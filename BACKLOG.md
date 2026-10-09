@@ -12,10 +12,37 @@ Reopen conditions, not promises.
 
 **Prompt default `python -m pytest`.** Prompt v5 guesses `uv run --offline
 pytest -q`, which runs the `pytest` entry point without the project root on
-`sys.path`; `python -m pytest` would have passed the ac-demo hello-world run
-first time. The prompt is measured, so the change needs a ladder run, and the
-ladder fixtures may not distinguish the two commands. *Reopens when* a ladder
-phase in mellum-mlx compares the two defaults.
+`sys.path`; `python -m pytest` would have passed both clean ac-demo runs
+first time. The prompt is measured, and the ladder as it stands cannot see
+the change: all four pytest fixtures keep the test beside the module with
+`testpaths = ["."]`, so both commands pass every rung. The experiment is
+sized in the [steering note](docs/superpowers/research/2026-10-09-steering-and-next-phase.md)
+§2: a sixth fixture shaped like ac-demo, a `v6` prompt variant, direct and
+mode phases against A3 and A17. *Reopens when* Paul schedules that phase in
+mellum-mlx.
+
+**Mode-side test-command preflight.** Instead of the prompt, Mode could
+detect a pyproject with pytest, no `pythonpath`, and a `tests/` directory
+without `__init__.py`, and append "Test command: uv run --offline python -m
+pytest -q" to the task. It changes what Mellum reads, the current fixtures
+would never trigger it, and the ladder's headless path does not run the
+command handler, so it would be measured in name only. *Reopens when* the
+prompt-default phase above fails the ladder and the sixth fixture exists.
+
+**Ladder drives the one-shot command.** After M.5, `pi -p "/mellum
+<sentence>"` works, so the ladder could launch the shipped command (and get
+run records per run) instead of `MELLUM_MODE=1`. That changes the measured
+launch (an on-marker in the messages), so it is a phase compared against
+A17, not a runner tweak. *Reopens when* the next Mode phase is scheduled.
+
+**Final reply omits moves and pre-existing work.** Recorded forms: a reply
+silent about `rm tests/test_hello.py`; a reply claiming to have created files
+a previous run left behind (`files: []`, one passing command); dead code and
+an environment mutated to make a named command pass. The completion fact
+makes "exits 0" the goal. The handoff and the Worker's parent test run are
+the measured answers; schema-2 records (M.5) make the gap countable.
+*Reopens when* records show two or more runs whose final reply claims success
+with `filesMissingAtEnd` non-empty or `lastCommand` not `ok`.
 
 **One change, then test.** In the ac-demo run Mellum made two edits between
 test runs and left dead code behind. A prompt line enforcing one change per
