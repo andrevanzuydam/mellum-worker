@@ -2,8 +2,7 @@
 
 This repo ships the measured "Mellum as a bounded coding worker" recipe for
 Pi and OpenCode. Read [`README.md`](README.md) first. The numbers come from
-the research repo, [mellum-mlx](https://github.com/pauleveritt/mellum-mlx);
-this repo does not re-derive them.
+the ladder (`ladder/`) and are recorded in `docs/ladder/`.
 
 ## Spec-driven development
 
@@ -18,7 +17,7 @@ plan, or roadmap edit**; it carries the document caps and why each exists.
 [`ROADMAP.md`](ROADMAP.md) is the phase list and current pointer;
 [`BACKLOG.md`](BACKLOG.md) is deferred work with reopen conditions. Brainstorm
 within a phase; do not re-open settled, measured decisions without a ladder
-run in mellum-mlx.
+run in `ladder/`.
 
 ## Document caps are not advisory
 
@@ -30,6 +29,10 @@ cap means a research doc is owed, not that the wording gets trimmed.
 ## Working rules
 
 - `npm test` runs the suite; every new test is shown to fail first.
+- The ladder: `cd ladder && uv run python -m pytest` for its tests,
+  `uv run python -m ladder.run_ladder --help` for runs. Never commit
+  `trace.jsonl`, `stdout.txt` or `diff.patch`; raw evidence goes in a
+  `research-YYYY-MM-DD` release.
 - `node build.mjs` regenerates the agent templates after a prompt change, and
   a test fails on drift. `prompts/mellum-worker.md` is the only prompt source.
 - Never add a `build`, `prepare`, `prepack`, or `install` npm script; OpenCode

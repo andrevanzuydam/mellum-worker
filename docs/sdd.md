@@ -6,9 +6,7 @@ The cycle: **brainstorm → spec → plan → execute → review/close.**
 - Plans: `docs/superpowers/plans/YYYY-MM-DD-<topic>.md`
 - Research and verdicts: `docs/superpowers/research/YYYY-MM-DD-<topic>.md`
 
-The design and plan that produced v0.1.0 live in the research repo:
-[spec](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/superpowers/specs/2026-10-09-mellum-worker-distribution-design.md)
-and [plan](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/superpowers/plans/2026-10-09-mellum-worker-distribution.md).
+The M.1 design and plan were written in the weights repo, which may go private; `docs/recipe.md` summarizes them.
 Everything after that lands here.
 
 ## Why this file exists
@@ -73,9 +71,9 @@ Evidence that is not text (transcripts, run records) goes in a sibling
 
 ## Standing rules
 
-- Measured settings are not changed without a ladder run in
-  [mellum-mlx](https://github.com/pauleveritt/mellum-mlx). This repo ships
-  results; it does not re-derive them.
+- Measured settings are not changed without a ladder run in `ladder/`,
+  recorded in `docs/ladder/`; raw evidence goes in a `research-YYYY-MM-DD`
+  release, never in git.
 - Every new test is shown to fail before the code that makes it pass.
 - A release is a tag; the package version, the tag, and the README install
   lines agree, and `CHANGELOG.md` has a section for it.

@@ -33,6 +33,16 @@ Versions match git tags; pin one in both install lines.
 - Mellum's request path (prompt, messages, tools, sampling, guards) and
   the handoff block text are unchanged.
 
+### Changed
+
+- Links to the research and the phase records now point inside this repo
+  (`docs/ladder/`, `docs/superpowers/research/`) instead of the research
+  repo, so they keep working if that repo goes private. The research notes
+  and the recovery bundle moved in with a "Moved from" line; the weights
+  link names the Hugging Face model card. README and AGENTS.md say how to
+  run the ladder (`cd ladder && uv run python -m pytest`) and that raw
+  files are never committed.
+
 ## [0.1.2] - 2026-10-09
 
 ### Changed

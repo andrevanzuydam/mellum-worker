@@ -1,11 +1,11 @@
 # Mellum Worker and Mellum Mode: Mellum 2.1 as a coding worker under Pi
 
-**Status: shipped 2026-10-09; two ways to use the worker (§4 delegated, §4b in-session), both measured. Follow-ups are scheduled in [2026-10-09-future-work.md](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/2026-10-09-future-work.md). Every number links to its record under `docs/research/ladder/` in mellum-mlx; the lean-down that produced the shipped worker is summarised in [ablation-summary.md](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-summary.md).**
+**Status: shipped 2026-10-09; two ways to use the worker (§4 delegated, §4b in-session), both measured. Follow-ups are scheduled in [2026-10-09-future-work.md](superpowers/research/2026-10-09-future-work.md). Every number links to its record under `docs/ladder/`; the lean-down that produced the shipped worker is summarised in [ablation-summary.md](ladder/ablation-summary.md).**
 
-Installed from this repo; measured in [mellum-mlx](https://github.com/pauleveritt/mellum-mlx), where the ladder, fixtures, and every phase record live.
+Installed from this repo; measured by the ladder (`ladder/`), whose fixtures and phase records (`docs/ladder/`) live here too.
 
 This is the practical recipe that came out of the research in
-[docs/research/](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/): run the local Mellum 2.1 model not as the agent
+[docs/superpowers/research/](superpowers/research/) and [docs/ladder/](ladder/): run the local Mellum 2.1 model not as the agent
 you talk to, but as a narrowly configured *child* that your normal Pi session
 hands bounded coding tasks to. Everything here was measured with the prompt
 ladder in the research repo; the numbers link to their records.
@@ -15,7 +15,7 @@ ladder in the research repo; the numbers link to their records.
 Mellum 2.1 Thinking (12B MoE, 2.5B active, Q6 MLX conversion) could not run
 the Superpowers workflow as the primary agent: it dispatched skill names as
 agents, retried after errors, and ended turns without answering
-([recovery report](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/mellum-recovery-2026-10-07/report.md)). The same
+([recovery report](superpowers/research/2026-10-07-mellum-recovery/report.md)). The same
 model, given a clean prompt and file tools only, completes bounded tasks.
 
 So the recipe inverts the roles. Your usual model (DeepSeek Flash here) stays
@@ -45,17 +45,17 @@ every request from its `models.json` entry. So:
 
 | setting | where it is decided | value used |
 | --- | --- | --- |
-| `max_tokens` | Pi `models.json` → `maxTokens` | 16,384 (model-card per-turn budget); a 4,096 cap cut off one three-file run mid-thought ([phases 1c/1d](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/phase1d-tuned-effective/README.md)) |
+| `max_tokens` | Pi `models.json` → `maxTokens` | 16,384 (model-card per-turn budget); a 4,096 cap cut off one three-file run mid-thought ([phases 1c/1d](ladder/phase1d-tuned-effective/README.md)) |
 | temperature / top_p / top_k | Pi `models.json` → `samplingParams`, else Pi defaults | Pi default is 1 / 0.95 / 20 (the model card's agentic sampling) |
 | presence / repetition penalty | request | 0 / 1.0 — 0.5 showed nothing measurable (1c vs 1d: 13/15 vs 14/15, same request and error counts), though that comparison changed the cap at the same time |
 | thinking budget | server profile only | off — a 4,096-per-block budget was never triggered in 15 runs; the request cap is what binds |
 | `max_tool_result_tokens` | server profile only | off — the largest tool result in 30 runs was 2,639 characters |
 | `forced_ct_kwargs: ["enable_thinking"]` | server profile only | on — a client cannot switch thinking off |
-| thinking level (`thinking:` in the agent file, `--thinking`) | nowhere | inert: Pi's level does not reach an `openai-completions` provider; two runs at "high" and "medium" sent byte-identical requests ([ablation A5](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a5-thinking-medium/README.md)) |
-| `thinking_budget` (request field) | a hook could send it (`ladder/thinking-budget.js` in mellum-mlx) | not enforced for this model: oMLX needs a reasoning parser configured to build its budget processor ([A13](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a13-budget-medium/README.md)) |
+| thinking level (`thinking:` in the agent file, `--thinking`) | nowhere | inert: Pi's level does not reach an `openai-completions` provider; two runs at "high" and "medium" sent byte-identical requests ([ablation A5](ladder/ablation-a5-thinking-medium/README.md)) |
+| `thinking_budget` (request field) | a hook could send it (`ladder/ladder/thinking-budget.js`) | not enforced for this model: oMLX needs a reasoning parser configured to build its budget processor ([A13](ladder/ablation-a13-budget-medium/README.md)) |
 
 Verify with one request through the proxy or Pi's `before_provider_request`
-hook (`ladder/record-pi.js` in mellum-mlx) that the values you expect are the values sent;
+hook (`ladder/ladder/record-pi.js`) that the values you expect are the values sent;
 the ladder records them per run as `effective_params`.
 
 ## 3. Pi setup
@@ -70,7 +70,7 @@ All of this is written by the setup skill into your user-scope Pi directory: the
   `excludeTools: contact_supervisor` (pi-subagents injects that tool and a
   supervisor-protocol prompt block into every child unless excluded; the
   supervisor protocol is what Mellum failed, measured in
-  [ablation A8](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a8-delegated-lean/README.md)), and
+  [ablation A8](ladder/ablation-a8-delegated-lean/README.md)), and
   `acceptance: level none` (the parent verifies by running the tests; an
   acceptance contract competed with the reply format and recorded a correct
   run as rejected). Nothing else: no `thinking:` (the level never reaches
@@ -81,11 +81,11 @@ All of this is written by the setup skill into your user-scope Pi directory: the
   facts about the test command, one line for when the files cannot be found.
   *The task is complete only when the test command exits 0* and *if it
   fails, read the failure, change the code, and run it again* took rung 5
-  from 0/3 to 3/3 ([phase 0b](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/phase0b-baseline-v3/README.md)).
+  from 0/3 to 3/3 ([phase 0b](ladder/phase0b-baseline-v3/README.md)).
   v3's six-step procedure and five tool descriptions were measured and
-  removed ([A2](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a2-v4a/README.md), [A3](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a3-v4b/README.md));
+  removed ([A2](ladder/ablation-a2-v4a/README.md), [A3](ladder/ablation-a3-v4b/README.md));
   the missing-files line stays because the run without it edited a test
-  ([A4](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a4-v4c/README.md)).
+  ([A4](ladder/ablation-a4-v4c/README.md)).
 - `extensions/mellum-guards.ts` — the child's guards, loaded only through the
   agent file's `subagentOnlyExtensions`. It lives outside `.pi/extensions/`
   on purpose: Pi auto-loads that directory into every session in a trusted
@@ -94,13 +94,13 @@ All of this is written by the setup skill into your user-scope Pi directory: the
   any edit, write, or bash call). Dormant: new-file-only `write`, step
   budget. See §6.
 - No parent-side skill. One existed; it was read in 2 of 15 runs and the
-  pass rate was 15/15 with or without it ([phase 3b](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/phase3b-delegated-skill/README.md)),
+  pass rate was 15/15 with or without it ([phase 3b](ladder/phase3b-delegated-skill/README.md)),
   so it was removed. Its content is §4's one paragraph on briefing.
 - Optional, global to your profile: `{"intercomBridge": {"mode": "off"}}`
   in `~/.pi/agent/extensions/subagent/config.json` removes the 1,582-character
   supervisor block pi-subagents puts in every child's prompt; the worker
   passed 15/15 with it off and its prompt halved
-  ([A11](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a11-delegated-nointercom/README.md)).
+  ([A11](ladder/ablation-a11-delegated-nointercom/README.md)).
   Every other subagent of yours loses `contact_supervisor` too, so only if
   none of them needs it.
 - `~/.pi/agent/models.json` omlx entry must set `supportsDeveloperRole: false`:
@@ -120,7 +120,7 @@ one recorded pathology is a turn that ends with `stop` and no text;
 pi-subagents reports it as "Subagent produced no output". In sixty
 delegated runs the parent re-dispatched on that error and the run then
 passed ten times out of eleven; the one miss was reported as blocked, never
-as done ([A9](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a9-delegated-final/README.md)).
+as done ([A9](ladder/ablation-a9-delegated-final/README.md)).
 
 The ladder's five sentences, as a user would type them, and what happened:
 
@@ -133,19 +133,19 @@ The ladder's five sentences, as a user would type them, and what happened:
 | 5 | the export is missing the totals row (same, plus a decoy, no test named) | 2/3 / 3/3 | 3/3 |
 
 The worker as it ships, prompt v5, delegated: 3/3 on every rung, no
-re-dispatch, no empty child turn ([A10](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a10-delegated-v5/README.md)).
+re-dispatch, no empty child turn ([A10](ladder/ablation-a10-delegated-v5/README.md)).
 
 Mellum as the *primary* agent in your own profile, given the same sentences
-([phase 0c](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/phase0c-primary-operator/README.md)): 3/3, 2/3,
+([phase 0c](ladder/phase0c-primary-operator/README.md)): 3/3, 2/3,
 3/3, 2/3, 0/3. It reads and follows the Superpowers skills; it fails when a
 skill asks a question nobody answers, when a turn ends empty, and on the
 three-file change by symptom. Bare Pi with no extensions or skills
-([phase 0c plain](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/phase0c-primary-plain/README.md)): 3/3, 3/3,
+([phase 0c plain](ladder/phase0c-primary-plain/README.md)): 3/3, 3/3,
 2/3, 0/3, 0/3, with four empty finals, three false "fixed" claims, and one
 rewritten test file. The worker alone, same model and harness but greedy
 decoding and the worker prompt, is 15/15
-([phase 2b](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/phase2b-guards-bounded/README.md), [A2](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a2-v4a/README.md),
-[A3](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a3-v4b/README.md)); only the delegated runs
+([phase 2b](ladder/phase2b-guards-bounded/README.md), [A2](ladder/ablation-a2-v4a/README.md),
+[A3](ladder/ablation-a3-v4b/README.md)); only the delegated runs
 measure it at the sampling your Pi actually uses.
 
 Where it stops working: rung 5 is a three-file change described only by a
@@ -158,7 +158,7 @@ What it costs. Wall seconds are from an uncontrolled clock; "prefill" is
 the characters the local server receives per run. On oMLX most of it is
 cache hits (86% of the worker's input tokens in direct mode), so prompt
 length is a token cost more than a wall-clock one. Fifteen runs each; full tables in
-[ablation-summary.md](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-summary.md).
+[ablation-summary.md](ladder/ablation-summary.md).
 
 | setup | pass | wall s | Mellum requests per run (max) | prefill, k chars per run |
 | --- | --- | --- | --- | --- |
@@ -182,7 +182,7 @@ parent work on the small rungs and gives it back on the three-file ones,
 where the briefed child needs fewer requests (14 vs 20) and never more than
 16. Request counts are 11–14 per run everywhere; what differs is what each
 request carries. The options for cutting this further, measured and
-projected, are in [2026-10-09-worker-cost-options.md](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/2026-10-09-worker-cost-options.md).
+projected, are in [2026-10-09-worker-cost-options.md](superpowers/research/2026-10-09-worker-cost-options.md).
 
 ## 4b. The second way: Mellum Mode in your own session
 
@@ -213,7 +213,7 @@ the file is append-only across upgrades, so lines without a `schema`
 field are schema 1.
 In the probe this took the parent's next request from 18 messages to 3.
 
-Measured in the ladder ([A14](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a14-mellum-mode/README.md)),
+Measured in the ladder ([A14](ladder/ablation-a14-mellum-mode/README.md)),
 same profile and sampling as "Mellum as the primary agent" above: 10/15
 becomes 14/15, rung 5 from 0/3 to 3/3, the model reads 606 characters of
 prompt instead of 17k, and the wall time is the same (prefill is cached;
@@ -221,7 +221,7 @@ the time is generation). What you give up against delegation is the
 parent's independent test run afterwards; run the tests yourself.
 
 Where the cost goes, measured per task at the same sampling
-([A10](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a10-delegated-v5/README.md) vs [A14](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a14-mellum-mode/README.md)):
+([A10](ladder/ablation-a10-delegated-v5/README.md) vs [A14](ladder/ablation-a14-mellum-mode/README.md)):
 
 | per task | Mellum Worker | Mellum Mode |
 | --- | --- | --- |
@@ -243,16 +243,16 @@ summary: the Worker's parent writes one, the Mode's handoff block is one.
 
 Cautions. The ladder measured the headless path; the interactive path
 (`on`, a second `on`, a task, `off`, a parent turn, a second `off`, the
-one-shot form) was verified over Pi's RPC mode with `ladder/probe_mode_rpc.py` in
-[mellum-mlx](https://github.com/pauleveritt/mellum-mlx), which showed each request carrying exactly the
+one-shot form) was verified over Pi's RPC mode with `ladder/ladder/probe_mode_rpc.py`,
+which showed each request carrying exactly the
 expected prompt, history and tools; the refusal to auto-compact while on
-is unit-tested. Mellum Mode is loaded as a package extension; its payload filter rewrites the request it sees, and other packages' hooks may run before or after it. Load order was only verified for the `-e` form in mellum-mlx. None of
+is unit-tested. Mellum Mode is loaded as a package extension; its payload filter rewrites the request it sees, and other packages' hooks may run before or after it. Load order was only verified for the `-e` form in the ladder. None of
 Superpowers, pi-subagents or context7 rewrites the payload today. Auto-compaction is refused while the mode is on
 (`/compact` still works); run `/mellum off` before a long parent turn.
 
 ## 5. Measuring
 
-Measurement lives in the research repo: `uv run python -m ladder.run_ladder` in mellum-mlx. This repo ships the result, not the ruler.
+Measurement lives in `ladder/` in this repo: `cd ladder && uv run python -m ladder.run_ladder --help`. The installed package is the result; `ladder/` is the ruler.
 
 ## 6. What is settled and what is not
 
@@ -262,7 +262,7 @@ Settled by measurement:
 - Of the settings, only the request cap has a measurable effect (it is a
   request value, sent by Pi); the penalty, thinking budget and tool-result
   cap do not, with the caveat that 1c→1d changed the cap and the penalty
-  together ([1c/1d](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/phase1d-tuned-effective/README.md)).
+  together ([1c/1d](ladder/phase1d-tuned-effective/README.md)).
 - No `write` shrank an existing file and no test file was edited in 240
   direct runs except one (A4, reverted). The loop breaker as shipped
   (repeats forgotten after any edit, write, or bash call), replayed over
@@ -275,23 +275,21 @@ Not settled:
 
 - The empty-final nudge, capped at 3 with the loop breaker live, in direct
   mode: 15/15, seven nudges in six runs, every nudged run green
-  ([phase 2b](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/phase2b-guards-bounded/README.md)); without
-  the extension, 13/15 ([A1](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a1-noguards/README.md)).
+  ([phase 2b](ladder/phase2b-guards-bounded/README.md)); without
+  the extension, 13/15 ([A1](ladder/ablation-a1-noguards/README.md)).
 - **The nudge does not fire inside a pi-subagents child.** Zero nudges in
   sixty delegated runs while eleven children "produced no output"; the
   parent's re-dispatch is what recovers them. First backlog item.
 - The Markdown brief as a mediator: chunked into one prompt per step it
   passes everything at 2.4× the cost; as one prompt with step-wise
   "reply" instructions it drops to 11/15 because the model stops at the
-  first reply ([A15/A16](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a15-chunked-brief/README.md)).
+  first reply ([A15/A16](ladder/ablation-a15-chunked-brief/README.md)).
   The sentence plus the worker prompt stays the cheapest reliable input.
 - pi-subagents appends an "Intercom orchestration channel" block (about
   1,500 characters) to the child prompt even with `contact_supervisor`
-  excluded; `intercomBridge.mode: off` removes it ([A11](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a11-delegated-nointercom/README.md)).
+  excluded; `intercomBridge.mode: off` removes it ([A11](ladder/ablation-a11-delegated-nointercom/README.md)).
 - Mellum as the primary agent is viable through rung 4 (10/15 overall) and
   fails rung 5; the worker's gain is at the top of the ladder, not an escape
   from a broken primary mode.
 
-Follow-ups and the research record: [docs/research/](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/), the
-[spec](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/superpowers/specs/2026-10-08-mellum-worker-recipe-design.md), and the
-backlog at the end of the [phase-3 plan](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/superpowers/plans/2026-10-08-mellum-worker-ladder-phase-3.md).
+Follow-ups and the research record: [docs/superpowers/research/](superpowers/research/) and the phase records in [docs/ladder/](ladder/).

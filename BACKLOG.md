@@ -19,7 +19,7 @@ the change: all four pytest fixtures keep the test beside the module with
 sized in the [steering note](docs/superpowers/research/2026-10-09-steering-and-next-phase.md)
 §2: a sixth fixture shaped like ac-demo, a `v6` prompt variant, direct and
 mode phases against A3 and A17. *Reopens when* Paul schedules that phase in
-mellum-mlx.
+`ladder/`.
 
 **Mode-side test-command preflight.** Instead of the prompt, Mode could
 detect a pyproject with pytest, no `pythonpath`, and a `tests/` directory
@@ -62,12 +62,12 @@ analyse runs; nothing reads it yet. *Reopens when* a second consumer wants a
 field the record lacks, which decides the schema.
 
 **The ladder measures the repo copy, not the package.** `ladder/run_ladder.py`
-in mellum-mlx points at `.pi/mellum/mellum-mode.ts`, which had drifted 260
+in the old ladder pointed at `.pi/mellum/mellum-mode.ts`, which had drifted 260
 lines from the shipped extension by v0.1.2. The A17 phase ran the shipped
 copy through a wrapper and found no regression (14/15, 12.9 requests, 44 s vs
 A14's 70 s), but the wrapper is scratch code. *Reopens when* the next change
 to `extensions/` is made: the ladder should take the extension path as an
-argument and the mellum-mlx copy should go.
+argument and any copy should go.
 
 **Empty-final nudge misses announce-and-stop turns.** The guard nudges only
 when a turn ends with no text. The A17 rung 5 miss ended with "Now let's run

@@ -19,8 +19,9 @@ Two ways to use it in Pi:
   stays the parent, briefs the child, and runs the tests itself. 15/15 on the
   ladder.
 
-Measured, not guessed: every setting here was ablated in the
-[mellum-mlx](https://github.com/pauleveritt/mellum-mlx) research repo.
+Measured, not guessed: every setting here was ablated by the ladder (`ladder/`),
+with records in `docs/ladder/`. The 6-bit weights are on
+[Hugging Face](https://huggingface.co/pauleveritt/Mellum2.1-12B-A2.5B-Thinking-mlx-6bit).
 
 ## Install
 
@@ -133,7 +134,7 @@ not a plan:
 | OpenCode | Mellum Worker subagent | "Delegate to mellum-worker ..." | ported, unmeasured | | | |
 
 The ladder is five coding tasks run three times each, in
-[mellum-mlx](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-summary.md),
+[the ladder](docs/ladder/ablation-summary.md),
 on an M5 Max through oMLX. The same tasks with Mellum as the primary agent:
 8/15 in bare Pi (51 s) and 10/15 in a full Superpowers profile (72 s).
 Mode and Worker trade cost for wall time: Mode spends nothing on your main
@@ -143,22 +144,21 @@ hosted tokens. The recipe's cost section has the per-rung numbers.
 
 ## Findings
 
-The research lives in [mellum-mlx](https://github.com/pauleveritt/mellum-mlx);
-this repo ships the result. Start with:
+The ladder (`ladder/`) and its records (`docs/ladder/`) live in this repo. Start with:
 
 - [recipe.md §6](docs/recipe.md#6-what-is-settled-and-what-is-not): what is
   settled by measurement and what is not.
 - [recipe.md §4](docs/recipe.md#4-using-mellum-worker-delegated): the recorded
   pathologies (empty final turns, false "fixed" claims, repeated identical
   calls) and the guard that answers each.
-- [Ablation summary](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-summary.md):
+- [Ablation summary](docs/ladder/ablation-summary.md):
   the scoreboard, every setting measured in and out.
-- [Where the cost goes](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/2026-10-09-worker-cost-options.md):
+- [Where the cost goes](docs/superpowers/research/2026-10-09-worker-cost-options.md):
   Mode versus Worker per task.
-- [Recovery report](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/mellum-recovery-2026-10-07/report.md):
+- [Recovery report](docs/superpowers/research/2026-10-07-mellum-recovery/report.md):
   why Mellum cannot run a full agent workflow as the primary model, and what
   it can do instead.
-- [Future work](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/2026-10-09-future-work.md):
+- [Future work](docs/superpowers/research/2026-10-09-future-work.md):
   the open experiments, including measuring the OpenCode port.
 
 ## Requirements (v1)
@@ -202,11 +202,14 @@ skills/mellum-setup/          the guided installer
 templates/                    agent files and provider fragments, per host
 scripts/                      merge-json and render-agent, used by the skill
 docs/                         recipe, backend guides, and docs/sdd.md for how work is recorded
+ladder/, docs/ladder/         the measuring ladder and its phase records
 ROADMAP.md, BACKLOG.md        phases and deferred work with reopen conditions
 ```
 
 `npm test` runs the suite. `node build.mjs` regenerates the
-agent templates after a prompt change.
+agent templates after a prompt change. `ladder/` measures this checkout:
+`cd ladder && uv run python -m pytest` for its tests,
+`uv run python -m ladder.run_ladder --help` for runs; records in `docs/ladder/`.
 
 ## Releases
 
