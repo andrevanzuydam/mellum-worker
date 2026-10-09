@@ -18,12 +18,17 @@ import time
 from pathlib import Path
 
 from ladder.pi_profile import mirror_agent_dir
-from ladder.run_ladder import GUARDS_EXT, MODE_EXT, RECORD_EXT, child_env
+from ladder.run_ladder import MODE_EXT, RECORD_EXT, child_env
 from ladder.rungs import copy_fixture
 
 scratch = Path(tempfile.mkdtemp(prefix="mellum-rpc-"))
 ws = copy_fixture("calculator", scratch / "ws")
-agent = mirror_agent_dir(Path.home() / ".pi" / "agent", scratch / "pi-agent", [ws])
+agent = mirror_agent_dir(
+    Path.home() / ".pi" / "agent",
+    scratch / "pi-agent",
+    [ws],
+    exclude_packages=("mellum-worker",),
+)
 trace = scratch / "trace.jsonl"
 env = child_env(dict(os.environ), str(trace), agent, offline=False)
 proc = subprocess.Popen(
@@ -34,8 +39,6 @@ proc = subprocess.Popen(
         "--no-session",
         "-e",
         str(MODE_EXT),
-        "-e",
-        str(GUARDS_EXT),
         "-e",
         str(RECORD_EXT),
     ],

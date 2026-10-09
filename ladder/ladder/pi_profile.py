@@ -3,8 +3,9 @@
 Delegated runs launch the parent with ``PI_CODING_AGENT_DIR`` pointing at the
 mirror, so the parent has its normal settings, models, credentials, and
 packages while nothing under ``~/.pi/agent`` is written to. The scratch
-workspace gets a copy of the committed worker definition with the ladder's
-recorder appended, because pi-subagents overrides cannot add extensions.
+workspace gets the worker definition rendered from this checkout's template
+with the ladder's recorder appended, because pi-subagents overrides cannot
+add extensions.
 """
 
 from __future__ import annotations
@@ -21,6 +22,8 @@ REPO_ROOT = LADDER_ROOT.parent
 MODEL_ID = "Mellum2.1-12B-A2.5B-Thinking-6bit"
 COPIED_FILES = ("settings.json", "models.json", "auth.json", "AGENTS.md")
 LINKED_DIRS = ("git", "npm")
+AGENT_TEMPLATE = REPO_ROOT / "templates" / "pi" / "mellum-worker.agent.md"
+PLACEHOLDER = "{{MELLUM_WORKER_ROOT}}"
 
 
 def mirror_agent_dir(
@@ -28,12 +31,16 @@ def mirror_agent_dir(
     dest: Path,
     trusted: list[Path],
     subagents_config: dict | None = None,
+    exclude_packages: tuple[str, ...] = (),
 ) -> Path:
     """Copy the parent's configuration, link its packages, trust the given workspaces.
 
     `subagents_config` replaces pi-subagents' config.json in the mirror only
     (it reads just ~/.pi/agent/extensions/subagent/config.json), so a run can
     change e.g. the intercom bridge without touching the operator's file.
+    `exclude_packages` drops settings.json `packages` entries naming any of the
+    given substrings from the mirror's copy, so an installed copy of this
+    package does not load beside the checkout under test.
     """
     dest.mkdir(parents=True, exist_ok=True)
     for name in COPIED_FILES:
@@ -41,6 +48,15 @@ def mirror_agent_dir(
             shutil.copy2(source / name, dest / name)
     if (source / "extensions").is_dir():
         shutil.copytree(source / "extensions", dest / "extensions", dirs_exist_ok=True)
+    settings = dest / "settings.json"
+    if exclude_packages and settings.exists():
+        data = json.loads(settings.read_text())
+        data["packages"] = [
+            p
+            for p in data.get("packages", [])
+            if not any(needle in json.dumps(p) for needle in exclude_packages)
+        ]
+        settings.write_text(json.dumps(data, indent=2))
     if subagents_config is not None:
         target = dest / "extensions" / "subagent" / "config.json"
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -54,27 +70,27 @@ def mirror_agent_dir(
     return dest
 
 
-def prepare_pi_workspace(ws: Path, record_ext: Path) -> Path:
-    """Give a scratch workspace the worker definition with the ladder recorder appended."""
+def prepare_pi_workspace(ws: Path, record_ext: Path | None) -> Path:
+    """Render the worker definition from this checkout's template into a scratch workspace.
+
+    With `record_ext`, the ladder recorder is appended to the template's
+    `subagentOnlyExtensions:` line. Nothing else is copied.
+    """
     pi = ws / ".pi"
     (pi / "agents").mkdir(parents=True, exist_ok=True)
-    (pi / "mellum").mkdir(exist_ok=True)
-    shutil.copy2(
-        REPO_ROOT / ".pi" / "mellum" / "mellum-guards.ts",
-        pi / "mellum" / "mellum-guards.ts",
-    )
     lines = (
-        (REPO_ROOT / ".pi" / "agents" / "mellum-worker.md")
-        .read_text()
+        AGENT_TEMPLATE.read_text()
+        .replace(PLACEHOLDER, str(REPO_ROOT))
         .splitlines(keepends=True)
     )
-    rewritten = [
-        f"subagentOnlyExtensions: ./.pi/mellum/mellum-guards.ts, {record_ext}\n"
-        if line.startswith("subagentOnlyExtensions:")
-        else line
-        for line in lines
-    ]
-    (pi / "agents" / "mellum-worker.md").write_text("".join(rewritten))
+    if record_ext is not None:
+        lines = [
+            f"{line.rstrip()}, {record_ext}\n"
+            if line.startswith("subagentOnlyExtensions:")
+            else line
+            for line in lines
+        ]
+    (pi / "agents" / "mellum-worker.md").write_text("".join(lines))
     return pi
 
 

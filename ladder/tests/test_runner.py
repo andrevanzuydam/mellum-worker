@@ -1,6 +1,15 @@
+import json
 from pathlib import Path
 
-from ladder.run_ladder import PROMPT_FILE, build_pi_direct_args
+from ladder.pi_profile import REPO_ROOT
+from ladder.run_ladder import (
+    GUARDS_EXT,
+    MODE_EXT,
+    PROMPT_FILE,
+    RECORD_EXT,
+    build_pi_direct_args,
+    build_pi_mode_args,
+)
 
 
 def test_direct_args_are_the_clean_profile():
@@ -287,20 +296,13 @@ def test_direct_args_load_the_budget_hook_before_the_recorder(tmp_path):
 
 def test_mode_args_run_mellum_inside_the_operator_profile_with_the_mode_extension():
     """Mellum mode: the operator's full profile (extensions, skills), plus the mode, guards, recorder."""
-    from ladder.run_ladder import (
-        GUARDS_EXT,
-        MODE_EXT,
-        MODEL,
-        RECORD_EXT,
-        build_pi_mode_args,
-    )
+    from ladder.run_ladder import MODE_EXT, MODEL, RECORD_EXT, build_pi_mode_args
 
     args = build_pi_mode_args("fix it")
     assert "--no-extensions" not in args and "--no-skills" not in args
     assert args[args.index("--model") + 1] == MODEL
     exts = [args[i + 1] for i, a in enumerate(args) if a == "-e"]
     assert exts.index(str(MODE_EXT)) < exts.index(str(RECORD_EXT))
-    assert str(GUARDS_EXT) in exts
     assert args[-1] == "fix it"
 
 
@@ -368,3 +370,76 @@ def test_split_brief_without_step_headings_returns_the_whole_text_and_warns(capl
         steps = split_brief("# Task\n\n## Step 1: Read\nx\n")
     assert steps == ["# Task\n\n## Step 1: Read\nx"]
     assert "no `## Step N` headings" in caplog.text
+
+
+def test_worker_files_are_this_checkouts():
+    for p in (PROMPT_FILE, MODE_EXT, GUARDS_EXT, RECORD_EXT):
+        assert p.is_absolute() and p.is_file(), p
+    assert MODE_EXT == REPO_ROOT / "extensions" / "mellum-mode.ts"
+    assert GUARDS_EXT == REPO_ROOT / "extensions" / "mellum-guards.ts"
+    assert PROMPT_FILE == REPO_ROOT / "prompts" / "mellum-worker.md"
+
+
+def test_mode_args_load_mode_and_recorder_but_no_guards_file():
+    args = build_pi_mode_args("fix it")
+    exts = [args[i + 1] for i, a in enumerate(args) if a == "-e"]
+    assert exts == [str(MODE_EXT), str(RECORD_EXT)]
+
+
+def test_worker_provenance_names_package_version_and_git():
+    from ladder.run_ladder import worker_provenance
+
+    got = worker_provenance()
+    assert (
+        got["worker_version"]
+        == json.loads((REPO_ROOT / "package.json").read_text())["version"]
+    )
+    assert got["worker_git"]
+
+
+def test_worker_provenance_without_git(tmp_path):
+    from ladder.run_ladder import worker_provenance
+
+    (tmp_path / "package.json").write_text('{"version": "9.9.9"}')
+    assert worker_provenance(tmp_path) == {
+        "worker_version": "9.9.9",
+        "worker_git": None,
+    }
+
+
+def test_mode_env_isolates_the_run_log_under_scratch(tmp_path):
+    from ladder.run_ladder import mode_env
+
+    env = mode_env(
+        {"HOME": "/h"}, tmp_path / "trace.jsonl", tmp_path / "agent", tmp_path
+    )
+    assert env["MELLUM_MODE"] == "1"
+    assert Path(env["MELLUM_MODE_RUNS"]).is_relative_to(tmp_path)
+    assert env["PI_CODING_AGENT_DIR"] == str(tmp_path / "agent")
+    assert "PI_OFFLINE" not in env
+
+
+def test_run_record_names_the_brief_file_relative_to_the_repo(monkeypatch, tmp_path):
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    monkeypatch.setattr(
+        run_ladder.subprocess,
+        "run",
+        lambda args, **kw: sp.CompletedProcess(args, 0, stdout="", stderr=""),
+    )
+    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch: scratch)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    rung = Rung(
+        1, "calculator", "fix it", ["true"], lambda ws, base: CheckResult(False, True)
+    )
+    run_ladder.run_once(rung, "brief", "baseline", 1, tmp_path / "out", 5, {}, False)
+    record = json.loads(
+        (tmp_path / "out" / "rung1-baseline-brief-r1" / "run.json").read_text()
+    )
+    assert record["brief_file"] == "ladder/ladder/briefs/rung1.md"
+    assert (REPO_ROOT / record["brief_file"]).is_file()
+    # subprocess.run is stubbed above, so git describe yields None here.
+    assert record["worker_version"] and "worker_git" in record

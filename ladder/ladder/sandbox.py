@@ -12,6 +12,7 @@ import sys
 import tempfile
 from pathlib import Path
 
+from .pi_profile import prepare_pi_workspace
 from .run_ladder import prepare_workspace
 from .rungs import RUNGS
 
@@ -19,6 +20,7 @@ from .rungs import RUNGS
 def make_sandbox(rung: int, parent: Path | None = None) -> Path:
     scratch = Path(tempfile.mkdtemp(prefix=f"mellum-try-rung{rung}-", dir=parent))
     ws = prepare_workspace(RUNGS[rung], scratch)
+    prepare_pi_workspace(ws, None)
     return ws
 
 

@@ -135,6 +135,32 @@ def child_env(
     return env
 
 
+def mode_env(parent: dict, trace: Path, agent_dir: Path, scratch: Path) -> dict:
+    """Mode runs: headless Mode, the mirrored profile, and a run log under scratch.
+
+    MELLUM_MODE_RUNS keeps the run out of the operator's real
+    ~/.pi/agent/mellum-mode-runs.jsonl.
+    """
+    env = child_env(parent, str(trace), agent_dir, offline=False, mode=True)
+    env["MELLUM_MODE_RUNS"] = str(scratch / "mellum-mode-runs.jsonl")
+    return env
+
+
+def worker_provenance(root: Path = REPO_ROOT) -> dict:
+    """Which worker the run measured: package.json's version and `git describe` (None outside git)."""
+    version = json.loads((root / "package.json").read_text())["version"]
+    try:
+        described = subprocess.run(
+            ["git", "-C", str(root), "describe", "--always", "--dirty"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+    except OSError, subprocess.CalledProcessError:
+        described = None
+    return {"worker_version": version, "worker_git": described or None}
+
+
 def build_pi_delegated_args(sentence: str) -> list[str]:
     """The parent: its normal profile (model, Superpowers, pi-subagents), addressed to the worker."""
     return [
@@ -185,8 +211,9 @@ def build_pi_mode_args(sentence: str) -> list[str]:
 
     Superpowers, pi-subagents and the skills catalog load as they do for the
     operator; the mode's before_provider_request hook then sends Mellum the
-    worker prompt and only the messages since the mode began. Guards and the
-    recorder load after the mode so the trace shows what was sent.
+    worker prompt and only the messages since the mode began. The shipped mode
+    runs the guard set itself, so no guards file is passed; the recorder loads
+    after the mode so the trace shows what was sent.
     """
     return [
         "pi",
@@ -198,8 +225,6 @@ def build_pi_mode_args(sentence: str) -> list[str]:
         MODEL,
         "-e",
         str(MODE_EXT),
-        "-e",
-        str(GUARDS_EXT),
         "-e",
         str(RECORD_EXT),
         sentence,
@@ -408,11 +433,12 @@ def run_once(
             )
     elif mode == "mode":
         agent_dir = mirror_agent_dir(
-            Path.home() / ".pi" / "agent", scratch / "pi-agent", [ws]
+            Path.home() / ".pi" / "agent",
+            scratch / "pi-agent",
+            [ws],
+            exclude_packages=("mellum-worker",),
         )
-        env = child_env(
-            dict(os.environ), str(trace), agent_dir, offline=False, mode=True
-        )
+        env = mode_env(dict(os.environ), trace, agent_dir, scratch)
         args = build_pi_mode_args(rung.sentence)
         guards = True  # the mode always loads the guard extension
     else:
@@ -489,7 +515,7 @@ def run_once(
         "strip_thinking": strip_thinking if mode == "direct" else None,
         "prompts": prompts_run,
         "prompts_planned": prompts,
-        "brief_file": f"ladder/briefs/rung{rung.number}.md"
+        "brief_file": str((BRIEFS / f"rung{rung.number}.md").relative_to(REPO_ROOT))
         if mode in ("chunked", "brief")
         else None,
         "budget_hook": budget_hook if mode == "direct" else None,
@@ -528,6 +554,7 @@ def run_once(
             if p
         ],
         "workspace": str(ws),
+        **worker_provenance(),
     }
     variant = f"{'-guards' if guards else ''}{'-plain' if plain else ''}"
     run_dir = out / f"rung{rung.number}-{prof}-{mode}{variant}-r{repeat}"
