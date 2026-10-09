@@ -8,7 +8,7 @@ This is the practical recipe that came out of the research in
 [docs/superpowers/research/](superpowers/research/) and [docs/ladder/](ladder/): run the local Mellum 2.1 model not as the agent
 you talk to, but as a narrowly configured *child* that your normal Pi session
 hands bounded coding tasks to. Everything here was measured with the prompt
-ladder in the research repo; the numbers link to their records.
+ladder (`ladder/`); the numbers link to their records.
 
 ## 1. What this is, and is not
 

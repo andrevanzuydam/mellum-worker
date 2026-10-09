@@ -23,6 +23,15 @@ Tracked files at that commit, via `git archive`, minus the raw files:
   `phase1b-tuned-nopenalty-v3`, `phase2-guards-v3-attempt1`); each got
   one holding its name and that link.
 
+## Moved research notes
+
+The recovery README under `docs/superpowers/research/2026-10-07-mellum-recovery/`
+gained the Moved-from line, and its line in `manifest.sha256` was updated to
+match; `shasum -a 256 -c manifest.sha256` passes there. The `.zip` beside the
+directory keeps the byte-original bundle. Paths quoted inside the moved notes
+(for example `ladder/run_ladder.py`, `ladder/briefs/`) are pre-move paths, now
+under `ladder/ladder/`.
+
 ## What was not copied
 
 The raw files `trace.jsonl`, `stdout.txt` and `diff.patch` (450 each,
