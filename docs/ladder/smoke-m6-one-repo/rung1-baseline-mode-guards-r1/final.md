@@ -1,0 +1,1 @@
+The issue has been fixed. The `totalCents` function now correctly multiplies each item's price by its quantity, and all tests pass.

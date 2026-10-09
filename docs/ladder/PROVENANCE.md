@@ -39,6 +39,11 @@ about 380 MB). They are archived per phase instead and listed in
 `.gitignore`, so new runs write them locally without committing them.
 Every one of the 30 phases had raw files, so there are 30 tarballs.
 
+A 31st phase, `smoke-m6-one-repo`, was added after the move: one rung-1 Mellum
+Mode run launched from this checkout (2026-10-09, commit `e5e72f3`). It is
+not part of the moved set, so it has no source commit; its raw files were
+archived the same way, giving 31 tarballs in all.
+
 Before the tarballs were built, `git status --short --ignored
 docs/research/ladder` in the source checkout was empty and its HEAD was
 the commit above, so the working tree matched the commit.
@@ -93,3 +98,4 @@ The command prints `<phase> <sha256>` per tarball; compare with the table.
 | phase2b-guards-bounded | `phase2b-guards-bounded.tar.gz` | `9049222a168013e921a2fe221cfa38da371775eb1230fc0b93a9638d7b186f08` |
 | phase3a-delegated-noskill | `phase3a-delegated-noskill.tar.gz` | `bc1997d958a0934d7a38973f36692c279d8632605665f7435cc6982a9239cf8e` |
 | phase3b-delegated-skill | `phase3b-delegated-skill.tar.gz` | `1da9291896c9246b24770786d27b3bac6f18b4282daf2efb8d962febf0cd5d9a` |
+| smoke-m6-one-repo | `smoke-m6-one-repo.tar.gz` | `b68eb25192c06676486be6bba7fdb18c25315a8438c3a648c88edae2d918ef0c` |
