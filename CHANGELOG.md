@@ -25,6 +25,11 @@ Versions match git tags; pin one in both install lines.
   scorer, fixtures and ablation prompts), moved in from the research
   repo. `npm test` also runs its two JS hook tests; its Python tests run
   with `cd ladder && uv run python -m pytest`.
+- `docs/ladder/`: the phase records (A0 to A17 and the earlier phases:
+  READMEs, tables, run records, final answers and briefs), moved in from
+  the research repo. Raw traces, stdout and diffs are archived per phase
+  as `research-2026-10-09` release assets, with their hashes in
+  `docs/ladder/PROVENANCE.md`; they are not tracked.
 - Mellum's request path (prompt, messages, tools, sampling, guards) and
   the handoff block text are unchanged.
 
