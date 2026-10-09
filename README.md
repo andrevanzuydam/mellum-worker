@@ -45,6 +45,44 @@ OpenCode, in the `plugin` array of `~/.config/opencode/opencode.json` or
 
 Then ask "run the mellum-setup skill".
 
+## Use it
+
+**Mellum Mode (Pi).** Type `/mellum <task>` in any session. Pi switches to
+Mellum with the worker prompt and seven file tools, runs the task, and
+switches back when it settles. For several tasks in a row, `/mellum on`,
+type each task as a normal prompt, then `/mellum off`. Your usual model
+then gets one handoff block per task (files touched, last command output,
+Mellum's reply) instead of every read and edit. Run the tests yourself
+afterwards; nothing else checks Mode's work. Run `/mellum off` before a
+long turn with your main model: auto-compaction is refused while Mode is on.
+
+**Mellum Worker (Pi, needs pi-subagents).** In a normal session say
+"Use mellum-worker to do this: the cart total ignores quantity, fix it. Test
+command: node --test calculator.test.js." Your model briefs the child, waits,
+and runs the tests itself before reporting. If pi-subagents says the child
+"produced no output", dispatch it once more with the same brief; in sixty
+measured runs that recovered ten of eleven.
+
+**OpenCode.** "Delegate to mellum-worker: …" with the same shape of brief.
+
+**Right-sizing the task.** Mellum passes when the brief is a fact sheet,
+not a plan:
+
+- Name the exact file or a literal string to grep for. "The export is
+  missing the totals row" works; "look around the reports code" does not.
+- Name the test command. Without one the prompt guesses `uv run --offline
+  pytest -q` or `node --test <file>`, and a wrong guess ends the run.
+- One change per task. Three files that change together is fine (rung 4 and
+  5 passed 3/3); two unrelated changes is two tasks.
+- Give facts, not steps. A brief that lists numbered steps with "reply
+  with…" between them stalls at the first reply (11/15); the same content
+  as plain facts passes.
+- Keep it out of exploration and design. If you would need to read the
+  code to write the brief, do that first with your main model, then hand
+  over the result.
+- Expect 11 to 14 Mellum requests and 25 to 120 seconds per task on an
+  M-series Mac; the long end is three-file changes.
+
 ## What you get
 
 | Host | Deliverable | How to use it | Passes | Wall s, mean | Mellum requests per run | Your main model per run |
