@@ -210,3 +210,96 @@ beyond the `## Mellum` section; commits in ac-demo; publishing releases.
   repeats them per task; that is intended (each task stands alone).
 - Three repeats per rung is thin for a 3-of-12 margin; the rule is a
   floor, and the note reports per-rung results.
+
+## Appendix A: the looser specs and the facts block (verbatim)
+
+Fixture `AGENTS.md` (every rung):
+
+```markdown
+# AgentClinic
+
+## Mellum
+
+- Test command: uv run python -m pytest tests
+- Write only: app.py, models.py, templates/, tests/
+- Do not: install packages or add dependencies; remove or rewrite routes that already work; weaken tests
+```
+
+`specs/phase-1-home.md`:
+
+```markdown
+# Phase 1 — Home Page
+
+- `app.py` holds the FastAPI application as `app`.
+- A shared Jinja2 layout, `templates/base.html`: HTML5 with `lang="en"`, a responsive viewport, Bootstrap 5 from a CDN (CSS in the head, the JS bundle at the end of the body), the favicon `https://www.python.org/static/favicon.ico`, the title "AgentClinic" unless a page sets its own, and a navbar with the "AgentClinic" brand and links to Home (`/`) and Complaints (`/complaints`).
+- The home page at `/` uses that layout: a hero section with the tagline *"Come in. Sit down. Tell us about your human."* and a short welcoming paragraph.
+- `python app.py` starts the app with uvicorn, with reload.
+- A smoke test: `GET /` returns 200 and contains the tagline.
+```
+
+`specs/phase-2-board.md`:
+
+```markdown
+# Phase 2 — Complaints Board
+
+- A complaint, `Complaint` in `models.py`, has an agent name, its text, and a UTC creation timestamp set automatically for each new complaint.
+- `models.py` keeps complaints in a module-level list, `complaints`, seeded with three to five typical AI-agent gripes, one of them exactly `Scope creep never ends.`
+- `GET /complaints` shows a "Complaints Board" in the shared layout: one Bootstrap card per complaint with the agent name, the date (year, month and day) and the text.
+- The home page keeps working.
+- A test: `GET /complaints` returns 200 and contains `Scope creep never ends.`
+```
+
+`specs/phase-3-add.md`:
+
+```markdown
+# Phase 3 — Add Complaint
+
+- The Complaints Board ends with a form for a new complaint (agent name and text) that posts to `/complaints`.
+- `POST /complaints` adds the complaint and redirects to the board with status 303 and `Location: /complaints`.
+- Existing pages keep working.
+- Tests: the POST, without following redirects, returns 303 with that `Location`; afterwards the board lists the new complaint.
+```
+
+`specs/phase-4-resolve-reopen.md`:
+
+```markdown
+# Phase 4 — Resolve and Reopen
+
+- Each complaint gets a unique, stable integer `id`, assigned automatically and never reused; `Complaint(agent_name, text)` still works.
+- Each complaint has a status, `"open"` unless changed.
+- `POST /complaints/{id}/resolve` marks a complaint resolved and `POST /complaints/{id}/reopen` marks it open again; both redirect to the board with 303.
+- The board shows a badge reading exactly "Open" or "Resolved", and a Resolve button for an open complaint or a Reopen button for a resolved one.
+- Resolving or reopening never changes the order of the board.
+- Tests: resolve and reopen change the status and redirect with 303, and the order is unchanged.
+```
+
+What was dropped from the originals: the per-phase rules paragraph (now the
+facts block), every import and library call (`starlette.testclient`,
+`dataclasses.field(default_factory=…)`, `Form`, `RedirectResponse`), the
+template and test file names other than `templates/base.html`, "create the
+`templates/` directory", `{% block content %}`, and "insert alongside the
+existing route" (now a facts bullet).
+
+## Appendix B: hidden tests (what each rung scores)
+
+Copied into the workspace root as `_hidden_p<k>.py` for every phase k up
+to the rung's phase, after the run, and run with `uv run --offline python -m
+pytest _hidden_p*.py -q`. Each file builds its own
+`TestClient(app)` (`from starlette.testclient import TestClient`, `from app
+import app`).
+
+- `_hidden_p1.py`: `GET /` is 200 and contains `Come in. Sit down. Tell us
+  about your human.`
+- `_hidden_p2.py`: `GET /complaints` is 200 and contains `Scope creep never
+  ends.`; `GET /` is still 200.
+- `_hidden_p3.py`: `POST /complaints` with `agent_name="hidden"`,
+  `text="hidden-check-123"`, `follow_redirects=False` is 303 with
+  `location == "/complaints"`; then `GET /complaints` contains
+  `hidden-check-123`.
+- `_hidden_p4.py`: `import models`; `models.Complaint("a", "b")` and
+  `models.Complaint("a", "c")` construct, have `status == "open"` and
+  different `id`s; for the first seeded complaint, `POST
+  /complaints/{id}/resolve` (no redirects) is 303, its `status` becomes
+  `"resolved"` and `GET /complaints` contains `Resolved`; `POST
+  /complaints/{id}/reopen` is 303 and `status` is `"open"` again; the list
+  of ids in `models.complaints` is the same before and after.
