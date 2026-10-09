@@ -150,3 +150,88 @@ test("/mellum off appends one run record line to the file named by MELLUM_MODE_R
 		delete process.env.MELLUM_MODE_RUNS;
 	}
 });
+
+function recordingPi() {
+	const handlers = {};
+	let commands = {};
+	const calls = { setModel: [], sendMessage: [], notify: [] };
+	const pi = {
+		on: (name, fn) => { handlers[name] = fn; },
+		registerCommand: (name, def) => { commands[name] = def; },
+		getActiveTools: () => ["read"], setActiveTools: () => {},
+		setModel: async (m) => { calls.setModel.push(m); return true; },
+		sendMessage: (m) => calls.sendMessage.push(m), sendUserMessage: () => {},
+	};
+	const ctx = { model: { provider: "anthropic", id: "parent" }, modelRegistry: { find: () => MODEL }, ui: { notify: (m, l) => calls.notify.push([m, l]) } };
+	install(pi);
+	return { handlers, ctx, calls, mellum: (a) => commands.mellum.handler(a, ctx) };
+}
+
+test("run record reconstructs the span from the last context snapshot plus the turns after it", async () => {
+	const { mkdtempSync, readFileSync } = await import("node:fs");
+	const { tmpdir } = await import("node:os");
+	const { join } = await import("node:path");
+	const file = join(mkdtempSync(join(tmpdir(), "mellum-runs-")), "runs.jsonl");
+	process.env.MELLUM_MODE_RUNS = file;
+	try {
+		const { handlers, mellum } = recordingPi();
+		await mellum("on");
+		// context fires before each request; the final assistant turn arrives only via turn_end
+		const before = [
+			{ role: "user", content: [{ type: "text", text: "fix the cart" }] },
+			{ role: "custom", customType: "mellum-mode", content: "[mellum-mode on]" },
+			{ role: "assistant", timestamp: 1000, usage: { output: 10 }, content: [{ type: "toolCall", id: "1", name: "bash", arguments: { command: "node --test" } }] },
+			{ role: "toolResult", toolCallId: "1", toolName: "bash", isError: true, content: [{ type: "text", text: "fail 1" }] },
+		];
+		handlers.context({ messages: before });
+		handlers.turn_end({ message: { role: "assistant", timestamp: 2000, usage: { output: 7 }, content: [{ type: "toolCall", id: "2", name: "edit", arguments: { path: "cart.js" } }] } });
+		handlers.context({ messages: [...before, { role: "assistant", timestamp: 2000, usage: { output: 7 }, content: [{ type: "toolCall", id: "2", name: "edit", arguments: { path: "cart.js" } }] }, { role: "toolResult", toolCallId: "2", toolName: "edit", content: [{ type: "text", text: "ok" }] }] });
+		handlers.turn_end({ message: { role: "assistant", timestamp: 3000, usage: { output: 5 }, content: [{ type: "text", text: "done" }] } });
+		await mellum("off");
+		const rec = JSON.parse(readFileSync(file, "utf8").trim());
+		assert.equal(rec.task, "fix the cart");
+		assert.equal(rec.requests, 3, "the turn after the last context snapshot is counted once");
+		assert.equal(rec.usage.output, 22);
+		assert.deepEqual(rec.files, ["cart.js"]);
+		assert.equal(rec.lastCommand, "failed");
+		assert.equal(rec.finalReply, "done");
+		assert.equal(rec.wallSeconds, 2);
+	} finally {
+		delete process.env.MELLUM_MODE_RUNS;
+	}
+});
+
+test("a failing record write warns but never disturbs deactivation", async () => {
+	const { mkdtempSync } = await import("node:fs");
+	const { tmpdir } = await import("node:os");
+	process.env.MELLUM_MODE_RUNS = mkdtempSync(join_(tmpdir(), "mellum-runs-")); // a directory, so appendFile fails
+	try {
+		const { handlers, ctx, calls, mellum } = recordingPi();
+		await mellum("on");
+		handlers.context({ messages: [{ role: "user", content: [{ type: "text", text: "t" }] }, { role: "user", content: [{ type: "text", text: "[mellum-mode on]" }] }, { role: "assistant", content: [{ type: "text", text: "x" }] }] });
+		await mellum("off");
+		assert.deepEqual(calls.setModel.at(-1), ctx.model, "previous model restored");
+		assert.ok(calls.sendMessage.some((m) => m.content === "[mellum-mode off]"), "off marker sent");
+		assert.ok(calls.notify.some(([m, l]) => m.includes("could not write the run record") && l === "warning"));
+		assert.ok(calls.notify.some(([m]) => m.startsWith("mellum-mode off:")), "off notification still shown");
+		for (let i = 0; i < 8; i++) assert.equal(handlers.tool_call({ toolName: "read", input: { path: "x" } }), undefined, "mode is off afterwards");
+	} finally {
+		delete process.env.MELLUM_MODE_RUNS;
+	}
+});
+function join_(...p) { return p.join("/"); }
+
+test("no context seen while on means nothing is written", async () => {
+	const { mkdtempSync, existsSync } = await import("node:fs");
+	const { tmpdir } = await import("node:os");
+	const file = join_(mkdtempSync(join_(tmpdir(), "mellum-runs-")), "runs.jsonl");
+	process.env.MELLUM_MODE_RUNS = file;
+	try {
+		const { mellum } = recordingPi();
+		await mellum("on");
+		await mellum("off");
+		assert.equal(existsSync(file), false);
+	} finally {
+		delete process.env.MELLUM_MODE_RUNS;
+	}
+});

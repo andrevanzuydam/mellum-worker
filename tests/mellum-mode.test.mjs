@@ -203,7 +203,7 @@ test("a bash call with no result is reported as unfinished, not ok, and does not
 		text("user", MARK_OFF),
 	];
 	const h = collapseHandoffs(msgs)[0].content[0].text;
-	assert.match(h, /1 request|2 requests/);
+	assert.match(h, /Mellum: 2 requests, /);
 	assert.match(h, /last command did not finish/);
 	assert.match(h, /- sleep 999 \(no result\)/);
 	assert.match(h, /Last command output:\npass 3/);

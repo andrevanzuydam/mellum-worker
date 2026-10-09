@@ -389,16 +389,20 @@ export default function (pi: any) {
 		ctx.ui?.notify?.(`mellum-mode off: ${span.requests} request${span.requests === 1 ? "" : "s"}, ${span.toolCalls} tool call${span.toolCalls === 1 ? "" : "s"}, ${span.outputTokens.toLocaleString("en-US")} output tokens, ${secs} s`, "info");
 	}
 
+	// Never lets an error escape: deactivation must complete whatever happens here.
 	function writeRunRecord(ctx: any) {
-		const file = runsFile();
-		if (!file) return;
-		const open = openSpan([...lastContext, ...turnsSinceContext]);
-		if (!open) return;
+		let file: string | undefined;
 		try {
+			file = runsFile();
+			if (!file) return;
+			const open = openSpan([...lastContext, ...turnsSinceContext]);
+			if (!open) return;
 			mkdirSync(dirname(file), { recursive: true });
 			appendFileSync(file, JSON.stringify(runRecord(open.task, open.span, { endedAt: Date.now(), cwd: process.cwd(), model: activeModel })) + "\n");
 		} catch (error) {
-			ctx?.ui?.notify?.(`mellum-mode: could not write the run record to ${file}: ${(error as Error).message}`, "warning");
+			try {
+				ctx?.ui?.notify?.(`mellum-mode: could not write the run record${file ? ` to ${file}` : ""}: ${(error as Error)?.message ?? String(error)}`, "warning");
+			} catch {}
 		}
 	}
 

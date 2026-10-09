@@ -199,7 +199,7 @@ your earlier conversation are not sent), and pi-subagents' re-added tools
 are removed. Your session keeps everything; after `/mellum off` your usual
 model is sent one handoff block per span, on to off (a summary line with
 the request count, output tokens, wall seconds and whether the last
-command failed; the first task; the files edited or written, flagged when
+command passed, failed or never returned; the first task; the files edited or written, flagged when
 missing at handoff time; the last fifteen shell commands run, failed ones
 marked; the last command output; Mellum's final reply) in place of
 Mellum's reads, edits and test runs, which stay in the transcript. When
