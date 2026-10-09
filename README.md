@@ -193,7 +193,8 @@ opencode/plugin.js            skills-path hook (OpenCode)
 skills/mellum-setup/          the guided installer
 templates/                    agent files and provider fragments, per host
 scripts/                      merge-json and render-agent, used by the skill
-docs/                         recipe and backend guides
+docs/                         recipe, backend guides, and docs/sdd.md for how work is recorded
+ROADMAP.md, BACKLOG.md        phases and deferred work with reopen conditions
 ```
 
 `npm test` runs the suite. `node build.mjs` regenerates the
