@@ -14,7 +14,7 @@ Nothing here has been run on Ollama. A port needs, in order:
 3. Confirmation that tool calls parse: a single `read` call round-trips
    through `/v1/chat/completions` with `tools` set.
 4. A provider template per host pointing at `http://127.0.0.1:11434/v1`.
-5. A rerun of the ladder from the `mellum-mlx` research repo against that
+5. A rerun of the ladder from `ladder/` against that
    endpoint, and the numbers added to the README's status table.
 
 Until then the setup skill stops at preflight on anything but Apple

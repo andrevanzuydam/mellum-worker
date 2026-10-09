@@ -1,6 +1,6 @@
 /**
  * Child-only guards for the Mellum worker: pure `ToolCall -> Decision`
- * functions in the shape proven in the mellum-mlx research repo, adapted
+ * functions in the shape proven in the ladder (`ladder/`), adapted
  * to Pi's hooks at the bottom of this file; Mellum Mode reuses `createGuardSet` while it is on.
  *
  * Each guard exists for a recorded pathology:
@@ -19,7 +19,7 @@
  *
  * ENABLED is set from the ladder records: the empty-final nudge capped at 3
  * and the loop breaker live are phase 2b's 15/15 configuration
- * (docs/research/ladder/phase2b-guards-bounded). The other guards stay
+ * (docs/ladder/phase2b-guards-bounded). The other guards stay
  * dormant: their columns never went non-zero in direct mode.
  */
 

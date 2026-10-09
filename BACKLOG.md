@@ -19,7 +19,7 @@ the change: all four pytest fixtures keep the test beside the module with
 sized in the [steering note](docs/superpowers/research/2026-10-09-steering-and-next-phase.md)
 §2: a sixth fixture shaped like ac-demo, a `v6` prompt variant, direct and
 mode phases against A3 and A17. *Reopens when* Paul schedules that phase in
-mellum-mlx.
+`ladder/`.
 
 **Mode-side test-command preflight.** Instead of the prompt, Mode could
 detect a pyproject with pytest, no `pythonpath`, and a `tests/` directory
@@ -57,18 +57,6 @@ cannot be stated in one line because the project rules are too long.
 `server`, and uses a flat `skills` array. *Reopens when* a 2.x host is
 available to test against.
 
-**Run-record consumers.** The JSONL record exists so another session can
-analyse runs; nothing reads it yet. *Reopens when* a second consumer wants a
-field the record lacks, which decides the schema.
-
-**The ladder measures the repo copy, not the package.** `ladder/run_ladder.py`
-in mellum-mlx points at `.pi/mellum/mellum-mode.ts`, which had drifted 260
-lines from the shipped extension by v0.1.2. The A17 phase ran the shipped
-copy through a wrapper and found no regression (14/15, 12.9 requests, 44 s vs
-A14's 70 s), but the wrapper is scratch code. *Reopens when* the next change
-to `extensions/` is made: the ladder should take the extension path as an
-argument and the mellum-mlx copy should go.
-
 **Empty-final nudge misses announce-and-stop turns.** The guard nudges only
 when a turn ends with no text. The A17 rung 5 miss ended with "Now let's run
 the tests again." and no tool call: the turn had text, so no nudge fired and
@@ -88,6 +76,6 @@ leash: a main model rewriting a handoff packet has gone wrong in other
 projects, so the brief is shown before it runs, is checked against a fixed
 shape (files, test command, constraints, nothing else), and Mode records the
 brief and the user's original text side by side. The worker prompt is
-unchanged, so this is not a measured setting. *Reopens when* M.5 closes: then
-compare loose `/mellum` against mediated runs on the ac-demo phase specs with
-schema-2 records.
+unchanged, so this is not a measured setting. *Reopens when* M.9 is scheduled
+(M.5 has closed): compare loose `/mellum` against mediated runs on the
+ac-demo phase specs with schema-2 records.

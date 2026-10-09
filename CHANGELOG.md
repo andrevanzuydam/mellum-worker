@@ -9,7 +9,9 @@ Versions match git tags; pin one in both install lines.
 - `/mellum <task>` under `pi -p` (and `pi --mode json`) returned at once,
   Pi disposed the runtime mid-run ("This extension ctx is stale"), and no
   run record was written. It now waits for the run, switches back, and
-  writes the record before Pi exits.
+  writes the record before Pi exits. When the host has no UI, warnings and
+  errors (the model is missing, Mode did not start in time) go to stderr
+  instead of vanishing.
 
 ### Added
 
@@ -18,11 +20,34 @@ Versions match git tags; pin one in both install lines.
   `headless`), `taskNamesTestCommand`, `edits`, `filesMissingAtEnd`,
   `commands[].mutates`, `finalTurn` (`stopReason`, `hadText`,
   `hadToolCall`), `nudges` and `guardBlocks`. All schema 1 fields are
-  kept. `commands[].mutates` comes from `commandMutatesFiles`, a heuristic
+  kept; lines written before this change have no `schema` field (schema
+  1), so one run file can mix both. `commands[].mutates` comes from `commandMutatesFiles`, a heuristic
   for shell commands that change files (`rm`, `mv`, redirects, `sed -i`,
   `git checkout`, `pip install`, virtualenvs).
+- `ladder/`: the five-rung ladder that measures this checkout (runner,
+  scorer, fixtures and ablation prompts), moved in from the research
+  repo. `npm test` also runs its two JS hook tests; its Python tests run
+  with `cd ladder && uv run python -m pytest`.
+- `docs/ladder/`: the phase records (A0 to A17 and the earlier phases:
+  READMEs, tables, run records, final answers and briefs), moved in from
+  the research repo. Raw traces, stdout and diffs are archived per phase
+  as `research-2026-10-09` release assets, with their hashes in
+  `docs/ladder/PROVENANCE.md`; they are not tracked.
+  `uv run python -m ladder.archive_raw` (in `ladder/`) builds those
+  tarballs. The first run from this checkout is the `smoke-m6-one-repo`
+  record.
 - Mellum's request path (prompt, messages, tools, sampling, guards) and
   the handoff block text are unchanged.
+
+### Changed
+
+- Links to the research and the phase records now point inside this repo
+  (`docs/ladder/`, `docs/superpowers/research/`) instead of the research
+  repo, so they keep working if that repo goes private. The research notes
+  and the recovery bundle moved in with a "Moved from" line; the weights
+  link names the Hugging Face model card. README and AGENTS.md say how to
+  run the ladder (`cd ladder && uv run python -m pytest`) and that raw
+  files are never committed.
 
 ## [0.1.2] - 2026-10-09
 
