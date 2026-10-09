@@ -1,8 +1,26 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, readFileSync, readdirSync, writeFileSync, existsSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { mergeJson } from "../scripts/merge-json.mjs";
 
+const script = join(dirname(fileURLToPath(import.meta.url)), "..", "scripts", "merge-json.mjs");
 const fragment = { providers: { omlx: { baseUrl: "http://127.0.0.1:8001/v1", models: [{ id: "mellum", maxTokens: 16384 }] } } };
+
+function runCli(args) {
+	try {
+		return { status: 0, stdout: execFileSync("node", [script, ...args], { encoding: "utf8", stdio: "pipe" }), stderr: "" };
+	} catch (err) {
+		return { status: err.status, stdout: err.stdout, stderr: err.stderr };
+	}
+}
+
+function tempDir() {
+	return mkdtempSync(join(tmpdir(), "merge-json-"));
+}
 
 test("adds the provider when the target has none", () => {
 	const out = mergeJson({ providers: { other: { baseUrl: "x" } } }, fragment);
@@ -28,4 +46,65 @@ test("is idempotent and refreshes an existing entry with the same id", () => {
 
 test("scalar arrays are replaced, not concatenated", () => {
 	assert.deepEqual(mergeJson({ a: [1, 2] }, { a: [3] }), { a: [3] });
+});
+
+test("mixed-shape object arrays keep every user entry and append the fragment entry", () => {
+	const target = { models: [{ id: "gemma" }, { name: "no-id-entry" }] };
+	const frag = { models: [{ id: "mellum" }] };
+	const once = mergeJson(target, frag);
+	assert.deepEqual(once.models, [{ id: "gemma" }, { name: "no-id-entry" }, { id: "mellum" }]);
+	const twice = mergeJson(once, frag);
+	assert.deepEqual(twice, once, "running twice adds nothing");
+	assert.deepEqual(target.models, [{ id: "gemma" }, { name: "no-id-entry" }], "input not mutated");
+});
+
+test("CLI fails clearly on a target that is not valid JSON", () => {
+	const dir = tempDir();
+	const bad = join(dir, "models.json");
+	writeFileSync(bad, '{ "providers": { // comment\n }');
+	const frag = join(dir, "frag.json");
+	writeFileSync(frag, JSON.stringify(fragment));
+	const result = runCli([bad, frag]);
+	assert.equal(result.status, 1);
+	assert.match(result.stderr, /target .*models\.json is not valid JSON/);
+	assert.match(result.stderr, /JSONC comments are not supported/);
+});
+
+test("CLI fails clearly when the target root is not a JSON object", () => {
+	const dir = tempDir();
+	const arr = join(dir, "models.json");
+	writeFileSync(arr, "[1, 2]");
+	const frag = join(dir, "frag.json");
+	writeFileSync(frag, JSON.stringify(fragment));
+	const result = runCli([arr, frag]);
+	assert.equal(result.status, 1);
+	assert.match(result.stderr, /target .*models\.json must contain a JSON object at the root/);
+});
+
+test("CLI preview writes nothing; --write creates a missing target and backs up an existing one", () => {
+	const dir = tempDir();
+	const frag = join(dir, "frag.json");
+	writeFileSync(frag, JSON.stringify(fragment));
+
+	const missing = join(dir, "nested", "models.json");
+	const created = runCli([missing, frag, "--write"]);
+	assert.equal(created.status, 0);
+	assert.ok(existsSync(missing), "--write creates the file and its directory");
+	assert.deepEqual(JSON.parse(readFileSync(missing, "utf8")), fragment);
+
+	const existing = join(dir, "existing.json");
+	writeFileSync(existing, JSON.stringify({ providers: { other: {} } }));
+	const before = readFileSync(existing, "utf8");
+	const preview = runCli([existing, frag]);
+	assert.equal(preview.status, 0);
+	assert.match(preview.stdout, /preview only/);
+	assert.equal(readFileSync(existing, "utf8"), before, "preview leaves the target unchanged");
+	assert.equal(readdirSync(dir).filter((f) => f.startsWith("existing.json.bak-mellum-")).length, 0);
+
+	const applied = runCli([existing, frag, "--write"]);
+	assert.equal(applied.status, 0);
+	const backups = readdirSync(dir).filter((f) => f.startsWith("existing.json.bak-mellum-"));
+	assert.equal(backups.length, 1, "--write leaves one .bak-mellum- sibling");
+	assert.equal(readFileSync(join(dir, backups[0]), "utf8"), before);
+	assert.deepEqual(JSON.parse(readFileSync(existing, "utf8")).providers.omlx.models, fragment.providers.omlx.models);
 });
