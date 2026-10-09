@@ -1,6 +1,6 @@
 {
   "name": "mellum-worker",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Mellum 2.1 as a bounded coding worker for OpenCode and Pi, with a guided setup skill",
   "type": "module",
   "main": "./opencode/plugin.js",
@@ -9,8 +9,7 @@
   "repository": "github:pauleveritt/mellum-worker",
   "keywords": ["pi-package", "opencode-plugin", "mellum", "local-llm"],
   "scripts": {
-    "test": "node --test 'tests/*.test.mjs'",
-    "build": "node build.mjs"
+    "test": "node --test 'tests/*.test.mjs'"
   },
   "pi": {
     "extensions": ["./extensions/mellum-mode.ts"],

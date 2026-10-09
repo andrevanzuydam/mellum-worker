@@ -14,13 +14,13 @@ Measured, not guessed: every setting here was ablated in the
 OpenCode, in `~/.config/opencode/opencode.json`:
 
 ```json
-{ "plugin": ["mellum-worker@git+https://github.com/pauleveritt/mellum-worker.git#v0.1.0"] }
+{ "plugin": ["mellum-worker@git+https://github.com/pauleveritt/mellum-worker.git#v0.1.1"] }
 ```
 
 Pi:
 
 ```bash
-pi install git:github.com/pauleveritt/mellum-worker@v0.1.0
+pi install git:github.com/pauleveritt/mellum-worker@v0.1.1
 ```
 
 Then run the setup skill. In Pi: `/skill:mellum-setup`. In OpenCode: ask
