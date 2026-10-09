@@ -1,6 +1,6 @@
 # Lean-down ablation: summary
 
-Date: 2026-10-08/09. Plan: [2026-10-09-mellum-worker-lean-ablation.md](../../superpowers/plans/2026-10-09-mellum-worker-lean-ablation.md).
+Date: 2026-10-08/09. Plan: 2026-10-09-mellum-worker-lean-ablation.
 Reference: phase 2b, 15/15, measured again as A0 in the form that ships.
 Rule: a removal stands when passes are within one of the reference and no
 scorer column that was zero becomes non-zero.

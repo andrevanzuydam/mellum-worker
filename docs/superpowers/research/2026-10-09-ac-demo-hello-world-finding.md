@@ -64,7 +64,7 @@ parsing a transcript.
 ## Regression check
 
 The ladder's Mode phase rerun against the shipped v0.1.2 extension
-([A17](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a17-mode-v012/README.md)):
+([A17](../../ladder/ablation-a17-mode-v012/README.md)):
 14/15, 12.9 requests per run, 44 s mean wall, against A14's 14/15, 13.1 and
 70 s. The run-2 slowdown above is sampling, not the code.
 

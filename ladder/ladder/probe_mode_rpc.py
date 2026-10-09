@@ -31,6 +31,7 @@ agent = mirror_agent_dir(
 )
 trace = scratch / "trace.jsonl"
 env = child_env(dict(os.environ), str(trace), agent, offline=False)
+env["MELLUM_MODE_RUNS"] = str(scratch / "mellum-mode-runs.jsonl")
 proc = subprocess.Popen(
     [
         "pi",

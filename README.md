@@ -207,8 +207,8 @@ ROADMAP.md, BACKLOG.md        phases and deferred work with reopen conditions
 ```
 
 `npm test` runs the suite. `node build.mjs` regenerates the
-agent templates after a prompt change. `ladder/` measures this checkout:
-`cd ladder && uv run python -m pytest` for its tests,
+agent templates after a prompt change. `ladder/` measures this checkout. From `ladder/`:
+`uv run python -m pytest` for its tests,
 `uv run python -m ladder.run_ladder --help` for runs; records in `docs/ladder/`.
 
 ## Releases

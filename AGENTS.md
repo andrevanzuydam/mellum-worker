@@ -29,7 +29,7 @@ cap means a research doc is owed, not that the wording gets trimmed.
 ## Working rules
 
 - `npm test` runs the suite; every new test is shown to fail first.
-- The ladder: `cd ladder && uv run python -m pytest` for its tests,
+- The ladder, from `ladder/`: `uv run python -m pytest` for its tests,
   `uv run python -m ladder.run_ladder --help` for runs. Never commit
   `trace.jsonl`, `stdout.txt` or `diff.patch`; raw evidence goes in a
   `research-YYYY-MM-DD` release.
