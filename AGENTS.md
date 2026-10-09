@@ -37,6 +37,26 @@ cap means a research doc is owed, not that the wording gets trimmed.
 - A release is a tag that matches `package.json` and both README install
   lines, with a `CHANGELOG.md` section.
 
+## Keep the changelog current
+
+`CHANGELOG.md`'s `## [Unreleased]` section is kept up to date as work lands,
+not written at release time. This is a standing rule.
+
+- **With each change:** a commit that changes what a user installs, runs,
+  configures, or reads (extensions, prompt, templates, skill, README,
+  recipe, the ladder's commands or records) adds its entry under
+  `[Unreleased]` in the same commit, in the existing `Added` / `Changed` /
+  `Fixed` / `Removed` headings. Internal-only commits (SDD records,
+  backlog, roadmap, tests alone) need no entry.
+- **At checkpoints:** at the end of each plan task, at phase close, and
+  before a tag, compare `[Unreleased]` against
+  `git log <last tag>..HEAD --oneline` and add anything missing.
+- **At release:** `[Unreleased]` becomes `## [x.y.z] - YYYY-MM-DD` in the
+  same commit that bumps `package.json` and the README install lines, and a
+  new empty `[Unreleased]` goes above it.
+- Entries say what changed for the user and why, in a sentence or two, not
+  the commit subject.
+
 ## Finishing a phase
 
 Update the phase's Status cell and the `## Now` pointer in `ROADMAP.md`, close
