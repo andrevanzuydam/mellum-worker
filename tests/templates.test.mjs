@@ -48,3 +48,11 @@ test("the Pi models fragment is JSON with the validated compat fields", () => {
 	assert.equal(model.maxTokens, 16384);
 	assert.equal(model.contextWindow, 56000);
 });
+
+test("models-only Pi fragment carries the same model and nothing else on the provider", () => {
+	const full = JSON.parse(read("templates/pi/models.omlx.json")).providers.omlx;
+	const only = JSON.parse(read("templates/pi/models.omlx.models-only.json")).providers.omlx;
+	assert.deepEqual(Object.keys(only), ["models"]);
+	assert.equal(only.models.length, 1);
+	assert.deepEqual(only.models[0], full.models[0]);
+});

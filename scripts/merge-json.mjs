@@ -90,7 +90,12 @@ function main(argv) {
 		return;
 	}
 	if (flag !== "--write") {
-		console.log(after);
+		// Print only the subtrees the fragment touches, so unrelated secrets stay out of the transcript.
+		for (const [k, v] of Object.entries(fragment)) {
+			if (isObject(v) && isObject(merged[k])) {
+				for (const k2 of Object.keys(v)) console.log(`${k}.${k2} (after merge):\n${JSON.stringify(merged[k][k2], null, 2)}\n`);
+			} else console.log(`${k} (after merge):\n${JSON.stringify(merged[k], null, 2)}\n`);
+		}
 		console.log(`(preview only; add --write to update ${target})`);
 		return;
 	}

@@ -1,5 +1,5 @@
 /**
- * mellum-worker plugin for OpenCode (V1 API, 1.18.x).
+ * mellum-worker plugin for OpenCode (V1 API only; OpenCode 2.x reads a different plugin shape and is not supported yet).
  *
  * Its only job is to make the mellum-setup skill discoverable: it appends this
  * package's skills/ directory to the merged config's skills.paths. It registers

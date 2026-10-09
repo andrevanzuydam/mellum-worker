@@ -1,17 +1,24 @@
 # Phase 4 (Pi): Provider
 
-Check: `pi --list-models 2>/dev/null | grep -q 'omlx/Mellum2.1-12B-A2.5B-Thinking-6bit'`
-(if that flag is absent in the user's Pi, inspect `~/.pi/agent/models.json`
-for an `omlx` provider with a model id `Mellum2.1-12B-A2.5B-Thinking-6bit`).
+Check: `pi --list-models Mellum2.1 2>/dev/null | grep -Eq '^omlx +Mellum2\.1-12B-A2\.5B-Thinking-6bit'`
+Pi prints provider and model as two columns, no slash. (If that flag is absent
+in the user's Pi, inspect `~/.pi/agent/models.json` for an `omlx` provider with
+a model id `Mellum2.1-12B-A2.5B-Thinking-6bit`.)
 
-If missing, preview the merge:
+If missing: if `~/.pi/agent/models.json` already has a `providers.omlx` entry
+(check with `node -e` or by reading the file), merge
+`$PKG/templates/pi/models.omlx.models-only.json` so your base URL, API key, and
+other models are untouched; otherwise merge `$PKG/templates/pi/models.omlx.json`.
+Preview first (shown with the full fragment; swap in the models-only file when
+`providers.omlx` exists):
 
 ```bash
 node "$PKG/scripts/merge-json.mjs" ~/.pi/agent/models.json "$PKG/templates/pi/models.omlx.json"
 ```
 
-Show the preview. Existing providers and other `omlx` models are kept; a
-backup is written next to the file. With the user's yes:
+Show the preview (it prints only `providers.omlx` after the merge). Existing
+providers and other `omlx` models are kept; a backup is written next to the
+file. With the user's yes:
 
 ```bash
 node "$PKG/scripts/merge-json.mjs" ~/.pi/agent/models.json "$PKG/templates/pi/models.omlx.json" --write

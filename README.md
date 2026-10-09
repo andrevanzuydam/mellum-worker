@@ -42,11 +42,11 @@ Bare Pi with Mellum as the primary agent scored 8/15 on the same tasks.
 
 ## Requirements (v1)
 
-- Apple Silicon Mac, [oMLX](https://github.com/omlx-ai/omlx) 0.6.4 or newer, 9.9 GB for the weights
+- Apple Silicon Mac, [oMLX](https://github.com/jundot/omlx) 0.6.4 or newer, 9.9 GB for the weights
 - Node 24 or newer
 - Pi 1.0 or newer; Mellum Worker also needs
   [pi-subagents](https://github.com/nicobailon/pi-subagents)
-- OpenCode 1.18 or newer
+- OpenCode 1.x (1.18 or newer; the V1 plugin API). OpenCode 2.x is not supported yet.
 
 Other backends: see [docs/backends/ollama.md](docs/backends/ollama.md) for
 what a port needs. Nothing but oMLX has been run.

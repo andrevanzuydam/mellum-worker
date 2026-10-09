@@ -275,6 +275,7 @@ export default function (pi: any) {
 			appendFileSync(process.env.MELLUM_MODE_DEBUG, JSON.stringify({ active, shapes }) + "\n");
 		}
 		if (active) return undefined;
+		if (!event.messages.some((m: any) => textOf(m).includes(MARK_ON))) return undefined;
 		const collapsed = collapseHandoffs(event.messages);
 		return collapsed === event.messages ? undefined : { messages: collapsed };
 	});

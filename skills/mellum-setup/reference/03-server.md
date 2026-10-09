@@ -43,5 +43,5 @@ curl -s -X PUT http://127.0.0.1:8001/admin/api/models/Mellum2.1-12B-A2.5B-Thinki
 ```
 
 Then read the values back and confirm they took. If the admin API needs
-an API key on their server, tell the user to set the same four values in
+an API key on their server, tell the user to set the same three values plus TurboQuant off in
 the admin page at `http://127.0.0.1:8001/admin` instead.

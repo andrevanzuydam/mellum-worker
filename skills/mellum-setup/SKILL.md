@@ -10,15 +10,16 @@ Work one phase at a time. Each phase has a check; run the check first, and
 skip the phase when it already passes. Before writing to any file that
 exists, show the user what will change and wait for a yes.
 
-Package root: the directory that contains this skill's parent `skills/`
-directory. Find it with:
+Set `PKG` to the package root: the directory two levels above this SKILL.md.
+Pi shows the skill's path when it lists skills; OpenCode's skill tool prints
+the skill's base directory. Pi clones to
+`~/.pi/agent/git/github.com/pauleveritt/mellum-worker`; OpenCode installs under
+`~/.cache/opencode/packages/*/node_modules/mellum-worker`.
 
 ```bash
-PKG="$(cd "$(dirname "$SKILL_PATH")/../.." && pwd)"   # if the host gives you the skill path
+PKG=~/.pi/agent/git/github.com/pauleveritt/mellum-worker
 ```
 
-or locate it: Pi clones to `~/.pi/agent/git/github.com/pauleveritt/mellum-worker`;
-OpenCode installs under `~/.cache/opencode/packages/*/node_modules/mellum-worker`.
 Every command below is relative to `$PKG`.
 
 ## Which host am I in?

@@ -1,6 +1,6 @@
 # Mellum Worker and Mellum Mode: Mellum 2.1 as a coding worker under Pi
 
-**Status: shipped 2026-10-09; two ways to use the worker (§4 delegated, §4b in-session), both measured. Follow-ups are scheduled in [2026-10-09-future-work.md](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/2026-10-09-future-work.md). Every number links to its record under `docs/research/ladder/`; the lean-down that produced the shipped worker is summarised in [ablation-summary.md](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-summary.md).**
+**Status: shipped 2026-10-09; two ways to use the worker (§4 delegated, §4b in-session), both measured. Follow-ups are scheduled in [2026-10-09-future-work.md](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/2026-10-09-future-work.md). Every number links to its record under `docs/research/ladder/` in mellum-mlx; the lean-down that produced the shipped worker is summarised in [ablation-summary.md](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-summary.md).**
 
 Installed from this repo; measured in [mellum-mlx](https://github.com/pauleveritt/mellum-mlx), where the ladder, fixtures, and every phase record live.
 

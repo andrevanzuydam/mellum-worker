@@ -59,3 +59,14 @@ test("activating with the model missing from the registry leaves mode and guards
 	for (let i = 0; i < 8; i++) assert.equal(handlers.tool_call(read), undefined);
 	assert.equal(handlers.before_provider_request({ payload: { messages: [] } }), undefined);
 });
+
+test("context hook is dormant when no mellum span exists, and collapses when one does", () => {
+	const { handlers } = fakePi();
+	const plain = [{ role: "user", content: [{ type: "text", text: "hi" }] }];
+	assert.equal(handlers.context({ messages: plain }), undefined);
+	const t = (text) => ({ role: "user", content: [{ type: "text", text }] });
+	const messages = [t("hi"), t("[mellum-mode on]"), t("task"), { role: "assistant", content: [{ type: "text", text: "done" }] }, t("[mellum-mode off]"), t("next")];
+	const out = handlers.context({ messages });
+	assert.ok(out && Array.isArray(out.messages));
+	assert.ok(out.messages.length < messages.length);
+});

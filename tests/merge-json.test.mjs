@@ -108,3 +108,24 @@ test("CLI preview writes nothing; --write creates a missing target and backs up 
 	assert.equal(readFileSync(join(dir, backups[0]), "utf8"), before);
 	assert.deepEqual(JSON.parse(readFileSync(existing, "utf8")).providers.omlx.models, fragment.providers.omlx.models);
 });
+
+test("models-only fragment keeps an existing omlx baseUrl and apiKey", () => {
+	const only = JSON.parse(readFileSync(join(dirname(script), "..", "templates", "pi", "models.omlx.models-only.json"), "utf8"));
+	const target = { providers: { omlx: { baseUrl: "http://127.0.0.1:8000/v1", apiKey: "sk-secret", api: "openai-completions", models: [{ id: "gemma" }] } } };
+	const out = mergeJson(target, only);
+	assert.equal(out.providers.omlx.baseUrl, "http://127.0.0.1:8000/v1");
+	assert.equal(out.providers.omlx.apiKey, "sk-secret");
+	assert.deepEqual(out.providers.omlx.models.map((x) => x.id), ["gemma", "Mellum2.1-12B-A2.5B-Thinking-6bit"]);
+});
+
+test("preview prints only the merged fragment subtree, not other providers' secrets", () => {
+	const dir = tempDir();
+	const target = join(dir, "models.json");
+	writeFileSync(target, JSON.stringify({ providers: { other: { apiKey: "sk-other" } } }));
+	const frag = join(dirname(script), "..", "templates", "pi", "models.omlx.json");
+	const r = runCli([target, frag]);
+	assert.equal(r.status, 0);
+	assert.ok(!r.stdout.includes("sk-other"));
+	assert.ok(r.stdout.includes("providers.omlx (after merge):"));
+	assert.ok(r.stdout.includes("preview only"));
+});
