@@ -17,7 +17,7 @@
  * Headless: MELLUM_MODE=1 activates at session start (the ladder's "mode" runner).
  * Installed as a Pi package extension it loads in every parent session and stays dormant until /mellum. While on, it runs the child guards (createGuardSet) itself, so no second extension is needed.
  */
-import { appendFileSync, existsSync, readFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createGuardSet, type GuardSet } from "./mellum-guards.ts";
@@ -138,7 +138,27 @@ export function collapseHandoffs(messages: Msg[], opts: HandoffOptions = {}): Ms
 	return out;
 }
 
-function handoffMessage(task: string, span: Msg[], opts: HandoffOptions = {}): Msg {
+export interface SpanCommand {
+	command: string;
+	failed: boolean;
+	finished: boolean;
+}
+
+export interface SpanStats {
+	requests: number;
+	usage: { input: number; cacheRead: number; output: number };
+	startedAt?: number;
+	lastTurnAt?: number;
+	wallSeconds?: number;
+	files: string[];
+	commands: SpanCommand[];
+	lastCommand: "ok" | "failed" | "unfinished" | "none";
+	lastCommandOutput: string;
+	finalReply: string;
+}
+
+/** Everything the handoff and the run record report, computed once from a span's messages. */
+export function spanStats(span: Msg[]): SpanStats {
 	const files = new Set<string>();
 	const results = new Map<string, { error: boolean; text: string }>();
 	for (const m of span) {
@@ -147,23 +167,28 @@ function handoffMessage(task: string, span: Msg[], opts: HandoffOptions = {}): M
 			if (typeof id === "string") results.set(id, { error: Boolean((m as any).isError), text: textOf(m).trim() });
 		}
 	}
-	const commands: { command: string; error: boolean }[] = [];
-	let lastTest = "";
-	let lastCommandFailed: boolean | undefined;
-	let finalText = "";
-	let requests = 0;
-	let outputTokens = 0;
-	let first: number | undefined;
-	let last: number | undefined;
+	const stats: SpanStats = {
+		requests: 0,
+		usage: { input: 0, cacheRead: 0, output: 0 },
+		files: [],
+		commands: [],
+		lastCommand: "none",
+		lastCommandOutput: "",
+		finalReply: "",
+	};
 	for (const m of span) {
 		if (m.role !== "assistant") continue;
-		requests += 1;
+		stats.requests += 1;
 		const usage = (m as any).usage;
-		if (usage && typeof usage.output === "number") outputTokens += usage.output;
+		if (usage) {
+			for (const k of ["input", "cacheRead", "output"] as const) {
+				if (typeof usage[k] === "number") stats.usage[k] += usage[k];
+			}
+		}
 		const t = toMillis((m as any).timestamp);
 		if (t !== undefined) {
-			first ??= t;
-			last = t;
+			stats.startedAt ??= t;
+			stats.lastTurnAt = t;
 		}
 		if (!Array.isArray(m.content)) continue;
 		for (const b of m.content as any[]) {
@@ -173,30 +198,110 @@ function handoffMessage(task: string, span: Msg[], opts: HandoffOptions = {}): M
 			}
 			if (b.type === "toolCall" && b.name === "bash" && typeof b.arguments?.command === "string") {
 				const r = results.get(b.id);
-				commands.push({ command: b.arguments.command, error: Boolean(r?.error) });
-				if (r?.text) lastTest = r.text;
-				lastCommandFailed = Boolean(r?.error);
+				stats.commands.push({ command: b.arguments.command, failed: Boolean(r?.error), finished: Boolean(r) });
+				if (r) {
+					if (r.text) stats.lastCommandOutput = r.text;
+					stats.lastCommand = r.error ? "failed" : "ok";
+				} else {
+					stats.lastCommand = "unfinished";
+				}
 			}
-			if (b.type === "text" && typeof b.text === "string" && b.text.trim()) finalText = b.text.trim();
+			if (b.type === "text" && typeof b.text === "string" && b.text.trim()) stats.finalReply = b.text.trim();
 		}
 	}
-	const clip = (s: string, n: number) => (s.length > n ? s.slice(0, n) + "\n…" : s);
-	const fileList = [...files].map((f) => (opts.exists && !opts.exists(f) ? `${f} (missing at handoff)` : f));
-	const wall = first !== undefined && last !== undefined ? `${Math.round((last - first) / 1000)} s` : "wall unknown";
-	const lastCommand = lastCommandFailed === undefined ? "no commands" : lastCommandFailed ? "last command failed" : "last command ok";
-	const summary = `Mellum: ${requests} requests, ${outputTokens.toLocaleString("en-US")} output tokens, ${wall}, ${lastCommand}`;
+	stats.files = [...files];
+	if (stats.startedAt !== undefined && stats.lastTurnAt !== undefined) stats.wallSeconds = Math.round((stats.lastTurnAt - stats.startedAt) / 1000);
+	return stats;
+}
+
+const MAX_HANDOFF_COMMANDS = 15;
+
+function summaryLine(stats: SpanStats): string {
+	const n = stats.requests;
+	const wall = stats.wallSeconds === undefined ? "wall unknown" : `${stats.wallSeconds} s`;
+	const last = { ok: "last command ok", failed: "last command failed", unfinished: "last command did not finish", none: "no commands" }[stats.lastCommand];
+	return `Mellum: ${n} request${n === 1 ? "" : "s"}, ${stats.usage.output.toLocaleString("en-US")} output tokens, ${wall}, ${last}`;
+}
+
+function handoffMessage(task: string, span: Msg[], opts: HandoffOptions = {}): Msg {
+	const stats = spanStats(span);
+	const clip = (s: string, n: number) => (s.length > n ? s.slice(0, n) + "…" : s);
+	const oneLine = (s: string) => s.replace(/\s+/g, " ").trim();
+	const fileList = stats.files.map((f) => (opts.exists && !opts.exists(f) ? `${f} (missing at handoff)` : f));
+	const shown = stats.commands.slice(-MAX_HANDOFF_COMMANDS);
+	const hidden = stats.commands.length - shown.length;
+	const commandLines = shown.map((c) => `- ${clip(oneLine(c.command), 200)}${!c.finished ? " (no result)" : c.failed ? " (failed)" : ""}`);
 	const body = [
 		"[mellum-mode handoff] Mellum ran a task in this session; its tool calls are in the transcript but not repeated here.",
-		summary,
+		summaryLine(stats),
 		`Task: ${clip(task.trim(), 400)}`,
 		`Files edited or written: ${fileList.length ? fileList.join(", ") : "none"}`,
-		commands.length
-			? `Commands run:\n${commands.map((c) => `- ${clip(c.command, 200)}${c.error ? " (failed)" : ""}`).join("\n")}`
+		commandLines.length
+			? `Commands run${hidden ? ` (${hidden} earlier not shown)` : ""}:\n${commandLines.join("\n")}`
 			: "Commands run: none",
-		lastTest ? `Last command output:\n${clip(lastTest, 600)}` : "Last command output: none",
-		finalText ? `Mellum's final reply:\n${clip(finalText, 1500)}` : "Mellum's final reply: (empty)",
+		stats.lastCommandOutput ? `Last command output:\n${clip(stats.lastCommandOutput, 600)}` : "Last command output: none",
+		stats.finalReply ? `Mellum's final reply:\n${clip(stats.finalReply, 1500)}` : "Mellum's final reply: (empty)",
 	].join("\n");
 	return { role: "user", content: [{ type: "text", text: body }], timestamp: Date.now() };
+}
+
+export interface RunRecord {
+	startedAt?: string;
+	endedAt: string;
+	wallSeconds?: number;
+	cwd: string;
+	model: string;
+	task: string;
+	requests: number;
+	usage: { input: number; cacheRead: number; output: number };
+	files: string[];
+	commands: { command: string; failed: boolean }[];
+	lastCommand: SpanStats["lastCommand"];
+	finalReply: string;
+}
+
+/** One JSONL line per span, for analysis outside the session. Same fields as the handoff. */
+export function runRecord(task: string, span: Msg[], meta: { endedAt: number; cwd: string; model: string }): RunRecord {
+	const stats = spanStats(span);
+	return {
+		startedAt: stats.startedAt === undefined ? undefined : new Date(stats.startedAt).toISOString(),
+		endedAt: new Date(meta.endedAt).toISOString(),
+		wallSeconds: stats.wallSeconds,
+		cwd: meta.cwd,
+		model: meta.model,
+		task: task.trim().slice(0, 2000),
+		requests: stats.requests,
+		usage: stats.usage,
+		files: stats.files,
+		commands: stats.commands.map((c) => ({ command: c.command.slice(0, 2000), failed: c.failed })),
+		lastCommand: stats.lastCommand,
+		finalReply: stats.finalReply.slice(0, 4000),
+	};
+}
+
+/** The trailing span still open at the end of `messages`: its task text and messages, or undefined. */
+export function openSpan(messages: Msg[]): { task: string; span: Msg[] } | undefined {
+	const hasMark = (m: Msg, mark: string) => (m.role === "user" || m.role === "custom") && textOf(m).includes(mark);
+	let on = -1;
+	for (let i = messages.length - 1; i >= 0; i--) {
+		if (hasMark(messages[i], MARK_OFF)) return undefined;
+		if (hasMark(messages[i], MARK_ON)) {
+			on = i;
+			break;
+		}
+	}
+	if (on === -1) return undefined;
+	const span = messages.slice(on + 1);
+	const prev = messages[on - 1];
+	const task = prev && prev.role === "user" && !hasMark(prev, MARK_OFF) ? textOf(prev) : textOf(span.find((m) => m.role === "user") ?? {});
+	return { task, span };
+}
+
+function runsFile(): string | undefined {
+	const env = process.env.MELLUM_MODE_RUNS;
+	if (env === "0" || env === "") return undefined;
+	if (env) return env.replace(/^~(?=$|\/)/, process.env.HOME ?? "~");
+	return resolve(process.env.HOME ?? ".", ".pi", "agent", "mellum-mode-runs.jsonl");
 }
 
 function toMillis(value: unknown): number | undefined {
@@ -223,6 +328,10 @@ export default function (pi: any) {
 	let guards: GuardSet | undefined;
 	// Per-span counters for the one-line summary shown at /mellum off.
 	let span = { startedAt: 0, requests: 0, toolCalls: 0, outputTokens: 0 };
+	let activeModel = "";
+	// The parent's context as last seen while on, plus assistant turns since; the run record is built from these.
+	let lastContext: Msg[] = [];
+	let turnsSinceContext: Msg[] = [];
 
 	async function activate(ctx: any, notify = true) {
 		if (active) {
@@ -248,6 +357,9 @@ export default function (pi: any) {
 		active = true;
 		guards = createGuardSet();
 		span = { startedAt: Date.now(), requests: 0, toolCalls: 0, outputTokens: 0 };
+		activeModel = `${provider}/${id}`;
+		lastContext = [];
+		turnsSinceContext = [];
 		interactive = notify;
 		warnedMissing = false;
 		if (notify) pi.sendMessage({ customType: "mellum-mode", content: MARK_ON, display: true }, { deliverAs: "nextTurn" });
@@ -269,11 +381,25 @@ export default function (pi: any) {
 			return;
 		}
 		pi.setActiveTools(saved.tools);
+		writeRunRecord(ctx);
 		active = false;
 		guards = undefined;
 		pi.sendMessage({ customType: "mellum-mode", content: MARK_OFF, display: true }, { deliverAs: "nextTurn" });
 		const secs = Math.round((Date.now() - span.startedAt) / 1000);
-		ctx.ui?.notify?.(`mellum-mode off: ${span.requests} requests, ${span.toolCalls} tool call${span.toolCalls === 1 ? "" : "s"}, ${span.outputTokens.toLocaleString("en-US")} output tokens, ${secs} s`, "info");
+		ctx.ui?.notify?.(`mellum-mode off: ${span.requests} request${span.requests === 1 ? "" : "s"}, ${span.toolCalls} tool call${span.toolCalls === 1 ? "" : "s"}, ${span.outputTokens.toLocaleString("en-US")} output tokens, ${secs} s`, "info");
+	}
+
+	function writeRunRecord(ctx: any) {
+		const file = runsFile();
+		if (!file) return;
+		const open = openSpan([...lastContext, ...turnsSinceContext]);
+		if (!open) return;
+		try {
+			mkdirSync(dirname(file), { recursive: true });
+			appendFileSync(file, JSON.stringify(runRecord(open.task, open.span, { endedAt: Date.now(), cwd: process.cwd(), model: activeModel })) + "\n");
+		} catch (error) {
+			ctx?.ui?.notify?.(`mellum-mode: could not write the run record to ${file}: ${(error as Error).message}`, "warning");
+		}
 	}
 
 	let oneShot = false;
@@ -323,7 +449,11 @@ export default function (pi: any) {
 			const shapes = event.messages.map((m: any) => `${m.role}${m.customType ? ":" + m.customType : ""}${textOf(m).includes(MARK_ON) ? "[ON]" : ""}${textOf(m).includes(MARK_OFF) ? "[OFF]" : ""}`);
 			appendFileSync(process.env.MELLUM_MODE_DEBUG, JSON.stringify({ active, shapes }) + "\n");
 		}
-		if (active) return undefined;
+		if (active) {
+			lastContext = event.messages;
+			turnsSinceContext = [];
+			return undefined;
+		}
 		if (!event.messages.some((m: any) => textOf(m).includes(MARK_ON))) return undefined;
 		const collapsed = collapseHandoffs(event.messages, { exists: (p) => existsSync(isAbsolute(p) ? p : resolve(process.cwd(), p)) });
 		return collapsed === event.messages ? undefined : { messages: collapsed };
@@ -353,7 +483,10 @@ export default function (pi: any) {
 		if (active && guards) {
 			guards.turnEnd(event);
 			const out = event?.message?.usage?.output;
-			if (event?.message?.role === "assistant" && typeof out === "number") span.outputTokens += out;
+			if (event?.message?.role === "assistant") {
+				if (typeof out === "number") span.outputTokens += out;
+				turnsSinceContext.push(event.message);
+			}
 		}
 		return undefined;
 	});

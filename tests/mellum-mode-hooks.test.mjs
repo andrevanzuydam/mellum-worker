@@ -101,3 +101,52 @@ test("/mellum off notifies a one-line summary of the span", async () => {
 	assert.ok(line, `no summary notify; got ${JSON.stringify(notes)}`);
 	assert.match(line, /2 requests, 1 tool call, 400 output tokens, \d+ s/);
 });
+
+test("/mellum off appends one run record line to the file named by MELLUM_MODE_RUNS, and 0 disables it", async () => {
+	const { mkdtempSync, readFileSync, existsSync } = await import("node:fs");
+	const { tmpdir } = await import("node:os");
+	const { join } = await import("node:path");
+	const dir = mkdtempSync(join(tmpdir(), "mellum-runs-"));
+	const file = join(dir, "nested", "runs.jsonl");
+	const makePi = () => {
+		const handlers = {};
+		let commands = {};
+		const pi = {
+			on: (name, fn) => { handlers[name] = fn; },
+			registerCommand: (name, def) => { commands[name] = def; },
+			getActiveTools: () => ["read"], setActiveTools: () => {}, setModel: async () => true, sendMessage: () => {}, sendUserMessage: () => {},
+		};
+		const ctx = { model: { provider: "anthropic", id: "parent" }, modelRegistry: { find: () => MODEL }, ui: { notify: () => {} } };
+		install(pi);
+		return { handlers, ctx, mellum: (a) => commands.mellum.handler(a, ctx) };
+	};
+	const span = [
+		{ role: "user", content: [{ type: "text", text: "fix the cart" }] },
+		{ role: "user", content: [{ type: "text", text: "[mellum-mode on]" }] },
+		{ role: "assistant", timestamp: Date.now(), usage: { output: 12 }, content: [{ type: "toolCall", id: "1", name: "bash", arguments: { command: "node --test" } }] },
+		{ role: "toolResult", toolCallId: "1", toolName: "bash", content: [{ type: "text", text: "pass" }] },
+		{ role: "assistant", timestamp: Date.now(), usage: { output: 5 }, content: [{ type: "text", text: "ok" }] },
+	];
+	process.env.MELLUM_MODE_RUNS = file;
+	try {
+		const a = makePi();
+		await a.mellum("on");
+		a.handlers.context({ messages: span });
+		await a.mellum("off");
+		const lines = readFileSync(file, "utf8").trim().split("\n");
+		assert.equal(lines.length, 1);
+		const rec = JSON.parse(lines[0]);
+		assert.equal(rec.task, "fix the cart");
+		assert.equal(rec.requests, 2);
+		assert.deepEqual(rec.commands, [{ command: "node --test", failed: false }]);
+		assert.equal(rec.model, `${MODEL.provider}/${MODEL.id}`);
+		process.env.MELLUM_MODE_RUNS = "0";
+		const b = makePi();
+		await b.mellum("on");
+		b.handlers.context({ messages: span });
+		await b.mellum("off");
+		assert.equal(readFileSync(file, "utf8").trim().split("\n").length, 1, "disabled: nothing appended");
+	} finally {
+		delete process.env.MELLUM_MODE_RUNS;
+	}
+});

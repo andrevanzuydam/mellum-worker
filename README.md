@@ -61,15 +61,24 @@ command and the files saves a round trip:
 ```
 /mellum Add hello.py at the repo root with hello() returning "Hello, World!", and tests/test_hello.py that imports it. Test command: uv run --offline python -m pytest -q tests
 ```
- For several tasks in a row, `/mellum on`,
+
+For several tasks in a row, `/mellum on`,
 type each task as a normal prompt, then `/mellum off`. Your usual model
-then gets one handoff block per task (a one-line summary of requests,
-output tokens and wall time; files written, flagged if a command later
-moved or deleted them; every shell command run; the last command's output;
-Mellum's reply) instead of every read and edit. The same summary line
-shows in Pi when the mode switches off. Run the tests yourself afterwards;
-nothing else checks Mode's work. Run `/mellum off` before a long turn with
-your main model: auto-compaction is refused while Mode is on.
+then gets one handoff block per span, from `/mellum on` to `/mellum off`
+(a one-line summary of requests, output tokens and wall time; files
+written, flagged if missing when the handoff is built; the shell commands
+run, failed ones marked; the last command's output; Mellum's reply)
+instead of every read and edit. When the mode switches off, Pi shows a
+one-line count of requests, tool calls, output tokens and seconds. Run
+the tests yourself afterwards; nothing else checks Mode's work. Run
+`/mellum off` before a long turn with your main model: auto-compaction is
+refused while Mode is on.
+
+Each span also appends one JSON line to `~/.pi/agent/mellum-mode-runs.jsonl`
+(task, model, working directory, start and end times, requests, token
+usage, files, commands with their pass or fail, Mellum's final reply) so
+you can analyse runs from another session without parsing transcripts.
+Set `MELLUM_MODE_RUNS` to another path, or to `0` to turn it off.
 
 Mode sends Mellum only the worker prompt and your task. It does not send
 your project's AGENTS.md, your earlier conversation, or any skill. If the

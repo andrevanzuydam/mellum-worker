@@ -191,3 +191,66 @@ test("collapseHandoffs without an exists option never flags files", async () => 
 	const msgs = [text("user", "t"), text("user", MARK_ON), { role: "assistant", content: [{ type: "toolCall", id: "1", name: "write", arguments: { path: "nope/zzz.py" } }] }, text("user", MARK_OFF)];
 	assert.match(collapseHandoffs(msgs)[0].content[0].text, /Files edited or written: nope\/zzz\.py\n/);
 });
+
+test("a bash call with no result is reported as unfinished, not ok, and does not steal the last output", async () => {
+	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const msgs = [
+		text("user", "t"),
+		text("user", MARK_ON),
+		{ role: "assistant", content: [{ type: "toolCall", id: "1", name: "bash", arguments: { command: "node --test" } }] },
+		{ role: "toolResult", toolCallId: "1", toolName: "bash", content: [{ type: "text", text: "pass 3" }] },
+		{ role: "assistant", content: [{ type: "toolCall", id: "2", name: "bash", arguments: { command: "sleep 999" } }] },
+		text("user", MARK_OFF),
+	];
+	const h = collapseHandoffs(msgs)[0].content[0].text;
+	assert.match(h, /1 request|2 requests/);
+	assert.match(h, /last command did not finish/);
+	assert.match(h, /- sleep 999 \(no result\)/);
+	assert.match(h, /Last command output:\npass 3/);
+});
+
+test("the commands list is capped and multi-line commands are collapsed to one line", async () => {
+	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const calls = [];
+	for (let i = 1; i <= 18; i++) {
+		calls.push({ role: "assistant", content: [{ type: "toolCall", id: String(i), name: "bash", arguments: { command: i === 18 ? "cat <<'X'\nline one\nline two\nX" : `echo ${i}` } }] });
+		calls.push({ role: "toolResult", toolCallId: String(i), toolName: "bash", content: [{ type: "text", text: "ok" }] });
+	}
+	const h = collapseHandoffs([text("user", "t"), text("user", MARK_ON), ...calls, text("user", MARK_OFF)])[0].content[0].text;
+	assert.match(h, /Commands run \(3 earlier not shown\):\n- echo 4\n/);
+	assert.ok(!h.includes("- echo 1\n"), "the earliest commands are dropped");
+	assert.match(h, /- cat <<'X' line one line two X\n/);
+	assert.match(h, /Mellum: 18 requests/);
+});
+
+test("summary uses the singular for one request", async () => {
+	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const h = collapseHandoffs([text("user", "t"), text("user", MARK_ON), { role: "assistant", content: [{ type: "text", text: "hi" }] }, text("user", MARK_OFF)])[0].content[0].text;
+	assert.match(h, /Mellum: 1 request, 0 output tokens, wall unknown, no commands/);
+});
+
+test("runRecord builds the JSONL line for a span from the same fields as the handoff", async () => {
+	const { runRecord, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const ts = (s) => Date.parse(`2026-10-09T19:${s}Z`);
+	const span = [
+		{ role: "assistant", timestamp: ts("28:52.217"), usage: { input: 547, cacheRead: 1024, output: 651 }, content: [{ type: "toolCall", id: "1", name: "write", arguments: { path: "hello.py" } }] },
+		{ role: "toolResult", toolCallId: "1", toolName: "write", content: [{ type: "text", text: "ok" }] },
+		{ role: "assistant", timestamp: ts("28:58.930"), usage: { input: 96, cacheRead: 3072, output: 77 }, content: [{ type: "toolCall", id: "2", name: "bash", arguments: { command: "uv run --offline pytest -q" } }] },
+		{ role: "toolResult", toolCallId: "2", toolName: "bash", isError: true, content: [{ type: "text", text: "Command exited with code 2" }] },
+		{ role: "assistant", timestamp: ts("29:13.636"), usage: { input: 143, cacheRead: 5120, output: 355 }, content: [{ type: "text", text: "done" }] },
+	];
+	const rec = runRecord("Write a hello world python file with a unit test", span, { endedAt: ts("29:27.031"), cwd: "/p/ac-demo", model: "omlx/Mellum" });
+	assert.equal(rec.task, "Write a hello world python file with a unit test");
+	assert.equal(rec.model, "omlx/Mellum");
+	assert.equal(rec.cwd, "/p/ac-demo");
+	assert.equal(rec.startedAt, "2026-10-09T19:28:52.217Z");
+	assert.equal(rec.endedAt, "2026-10-09T19:29:27.031Z");
+	assert.equal(rec.requests, 3);
+	assert.deepEqual(rec.usage, { input: 786, cacheRead: 9216, output: 1083 });
+	assert.deepEqual(rec.files, ["hello.py"]);
+	assert.deepEqual(rec.commands, [{ command: "uv run --offline pytest -q", failed: true }]);
+	assert.equal(rec.lastCommand, "failed");
+	assert.equal(rec.wallSeconds, 21);
+	assert.equal(rec.finalReply, "done");
+	assert.equal(JSON.stringify(rec).includes("\n"), false);
+});

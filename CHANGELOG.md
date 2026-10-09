@@ -7,11 +7,19 @@ Versions match git tags; pin one in both install lines.
 ### Changed
 
 - Mellum Mode's handoff block now opens with a one-line summary (requests,
-  output tokens, wall seconds, whether the last command failed), lists every
-  shell command Mellum ran with failed ones marked, and flags a written file
-  that a later command moved or deleted. Found by a run where `mv` made the
-  file list wrong.
-- `/mellum off` shows the same summary as a notification.
+  output tokens, wall seconds, whether the last command finished and
+  passed), lists the last fifteen shell commands Mellum ran with failed or
+  unfinished ones marked, and flags a written file that is missing when
+  the handoff is built. Found by a run where `mv` made the file list wrong.
+- `/mellum off` shows a one-line count of requests, tool calls, output
+  tokens and seconds.
+
+### Added
+
+- A run record: each Mellum Mode span appends one JSON line to
+  `~/.pi/agent/mellum-mode-runs.jsonl` (task, model, cwd, times, requests,
+  token usage, files, commands with pass or fail, final reply) for analysis
+  outside the session. `MELLUM_MODE_RUNS` sets the path; `0` disables it.
 - README: Mode does not send the project's AGENTS.md, so the task line must
   carry the project's test command and layout rules; the test-command tip
   explains why `pytest` and `python -m pytest` differ on `sys.path`.
