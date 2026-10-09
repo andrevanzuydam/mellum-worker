@@ -33,3 +33,11 @@ available to test against.
 **Run-record consumers.** The JSONL record exists so another session can
 analyse runs; nothing reads it yet. *Reopens when* a second consumer wants a
 field the record lacks, which decides the schema.
+
+**The ladder measures the repo copy, not the package.** `ladder/run_ladder.py`
+in mellum-mlx points at `.pi/mellum/mellum-mode.ts`, which had drifted 260
+lines from the shipped extension by v0.1.2. The A17 phase ran the shipped
+copy through a wrapper and found no regression (14/15, 12.9 requests, 44 s vs
+A14's 70 s), but the wrapper is scratch code. *Reopens when* the next change
+to `extensions/` is made: the ladder should take the extension path as an
+argument and the mellum-mlx copy should go.
