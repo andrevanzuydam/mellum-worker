@@ -82,6 +82,8 @@ Set `MELLUM_MODE_RUNS` to another path, or to `0` to turn it off.
 Schema 2 also records files missing at the end, which commands change
 files, the shape of the final turn, nudge and guard-block counts, how the
 span was activated, the host, and the package and prompt versions.
+The file is append-only across upgrades, so lines without a `schema`
+field are schema 1.
 
 `pi -p "/mellum <task>"` runs one task headlessly: it waits for Mellum to
 finish, switches back, writes the record, and exits.

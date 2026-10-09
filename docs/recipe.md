@@ -208,7 +208,9 @@ output tokens and seconds, and one JSON line describing the span is
 appended to `~/.pi/agent/mellum-mode-runs.jsonl` (`MELLUM_MODE_RUNS`
 overrides the path; `0` disables it). Schema 2 adds files missing at the
 end, which commands change files, the final turn's shape, nudge and
-guard-block counts, activation, host, and package and prompt versions.
+guard-block counts, activation, host, and package and prompt versions;
+the file is append-only across upgrades, so lines without a `schema`
+field are schema 1.
 In the probe this took the parent's next request from 18 messages to 3.
 
 Measured in the ladder ([A14](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a14-mellum-mode/README.md)),
