@@ -4,6 +4,26 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Fixed
+
+- `/mellum <task>` under `pi -p` (and `pi --mode json`) returned at once,
+  Pi disposed the runtime mid-run ("This extension ctx is stale"), and no
+  run record was written. It now waits for the run, switches back, and
+  writes the record before Pi exits.
+
+### Added
+
+- Run record schema 2: `schema`, `version`, `promptVersion`, `host`
+  (`tui`, `rpc`, `print`, `json`), `activation` (`one-shot`, `on`,
+  `headless`), `taskNamesTestCommand`, `edits`, `filesMissingAtEnd`,
+  `commands[].mutates`, `finalTurn` (`stopReason`, `hadText`,
+  `hadToolCall`), `nudges` and `guardBlocks`. All schema 1 fields are
+  kept. `commands[].mutates` comes from `commandMutatesFiles`, a heuristic
+  for shell commands that change files (`rm`, `mv`, redirects, `sed -i`,
+  `git checkout`, `pip install`, virtualenvs).
+- Mellum's request path (prompt, messages, tools, sampling, guards) and
+  the handoff block text are unchanged.
+
 ## [0.1.2] - 2026-10-09
 
 ### Changed

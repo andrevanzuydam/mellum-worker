@@ -79,6 +79,12 @@ Each span also appends one JSON line to `~/.pi/agent/mellum-mode-runs.jsonl`
 usage, files, commands with their pass or fail, Mellum's final reply) so
 you can analyse runs from another session without parsing transcripts.
 Set `MELLUM_MODE_RUNS` to another path, or to `0` to turn it off.
+Schema 2 also records files missing at the end, which commands change
+files, the shape of the final turn, nudge and guard-block counts, how the
+span was activated, the host, and the package and prompt versions.
+
+`pi -p "/mellum <task>"` runs one task headlessly: it waits for Mellum to
+finish, switches back, writes the record, and exits.
 
 Mode sends Mellum only the worker prompt and your task. It does not send
 your project's AGENTS.md, your earlier conversation, or any skill. If the
