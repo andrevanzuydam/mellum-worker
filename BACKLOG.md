@@ -76,3 +76,17 @@ the run stopped unfinished. A check for a final turn that announces an action
 without making a tool call would catch it, but it is a guard change on a
 single observed miss in 30 Mode runs (A14, A17). *Reopens when* a second
 announce-and-stop miss is recorded in a ladder phase or a run record.
+
+**Mediated brief: the main model writes Mellum's task.** Mode sends the
+`/mellum` text to Mellum word for word, so it passes only when the user writes
+a fact sheet (files, test command, constraints), and few developers will. A
+big model can write that brief from a loose request or a spec file. The shape:
+a parent-side skill or a model-callable tool (`pi.registerTool`) that reads
+the request and the project, writes the brief, and runs it under Mode, for
+example by queueing `/mellum <brief>` as a follow-up once the parent's turn
+ends; then the parent reads the handoff and runs the tests. Open: whether a
+tool can activate Mode (model switch) or must queue the command, and whether
+the brief is shown to the user first. The worker prompt is unchanged, so this
+is not a measured setting. *Reopens when* M.5 closes: then compare loose
+`/mellum` against mediated runs on the ac-demo phase specs using schema-2
+records.
