@@ -197,9 +197,13 @@ every request is rewritten before it leaves: the system prompt is v5, the
 messages are only those since `/mellum on` (Superpowers' bootstrap and
 your earlier conversation are not sent), and pi-subagents' re-added tools
 are removed. Your session keeps everything; after `/mellum off` your usual
-model is sent one handoff block per Mellum task (the task, the files
-edited or written, the last command output, Mellum's final reply) in
-place of Mellum's reads, edits and test runs, which stay in the transcript.
+model is sent one handoff block per Mellum task (a summary line with the
+request count, output tokens, wall seconds and whether the last command
+failed; the task; the files edited or written, flagged when a later shell
+command moved or deleted them; every shell command run, failed ones
+marked; the last command output; Mellum's final reply) in place of
+Mellum's reads, edits and test runs, which stay in the transcript. The
+same summary is shown as a notification when the mode switches off.
 In the probe this took the parent's next request from 18 messages to 3.
 
 Measured in the ladder ([A14](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-a14-mellum-mode/README.md)),

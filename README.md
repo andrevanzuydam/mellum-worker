@@ -47,14 +47,34 @@ Then ask "run the mellum-setup skill".
 
 ## Use it
 
-**Mellum Mode (Pi).** Type `/mellum <task>` in any session. Pi switches to
-Mellum with the worker prompt and seven file tools, runs the task, and
-switches back when it settles. For several tasks in a row, `/mellum on`,
+**Mellum Mode (Pi).** Type `/mellum <task>` in any session. Here's an
+example prompt:
+
+```
+/mellum Add a hello world file and a unit test that goes with it
+```
+
+Pi switches to Mellum with the worker prompt and seven file tools, runs the
+task, and switches back when it settles. A task that also names the test
+command and the files saves a round trip:
+
+```
+/mellum Add hello.py at the repo root with hello() returning "Hello, World!", and tests/test_hello.py that imports it. Test command: uv run --offline python -m pytest -q tests
+```
+ For several tasks in a row, `/mellum on`,
 type each task as a normal prompt, then `/mellum off`. Your usual model
-then gets one handoff block per task (files touched, last command output,
-Mellum's reply) instead of every read and edit. Run the tests yourself
-afterwards; nothing else checks Mode's work. Run `/mellum off` before a
-long turn with your main model: auto-compaction is refused while Mode is on.
+then gets one handoff block per task (a one-line summary of requests,
+output tokens and wall time; files written, flagged if a command later
+moved or deleted them; every shell command run; the last command's output;
+Mellum's reply) instead of every read and edit. The same summary line
+shows in Pi when the mode switches off. Run the tests yourself afterwards;
+nothing else checks Mode's work. Run `/mellum off` before a long turn with
+your main model: auto-compaction is refused while Mode is on.
+
+Mode sends Mellum only the worker prompt and your task. It does not send
+your project's AGENTS.md, your earlier conversation, or any skill. If the
+project has a test command, a layout rule, or a file it must not touch,
+say so in the task.
 
 **Mellum Worker (Pi, needs pi-subagents).** In a normal session say
 "Use mellum-worker to do this: the cart total ignores quantity, fix it. Test
@@ -71,7 +91,11 @@ not a plan:
 - Name the exact file or a literal string to grep for. "The export is
   missing the totals row" works; "look around the reports code" does not.
 - Name the test command. Without one the prompt guesses `uv run --offline
-  pytest -q` or `node --test <file>`, and a wrong guess ends the run.
+  pytest -q` or `node --test <file>`, and a wrong guess costs a round trip
+  or ends the run. The guess runs the `pytest` entry point, which does not
+  put the project root on `sys.path`; a project whose tests import a root
+  module needs `python -m pytest`, a `pythonpath` setting, or a package, and
+  Mellum will not know which unless the task says.
 - One change per task. Three files that change together is fine (rung 4 and
   5 passed 3/3); two unrelated changes is two tasks.
 - Give facts, not steps. A brief that lists numbered steps with "reply
