@@ -330,3 +330,123 @@ test("a ctx without a mode records host unknown", async () => {
 	});
 	assert.equal(rec.host, "unknown");
 });
+
+// A fake Pi whose sendUserMessage runs the task a tick later, as Pi's print mode does:
+// agent_start, a context snapshot, one assistant turn, then (optionally) agent_settled,
+// then the idle wait resolves. `waitForIdle` is a spy returning that idle promise.
+function headlessPi({ hasUI = false, withWait = true, startsRun = true, settledFirst = false, startTimeoutMs } = {}) {
+	const handlers = {};
+	let commands = {};
+	const calls = { setModel: [], sendMessage: [], notify: [], waitForIdle: 0 };
+	let resolveIdle;
+	const idle = new Promise((r) => { resolveIdle = r; });
+	if (!startsRun) resolveIdle(); // no run: Pi is idle, so the wait returns at once
+	const ctx = { mode: "print", hasUI, model: { provider: "anthropic", id: "parent" }, modelRegistry: { find: () => MODEL }, ui: { notify: (m, l) => calls.notify.push([m, l]) } };
+	if (withWait) ctx.waitForIdle = () => { calls.waitForIdle += 1; return idle; };
+	const pi = {
+		on: (name, fn) => { handlers[name] = fn; },
+		registerCommand: (name, def) => { commands[name] = def; },
+		getActiveTools: () => ["read"], setActiveTools: () => {},
+		setModel: async (m) => { calls.setModel.push(m); return true; },
+		sendMessage: (m) => calls.sendMessage.push(m),
+		sendUserMessage: (text) => {
+			if (!startsRun) return;
+			setImmediate(async () => {
+				handlers.agent_start?.({}, ctx);
+				const reply = { role: "assistant", timestamp: 1000, usage: { output: 5 }, content: [{ type: "text", text: "done" }] };
+				handlers.context({ messages: [{ role: "user", content: [{ type: "text", text }] }, { role: "custom", customType: "mellum-mode", content: "[mellum-mode on]" }, reply] });
+				handlers.turn_end({ message: reply });
+				if (settledFirst) await handlers.agent_settled({}, ctx);
+				resolveIdle();
+			});
+		},
+	};
+	if (startTimeoutMs === undefined) install(pi);
+	else install(pi, { startTimeoutMs });
+	return { handlers, ctx, calls, mellum: (a) => commands.mellum.handler(a, ctx) };
+}
+
+// Runs `body()` with MELLUM_MODE_RUNS on a fresh temp file; returns the file's lines (none if absent).
+async function recordLines(body) {
+	const { mkdtempSync, readFileSync, existsSync } = await import("node:fs");
+	const { tmpdir } = await import("node:os");
+	const file = join_(mkdtempSync(join_(tmpdir(), "mellum-runs-")), "runs.jsonl");
+	const saved = process.env.MELLUM_MODE_RUNS;
+	process.env.MELLUM_MODE_RUNS = file;
+	try {
+		await body();
+		return existsSync(file) ? readFileSync(file, "utf8").trim().split("\n") : [];
+	} finally {
+		if (saved === undefined) delete process.env.MELLUM_MODE_RUNS;
+		else process.env.MELLUM_MODE_RUNS = saved;
+	}
+}
+
+const offMarkers = (calls) => calls.sendMessage.filter((m) => m.content === "[mellum-mode off]").length;
+const modeIsOff = (handlers) => { for (let i = 0; i < 8; i++) assert.equal(handlers.tool_call(read), undefined, "guard hooks inert: mode is off"); };
+
+test("headless one shot: the handler waits for the run, then restores the model and writes the record", async () => {
+	let h;
+	const lines = await recordLines(async () => {
+		h = headlessPi();
+		await h.mellum("fix it");
+	});
+	assert.equal(h.calls.waitForIdle, 1, "waitForIdle called once");
+	assert.deepEqual(h.calls.setModel.at(-1), h.ctx.model, "the parent model is restored");
+	assert.equal(offMarkers(h.calls), 1, "one off-marker");
+	assert.equal(lines.length, 1, "one record line");
+	const rec = JSON.parse(lines[0]);
+	assert.equal(rec.activation, "one-shot");
+	assert.equal(rec.host, "print");
+	assert.equal(rec.task, "fix it");
+	modeIsOff(h.handlers);
+});
+
+test("headless one shot where agent_settled fires before idle: still one deactivation", async () => {
+	let h;
+	const lines = await recordLines(async () => {
+		h = headlessPi({ settledFirst: true });
+		await h.mellum("fix it");
+	});
+	const restores = h.calls.setModel.filter((m) => m === h.ctx.model).length;
+	assert.equal(restores, 1, "one restore setModel");
+	assert.equal(offMarkers(h.calls), 1, "one off-marker");
+	assert.equal(lines.length, 1, "one record line");
+	assert.equal(h.calls.notify.filter(([m]) => m.startsWith("mellum-mode off:")).length, 1, "one off notification");
+	modeIsOff(h.handlers);
+});
+
+test("one shot with a UI: the handler returns at once and agent_settled turns the mode off", async () => {
+	const h = headlessPi({ hasUI: true, startsRun: false, startTimeoutMs: 20 });
+	await h.mellum("fix it");
+	assert.equal(h.calls.waitForIdle, 0, "waitForIdle never called");
+	for (let i = 0; i < 5; i++) assert.equal(h.handlers.tool_call(read), undefined);
+	assert.ok(h.handlers.tool_call(read)?.block, "mode still on after return: the sixth identical read is blocked");
+	await h.handlers.agent_settled({}, h.ctx);
+	modeIsOff(h.handlers);
+	assert.equal(offMarkers(h.calls), 1);
+});
+
+test("headless ctx without waitForIdle: the handler returns with the mode on and does not throw", async () => {
+	const h = headlessPi({ withWait: false, startsRun: false, startTimeoutMs: 20 });
+	await h.mellum("fix it");
+	for (let i = 0; i < 5; i++) assert.equal(h.handlers.tool_call(read), undefined);
+	assert.ok(h.handlers.tool_call(read)?.block, "mode still on after return");
+	assert.equal(offMarkers(h.calls), 0);
+});
+
+test("headless one shot whose run never starts gives up after the start timeout and turns the mode off", async () => {
+	let h;
+	let elapsed;
+	const lines = await recordLines(async () => {
+		h = headlessPi({ startsRun: false, startTimeoutMs: 20 });
+		const t0 = Date.now();
+		await h.mellum("fix it");
+		elapsed = Date.now() - t0;
+	});
+	assert.ok(elapsed < 1000, `returned within a second (took ${elapsed} ms)`);
+	assert.deepEqual(h.calls.setModel.at(-1), h.ctx.model, "the parent model is restored");
+	assert.equal(offMarkers(h.calls), 1);
+	assert.equal(lines.length, 0, "no record line");
+	modeIsOff(h.handlers);
+});

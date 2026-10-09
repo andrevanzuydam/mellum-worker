@@ -2,7 +2,9 @@
  * Mellum mode: run the small model inside the main session with the worker's prompt
  * and tools, and show it nothing from before the mode began.
  *
- *   /mellum <task>  – one shot: switch to Mellum, run the task, switch back when settled
+ *   /mellum <task>  – one shot: switch to Mellum, run the task, switch back when settled.
+ *                     Under a host without a UI (`pi -p`) the command waits for the run,
+ *                     switches back and writes the run record before it returns.
  *   /mellum on      – stay on for several turns (switch model, tools, mark the start)
  *   /mellum off     – restore the previous model and tools
  *
@@ -388,7 +390,7 @@ function loadPrompt(): string {
 	return readFileSync(file, "utf8").trim();
 }
 
-export default function (pi: any) {
+export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
 	let active = false;
 	let interactive = false;
 	let saved: { model: any; tools: string[] } | undefined;
@@ -490,6 +492,21 @@ export default function (pi: any) {
 	}
 
 	let oneShot = false;
+	// The one in-flight deactivation of a one shot, shared by agent_settled and the headless handler.
+	let settling: Promise<void> | undefined;
+	// Resolves the headless handler's wait for the run to start; set only while it waits.
+	let onRunStart: (() => void) | undefined;
+	const startTimeoutMs = options.startTimeoutMs ?? 60_000;
+
+	// Ends a one shot exactly once: a second caller gets the deactivation already under way.
+	function settle(ctx: any): Promise<void> {
+		if (settling) return settling;
+		oneShot = false;
+		settling = deactivate(ctx).finally(() => {
+			settling = undefined;
+		});
+		return settling;
+	}
 
 	pi.registerCommand("mellum", {
 		description: "mellum <task> | on | off — run Mellum with the worker prompt and tools inside this session",
@@ -502,18 +519,49 @@ export default function (pi: any) {
 				ctx.ui?.notify?.("mellum-mode is already on; type the task as a normal prompt, or /mellum off first", "warning");
 				return;
 			}
+			// Read while the ctx is certainly live. Without a UI (pi -p, JSON mode) Pi treats the
+			// prompt as finished when this handler returns and disposes the runtime, so the
+			// handler must wait for the run and the deactivation.
+			const headless = ctx.hasUI === false && typeof ctx.waitForIdle === "function";
+			const waitForIdle: () => Promise<void> = headless ? ctx.waitForIdle : async () => {};
 			await activate(ctx, true, "one-shot");
 			if (!active) return;
 			oneShot = true;
+			if (!headless) {
+				pi.sendUserMessage(want);
+				return;
+			}
+			// sendUserMessage is fire-and-forget and the run is not active (so not "busy")
+			// until Pi has run its input and before_agent_start handlers: wait for agent_start
+			// first, or waitForIdle would return before the task ran.
+			const started = new Promise<void>((resolve) => {
+				onRunStart = resolve;
+			});
+			let timer: ReturnType<typeof setTimeout> | undefined;
+			const timedOut = new Promise<void>((resolve) => {
+				timer = setTimeout(resolve, startTimeoutMs);
+			});
 			pi.sendUserMessage(want);
+			try {
+				await Promise.race([started, timedOut]);
+			} finally {
+				clearTimeout(timer);
+				onRunStart = undefined;
+			}
+			await waitForIdle();
+			// Pi resolves the idle wait after agent_settled handlers return, so normally
+			// agent_settled has already deactivated; cover the other order too.
+			if (settling) await settling;
+			else if (active && oneShot) await settle(ctx);
 		},
 	});
 
+	pi.on("agent_start", () => {
+		if (oneShot) onRunStart?.();
+	});
+
 	pi.on("agent_settled", async (_event: any, ctx: any) => {
-		if (active && oneShot) {
-			oneShot = false;
-			await deactivate(ctx);
-		}
+		if (active && oneShot) await settle(ctx);
 	});
 
 	pi.on("session_start", async (_event: any, ctx: any) => {
