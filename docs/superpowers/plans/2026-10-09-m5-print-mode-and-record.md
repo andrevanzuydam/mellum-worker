@@ -332,12 +332,21 @@ Behaviour (see "Deviation" above):
 
 ## Progress
 
-- Task 1: pending.
-- Task 2: pending.
-- Task 3: pending.
-- Task 4: pending.
-- Task 5: pending.
-- Task 6: pending.
+- Task 1: done, e63321e. RED: module not found.
+- Task 2: done, 66a76e2. RED e.g. `undefined !== 2` (schema).
+- Task 3: done, 9cafb35. RED e.g. `0 !== 1` (nudges); assertions masked
+  or passing first were shown failing by mutation (`'unknown' !== 'tui'`).
+- Task 4: done, d7ec11a. RED: `waitForIdle called once (actual: 0)`;
+  UI and no-`waitForIdle` cases pin old behaviour, shown failing by mutation.
+- Task 6 (run before Task 5): passed 2026-10-09 on Pi 1.0.2. Exit 0,
+  stderr empty, 7 requests, about 7 s, `node --test` 3/3 afterwards. The
+  record (`cwd` is a scratch copy of the fixture):
+  `{"schema":2,"version":"0.1.2","promptVersion":"v5","host":"print","activation":"one-shot","wallSeconds":7,"taskNamesTestCommand":true,"requests":7,"files":["calculator.js"],"edits":1,"filesMissingAtEnd":[],"commands":[{"command":"node --test calculator.test.js","failed":false,"mutates":false}],"lastCommand":"ok","finalTurn":{"stopReason":"stop","hadText":true,"hadToolCall":false},"nudges":0,"guardBlocks":0,…}`.
+  Control, the same command with main's extension: exit 0, empty stdout,
+  stderr "turn_end could not resolve the persisted assistant entry ID" and
+  "This extension ctx is stale…", no record, tests still failing.
+- Task 5: done, 3284561.
+- `npm test`: 94/94 (75 at baseline).
 
 Remaining for this phase (not in this plan): spec §3 (mellum-mlx reads the
 worker from `--worker-root`, its copies deleted, tests, docs), §5 step 6
