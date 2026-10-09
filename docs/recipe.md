@@ -60,7 +60,7 @@ the ladder records them per run as `effective_params`.
 
 ## 3. Pi setup
 
-Project-local; the only change outside the project is the `models.json` entry at the end of this list:
+All of this is written by the setup skill into your user-scope Pi directory: the agent file at `~/.pi/agent/agents/`, the `models.json` entry, and the extensions come with the package.
 
 - `~/.pi/agent/agents/mellum-worker.md` (written by the setup skill from `templates/pi/mellum-worker.agent.md`) — the worker. Each frontmatter line removes
   something: `systemPromptMode: replace` (no Pi base prompt),
@@ -187,7 +187,7 @@ projected, are in [2026-10-09-worker-cost-options.md](https://github.com/pauleve
 ## 4b. The second way: Mellum Mode in your own session
 
 **Mellum Mode** (`extensions/mellum-mode.ts`) turns your current session
-into the worker without a parent, a brief, or a subagent:
+into the worker without a parent, a brief, or a subagent.
 
 Mellum Mode loads with the package; no `-e` flags. Type `/mellum <task>`: the session switches to Mellum, runs the task, and
 switches back when the agent settles. For a longer back-and-forth use
@@ -232,11 +232,10 @@ summary: the Worker's parent writes one, the Mode's handoff block is one.
 
 Cautions. The ladder measured the headless path; the interactive path
 (`on`, a second `on`, a task, `off`, a parent turn, a second `off`, the
-one-shot form) is exercised by `uv run python -m ladder.probe_mode_rpc`
-over Pi's RPC mode, which showed each request carrying exactly the
+one-shot form) was verified over Pi's RPC mode with `ladder/probe_mode_rpc.py` in
+[mellum-mlx](https://github.com/pauleveritt/mellum-mlx), which showed each request carrying exactly the
 expected prompt, history and tools; the refusal to auto-compact while on
-is unit-tested. Pi loads `-e` extensions
-first, so the filter runs before any package's payload hook; none of
+is unit-tested. Mellum Mode is loaded as a package extension; its payload filter rewrites the request it sees, and other packages' hooks may run before or after it. Load order was only verified for the `-e` form in mellum-mlx. None of
 Superpowers, pi-subagents or context7 rewrites the payload today. Auto-compaction is refused while the mode is on
 (`/compact` still works); run `/mellum off` before a long parent turn.
 
