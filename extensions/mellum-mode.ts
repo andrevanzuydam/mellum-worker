@@ -17,8 +17,8 @@
  * Headless: MELLUM_MODE=1 activates at session start (the ladder's "mode" runner).
  * Installed as a Pi package extension it loads in every parent session and stays dormant until /mellum. While on, it runs the child guards (createGuardSet) itself, so no second extension is needed.
  */
-import { appendFileSync, readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { appendFileSync, existsSync, readFileSync } from "node:fs";
+import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createGuardSet, type GuardSet } from "./mellum-guards.ts";
 
@@ -95,7 +95,12 @@ export function filterForMellum(payload: any, systemPrompt: string, opts: { expe
  * read, edit and test run. Built from the span's own messages (Pi's internal
  * message format, as seen by the `context` event). Open spans are untouched.
  */
-export function collapseHandoffs(messages: Msg[]): Msg[] {
+export interface HandoffOptions {
+	/** Reports whether a written path still exists at handoff time; omitted means never flag. */
+	exists?: (path: string) => boolean;
+}
+
+export function collapseHandoffs(messages: Msg[], opts: HandoffOptions = {}): Msg[] {
 	// At the `context` event a sent marker is a `custom` message; in the provider
 	// payload it has become a user message. Accept both.
 	const hasMark = (m: Msg, mark: string) => (m.role === "user" || m.role === "custom") && textOf(m).includes(mark);
@@ -123,7 +128,7 @@ export function collapseHandoffs(messages: Msg[]): Msg[] {
 			const trailing = span.slice(tail);
 			span = span.slice(0, tail);
 			const task = prev ? textOf(prev) : textOf(span.find((x) => x.role === "user") ?? {});
-			out.push(handoffMessage(task, span), ...trailing);
+			out.push(handoffMessage(task, span, opts), ...trailing);
 			i = j + 1;
 			continue;
 		}
@@ -133,34 +138,74 @@ export function collapseHandoffs(messages: Msg[]): Msg[] {
 	return out;
 }
 
-function handoffMessage(task: string, span: Msg[]): Msg {
+function handoffMessage(task: string, span: Msg[], opts: HandoffOptions = {}): Msg {
 	const files = new Set<string>();
-	let lastTest = "";
-	let finalText = "";
+	const results = new Map<string, { error: boolean; text: string }>();
 	for (const m of span) {
-		if (m.role === "assistant" && Array.isArray(m.content)) {
-			for (const b of m.content as any[]) {
-				if (b.type === "toolCall" && (b.name === "edit" || b.name === "write")) {
-					const p = b.arguments?.path;
-					if (typeof p === "string") files.add(p);
-				}
-				if (b.type === "text" && typeof b.text === "string" && b.text.trim()) finalText = b.text.trim();
-			}
+		if (m.role === "toolResult") {
+			const id = (m as any).toolCallId;
+			if (typeof id === "string") results.set(id, { error: Boolean((m as any).isError), text: textOf(m).trim() });
 		}
-		if (m.role === "toolResult" && (m as any).toolName === "bash") {
-			const t = textOf(m).trim();
-			if (t) lastTest = t;
+	}
+	const commands: { command: string; error: boolean }[] = [];
+	let lastTest = "";
+	let lastCommandFailed: boolean | undefined;
+	let finalText = "";
+	let requests = 0;
+	let outputTokens = 0;
+	let first: number | undefined;
+	let last: number | undefined;
+	for (const m of span) {
+		if (m.role !== "assistant") continue;
+		requests += 1;
+		const usage = (m as any).usage;
+		if (usage && typeof usage.output === "number") outputTokens += usage.output;
+		const t = toMillis((m as any).timestamp);
+		if (t !== undefined) {
+			first ??= t;
+			last = t;
+		}
+		if (!Array.isArray(m.content)) continue;
+		for (const b of m.content as any[]) {
+			if (b.type === "toolCall" && (b.name === "edit" || b.name === "write")) {
+				const p = b.arguments?.path;
+				if (typeof p === "string") files.add(p);
+			}
+			if (b.type === "toolCall" && b.name === "bash" && typeof b.arguments?.command === "string") {
+				const r = results.get(b.id);
+				commands.push({ command: b.arguments.command, error: Boolean(r?.error) });
+				if (r?.text) lastTest = r.text;
+				lastCommandFailed = Boolean(r?.error);
+			}
+			if (b.type === "text" && typeof b.text === "string" && b.text.trim()) finalText = b.text.trim();
 		}
 	}
 	const clip = (s: string, n: number) => (s.length > n ? s.slice(0, n) + "\n…" : s);
+	const fileList = [...files].map((f) => (opts.exists && !opts.exists(f) ? `${f} (missing at handoff)` : f));
+	const wall = first !== undefined && last !== undefined ? `${Math.round((last - first) / 1000)} s` : "wall unknown";
+	const lastCommand = lastCommandFailed === undefined ? "no commands" : lastCommandFailed ? "last command failed" : "last command ok";
+	const summary = `Mellum: ${requests} requests, ${outputTokens.toLocaleString("en-US")} output tokens, ${wall}, ${lastCommand}`;
 	const body = [
 		"[mellum-mode handoff] Mellum ran a task in this session; its tool calls are in the transcript but not repeated here.",
+		summary,
 		`Task: ${clip(task.trim(), 400)}`,
-		`Files edited or written: ${files.size ? [...files].join(", ") : "none"}`,
+		`Files edited or written: ${fileList.length ? fileList.join(", ") : "none"}`,
+		commands.length
+			? `Commands run:\n${commands.map((c) => `- ${clip(c.command, 200)}${c.error ? " (failed)" : ""}`).join("\n")}`
+			: "Commands run: none",
 		lastTest ? `Last command output:\n${clip(lastTest, 600)}` : "Last command output: none",
 		finalText ? `Mellum's final reply:\n${clip(finalText, 1500)}` : "Mellum's final reply: (empty)",
 	].join("\n");
 	return { role: "user", content: [{ type: "text", text: body }], timestamp: Date.now() };
+}
+
+function toMillis(value: unknown): number | undefined {
+	if (typeof value === "number" && Number.isFinite(value)) return value;
+	if (typeof value === "string") {
+		const t = Date.parse(value);
+		return Number.isNaN(t) ? undefined : t;
+	}
+	return undefined;
 }
 
 function loadPrompt(): string {
@@ -176,6 +221,8 @@ export default function (pi: any) {
 	let prompt = "";
 	let warnedMissing = false;
 	let guards: GuardSet | undefined;
+	// Per-span counters for the one-line summary shown at /mellum off.
+	let span = { startedAt: 0, requests: 0, toolCalls: 0, outputTokens: 0 };
 
 	async function activate(ctx: any, notify = true) {
 		if (active) {
@@ -200,6 +247,7 @@ export default function (pi: any) {
 		pi.setActiveTools(WORKER_TOOLS);
 		active = true;
 		guards = createGuardSet();
+		span = { startedAt: Date.now(), requests: 0, toolCalls: 0, outputTokens: 0 };
 		interactive = notify;
 		warnedMissing = false;
 		if (notify) pi.sendMessage({ customType: "mellum-mode", content: MARK_ON, display: true }, { deliverAs: "nextTurn" });
@@ -224,7 +272,8 @@ export default function (pi: any) {
 		active = false;
 		guards = undefined;
 		pi.sendMessage({ customType: "mellum-mode", content: MARK_OFF, display: true }, { deliverAs: "nextTurn" });
-		ctx.ui?.notify?.("mellum-mode off", "info");
+		const secs = Math.round((Date.now() - span.startedAt) / 1000);
+		ctx.ui?.notify?.(`mellum-mode off: ${span.requests} requests, ${span.toolCalls} tool call${span.toolCalls === 1 ? "" : "s"}, ${span.outputTokens.toLocaleString("en-US")} output tokens, ${secs} s`, "info");
 	}
 
 	let oneShot = false;
@@ -276,12 +325,13 @@ export default function (pi: any) {
 		}
 		if (active) return undefined;
 		if (!event.messages.some((m: any) => textOf(m).includes(MARK_ON))) return undefined;
-		const collapsed = collapseHandoffs(event.messages);
+		const collapsed = collapseHandoffs(event.messages, { exists: (p) => existsSync(isAbsolute(p) ? p : resolve(process.cwd(), p)) });
 		return collapsed === event.messages ? undefined : { messages: collapsed };
 	});
 
 	pi.on("before_provider_request", (event: any, ctx: any) => {
 		if (!active) return undefined;
+		span.requests += 1;
 		const out = filterForMellum(event.payload, prompt, { expectMarker: interactive });
 		if (out?.mellumModeMarkerMissing) {
 			delete out.mellumModeMarkerMissing;
@@ -294,9 +344,17 @@ export default function (pi: any) {
 	});
 
 	// The child's guards, run in-session while the mode is on. A fresh set per span.
-	pi.on("tool_call", (event: any) => (active && guards ? guards.toolCall(event) : undefined));
+	pi.on("tool_call", (event: any) => {
+		if (!active || !guards) return undefined;
+		span.toolCalls += 1;
+		return guards.toolCall(event);
+	});
 	pi.on("turn_end", (event: any) => {
-		if (active && guards) guards.turnEnd(event);
+		if (active && guards) {
+			guards.turnEnd(event);
+			const out = event?.message?.usage?.output;
+			if (event?.message?.role === "assistant" && typeof out === "number") span.outputTokens += out;
+		}
 		return undefined;
 	});
 	pi.on("agent_before_settle", () => (active && guards ? guards.beforeSettle() : undefined));

@@ -70,3 +70,34 @@ test("context hook is dormant when no mellum span exists, and collapses when one
 	assert.ok(out && Array.isArray(out.messages));
 	assert.ok(out.messages.length < messages.length);
 });
+
+test("/mellum off notifies a one-line summary of the span", async () => {
+	const notes = [];
+	const handlers = {};
+	let commands = {};
+	const pi = {
+		on: (name, fn) => { handlers[name] = fn; },
+		registerCommand: (name, def) => { commands[name] = def; },
+		getActiveTools: () => ["read"],
+		setActiveTools: () => {},
+		setModel: async () => true,
+		sendMessage: () => {},
+		sendUserMessage: () => {},
+	};
+	const ctx = {
+		model: { provider: "anthropic", id: "parent" },
+		modelRegistry: { find: () => MODEL },
+		ui: { notify: (msg, level) => notes.push([msg, level]) },
+	};
+	install(pi);
+	await commands.mellum.handler("on", ctx);
+	handlers.before_provider_request({ payload: { messages: [] } }, ctx);
+	handlers.before_provider_request({ payload: { messages: [] } }, ctx);
+	handlers.tool_call({ toolName: "bash", input: { command: "node --test" } });
+	handlers.turn_end({ message: { role: "assistant", usage: { output: 300 }, content: [{ type: "toolCall", id: "1", name: "bash", arguments: { command: "node --test" } }] } });
+	handlers.turn_end({ message: { role: "assistant", usage: { output: 100 }, content: [{ type: "text", text: "done" }] } });
+	await commands.mellum.handler("off", ctx);
+	const line = notes.map(([m]) => m).find((m) => m.startsWith("mellum-mode off:"));
+	assert.ok(line, `no summary notify; got ${JSON.stringify(notes)}`);
+	assert.match(line, /2 requests, 1 tool call, 400 output tokens, \d+ s/);
+});

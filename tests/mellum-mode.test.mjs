@@ -142,3 +142,52 @@ test("markers arrive at the context event as custom messages, not user messages"
 	assert.deepEqual(out.map(m => m.role), ["user", "user"]);
 	assert.match(out[0].content[0].text, /handoff/);
 });
+
+test("handoff lists the bash commands run and flags written files that no longer exist", async () => {
+	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const ts = (s) => Date.parse(`2026-10-09T19:${s}Z`);
+	const msgs = [
+		text("user", "Write a hello world python file with a unit test"),
+		text("user", MARK_ON),
+		{ role: "assistant", timestamp: ts("28:52.217"), usage: { input: 547, output: 651 }, content: [{ type: "toolCall", id: "1", name: "write", arguments: { path: "hello.py", content: "x" } }] },
+		{ role: "toolResult", toolCallId: "1", toolName: "write", content: [{ type: "text", text: "Successfully wrote to hello.py" }] },
+		{ role: "assistant", timestamp: ts("28:58.265"), usage: { input: 994, output: 102 }, content: [{ type: "toolCall", id: "2", name: "write", arguments: { path: "tests/test_hello.py", content: "y" } }] },
+		{ role: "toolResult", toolCallId: "2", toolName: "write", content: [{ type: "text", text: "Successfully wrote to tests/test_hello.py" }] },
+		{ role: "assistant", timestamp: ts("28:58.930"), usage: { input: 96, output: 77 }, content: [{ type: "toolCall", id: "3", name: "bash", arguments: { command: "uv run --offline pytest -q" } }] },
+		{ role: "toolResult", toolCallId: "3", toolName: "bash", isError: true, content: [{ type: "text", text: "E   ModuleNotFoundError: No module named 'hello'\n\nCommand exited with code 2" }] },
+		{ role: "assistant", timestamp: ts("29:04.814"), usage: { input: 180, output: 55 }, content: [{ type: "toolCall", id: "4", name: "bash", arguments: { command: "mv hello.py tests/hello.py" } }] },
+		{ role: "toolResult", toolCallId: "4", toolName: "bash", content: [{ type: "text", text: "(no output)" }] },
+		{ role: "assistant", timestamp: ts("29:09.304"), usage: { input: 839, output: 40 }, content: [{ type: "toolCall", id: "5", name: "bash", arguments: { command: "uv run --offline pytest -q" } }] },
+		{ role: "toolResult", toolCallId: "5", toolName: "bash", content: [{ type: "text", text: "1 passed in 0.00s" }] },
+		{ role: "assistant", timestamp: ts("29:13.636"), usage: { input: 143, output: 355 }, content: [{ type: "text", text: "Hello world Python file with unit test created and tests passed successfully." }] },
+		text("user", MARK_OFF),
+	];
+	const exists = (p) => p === "tests/test_hello.py"; // hello.py was moved away by bash
+	const out = collapseHandoffs(msgs, { exists });
+	const h = out[0].content[0].text;
+	assert.match(h, /Files edited or written: hello\.py \(missing at handoff\), tests\/test_hello\.py/);
+	assert.match(h, /Commands run:\n- uv run --offline pytest -q \(failed\)\n- mv hello\.py tests\/hello\.py\n- uv run --offline pytest -q/);
+	assert.match(h, /Mellum: 6 requests, 1,280 output tokens, 21 s, last command ok/);
+	assert.ok(h.indexOf("Mellum: 6 requests") < h.indexOf("Task:"), "the summary line comes right after the header");
+});
+
+test("handoff summary reports a failed last command and tolerates missing usage and timestamps", async () => {
+	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const msgs = [
+		text("user", "fix it"),
+		text("user", MARK_ON),
+		{ role: "assistant", content: [{ type: "toolCall", id: "1", name: "bash", arguments: { command: "node --test" } }] },
+		{ role: "toolResult", toolCallId: "1", toolName: "bash", isError: true, content: [{ type: "text", text: "fail 1" }] },
+		{ role: "assistant", content: [{ type: "text", text: "could not" }] },
+		text("user", MARK_OFF),
+	];
+	const h = collapseHandoffs(msgs, { exists: () => true })[0].content[0].text;
+	assert.match(h, /Mellum: 2 requests, 0 output tokens, wall unknown, last command failed/);
+	assert.match(h, /Commands run:\n- node --test \(failed\)/);
+});
+
+test("collapseHandoffs without an exists option never flags files", async () => {
+	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const msgs = [text("user", "t"), text("user", MARK_ON), { role: "assistant", content: [{ type: "toolCall", id: "1", name: "write", arguments: { path: "nope/zzz.py" } }] }, text("user", MARK_OFF)];
+	assert.match(collapseHandoffs(msgs)[0].content[0].text, /Files edited or written: nope\/zzz\.py\n/);
+});
