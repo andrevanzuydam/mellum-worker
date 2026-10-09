@@ -1,7 +1,7 @@
 ---
 phase: M.5
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # M.5 (mellum-worker half): one-shot print mode and run record schema 2
@@ -89,25 +89,9 @@ the `agent_settled` path deactivates and the handler awaits its promise.
   needed; one test for the true list, one for the false list, each
   asserting with the command in the message:
 
-```js
-import assert from "node:assert/strict";
-import test from "node:test";
-import { commandMutatesFiles } from "../extensions/mellum-commands.ts";
-
-const MUTATING = ["rm tests/test_hello.py", "mv hello.py tests/hello.py", "touch __init__.py",
-	"echo hi > out.txt", "cat <<'X' > f.py\nprint(1)\nX", "git checkout -- x.py", "pip install pytest",
-	"uv run python -m venv venv", "sed -i '' s/a/b/ f", "cd x && rm y", "make 2>&1 | tee log.txt", "ls >> log"];
-const READ_ONLY = ["uv run --offline pytest -q", 'python -c "print(1 > 0)"', "grep -v '>' x", "cmd 2>&1",
-	"cmd > /dev/null", "cmd > /dev/null 2>&1", 'uv run python -c "import sys; print(sys.path)"', "git status",
-	"git diff", "ls -R", "cat <<'EOF'\nrm -rf build\nEOF", "node --test calculator.test.js", "echo rm"];
-
-test("commands that change files or the environment are mutating", () => {
-	for (const c of MUTATING) assert.equal(commandMutatesFiles(c), true, c);
-});
-test("read-only commands are not", () => {
-	for (const c of READ_ONLY) assert.equal(commandMutatesFiles(c), false, c);
-});
-```
+The table test is `tests/mellum-commands.test.mjs:1-20`: a `MUTATING` list
+(`tests/mellum-commands.test.mjs:5`) and a `READ_ONLY` list
+(`tests/mellum-commands.test.mjs:11`), each asserted over its commands.
 
 - [ ] **Step 2: Run** `node --test tests/mellum-commands.test.mjs`. Expected:
   fails, module not found. Quote the line.
@@ -364,3 +348,13 @@ Remaining for this phase (not in this plan): spec §3 (mellum-mlx reads the
 worker from `--worker-root`, its copies deleted, tests, docs), §5 step 6
 (the rung-1 smoke), recipe §5, and the close-out in §4 (roadmap Status,
 backlog removals, `## Result`).
+
+## Result
+
+2026-10-09. Shipped the mellum-worker half: `/mellum` runs to completion
+under `pi -p` (one-shot), run record schema 2, 96 tests (75 at baseline),
+and the live check at eeca1fa. Spec §3 (`--worker-root` in mellum-mlx) and
+the rung-1 smoke are superseded by M.6, which moves the ladder into this
+repo; see [`../2026-10-09-m6-one-repo.md`](../2026-10-09-m6-one-repo.md).
+Merged to main as `d73f15c`. The v0.1.3 tag is not part of this phase's
+close.
