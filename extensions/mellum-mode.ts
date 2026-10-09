@@ -3,8 +3,8 @@
  * and tools, and show it nothing from before the mode began.
  *
  *   /mellum <task>  – one shot: switch to Mellum, run the task, switch back when settled.
- *                     Under a host without a UI (`pi -p`) the command waits for the run,
- *                     switches back and writes the run record before it returns.
+ *                     One shot under `pi -p` or `--mode json` (no UI): the command waits for
+ *                     the run, switches back and writes the run record before it returns.
  *   /mellum on      – stay on for several turns (switch model, tools, mark the start)
  *   /mellum off     – restore the previous model and tools
  *
@@ -390,6 +390,17 @@ function loadPrompt(): string {
 	return readFileSync(file, "utf8").trim();
 }
 
+/**
+ * Reports a problem the user must see. Without a UI (`pi -p`, `--mode json`) Pi's notify
+ * is a no-op, so the message goes to stderr instead. Never throws.
+ */
+function warn(ctx: any, msg: string, level: "warning" | "error") {
+	try {
+		if (ctx?.hasUI === false) console.error(msg);
+		else ctx?.ui?.notify?.(msg, level);
+	} catch {}
+}
+
 export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
 	let active = false;
 	let interactive = false;
@@ -422,14 +433,14 @@ export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
 		const id = process.env.MELLUM_MODE_MODEL || DEFAULT_MODEL.id;
 		const model = ctx.modelRegistry.find(provider, id);
 		if (!model) {
-			ctx.ui?.notify?.(`mellum-mode: model ${provider}/${id} not found; mode stays off`, "error");
+			warn(ctx, `mellum-mode: model ${provider}/${id} not found; mode stays off`, "error");
 			return;
 		}
 		const previous = { model: ctx.model, tools: pi.getActiveTools() };
 		prompt = loadPrompt();
 		const switched = await pi.setModel(model);
 		if (!switched) {
-			ctx.ui?.notify?.(`mellum-mode: could not select ${provider}/${id} (auth or provider error); mode stays off`, "error");
+			warn(ctx, `mellum-mode: could not select ${provider}/${id} (auth or provider error); mode stays off`, "error");
 			return;
 		}
 		saved = previous;
@@ -457,12 +468,12 @@ export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
 			return;
 		}
 		if (!saved?.model) {
-			ctx.ui?.notify?.("mellum-mode: no previous model to restore; staying on. Pick a model with /model, then /mellum off.", "warning");
+			warn(ctx, "mellum-mode: no previous model to restore; staying on. Pick a model with /model, then /mellum off.", "warning");
 			return;
 		}
 		const restored = await pi.setModel(saved.model);
 		if (!restored) {
-			ctx.ui?.notify?.("mellum-mode: could not restore the previous model; staying on", "error");
+			warn(ctx, "mellum-mode: could not restore the previous model; staying on", "error");
 			return;
 		}
 		pi.setActiveTools(saved.tools);
@@ -485,9 +496,7 @@ export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
 			mkdirSync(dirname(file), { recursive: true });
 			appendFileSync(file, JSON.stringify(runRecord(open.task, open.span, { endedAt: Date.now(), cwd: process.cwd(), model: activeModel, exists: existsInCwd, host, activation, promptVersion, nudges, guardBlocks })) + "\n");
 		} catch (error) {
-			try {
-				ctx?.ui?.notify?.(`mellum-mode: could not write the run record${file ? ` to ${file}` : ""}: ${(error as Error)?.message ?? String(error)}`, "warning");
-			} catch {}
+			warn(ctx, `mellum-mode: could not write the run record${file ? ` to ${file}` : ""}: ${(error as Error)?.message ?? String(error)}`, "warning");
 		}
 	}
 
@@ -516,14 +525,14 @@ export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
 			if (want === "on" || want === "") return activate(ctx, true, "on");
 			// One shot: the task runs under the mode and the mode ends when the agent settles.
 			if (active) {
-				ctx.ui?.notify?.("mellum-mode is already on; type the task as a normal prompt, or /mellum off first", "warning");
+				warn(ctx, "mellum-mode is already on; type the task as a normal prompt, or /mellum off first", "warning");
 				return;
 			}
 			// Read while the ctx is certainly live. Without a UI (pi -p, JSON mode) Pi treats the
 			// prompt as finished when this handler returns and disposes the runtime, so the
 			// handler must wait for the run and the deactivation.
 			const headless = ctx.hasUI === false && typeof ctx.waitForIdle === "function";
-			const waitForIdle: () => Promise<void> = headless ? ctx.waitForIdle : async () => {};
+			const waitForIdle: () => Promise<void> = ctx.waitForIdle;
 			await activate(ctx, true, "one-shot");
 			if (!active) return;
 			oneShot = true;
@@ -534,20 +543,22 @@ export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
 			// sendUserMessage is fire-and-forget and the run is not active (so not "busy")
 			// until Pi has run its input and before_agent_start handlers: wait for agent_start
 			// first, or waitForIdle would return before the task ran.
-			const started = new Promise<void>((resolve) => {
-				onRunStart = resolve;
+			const started = new Promise<boolean>((resolve) => {
+				onRunStart = () => resolve(true);
 			});
 			let timer: ReturnType<typeof setTimeout> | undefined;
-			const timedOut = new Promise<void>((resolve) => {
-				timer = setTimeout(resolve, startTimeoutMs);
+			const timedOut = new Promise<boolean>((resolve) => {
+				timer = setTimeout(() => resolve(false), startTimeoutMs);
 			});
 			pi.sendUserMessage(want);
+			let didStart: boolean;
 			try {
-				await Promise.race([started, timedOut]);
+				didStart = await Promise.race([started, timedOut]);
 			} finally {
 				clearTimeout(timer);
 				onRunStart = undefined;
 			}
+			if (!didStart) warn(ctx, `mellum-mode: the task did not start within ${startTimeoutMs / 1000} s; switching the mode off`, "warning");
 			await waitForIdle();
 			// Pi resolves the idle wait after agent_settled handlers return, so normally
 			// agent_settled has already deactivated; cover the other order too.

@@ -435,18 +435,54 @@ test("headless ctx without waitForIdle: the handler returns with the mode on and
 	assert.equal(offMarkers(h.calls), 0);
 });
 
-test("headless one shot whose run never starts gives up after the start timeout and turns the mode off", async () => {
+test("headless one shot whose run never starts gives up after the start timeout, warns on stderr and turns the mode off", async () => {
 	let h;
 	let elapsed;
-	const lines = await recordLines(async () => {
-		h = headlessPi({ startsRun: false, startTimeoutMs: 20 });
-		const t0 = Date.now();
-		await h.mellum("fix it");
-		elapsed = Date.now() - t0;
+	let lines;
+	const stderr = await captureStderr(async () => {
+		lines = await recordLines(async () => {
+			h = headlessPi({ startsRun: false, startTimeoutMs: 20 });
+			const t0 = Date.now();
+			await h.mellum("fix it");
+			elapsed = Date.now() - t0;
+		});
 	});
 	assert.ok(elapsed < 1000, `returned within a second (took ${elapsed} ms)`);
+	assert.equal(stderr.length, 1, `one stderr line (got ${JSON.stringify(stderr)})`);
+	assert.match(stderr[0], /did not start within/);
 	assert.deepEqual(h.calls.setModel.at(-1), h.ctx.model, "the parent model is restored");
 	assert.equal(offMarkers(h.calls), 1);
 	assert.equal(lines.length, 0, "no record line");
+	modeIsOff(h.handlers);
+});
+
+// Runs `body()` with console.error captured; returns the captured lines. Always restores console.error.
+async function captureStderr(body) {
+	const lines = [];
+	const original = console.error;
+	console.error = (...args) => lines.push(args.join(" "));
+	try {
+		await body();
+	} finally {
+		console.error = original;
+	}
+	return lines;
+}
+
+test("without a UI, a missing Mellum model is reported on stderr and the mode stays off", async () => {
+	const h = recordingPi({ mode: "print", hasUI: false });
+	h.ctx.modelRegistry.find = () => undefined;
+	const lines = await captureStderr(() => h.mellum("fix it"));
+	assert.equal(lines.length, 1, "one stderr line");
+	assert.match(lines[0], /omlx\/Mellum2\.1-12B-A2\.5B-Thinking-6bit not found/);
+	modeIsOff(h.handlers);
+});
+
+test("with a UI, a missing Mellum model is a notify error and nothing goes to stderr", async () => {
+	const h = recordingPi({ mode: "tui", hasUI: true });
+	h.ctx.modelRegistry.find = () => undefined;
+	const lines = await captureStderr(() => h.mellum("fix it"));
+	assert.deepEqual(lines, [], "nothing on stderr");
+	assert.ok(h.calls.notify.some(([m, l]) => m.includes("not found") && l === "error"), "notify called with level error");
 	modeIsOff(h.handlers);
 });
