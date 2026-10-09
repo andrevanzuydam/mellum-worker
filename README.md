@@ -59,6 +59,26 @@ model and leaves Mellum's tool results in your session; Worker is faster on
 multi-file tasks and keeps your session clean, but its parent turns cost
 hosted tokens. The recipe's cost section has the per-task numbers.
 
+## Findings
+
+The research lives in [mellum-mlx](https://github.com/pauleveritt/mellum-mlx);
+this repo ships the result. Start with:
+
+- [recipe.md §6](docs/recipe.md#6-what-is-settled-and-what-is-not): what is
+  settled by measurement and what is not.
+- [recipe.md §4](docs/recipe.md#4-using-mellum-worker-delegated): the recorded
+  pathologies (empty final turns, false "fixed" claims, repeated identical
+  calls) and the guard that answers each.
+- [Ablation summary](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-summary.md):
+  the scoreboard, every setting measured in and out.
+- [Where the cost goes](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/2026-10-09-worker-cost-options.md):
+  Mode versus Worker per task.
+- [Recovery report](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/mellum-recovery-2026-10-07/report.md):
+  why Mellum cannot run a full agent workflow as the primary model, and what
+  it can do instead.
+- [Future work](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/2026-10-09-future-work.md):
+  the open experiments, including measuring the OpenCode port.
+
 ## Requirements (v1)
 
 - Apple Silicon Mac, [oMLX](https://github.com/jundot/omlx) 0.6.4 or newer, 9.9 GB for the weights
