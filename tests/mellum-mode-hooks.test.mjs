@@ -138,7 +138,7 @@ test("/mellum off appends one run record line to the file named by MELLUM_MODE_R
 		const rec = JSON.parse(lines[0]);
 		assert.equal(rec.task, "fix the cart");
 		assert.equal(rec.requests, 2);
-		assert.deepEqual(rec.commands, [{ command: "node --test", failed: false }]);
+		assert.deepEqual(rec.commands, [{ command: "node --test", failed: false, mutates: false }]);
 		assert.equal(rec.model, `${MODEL.provider}/${MODEL.id}`);
 		process.env.MELLUM_MODE_RUNS = "0";
 		const b = makePi();
