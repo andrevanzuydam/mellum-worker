@@ -1,5 +1,7 @@
 # mellum-worker
 
+*Apologies for the slop, I was in a hurry.* 
+
 [JetBrains Mellum 2.1](https://huggingface.co/JetBrains/Mellum2.1-12B-A2.5B-Thinking),
 a 12B-A2.5B thinking model, as a bounded coding worker for
 [Pi](https://pi.dev), with an [OpenCode](https://opencode.ai) port. It runs
@@ -45,19 +47,20 @@ Then ask "run the mellum-setup skill".
 
 ## What you get
 
-| Host | Deliverable | How to use it | Ladder result |
-| --- | --- | --- | --- |
-| Pi | Mellum Mode, in your own session | `/mellum <task>`, `/mellum on`, `/mellum off` | 14/15 |
-| Pi | Mellum Worker, a pi-subagents child | "Use mellum-worker to ..." | 15/15 |
-| OpenCode | Mellum Worker subagent | "Delegate to mellum-worker ..." | ported, unmeasured |
+| Host | Deliverable | How to use it | Passes | Wall s, mean | Mellum requests per run | Your main model per run |
+| --- | --- | --- | --- | --- | --- | --- |
+| Pi | Mellum Mode, in your own session | `/mellum <task>`, `/mellum on`, `/mellum off` | 14/15 | 70 | 13.1 | none |
+| Pi | Mellum Worker, a pi-subagents child | "Use mellum-worker to ..." | 15/15 | 54 | 11.1 | 6.5 turns, about 3k output and 120k mostly cached input tokens |
+| OpenCode | Mellum Worker subagent | "Delegate to mellum-worker ..." | ported, unmeasured | | | |
 
 The ladder is five coding tasks run three times each, in
-[mellum-mlx](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-summary.md).
-Bare Pi with Mellum as the primary agent scored 8/15 on the same tasks.
+[mellum-mlx](https://github.com/pauleveritt/mellum-mlx/blob/main/docs/research/ladder/ablation-summary.md),
+on an M5 Max through oMLX. The same tasks with Mellum as the primary agent:
+8/15 in bare Pi (51 s) and 10/15 in a full Superpowers profile (72 s).
 Mode and Worker trade cost for wall time: Mode spends nothing on your main
 model and leaves Mellum's tool results in your session; Worker is faster on
 multi-file tasks and keeps your session clean, but its parent turns cost
-hosted tokens. The recipe's cost section has the per-task numbers.
+hosted tokens. The recipe's cost section has the per-rung numbers.
 
 ## Findings
 
