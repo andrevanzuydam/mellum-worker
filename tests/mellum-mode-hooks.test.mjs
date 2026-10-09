@@ -151,7 +151,7 @@ test("/mellum off appends one run record line to the file named by MELLUM_MODE_R
 	}
 });
 
-function recordingPi() {
+function recordingPi({ mode, hasUI } = {}) {
 	const handlers = {};
 	let commands = {};
 	const calls = { setModel: [], sendMessage: [], notify: [] };
@@ -163,6 +163,8 @@ function recordingPi() {
 		sendMessage: (m) => calls.sendMessage.push(m), sendUserMessage: () => {},
 	};
 	const ctx = { model: { provider: "anthropic", id: "parent" }, modelRegistry: { find: () => MODEL }, ui: { notify: (m, l) => calls.notify.push([m, l]) } };
+	if (mode !== undefined) ctx.mode = mode;
+	if (hasUI !== undefined) ctx.hasUI = hasUI;
 	install(pi);
 	return { handlers, ctx, calls, mellum: (a) => commands.mellum.handler(a, ctx) };
 }
@@ -234,4 +236,97 @@ test("no context seen while on means nothing is written", async () => {
 	} finally {
 		delete process.env.MELLUM_MODE_RUNS;
 	}
+});
+
+const snapshot = [
+	{ role: "user", content: [{ type: "text", text: "fix the cart" }] },
+	{ role: "user", content: [{ type: "text", text: "[mellum-mode on]" }] },
+	{ role: "assistant", timestamp: 1000, usage: { output: 5 }, content: [{ type: "text", text: "ok" }] },
+];
+
+// Runs `body(file)` with MELLUM_MODE_RUNS on a fresh temp file, restoring every env var afterwards.
+async function withRunsFile(body, { prompt, headless } = {}) {
+	const { mkdtempSync, readFileSync, writeFileSync } = await import("node:fs");
+	const { tmpdir } = await import("node:os");
+	const dir = mkdtempSync(join_(tmpdir(), "mellum-runs-"));
+	const file = join_(dir, "runs.jsonl");
+	const saved = { RUNS: process.env.MELLUM_MODE_RUNS, PROMPT: process.env.MELLUM_MODE_PROMPT, MODE: process.env.MELLUM_MODE };
+	process.env.MELLUM_MODE_RUNS = file;
+	if (prompt !== undefined) {
+		const pf = join_(dir, "prompt.md");
+		writeFileSync(pf, prompt);
+		process.env.MELLUM_MODE_PROMPT = pf;
+	}
+	if (headless) process.env.MELLUM_MODE = "1";
+	try {
+		await body();
+		return JSON.parse(readFileSync(file, "utf8").trim());
+	} finally {
+		for (const [k, v] of Object.entries({ MELLUM_MODE_RUNS: saved.RUNS, MELLUM_MODE_PROMPT: saved.PROMPT, MELLUM_MODE: saved.MODE })) {
+			if (v === undefined) delete process.env[k];
+			else process.env[k] = v;
+		}
+	}
+}
+
+test("run record carries host, activation, prompt version, nudges and guard blocks", async () => {
+	const { readFileSync } = await import("node:fs");
+	const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+	const rec = await withRunsFile(async () => {
+		const { handlers, mellum } = recordingPi({ mode: "tui" });
+		await mellum("on");
+		handlers.context({ messages: snapshot });
+		for (let i = 0; i < 5; i++) assert.equal(handlers.tool_call(read), undefined);
+		assert.ok(handlers.tool_call(read)?.block, "the sixth identical read is blocked");
+		handlers.turn_end(emptyTurn);
+		assert.ok(handlers.agent_before_settle()?.continue, "the empty turn is nudged");
+		await mellum("off");
+	});
+	assert.equal(rec.nudges, 1);
+	assert.equal(rec.guardBlocks, 1);
+	assert.equal(rec.activation, "on");
+	assert.equal(rec.host, "tui");
+	assert.equal(rec.promptVersion, "v5");
+	assert.equal(rec.version, pkg.version);
+});
+
+test("a prompt without a version marker records promptVersion unknown", async () => {
+	const rec = await withRunsFile(async () => {
+		const { handlers, mellum } = recordingPi({ mode: "tui" });
+		await mellum("on");
+		handlers.context({ messages: snapshot });
+		await mellum("off");
+	}, { prompt: "no marker" });
+	assert.equal(rec.promptVersion, "unknown");
+});
+
+test("MELLUM_MODE=1 at session_start records activation headless and the host mode", async () => {
+	const rec = await withRunsFile(async () => {
+		const { handlers, ctx, mellum } = recordingPi({ mode: "json" });
+		await handlers.session_start({}, ctx);
+		handlers.context({ messages: snapshot });
+		await mellum("off");
+	}, { headless: true });
+	assert.equal(rec.activation, "headless");
+	assert.equal(rec.host, "json");
+});
+
+test("/mellum <task> records activation one-shot", async () => {
+	const rec = await withRunsFile(async () => {
+		const { handlers, ctx, mellum } = recordingPi({ mode: "tui", hasUI: true });
+		await mellum("fix it");
+		handlers.context({ messages: snapshot });
+		await handlers.agent_settled({}, ctx);
+	});
+	assert.equal(rec.activation, "one-shot");
+});
+
+test("a ctx without a mode records host unknown", async () => {
+	const rec = await withRunsFile(async () => {
+		const { handlers, mellum } = recordingPi();
+		await mellum("on");
+		handlers.context({ messages: snapshot });
+		await mellum("off");
+	});
+	assert.equal(rec.host, "unknown");
 });

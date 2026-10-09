@@ -401,8 +401,17 @@ export default function (pi: any) {
 	// The parent's context as last seen while on, plus assistant turns since; the run record is built from these.
 	let lastContext: Msg[] = [];
 	let turnsSinceContext: Msg[] = [];
+	// Per-span facts for the run record, reset in activate.
+	let host = "unknown";
+	let activation: Activation = "on";
+	let promptVersion = "unknown";
+	let nudges = 0;
+	let guardBlocks = 0;
 
-	async function activate(ctx: any, notify = true) {
+	// Same resolver for the handoff collapse and the run record: absolute, else relative to the cwd.
+	const existsInCwd = (p: string) => existsSync(isAbsolute(p) ? p : resolve(process.cwd(), p));
+
+	async function activate(ctx: any, notify: boolean, how: Activation) {
 		if (active) {
 			ctx.ui?.notify?.("mellum-mode is already on", "info");
 			return;
@@ -429,6 +438,11 @@ export default function (pi: any) {
 		activeModel = `${provider}/${id}`;
 		lastContext = [];
 		turnsSinceContext = [];
+		host = typeof ctx.mode === "string" ? ctx.mode : "unknown";
+		activation = how;
+		promptVersion = promptVersionOf(prompt);
+		nudges = 0;
+		guardBlocks = 0;
 		interactive = notify;
 		warnedMissing = false;
 		if (notify) pi.sendMessage({ customType: "mellum-mode", content: MARK_ON, display: true }, { deliverAs: "nextTurn" });
@@ -467,7 +481,7 @@ export default function (pi: any) {
 			const open = openSpan([...lastContext, ...turnsSinceContext]);
 			if (!open) return;
 			mkdirSync(dirname(file), { recursive: true });
-			appendFileSync(file, JSON.stringify(runRecord(open.task, open.span, { endedAt: Date.now(), cwd: process.cwd(), model: activeModel })) + "\n");
+			appendFileSync(file, JSON.stringify(runRecord(open.task, open.span, { endedAt: Date.now(), cwd: process.cwd(), model: activeModel, exists: existsInCwd, host, activation, promptVersion, nudges, guardBlocks })) + "\n");
 		} catch (error) {
 			try {
 				ctx?.ui?.notify?.(`mellum-mode: could not write the run record${file ? ` to ${file}` : ""}: ${(error as Error)?.message ?? String(error)}`, "warning");
@@ -482,13 +496,13 @@ export default function (pi: any) {
 		handler: async (args: string, ctx: any) => {
 			const want = (args || "").trim();
 			if (want === "off") return deactivate(ctx);
-			if (want === "on" || want === "") return activate(ctx);
+			if (want === "on" || want === "") return activate(ctx, true, "on");
 			// One shot: the task runs under the mode and the mode ends when the agent settles.
 			if (active) {
 				ctx.ui?.notify?.("mellum-mode is already on; type the task as a normal prompt, or /mellum off first", "warning");
 				return;
 			}
-			await activate(ctx);
+			await activate(ctx, true, "one-shot");
 			if (!active) return;
 			oneShot = true;
 			pi.sendUserMessage(want);
@@ -503,7 +517,7 @@ export default function (pi: any) {
 	});
 
 	pi.on("session_start", async (_event: any, ctx: any) => {
-		if (process.env.MELLUM_MODE === "1" && !active) await activate(ctx, false);
+		if (process.env.MELLUM_MODE === "1" && !active) await activate(ctx, false, "headless");
 	});
 
 	// Pi sizes auto-compaction against the active model's window (Mellum's 56k) over the
@@ -528,7 +542,7 @@ export default function (pi: any) {
 			return undefined;
 		}
 		if (!event.messages.some((m: any) => textOf(m).includes(MARK_ON))) return undefined;
-		const collapsed = collapseHandoffs(event.messages, { exists: (p) => existsSync(isAbsolute(p) ? p : resolve(process.cwd(), p)) });
+		const collapsed = collapseHandoffs(event.messages, { exists: existsInCwd });
 		return collapsed === event.messages ? undefined : { messages: collapsed };
 	});
 
@@ -550,7 +564,9 @@ export default function (pi: any) {
 	pi.on("tool_call", (event: any) => {
 		if (!active || !guards) return undefined;
 		span.toolCalls += 1;
-		return guards.toolCall(event);
+		const result = guards.toolCall(event);
+		if (result?.block) guardBlocks += 1;
+		return result;
 	});
 	pi.on("turn_end", (event: any) => {
 		if (active && guards) {
@@ -563,5 +579,10 @@ export default function (pi: any) {
 		}
 		return undefined;
 	});
-	pi.on("agent_before_settle", () => (active && guards ? guards.beforeSettle() : undefined));
+	pi.on("agent_before_settle", () => {
+		if (!active || !guards) return undefined;
+		const result = guards.beforeSettle();
+		if (result?.continue) nudges += 1;
+		return result;
+	});
 }
