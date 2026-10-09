@@ -41,3 +41,11 @@ copy through a wrapper and found no regression (14/15, 12.9 requests, 44 s vs
 A14's 70 s), but the wrapper is scratch code. *Reopens when* the next change
 to `extensions/` is made: the ladder should take the extension path as an
 argument and the mellum-mlx copy should go.
+
+**Empty-final nudge misses announce-and-stop turns.** The guard nudges only
+when a turn ends with no text. The A17 rung 5 miss ended with "Now let's run
+the tests again." and no tool call: the turn had text, so no nudge fired and
+the run stopped unfinished. A check for a final turn that announces an action
+without making a tool call would catch it, but it is a guard change on a
+single observed miss in 30 Mode runs (A14, A17). *Reopens when* a second
+announce-and-stop miss is recorded in a ladder phase or a run record.
