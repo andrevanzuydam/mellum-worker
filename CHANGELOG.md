@@ -4,6 +4,8 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-09
+
 ### Changed
 
 - Mellum Mode's handoff block now opens with a one-line summary (requests,
@@ -55,6 +57,7 @@ First release.
 - Recipe and backend docs. oMLX on Apple Silicon is the only backend run;
   Ollama is a documented stub.
 
-[Unreleased]: https://github.com/pauleveritt/mellum-worker/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/pauleveritt/mellum-worker/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/pauleveritt/mellum-worker/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/pauleveritt/mellum-worker/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/pauleveritt/mellum-worker/releases/tag/v0.1.0

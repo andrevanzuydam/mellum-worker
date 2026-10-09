@@ -27,7 +27,7 @@ Measured, not guessed: every setting here was ablated in the
 Pi:
 
 ```bash
-pi install git:github.com/pauleveritt/mellum-worker@v0.1.1
+pi install git:github.com/pauleveritt/mellum-worker@v0.1.2
 ```
 
 Then `/skill:mellum-setup`. The skill walks through weights, the oMLX
@@ -40,7 +40,7 @@ OpenCode, in the `plugin` array of `~/.config/opencode/opencode.json` or
 `opencode.jsonc`:
 
 ```json
-{ "plugin": ["mellum-worker@git+https://github.com/pauleveritt/mellum-worker.git#v0.1.1"] }
+{ "plugin": ["mellum-worker@git+https://github.com/pauleveritt/mellum-worker.git#v0.1.2"] }
 ```
 
 Then ask "run the mellum-setup skill".
