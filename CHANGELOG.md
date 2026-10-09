@@ -21,6 +21,10 @@ Versions match git tags; pin one in both install lines.
   kept. `commands[].mutates` comes from `commandMutatesFiles`, a heuristic
   for shell commands that change files (`rm`, `mv`, redirects, `sed -i`,
   `git checkout`, `pip install`, virtualenvs).
+- `ladder/`: the five-rung ladder that measures this checkout (runner,
+  scorer, fixtures and ablation prompts), moved in from the research
+  repo. `npm test` also runs its two JS hook tests; its Python tests run
+  with `cd ladder && uv run python -m pytest`.
 - Mellum's request path (prompt, messages, tools, sampling, guards) and
   the handoff block text are unchanged.
 

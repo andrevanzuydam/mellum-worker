@@ -16,7 +16,7 @@
     "local-llm"
   ],
   "scripts": {
-    "test": "node --test 'tests/*.test.mjs'"
+    "test": "node --test 'tests/*.test.mjs' 'ladder/ladder/*.test.mjs'"
   },
   "pi": {
     "extensions": [

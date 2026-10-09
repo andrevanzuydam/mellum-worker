@@ -1,0 +1,370 @@
+from pathlib import Path
+
+from ladder.run_ladder import PROMPT_FILE, build_pi_direct_args
+
+
+def test_direct_args_are_the_clean_profile():
+    args = build_pi_direct_args(Path("/tmp/trace.jsonl"), "fix it")
+    for flag in (
+        "-p",
+        "--no-extensions",
+        "--no-skills",
+        "--no-context-files",
+        "--no-session",
+    ):
+        assert flag in args
+    assert args[args.index("--tools") + 1] == "read,grep,find,ls,bash,edit,write"
+    assert args[args.index("--append-system-prompt") + 1] == str(PROMPT_FILE)
+    assert args[-1] == "fix it"
+
+
+def test_parse_pi_json_extracts_final_stop_and_text():
+    from ladder.run_ladder import parse_pi_json
+
+    lines = [
+        '{"type":"message_end","message":{"role":"user","content":"hi"}}',
+        '{"type":"message_end","message":{"role":"assistant","stopReason":"toolUse","content":[{"type":"toolCall","name":"read"}]}}',
+        '{"type":"message_end","message":{"role":"assistant","stopReason":"length","content":[{"type":"thinking","thinking":"..."}]}}',
+        '{"type":"agent_end"}',
+    ]
+    stop, text = parse_pi_json("\n".join(lines))
+    assert stop == "length" and text == ""
+    stop, text = parse_pi_json(
+        '{"type":"message_end","message":{"role":"assistant","stopReason":"stop","content":[{"type":"text","text":"Done."}]}}'
+    )
+    assert stop == "stop" and text == "Done."
+
+
+def test_direct_env_drops_virtual_env():
+    from ladder.run_ladder import child_env
+
+    env = child_env({"VIRTUAL_ENV": "/x", "PATH": "/bin"}, "/tmp/t.jsonl")
+    assert "VIRTUAL_ENV" not in env and env["MELLUM_TRACE_FILE"] == "/tmp/t.jsonl"
+
+
+def test_parse_pi_json_counts_thinking_reentries():
+    from ladder.run_ladder import parse_pi_json
+
+    two_blocks = (
+        '{"type":"message_end","message":{"role":"assistant","stopReason":"toolUse","content":'
+        '[{"type":"thinking","thinking":"a"},{"type":"text","text":"b"},{"type":"thinking","thinking":"c"}]}}'
+    )
+    one_block = (
+        '{"type":"message_end","message":{"role":"assistant","stopReason":"stop","content":'
+        '[{"type":"thinking","thinking":"a"},{"type":"text","text":"Done."}]}}'
+    )
+    stop, text, reentries = parse_pi_json(
+        f"{two_blocks}\n{one_block}", with_reentries=True
+    )
+    assert stop == "stop" and text == "Done." and reentries == 1
+
+
+def test_run_once_never_inherits_stdin(monkeypatch, tmp_path):
+    """Pi blocks forever on a non-TTY stdin that never reaches EOF; the worker must get DEVNULL."""
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    seen = {}
+
+    def fake_run(args, **kwargs):
+        seen.update(kwargs)
+        return sp.CompletedProcess(args, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(run_ladder.subprocess, "run", fake_run)
+    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch: scratch)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    rung = Rung(
+        1, "calculator", "fix it", ["true"], lambda ws, base: CheckResult(False, True)
+    )
+    run_ladder.run_once(rung, "direct", "baseline", 1, tmp_path / "out", 5, {}, False)
+    assert seen.get("stdin") is sp.DEVNULL
+
+
+def test_run_record_carries_the_guards_override(monkeypatch, tmp_path):
+    """A run under MELLUM_GUARDS must say so in run.json, or the record lies about which guards ran."""
+    import json
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    monkeypatch.setattr(
+        run_ladder.subprocess,
+        "run",
+        lambda args, **kw: sp.CompletedProcess(args, 0, stdout="", stderr=""),
+    )
+    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch: scratch)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    monkeypatch.setenv("MELLUM_GUARDS", '{"emptyFinalNudge":3,"loopBreaker":true}')
+    rung = Rung(
+        1, "calculator", "fix it", ["true"], lambda ws, base: CheckResult(False, True)
+    )
+    run_ladder.run_once(rung, "direct", "baseline", 1, tmp_path / "out", 5, {}, True)
+    record = json.loads(
+        (tmp_path / "out" / "rung1-baseline-direct-guards-r1" / "run.json").read_text()
+    )
+    assert record["guards_env"] == {"emptyFinalNudge": 3, "loopBreaker": True}
+
+
+def test_signal_handlers_raise_system_exit_so_finally_blocks_run():
+    import signal
+
+    from ladder.run_ladder import install_signal_handlers
+
+    install_signal_handlers()
+    for sig in (signal.SIGTERM, signal.SIGHUP):
+        handler = signal.getsignal(sig)
+        import pytest
+
+        with pytest.raises(SystemExit):
+            handler(sig, None)
+
+
+def test_parse_parent_json_extracts_the_brief():
+    from ladder.run_ladder import parse_parent_json
+
+    lines = [
+        '{"type":"message_end","message":{"role":"assistant","stopReason":"toolUse","content":[{"type":"toolCall","name":"subagent","arguments":{"agent":"mellum-worker","task":"Fix totalCents in calculator.js; run node --test"}}]}}',
+        '{"type":"message_end","message":{"role":"assistant","stopReason":"stop","content":[{"type":"text","text":"Done: 3/3 tests pass."}]}}',
+    ]
+    parent = parse_parent_json("\n".join(lines))
+    assert parent["delegated"] is True
+    assert parent["brief"] == "Fix totalCents in calculator.js; run node --test"
+    assert parent["parent_final_chars"] == len("Done: 3/3 tests pass.")
+    assert parent["subagent_calls"] == 1
+
+
+def test_parse_parent_json_reports_no_delegation():
+    from ladder.run_ladder import parse_parent_json
+
+    line = (
+        '{"type":"message_end","message":{"role":"assistant","stopReason":"stop","content":'
+        '[{"type":"toolCall","name":"edit","arguments":{}},{"type":"text","text":"I fixed it myself."}]}}'
+    )
+    parent = parse_parent_json(line)
+    assert (
+        parent["delegated"] is False
+        and parent["brief"] == ""
+        and parent["subagent_calls"] == 0
+    )
+
+
+def test_delegated_args_address_the_worker_by_name():
+    from ladder.run_ladder import build_pi_delegated_args
+
+    args = build_pi_delegated_args("fix it")
+    assert (
+        args[:2] == ["pi", "-p"]
+        and "--no-session" in args
+        and "--no-extensions" not in args
+    )
+    assert args[-1] == "Use mellum-worker to do this: fix it"
+
+
+def test_direct_env_is_offline_and_uses_the_profile_agent_dir():
+    from ladder.run_ladder import child_env
+
+    env = child_env(
+        {"PATH": "/bin"},
+        "/tmp/t.jsonl",
+        agent_dir=__import__("pathlib").Path("/tmp/agent"),
+        offline=True,
+    )
+    assert env["PI_OFFLINE"] == "1" and env["PI_CODING_AGENT_DIR"] == "/tmp/agent"
+
+
+def test_primary_args_run_mellum_as_the_parent_with_the_recorder():
+    from ladder.run_ladder import MODEL, RECORD_EXT, build_pi_primary_args
+
+    args = build_pi_primary_args("fix it")
+    assert (
+        args[:2] == ["pi", "-p"]
+        and "--no-session" in args
+        and "--no-extensions" not in args
+    )
+    assert args[args.index("--model") + 1] == MODEL
+    assert args[args.index("-e") + 1] == str(RECORD_EXT)
+    assert args[-1] == "fix it"
+
+
+def test_primary_plain_args_strip_extensions_skills_and_context_but_keep_the_recorder():
+    from ladder.run_ladder import MODEL, RECORD_EXT, build_pi_primary_args
+
+    args = build_pi_primary_args("fix it", plain=True)
+    for flag in (
+        "--no-extensions",
+        "--no-skills",
+        "--no-context-files",
+        "--no-session",
+    ):
+        assert flag in args
+    assert args[args.index("--model") + 1] == MODEL
+    assert args[args.index("-e") + 1] == str(RECORD_EXT)
+    assert args[-1] == "fix it"
+
+
+def test_direct_args_can_replace_the_system_prompt_and_set_thinking(tmp_path):
+    """The shipped worker uses systemPromptMode: replace; the ladder must be able to measure that."""
+    from ladder.run_ladder import build_pi_direct_args
+
+    prompt = tmp_path / "v4.md"
+    prompt.write_text("facts")
+    args = build_pi_direct_args(
+        tmp_path / "t",
+        "fix it",
+        False,
+        prompt=prompt,
+        prompt_mode="replace",
+        thinking="low",
+    )
+    assert "--append-system-prompt" not in args
+    assert args[args.index("--system-prompt") + 1] == "facts"
+    assert args[args.index("--thinking") + 1] == "low"
+
+
+def test_direct_args_default_to_append_mode_with_the_worker_prompt(tmp_path):
+    from ladder.run_ladder import PROMPT_FILE, build_pi_direct_args
+
+    args = build_pi_direct_args(tmp_path / "t", "fix it", False)
+    assert args[args.index("--append-system-prompt") + 1] == str(PROMPT_FILE)
+    assert "--system-prompt" not in args
+
+
+def test_run_record_leaves_direct_only_fields_empty_in_other_modes(
+    monkeypatch, tmp_path
+):
+    """prompt_file/prompt_mode/thinking only describe direct mode; recording them elsewhere misdescribes the run."""
+    import json
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    monkeypatch.setattr(
+        run_ladder.subprocess,
+        "run",
+        lambda args, **kw: sp.CompletedProcess(args, 0, stdout="", stderr=""),
+    )
+    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch: scratch)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    monkeypatch.setattr(run_ladder, "prepare_pi_workspace", lambda ws, ext: ws)
+    monkeypatch.setattr(run_ladder, "mirror_agent_dir", lambda s, d, t, **kw: d)
+    rung = Rung(
+        1, "calculator", "fix it", ["true"], lambda ws, base: CheckResult(False, True)
+    )
+    run_ladder.run_once(rung, "delegated", "baseline", 1, tmp_path / "out", 5, {}, True)
+    record = json.loads(
+        (
+            tmp_path / "out" / "rung1-baseline-delegated-guards-r1" / "run.json"
+        ).read_text()
+    )
+    assert record["prompt_file"] is None and record["prompt_mode"] is None
+    assert record["thinking"] is None and record["prompt_version"] is None
+
+
+def test_direct_args_load_the_thinking_stripper_before_the_recorder(tmp_path):
+    """The recorder must see the stripped payload, so the stripper loads first."""
+    from ladder.run_ladder import RECORD_EXT, STRIP_EXT, build_pi_direct_args
+
+    args = build_pi_direct_args(tmp_path / "t", "fix it", True, strip_thinking=True)
+    exts = [args[i + 1] for i, a in enumerate(args) if a == "-e"]
+    assert exts.index(str(STRIP_EXT)) < exts.index(str(RECORD_EXT))
+    assert str(STRIP_EXT) not in build_pi_direct_args(tmp_path / "t", "fix it", True)
+
+
+def test_direct_args_load_the_budget_hook_before_the_recorder(tmp_path):
+    from ladder.run_ladder import BUDGET_EXT, RECORD_EXT, build_pi_direct_args
+
+    args = build_pi_direct_args(
+        tmp_path / "t", "fix it", True, thinking="medium", budget_hook=True
+    )
+    exts = [args[i + 1] for i, a in enumerate(args) if a == "-e"]
+    assert exts.index(str(BUDGET_EXT)) < exts.index(str(RECORD_EXT))
+    assert args[args.index("--thinking") + 1] == "medium"
+
+
+def test_mode_args_run_mellum_inside_the_operator_profile_with_the_mode_extension():
+    """Mellum mode: the operator's full profile (extensions, skills), plus the mode, guards, recorder."""
+    from ladder.run_ladder import (
+        GUARDS_EXT,
+        MODE_EXT,
+        MODEL,
+        RECORD_EXT,
+        build_pi_mode_args,
+    )
+
+    args = build_pi_mode_args("fix it")
+    assert "--no-extensions" not in args and "--no-skills" not in args
+    assert args[args.index("--model") + 1] == MODEL
+    exts = [args[i + 1] for i, a in enumerate(args) if a == "-e"]
+    assert exts.index(str(MODE_EXT)) < exts.index(str(RECORD_EXT))
+    assert str(GUARDS_EXT) in exts
+    assert args[-1] == "fix it"
+
+
+def test_mode_env_activates_the_mode_headlessly():
+    from ladder.run_ladder import child_env
+
+    env = child_env({}, "/t", None, offline=False, mode=True)
+    assert env["MELLUM_MODE"] == "1"
+    assert "MELLUM_MODE" not in child_env({}, "/t", None, offline=False)
+
+
+def test_split_brief_yields_one_prompt_per_step_with_the_header_prepended_to_the_first():
+    from ladder.run_ladder import split_brief
+
+    brief = "# Task: t\n\nTest command: x\n\n## Step 1\nread\n\n## Step 2\nedit\n"
+    steps = split_brief(brief)
+    assert len(steps) == 2
+    assert steps[0].startswith("# Task: t") and steps[0].rstrip().endswith("read")
+    assert steps[1].strip() == "edit"
+
+
+def test_chunk_args_continue_one_session_and_load_guards_and_recorder(tmp_path):
+    from ladder.run_ladder import GUARDS_EXT, RECORD_EXT, build_pi_chunk_args
+
+    args = build_pi_chunk_args(tmp_path / "sessions", "run", "step text", True)
+    assert args[args.index("--session-dir") + 1] == str(tmp_path / "sessions")
+    assert args[args.index("--session-id") + 1] == "run"
+    assert "--no-session" not in args and "--system-prompt" in args
+    exts = [args[i + 1] for i, a in enumerate(args) if a == "-e"]
+    assert str(GUARDS_EXT) in exts and str(RECORD_EXT) in exts
+    assert args[-1] == "step text"
+
+
+def test_mode_runs_record_guards_on_because_the_mode_always_loads_them(
+    monkeypatch, tmp_path
+):
+    import json
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    monkeypatch.setattr(
+        run_ladder.subprocess,
+        "run",
+        lambda args, **kw: sp.CompletedProcess(args, 0, stdout="", stderr=""),
+    )
+    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch: scratch)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    monkeypatch.setattr(run_ladder, "mirror_agent_dir", lambda s, d, t, **kw: d)
+    rung = Rung(
+        1, "calculator", "fix it", ["true"], lambda ws, base: CheckResult(False, True)
+    )
+    run_ladder.run_once(rung, "mode", "baseline", 1, tmp_path / "out", 5, {}, False)
+    record = json.loads(
+        (tmp_path / "out" / "rung1-baseline-mode-guards-r1" / "run.json").read_text()
+    )
+    assert record["guards"] is True and record["subagents_config"] is None
+
+
+def test_split_brief_without_step_headings_returns_the_whole_text_and_warns(caplog):
+    from ladder.run_ladder import split_brief
+
+    with caplog.at_level("WARNING"):
+        steps = split_brief("# Task\n\n## Step 1: Read\nx\n")
+    assert steps == ["# Task\n\n## Step 1: Read\nx"]
+    assert "no `## Step N` headings" in caplog.text
