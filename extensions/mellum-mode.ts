@@ -2,7 +2,9 @@
  * Mellum mode: run the small model inside the main session with the worker's prompt
  * and tools, and show it nothing from before the mode began.
  *
- *   /mellum <task>  – one shot: switch to Mellum, run the task, switch back when settled
+ *   /mellum <task>  – one shot: switch to Mellum, run the task, switch back when settled.
+ *                     One shot under `pi -p` or `--mode json` (no UI): the command waits for
+ *                     the run, switches back and writes the run record before it returns.
  *   /mellum on      – stay on for several turns (switch model, tools, mark the start)
  *   /mellum off     – restore the previous model and tools
  *
@@ -20,6 +22,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { commandMutatesFiles } from "./mellum-commands.ts";
 import { createGuardSet, type GuardSet } from "./mellum-guards.ts";
 
 export const MARK_ON = "[mellum-mode on]";
@@ -151,10 +154,14 @@ export interface SpanStats {
 	lastTurnAt?: number;
 	wallSeconds?: number;
 	files: string[];
+	/** Count of edit and write tool calls (not unique paths). */
+	edits: number;
 	commands: SpanCommand[];
 	lastCommand: "ok" | "failed" | "unfinished" | "none";
 	lastCommandOutput: string;
 	finalReply: string;
+	/** Shape of the span's last assistant message. */
+	finalTurn: { stopReason?: string; hadText: boolean; hadToolCall: boolean };
 }
 
 /** Everything the handoff and the run record report, computed once from a span's messages. */
@@ -171,14 +178,23 @@ export function spanStats(span: Msg[]): SpanStats {
 		requests: 0,
 		usage: { input: 0, cacheRead: 0, output: 0 },
 		files: [],
+		edits: 0,
 		commands: [],
 		lastCommand: "none",
 		lastCommandOutput: "",
 		finalReply: "",
+		finalTurn: { hadText: false, hadToolCall: false },
 	};
 	for (const m of span) {
 		if (m.role !== "assistant") continue;
 		stats.requests += 1;
+		const sr = (m as any).stopReason;
+		const blocks: any[] = Array.isArray(m.content) ? (m.content as any[]) : [];
+		stats.finalTurn = {
+			...(typeof sr === "string" ? { stopReason: sr } : {}),
+			hadText: blocks.some((b) => b.type === "text" && typeof b.text === "string" && b.text.trim() !== ""),
+			hadToolCall: blocks.some((b) => b.type === "toolCall"),
+		};
 		const usage = (m as any).usage;
 		if (usage) {
 			for (const k of ["input", "cacheRead", "output"] as const) {
@@ -193,6 +209,7 @@ export function spanStats(span: Msg[]): SpanStats {
 		if (!Array.isArray(m.content)) continue;
 		for (const b of m.content as any[]) {
 			if (b.type === "toolCall" && (b.name === "edit" || b.name === "write")) {
+				stats.edits += 1;
 				const p = b.arguments?.path;
 				if (typeof p === "string") files.add(p);
 			}
@@ -245,37 +262,91 @@ function handoffMessage(task: string, span: Msg[], opts: HandoffOptions = {}): M
 	return { role: "user", content: [{ type: "text", text: body }], timestamp: Date.now() };
 }
 
+/** The package version, read once at load; "unknown" if package.json cannot be read. */
+export const PACKAGE_VERSION: string = (() => {
+	try {
+		const here = dirname(fileURLToPath(import.meta.url));
+		const v = JSON.parse(readFileSync(resolve(here, "..", "package.json"), "utf8")).version;
+		return typeof v === "string" ? v : "unknown";
+	} catch {
+		return "unknown";
+	}
+})();
+
+/** `vN` from the prompt's first-line marker `<!-- mellum-worker prompt vN -->`, else "unknown". */
+export function promptVersionOf(prompt: string): string {
+	const first = prompt.split("\n", 1)[0] ?? "";
+	return /^<!--\s*mellum-worker prompt (v\d+)\s*-->/.exec(first)?.[1] ?? "unknown";
+}
+
+export type Activation = "one-shot" | "on" | "headless";
+
+export interface RecordMeta {
+	endedAt: number;
+	cwd: string;
+	model: string;
+	exists?: (path: string) => boolean;
+	host?: string;
+	activation?: Activation;
+	promptVersion?: string;
+	nudges?: number;
+	guardBlocks?: number;
+}
+
 export interface RunRecord {
+	schema: 2;
+	version: string;
+	promptVersion: string;
+	host: string;
+	activation: Activation | "unknown";
 	startedAt?: string;
 	endedAt: string;
 	wallSeconds?: number;
 	cwd: string;
 	model: string;
 	task: string;
+	taskNamesTestCommand: boolean;
 	requests: number;
 	usage: { input: number; cacheRead: number; output: number };
 	files: string[];
-	commands: { command: string; failed: boolean }[];
+	edits: number;
+	filesMissingAtEnd: string[];
+	commands: { command: string; failed: boolean; mutates: boolean }[];
 	lastCommand: SpanStats["lastCommand"];
 	finalReply: string;
+	finalTurn: SpanStats["finalTurn"];
+	nudges: number;
+	guardBlocks: number;
 }
 
-/** One JSONL line per span, for analysis outside the session. Same fields as the handoff. */
-export function runRecord(task: string, span: Msg[], meta: { endedAt: number; cwd: string; model: string }): RunRecord {
+/** One JSONL line per span, for analysis outside the session. Same fields as the handoff, plus schema 2 additions. */
+export function runRecord(task: string, span: Msg[], meta: RecordMeta): RunRecord {
 	const stats = spanStats(span);
+	const exists = meta.exists;
 	return {
+		schema: 2,
+		version: PACKAGE_VERSION,
+		promptVersion: meta.promptVersion ?? "unknown",
+		host: meta.host ?? "unknown",
+		activation: meta.activation ?? "unknown",
 		startedAt: stats.startedAt === undefined ? undefined : new Date(stats.startedAt).toISOString(),
 		endedAt: new Date(meta.endedAt).toISOString(),
 		wallSeconds: stats.wallSeconds,
 		cwd: meta.cwd,
 		model: meta.model,
 		task: task.trim().slice(0, 2000),
+		taskNamesTestCommand: /test command/i.test(task),
 		requests: stats.requests,
 		usage: stats.usage,
 		files: stats.files,
-		commands: stats.commands.map((c) => ({ command: c.command.slice(0, 2000), failed: c.failed })),
+		edits: stats.edits,
+		filesMissingAtEnd: exists ? stats.files.filter((f) => !exists(f)) : [],
+		commands: stats.commands.map((c) => ({ command: c.command.slice(0, 2000), failed: c.failed, mutates: commandMutatesFiles(c.command) })),
 		lastCommand: stats.lastCommand,
 		finalReply: stats.finalReply.slice(0, 4000),
+		finalTurn: stats.finalTurn,
+		nudges: meta.nudges ?? 0,
+		guardBlocks: meta.guardBlocks ?? 0,
 	};
 }
 
@@ -319,7 +390,18 @@ function loadPrompt(): string {
 	return readFileSync(file, "utf8").trim();
 }
 
-export default function (pi: any) {
+/**
+ * Reports a problem the user must see. Without a UI (`pi -p`, `--mode json`) Pi's notify
+ * is a no-op, so the message goes to stderr instead. Never throws.
+ */
+function warn(ctx: any, msg: string, level: "warning" | "error") {
+	try {
+		if (ctx?.hasUI === false) console.error(msg);
+		else ctx?.ui?.notify?.(msg, level);
+	} catch {}
+}
+
+export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
 	let active = false;
 	let interactive = false;
 	let saved: { model: any; tools: string[] } | undefined;
@@ -332,8 +414,17 @@ export default function (pi: any) {
 	// The parent's context as last seen while on, plus assistant turns since; the run record is built from these.
 	let lastContext: Msg[] = [];
 	let turnsSinceContext: Msg[] = [];
+	// Per-span facts for the run record, reset in activate.
+	let host = "unknown";
+	let activation: Activation = "on";
+	let promptVersion = "unknown";
+	let nudges = 0;
+	let guardBlocks = 0;
 
-	async function activate(ctx: any, notify = true) {
+	// Same resolver for the handoff collapse and the run record: absolute, else relative to the cwd.
+	const existsInCwd = (p: string) => existsSync(isAbsolute(p) ? p : resolve(process.cwd(), p));
+
+	async function activate(ctx: any, notify: boolean, how: Activation) {
 		if (active) {
 			ctx.ui?.notify?.("mellum-mode is already on", "info");
 			return;
@@ -342,14 +433,14 @@ export default function (pi: any) {
 		const id = process.env.MELLUM_MODE_MODEL || DEFAULT_MODEL.id;
 		const model = ctx.modelRegistry.find(provider, id);
 		if (!model) {
-			ctx.ui?.notify?.(`mellum-mode: model ${provider}/${id} not found; mode stays off`, "error");
+			warn(ctx, `mellum-mode: model ${provider}/${id} not found; mode stays off`, "error");
 			return;
 		}
 		const previous = { model: ctx.model, tools: pi.getActiveTools() };
 		prompt = loadPrompt();
 		const switched = await pi.setModel(model);
 		if (!switched) {
-			ctx.ui?.notify?.(`mellum-mode: could not select ${provider}/${id} (auth or provider error); mode stays off`, "error");
+			warn(ctx, `mellum-mode: could not select ${provider}/${id} (auth or provider error); mode stays off`, "error");
 			return;
 		}
 		saved = previous;
@@ -360,6 +451,11 @@ export default function (pi: any) {
 		activeModel = `${provider}/${id}`;
 		lastContext = [];
 		turnsSinceContext = [];
+		host = typeof ctx.mode === "string" ? ctx.mode : "unknown";
+		activation = how;
+		promptVersion = promptVersionOf(prompt);
+		nudges = 0;
+		guardBlocks = 0;
 		interactive = notify;
 		warnedMissing = false;
 		if (notify) pi.sendMessage({ customType: "mellum-mode", content: MARK_ON, display: true }, { deliverAs: "nextTurn" });
@@ -372,12 +468,12 @@ export default function (pi: any) {
 			return;
 		}
 		if (!saved?.model) {
-			ctx.ui?.notify?.("mellum-mode: no previous model to restore; staying on. Pick a model with /model, then /mellum off.", "warning");
+			warn(ctx, "mellum-mode: no previous model to restore; staying on. Pick a model with /model, then /mellum off.", "warning");
 			return;
 		}
 		const restored = await pi.setModel(saved.model);
 		if (!restored) {
-			ctx.ui?.notify?.("mellum-mode: could not restore the previous model; staying on", "error");
+			warn(ctx, "mellum-mode: could not restore the previous model; staying on", "error");
 			return;
 		}
 		pi.setActiveTools(saved.tools);
@@ -398,43 +494,89 @@ export default function (pi: any) {
 			const open = openSpan([...lastContext, ...turnsSinceContext]);
 			if (!open) return;
 			mkdirSync(dirname(file), { recursive: true });
-			appendFileSync(file, JSON.stringify(runRecord(open.task, open.span, { endedAt: Date.now(), cwd: process.cwd(), model: activeModel })) + "\n");
+			appendFileSync(file, JSON.stringify(runRecord(open.task, open.span, { endedAt: Date.now(), cwd: process.cwd(), model: activeModel, exists: existsInCwd, host, activation, promptVersion, nudges, guardBlocks })) + "\n");
 		} catch (error) {
-			try {
-				ctx?.ui?.notify?.(`mellum-mode: could not write the run record${file ? ` to ${file}` : ""}: ${(error as Error)?.message ?? String(error)}`, "warning");
-			} catch {}
+			warn(ctx, `mellum-mode: could not write the run record${file ? ` to ${file}` : ""}: ${(error as Error)?.message ?? String(error)}`, "warning");
 		}
 	}
 
 	let oneShot = false;
+	// The one in-flight deactivation of a one shot, shared by agent_settled and the headless handler.
+	let settling: Promise<void> | undefined;
+	// Resolves the headless handler's wait for the run to start; set only while it waits.
+	let onRunStart: (() => void) | undefined;
+	const startTimeoutMs = options.startTimeoutMs ?? 60_000;
+
+	// Ends a one shot exactly once: a second caller gets the deactivation already under way.
+	function settle(ctx: any): Promise<void> {
+		if (settling) return settling;
+		oneShot = false;
+		settling = deactivate(ctx).finally(() => {
+			settling = undefined;
+		});
+		return settling;
+	}
 
 	pi.registerCommand("mellum", {
 		description: "mellum <task> | on | off — run Mellum with the worker prompt and tools inside this session",
 		handler: async (args: string, ctx: any) => {
 			const want = (args || "").trim();
 			if (want === "off") return deactivate(ctx);
-			if (want === "on" || want === "") return activate(ctx);
+			if (want === "on" || want === "") return activate(ctx, true, "on");
 			// One shot: the task runs under the mode and the mode ends when the agent settles.
 			if (active) {
-				ctx.ui?.notify?.("mellum-mode is already on; type the task as a normal prompt, or /mellum off first", "warning");
+				warn(ctx, "mellum-mode is already on; type the task as a normal prompt, or /mellum off first", "warning");
 				return;
 			}
-			await activate(ctx);
+			// Read while the ctx is certainly live. Without a UI (pi -p, JSON mode) Pi treats the
+			// prompt as finished when this handler returns and disposes the runtime, so the
+			// handler must wait for the run and the deactivation.
+			const headless = ctx.hasUI === false && typeof ctx.waitForIdle === "function";
+			const waitForIdle: () => Promise<void> = ctx.waitForIdle;
+			await activate(ctx, true, "one-shot");
 			if (!active) return;
 			oneShot = true;
+			if (!headless) {
+				pi.sendUserMessage(want);
+				return;
+			}
+			// sendUserMessage is fire-and-forget and the run is not active (so not "busy")
+			// until Pi has run its input and before_agent_start handlers: wait for agent_start
+			// first, or waitForIdle would return before the task ran.
+			const started = new Promise<boolean>((resolve) => {
+				onRunStart = () => resolve(true);
+			});
+			let timer: ReturnType<typeof setTimeout> | undefined;
+			const timedOut = new Promise<boolean>((resolve) => {
+				timer = setTimeout(() => resolve(false), startTimeoutMs);
+			});
 			pi.sendUserMessage(want);
+			let didStart: boolean;
+			try {
+				didStart = await Promise.race([started, timedOut]);
+			} finally {
+				clearTimeout(timer);
+				onRunStart = undefined;
+			}
+			if (!didStart) warn(ctx, `mellum-mode: the task did not start within ${startTimeoutMs / 1000} s; switching the mode off`, "warning");
+			await waitForIdle();
+			// Pi resolves the idle wait after agent_settled handlers return, so normally
+			// agent_settled has already deactivated; cover the other order too.
+			if (settling) await settling;
+			else if (active && oneShot) await settle(ctx);
 		},
 	});
 
+	pi.on("agent_start", () => {
+		if (oneShot) onRunStart?.();
+	});
+
 	pi.on("agent_settled", async (_event: any, ctx: any) => {
-		if (active && oneShot) {
-			oneShot = false;
-			await deactivate(ctx);
-		}
+		if (active && oneShot) await settle(ctx);
 	});
 
 	pi.on("session_start", async (_event: any, ctx: any) => {
-		if (process.env.MELLUM_MODE === "1" && !active) await activate(ctx, false);
+		if (process.env.MELLUM_MODE === "1" && !active) await activate(ctx, false, "headless");
 	});
 
 	// Pi sizes auto-compaction against the active model's window (Mellum's 56k) over the
@@ -459,7 +601,7 @@ export default function (pi: any) {
 			return undefined;
 		}
 		if (!event.messages.some((m: any) => textOf(m).includes(MARK_ON))) return undefined;
-		const collapsed = collapseHandoffs(event.messages, { exists: (p) => existsSync(isAbsolute(p) ? p : resolve(process.cwd(), p)) });
+		const collapsed = collapseHandoffs(event.messages, { exists: existsInCwd });
 		return collapsed === event.messages ? undefined : { messages: collapsed };
 	});
 
@@ -481,7 +623,9 @@ export default function (pi: any) {
 	pi.on("tool_call", (event: any) => {
 		if (!active || !guards) return undefined;
 		span.toolCalls += 1;
-		return guards.toolCall(event);
+		const result = guards.toolCall(event);
+		if (result?.block) guardBlocks += 1;
+		return result;
 	});
 	pi.on("turn_end", (event: any) => {
 		if (active && guards) {
@@ -494,5 +638,10 @@ export default function (pi: any) {
 		}
 		return undefined;
 	});
-	pi.on("agent_before_settle", () => (active && guards ? guards.beforeSettle() : undefined));
+	pi.on("agent_before_settle", () => {
+		if (!active || !guards) return undefined;
+		const result = guards.beforeSettle();
+		if (result?.continue) nudges += 1;
+		return result;
+	});
 }

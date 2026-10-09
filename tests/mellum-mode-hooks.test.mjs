@@ -138,7 +138,7 @@ test("/mellum off appends one run record line to the file named by MELLUM_MODE_R
 		const rec = JSON.parse(lines[0]);
 		assert.equal(rec.task, "fix the cart");
 		assert.equal(rec.requests, 2);
-		assert.deepEqual(rec.commands, [{ command: "node --test", failed: false }]);
+		assert.deepEqual(rec.commands, [{ command: "node --test", failed: false, mutates: false }]);
 		assert.equal(rec.model, `${MODEL.provider}/${MODEL.id}`);
 		process.env.MELLUM_MODE_RUNS = "0";
 		const b = makePi();
@@ -151,7 +151,7 @@ test("/mellum off appends one run record line to the file named by MELLUM_MODE_R
 	}
 });
 
-function recordingPi() {
+function recordingPi({ mode, hasUI } = {}) {
 	const handlers = {};
 	let commands = {};
 	const calls = { setModel: [], sendMessage: [], notify: [] };
@@ -163,6 +163,8 @@ function recordingPi() {
 		sendMessage: (m) => calls.sendMessage.push(m), sendUserMessage: () => {},
 	};
 	const ctx = { model: { provider: "anthropic", id: "parent" }, modelRegistry: { find: () => MODEL }, ui: { notify: (m, l) => calls.notify.push([m, l]) } };
+	if (mode !== undefined) ctx.mode = mode;
+	if (hasUI !== undefined) ctx.hasUI = hasUI;
 	install(pi);
 	return { handlers, ctx, calls, mellum: (a) => commands.mellum.handler(a, ctx) };
 }
@@ -234,4 +236,253 @@ test("no context seen while on means nothing is written", async () => {
 	} finally {
 		delete process.env.MELLUM_MODE_RUNS;
 	}
+});
+
+const snapshot = [
+	{ role: "user", content: [{ type: "text", text: "fix the cart" }] },
+	{ role: "user", content: [{ type: "text", text: "[mellum-mode on]" }] },
+	{ role: "assistant", timestamp: 1000, usage: { output: 5 }, content: [{ type: "text", text: "ok" }] },
+];
+
+// Runs `body(file)` with MELLUM_MODE_RUNS on a fresh temp file, restoring every env var afterwards.
+async function withRunsFile(body, { prompt, headless } = {}) {
+	const { mkdtempSync, readFileSync, writeFileSync } = await import("node:fs");
+	const { tmpdir } = await import("node:os");
+	const dir = mkdtempSync(join_(tmpdir(), "mellum-runs-"));
+	const file = join_(dir, "runs.jsonl");
+	const saved = { RUNS: process.env.MELLUM_MODE_RUNS, PROMPT: process.env.MELLUM_MODE_PROMPT, MODE: process.env.MELLUM_MODE };
+	process.env.MELLUM_MODE_RUNS = file;
+	if (prompt !== undefined) {
+		const pf = join_(dir, "prompt.md");
+		writeFileSync(pf, prompt);
+		process.env.MELLUM_MODE_PROMPT = pf;
+	}
+	if (headless) process.env.MELLUM_MODE = "1";
+	try {
+		await body();
+		return JSON.parse(readFileSync(file, "utf8").trim());
+	} finally {
+		for (const [k, v] of Object.entries({ MELLUM_MODE_RUNS: saved.RUNS, MELLUM_MODE_PROMPT: saved.PROMPT, MELLUM_MODE: saved.MODE })) {
+			if (v === undefined) delete process.env[k];
+			else process.env[k] = v;
+		}
+	}
+}
+
+test("run record carries host, activation, prompt version, nudges and guard blocks", async () => {
+	const { readFileSync } = await import("node:fs");
+	const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+	const rec = await withRunsFile(async () => {
+		const { handlers, mellum } = recordingPi({ mode: "tui" });
+		await mellum("on");
+		handlers.context({ messages: snapshot });
+		for (let i = 0; i < 5; i++) assert.equal(handlers.tool_call(read), undefined);
+		assert.ok(handlers.tool_call(read)?.block, "the sixth identical read is blocked");
+		handlers.turn_end(emptyTurn);
+		assert.ok(handlers.agent_before_settle()?.continue, "the empty turn is nudged");
+		await mellum("off");
+	});
+	assert.equal(rec.nudges, 1);
+	assert.equal(rec.guardBlocks, 1);
+	assert.equal(rec.activation, "on");
+	assert.equal(rec.host, "tui");
+	assert.equal(rec.promptVersion, "v5");
+	assert.equal(rec.version, pkg.version);
+});
+
+test("a prompt without a version marker records promptVersion unknown", async () => {
+	const rec = await withRunsFile(async () => {
+		const { handlers, mellum } = recordingPi({ mode: "tui" });
+		await mellum("on");
+		handlers.context({ messages: snapshot });
+		await mellum("off");
+	}, { prompt: "no marker" });
+	assert.equal(rec.promptVersion, "unknown");
+});
+
+test("MELLUM_MODE=1 at session_start records activation headless and the host mode", async () => {
+	const rec = await withRunsFile(async () => {
+		const { handlers, ctx, mellum } = recordingPi({ mode: "json" });
+		await handlers.session_start({}, ctx);
+		handlers.context({ messages: snapshot });
+		await mellum("off");
+	}, { headless: true });
+	assert.equal(rec.activation, "headless");
+	assert.equal(rec.host, "json");
+});
+
+test("/mellum <task> records activation one-shot", async () => {
+	const rec = await withRunsFile(async () => {
+		const { handlers, ctx, mellum } = recordingPi({ mode: "tui", hasUI: true });
+		await mellum("fix it");
+		handlers.context({ messages: snapshot });
+		await handlers.agent_settled({}, ctx);
+	});
+	assert.equal(rec.activation, "one-shot");
+});
+
+test("a ctx without a mode records host unknown", async () => {
+	const rec = await withRunsFile(async () => {
+		const { handlers, mellum } = recordingPi();
+		await mellum("on");
+		handlers.context({ messages: snapshot });
+		await mellum("off");
+	});
+	assert.equal(rec.host, "unknown");
+});
+
+// A fake Pi whose sendUserMessage runs the task a tick later, as Pi's print mode does:
+// agent_start, a context snapshot, one assistant turn, then (optionally) agent_settled,
+// then the idle wait resolves. `waitForIdle` is a spy returning that idle promise.
+function headlessPi({ hasUI = false, withWait = true, startsRun = true, settledFirst = false, startTimeoutMs } = {}) {
+	const handlers = {};
+	let commands = {};
+	const calls = { setModel: [], sendMessage: [], notify: [], waitForIdle: 0 };
+	let resolveIdle;
+	const idle = new Promise((r) => { resolveIdle = r; });
+	if (!startsRun) resolveIdle(); // no run: Pi is idle, so the wait returns at once
+	const ctx = { mode: "print", hasUI, model: { provider: "anthropic", id: "parent" }, modelRegistry: { find: () => MODEL }, ui: { notify: (m, l) => calls.notify.push([m, l]) } };
+	if (withWait) ctx.waitForIdle = () => { calls.waitForIdle += 1; return idle; };
+	const pi = {
+		on: (name, fn) => { handlers[name] = fn; },
+		registerCommand: (name, def) => { commands[name] = def; },
+		getActiveTools: () => ["read"], setActiveTools: () => {},
+		setModel: async (m) => { calls.setModel.push(m); return true; },
+		sendMessage: (m) => calls.sendMessage.push(m),
+		sendUserMessage: (text) => {
+			if (!startsRun) return;
+			setImmediate(async () => {
+				handlers.agent_start?.({}, ctx);
+				const reply = { role: "assistant", timestamp: 1000, usage: { output: 5 }, content: [{ type: "text", text: "done" }] };
+				handlers.context({ messages: [{ role: "user", content: [{ type: "text", text }] }, { role: "custom", customType: "mellum-mode", content: "[mellum-mode on]" }, reply] });
+				handlers.turn_end({ message: reply });
+				if (settledFirst) await handlers.agent_settled({}, ctx);
+				resolveIdle();
+			});
+		},
+	};
+	if (startTimeoutMs === undefined) install(pi);
+	else install(pi, { startTimeoutMs });
+	return { handlers, ctx, calls, mellum: (a) => commands.mellum.handler(a, ctx) };
+}
+
+// Runs `body()` with MELLUM_MODE_RUNS on a fresh temp file; returns the file's lines (none if absent).
+async function recordLines(body) {
+	const { mkdtempSync, readFileSync, existsSync } = await import("node:fs");
+	const { tmpdir } = await import("node:os");
+	const file = join_(mkdtempSync(join_(tmpdir(), "mellum-runs-")), "runs.jsonl");
+	const saved = process.env.MELLUM_MODE_RUNS;
+	process.env.MELLUM_MODE_RUNS = file;
+	try {
+		await body();
+		return existsSync(file) ? readFileSync(file, "utf8").trim().split("\n") : [];
+	} finally {
+		if (saved === undefined) delete process.env.MELLUM_MODE_RUNS;
+		else process.env.MELLUM_MODE_RUNS = saved;
+	}
+}
+
+const offMarkers = (calls) => calls.sendMessage.filter((m) => m.content === "[mellum-mode off]").length;
+const modeIsOff = (handlers) => { for (let i = 0; i < 8; i++) assert.equal(handlers.tool_call(read), undefined, "guard hooks inert: mode is off"); };
+
+test("headless one shot: the handler waits for the run, then restores the model and writes the record", async () => {
+	let h;
+	const lines = await recordLines(async () => {
+		h = headlessPi();
+		await h.mellum("fix it");
+	});
+	assert.equal(h.calls.waitForIdle, 1, "waitForIdle called once");
+	assert.deepEqual(h.calls.setModel.at(-1), h.ctx.model, "the parent model is restored");
+	assert.equal(offMarkers(h.calls), 1, "one off-marker");
+	assert.equal(lines.length, 1, "one record line");
+	const rec = JSON.parse(lines[0]);
+	assert.equal(rec.activation, "one-shot");
+	assert.equal(rec.host, "print");
+	assert.equal(rec.task, "fix it");
+	modeIsOff(h.handlers);
+});
+
+test("headless one shot where agent_settled fires before idle: still one deactivation", async () => {
+	let h;
+	const lines = await recordLines(async () => {
+		h = headlessPi({ settledFirst: true });
+		await h.mellum("fix it");
+	});
+	const restores = h.calls.setModel.filter((m) => m === h.ctx.model).length;
+	assert.equal(restores, 1, "one restore setModel");
+	assert.equal(offMarkers(h.calls), 1, "one off-marker");
+	assert.equal(lines.length, 1, "one record line");
+	assert.equal(h.calls.notify.filter(([m]) => m.startsWith("mellum-mode off:")).length, 1, "one off notification");
+	modeIsOff(h.handlers);
+});
+
+test("one shot with a UI: the handler returns at once and agent_settled turns the mode off", async () => {
+	const h = headlessPi({ hasUI: true, startsRun: false, startTimeoutMs: 20 });
+	await h.mellum("fix it");
+	assert.equal(h.calls.waitForIdle, 0, "waitForIdle never called");
+	for (let i = 0; i < 5; i++) assert.equal(h.handlers.tool_call(read), undefined);
+	assert.ok(h.handlers.tool_call(read)?.block, "mode still on after return: the sixth identical read is blocked");
+	await h.handlers.agent_settled({}, h.ctx);
+	modeIsOff(h.handlers);
+	assert.equal(offMarkers(h.calls), 1);
+});
+
+test("headless ctx without waitForIdle: the handler returns with the mode on and does not throw", async () => {
+	const h = headlessPi({ withWait: false, startsRun: false, startTimeoutMs: 20 });
+	await h.mellum("fix it");
+	for (let i = 0; i < 5; i++) assert.equal(h.handlers.tool_call(read), undefined);
+	assert.ok(h.handlers.tool_call(read)?.block, "mode still on after return");
+	assert.equal(offMarkers(h.calls), 0);
+});
+
+test("headless one shot whose run never starts gives up after the start timeout, warns on stderr and turns the mode off", async () => {
+	let h;
+	let elapsed;
+	let lines;
+	const stderr = await captureStderr(async () => {
+		lines = await recordLines(async () => {
+			h = headlessPi({ startsRun: false, startTimeoutMs: 20 });
+			const t0 = Date.now();
+			await h.mellum("fix it");
+			elapsed = Date.now() - t0;
+		});
+	});
+	assert.ok(elapsed < 1000, `returned within a second (took ${elapsed} ms)`);
+	assert.equal(stderr.length, 1, `one stderr line (got ${JSON.stringify(stderr)})`);
+	assert.match(stderr[0], /did not start within/);
+	assert.deepEqual(h.calls.setModel.at(-1), h.ctx.model, "the parent model is restored");
+	assert.equal(offMarkers(h.calls), 1);
+	assert.equal(lines.length, 0, "no record line");
+	modeIsOff(h.handlers);
+});
+
+// Runs `body()` with console.error captured; returns the captured lines. Always restores console.error.
+async function captureStderr(body) {
+	const lines = [];
+	const original = console.error;
+	console.error = (...args) => lines.push(args.join(" "));
+	try {
+		await body();
+	} finally {
+		console.error = original;
+	}
+	return lines;
+}
+
+test("without a UI, a missing Mellum model is reported on stderr and the mode stays off", async () => {
+	const h = recordingPi({ mode: "print", hasUI: false });
+	h.ctx.modelRegistry.find = () => undefined;
+	const lines = await captureStderr(() => h.mellum("fix it"));
+	assert.equal(lines.length, 1, "one stderr line");
+	assert.match(lines[0], /omlx\/Mellum2\.1-12B-A2\.5B-Thinking-6bit not found/);
+	modeIsOff(h.handlers);
+});
+
+test("with a UI, a missing Mellum model is a notify error and nothing goes to stderr", async () => {
+	const h = recordingPi({ mode: "tui", hasUI: true });
+	h.ctx.modelRegistry.find = () => undefined;
+	const lines = await captureStderr(() => h.mellum("fix it"));
+	assert.deepEqual(lines, [], "nothing on stderr");
+	assert.ok(h.calls.notify.some(([m, l]) => m.includes("not found") && l === "error"), "notify called with level error");
+	modeIsOff(h.handlers);
 });
