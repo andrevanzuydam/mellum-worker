@@ -346,7 +346,19 @@ Behaviour (see "Deviation" above):
   stderr "turn_end could not resolve the persisted assistant entry ID" and
   "This extension ctx is stale…", no record, tests still failing.
 - Task 5: done, 3284561.
-- `npm test`: 94/94 (75 at baseline).
+- Final review fix wave: e085bd8 (warnings and errors go to stderr when
+  the host has no UI, including a new start-timeout warning; before this,
+  `pi -p "/mellum …"` with the model missing exited 0 with no output),
+  8b00318 (`commandMutatesFiles` sees commands after `then`, `do`, `{`,
+  `!`, `env`, `nohup`, `xargs`, `sudo -u x`; here-strings), eeca1fa (docs:
+  lines without `schema` are schema 1).
+- Live check repeated at eeca1fa: exit 0, stderr empty, one schema-2 line
+  (`host` print, `activation` one-shot, 7 requests, 11 s), tests 3/3. With
+  `MELLUM_MODE_MODEL=no-such-model`: exit 0, stderr
+  `mellum-mode: model omlx/no-such-model not found; mode stays off`.
+  Run `pi -p` with stdin closed (`< /dev/null`); with an open stdin pipe
+  Pi waits for it before starting.
+- `npm test`: 96/96 (75 at baseline).
 
 Remaining for this phase (not in this plan): spec §3 (mellum-mlx reads the
 worker from `--worker-root`, its copies deleted, tests, docs), §5 step 6
