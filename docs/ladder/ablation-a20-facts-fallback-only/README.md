@@ -93,8 +93,11 @@ prompt v5's `uv run --offline pytest -q`.
 - **6 r2: a missing annotation, then the deadline.** `def home(request)` with
   no `Request` type makes FastAPI read `request` as a query parameter, so `/`
   returns 422 (checked by rerunning the hidden test in the retained
-  workspace). The run then started uvicorn in the foreground four times and
-  hit 600 s; that those calls held it is inferred from the trace.
+  workspace). The run then started uvicorn in the foreground on ports 8000,
+  8001 and 8002; each exited at once with `[Errno 48] Address already in
+  use`, because servers left by earlier deadline runs held them (see Risks).
+  The fourth start, on 8003, has no result before the 600 s deadline; that
+  it held the run is inferred from the trace, and it too was left running.
 - **9 r2 and 9 r3: complaint ids, as in A19.** 9 r2 made `id` the first
   positional field (`Complaint("a", "b")` raises a missing `text`
   argument); 9 r3's new complaints both get id 0 (`assert 0 != 0`). Checked
@@ -125,6 +128,14 @@ is what A19 added.
   scorer runs the workspace's environment, so A20's scores are not affected
   as far as checked, but later phases should start from a clean
   `ladder/.venv`.
+- Runs share the machine's ports, and the runner does not stop leftover
+  servers. Every run that hit the 600 s deadline in A18, A19 and A20 (A18 6 r2, 8 r1, 9 r1; A19 8 r2; A20 6 r2) ended on a server
+  started in the foreground, and the runner left it running when it cut
+  the run, on ports 8000 to 8003 (A19 8 r2's on `*:8001`, the port
+  oMLX serves on at 127.0.0.1). A later run that starts a server meets
+  them. Scores are not affected (both affected runs fail for their own
+  reasons), and the controller stopped those servers on 2026-10-10 about
+  09:50 EDT, after the phases.
 
 Raw traces, stdout and diffs: [`ablation-a20-facts-fallback-only.tar.gz`](https://github.com/pauleveritt/mellum-worker/releases/download/research-2026-10-09/ablation-a20-facts-fallback-only.tar.gz)
 (sha256 `b549e06a201fbffdd0badb268cb52ee6eaec4ab9ce90ffa74796962fdc3e84d0`).

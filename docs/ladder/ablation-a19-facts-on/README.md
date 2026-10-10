@@ -42,8 +42,9 @@ from scratch.
 | 5 (fallback) | 2/3 | 3/3 | 16 (16, 16, 20) | 118 |
 | all | 14/15 | **15/15** | mean 13.8 (A17 12.9) | mean 51 (A17 44) |
 
-Nudges 4 (A17 2), tool errors 17 (A17 12). No regression in passes; requests
-and wall are within the run-to-run spread A14 and A17 already showed.
+Nudges 4 (A17 3), tool errors 17 (A17 12), from each phase's `run.json`. No
+regression in passes. Mean requests, 13.8, are above both A14 (13.1) and A17
+(12.9); mean wall, 51 s, falls between A17 (44 s) and A14 (70 s).
 
 ## Result, rungs 6–9 (against A18)
 
@@ -98,10 +99,15 @@ r2; A18 had three).
   appended `test_post_complaint`, which asserts 303 from `client.post` without
   `follow_redirects=False`; the test client follows the redirect and gets 200
   (`assert 200 == 303` in the trace), so the facts command fails. Hidden tests
-  passed. It then started uvicorn and curl, and the trace ends on a
-  foreground `uv run uvicorn app:app --port 8001` with no result before the
-  600 s deadline; that this call is what held the run is inferred from the
-  trace, not checked otherwise.
+  passed. It then started a server on port 8000 in the background, and its
+  `curl` to `localhost:8000` timed out after 7.8 s; a foreground start on
+  8000 failed with `[Errno 48] ... address already in use`. Port 8000 was
+  held by A18 6 r2's leftover phase-1 app (see Risks; the process was
+  identified by the controller after the phase, not from this trace). It
+  moved to a foreground `uv run uvicorn app:app --host 0.0.0.0 --port 8001`,
+  which bound, and the trace ends there with no result before the 600 s
+  deadline; that this call held the run is inferred from the trace, and
+  the server it started was left running.
 - **9 r1 and 9 r2: complaint ids.** Both broke the spec's "assigned
   automatically; `Complaint(agent_name, text)` still works". 9 r1 added
   `id: int = None` and set ids only in the POST route, so two new complaints
@@ -138,6 +144,14 @@ the bullets do not reliably hold the write-list.
   results (rung 9 at 1/3) are not stable estimates.
 - Rungs 2–5 received the fallback command, so rungs 1–5 measure "facts on"
   including the fallback, not Mode with nothing added.
+- Runs share the machine's ports, and the runner does not stop leftover
+  servers. Every run that hit the 600 s deadline in A18, A19 and A20 (A18 6 r2, 8 r1, 9 r1; A19 8 r2; A20 6 r2) ended on a server
+  started in the foreground, and the runner left it running when it cut
+  the run, on ports 8000 to 8003 (A19 8 r2's on `*:8001`, the port
+  oMLX serves on at 127.0.0.1). A later run that starts a server meets
+  them. Scores are not affected (both affected runs fail for their own
+  reasons), and the controller stopped those servers on 2026-10-10 about
+  09:50 EDT, after the phases.
 - Rule 3 changed after A18 ran; A18 is compared through its rescored
   workspaces, not a fresh run under the new rule.
 

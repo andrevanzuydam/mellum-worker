@@ -122,7 +122,10 @@ but with five write-list failures against none.
   phases tried that import at least once; the looser spec dropped the
   import hint. A19 8 r1 spent 88 requests on it before passing.
 - **Servers in the foreground.** The two deadline hits in A19 and A20 end on
-  a foreground `uvicorn` call (inferred from the traces).
+  a foreground `uvicorn` call that bound a port and never returned (that it
+  held the run is inferred from the traces). Earlier calls in both runs
+  failed with `Address already in use` against servers left by earlier
+  deadline runs (see Risks).
 
 ## What would falsify this
 
@@ -146,6 +149,14 @@ but with five write-list failures against none.
   `starlette` and `httpx2` there (the last downloaded); the scorer uses the
   workspace's environment, so scores are not affected as far as checked,
   but the harness environment is no longer clean for later phases.
+- Runs share the machine's ports, and the runner does not stop leftover
+  servers. Every run that hit the 600 s deadline in A18, A19 and A20 (A18 6 r2, 8 r1, 9 r1; A19 8 r2; A20 6 r2) ended on a server
+  started in the foreground, and the runner left it running when it cut
+  the run, on ports 8000 to 8003 (A19 8 r2's on `*:8001`, the port
+  oMLX serves on at 127.0.0.1). A later run that starts a server meets
+  them. Scores are not affected (both affected runs fail for their own
+  reasons), and the controller stopped those servers on 2026-10-10 about
+  09:50 EDT, after the phases.
 - The fixture is one small FastAPI project. A project whose test command is
   not a pytest variant, or whose rules are longer than 600 characters, is
   not measured here.
