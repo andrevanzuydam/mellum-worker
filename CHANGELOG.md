@@ -4,6 +4,8 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-10
+
 ### Fixed
 
 - `/mellum <task>` under `pi -p` (and `pi --mode json`) returned at once,

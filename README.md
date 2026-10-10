@@ -28,7 +28,7 @@ with records in `docs/ladder/`. The 6-bit weights are on
 Pi:
 
 ```bash
-pi install git:github.com/pauleveritt/mellum-worker@v0.1.2
+pi install git:github.com/pauleveritt/mellum-worker@v0.1.3
 ```
 
 Then `/skill:mellum-setup`. The skill walks through weights, the oMLX
@@ -41,7 +41,7 @@ OpenCode, in the `plugin` array of `~/.config/opencode/opencode.json` or
 `opencode.jsonc`:
 
 ```json
-{ "plugin": ["mellum-worker@git+https://github.com/pauleveritt/mellum-worker.git#v0.1.2"] }
+{ "plugin": ["mellum-worker@git+https://github.com/pauleveritt/mellum-worker.git#v0.1.3"] }
 ```
 
 Then ask "run the mellum-setup skill".
