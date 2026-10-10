@@ -22,7 +22,7 @@ const HISTORY = [
 	/^docs\/superpowers\/specs\/2026-10-09-m5-print-mode-and-record-design\.md$/,
 	/^docs\/superpowers\/specs\/2026-10-09-m6-one-repo-design\.md$/,
 	/^docs\/superpowers\/plans\/(archive\/)?2026-10-09-m5-print-mode-and-record\.md$/,
-	/^docs\/superpowers\/plans\/2026-10-09-m6-one-repo\.md$/,
+	/^docs\/superpowers\/plans\/(archive\/)?2026-10-09-m6-one-repo\.md$/,
 ];
 const isText = (f) => !SKIP_EXT.test(f);
 const live = tracked.filter((f) => isText(f) && f !== SELF && !HISTORY.some((re) => re.test(f)));

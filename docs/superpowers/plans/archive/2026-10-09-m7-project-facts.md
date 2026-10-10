@@ -1,7 +1,7 @@
 ---
 phase: M.7
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # M.7 Project Facts Implementation Plan
@@ -160,3 +160,16 @@ Verdict: **SHIP**. Ledger with the rulings: `.superpowers/sdd/2026-10-09-m7-proj
 
 2. Release: publish the new tarballs `ablation-a18-agentclinic-facts-off`, `ablation-a19-facts-on` and `ablation-a20-facts-fallback-only` from `/Users/pauleveritt/projects/pauleveritt/mellum-worker-raw-research-2026-10-09/` as release `research-2026-10-09`.
 3. Merge `m7-project-facts` into `main`. `main` has since gained `1c12d2c`, which also appends to the end of `BACKLOG.md`, so expect an add/add conflict there; keep both entries. Then finish the phase per AGENTS.md (Status cell, `## Result`, archive the plan).
+
+## Result
+
+2026-10-10. Shipped in v0.1.3; verdict SHIP under the literal rule. A19
+rungs 1–5 15/15; rungs 6–9 9/12 against A18's 1/12 (rescored under Paul's
+added-tests rule; 0/12 strict); median requests 26 against 50. A20
+(fallback only) 7/12, median 28. `outside_write_list` 8/12 → 0/12. Tarballs
+for A18–A20 are in release `research-2026-10-09` (34 assets, hashes
+verified). Before the tag, one RPC probe on rung 6's fixture showed the
+interactive marker `facts: agents-md` and a schema-2 record with
+`facts.source: agents-md`; tests passed. Merged to `main` with an add/add
+`BACKLOG.md` conflict resolved by keeping both sides. Suites at close:
+`npm test` 135, ladder pytest 146.
