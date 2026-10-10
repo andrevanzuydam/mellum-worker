@@ -213,6 +213,18 @@ the file is append-only across upgrades, so lines without a `schema`
 field are schema 1.
 In the probe this took the parent's next request from 18 messages to 3.
 
+Project facts (new; not yet shipped advice until A19 measures them). Mode
+reads the `## Mellum` section of `AGENTS.md` in the working directory once
+per span, and appends its bullets (any label; `Test command:`, `Write only:`
+and `Do not:` are the documented ones) as `Project facts:` to every user
+message it sends, so the prompt's "a command named in the task is the
+command" rule sees your test command. The section ends at the next `#` or
+`##` heading and is capped at 600 characters of bullets; over that, Mode
+warns and ignores it. With no `Test command:` bullet and a `pyproject.toml`
+that mentions pytest, Mode adds `uv run --offline python -m pytest -q`.
+`MELLUM_MODE_FACTS=0` turns both off. The run record's `facts` field and
+the handoff summary line say which source applied.
+
 Measured in the ladder ([A14](ladder/ablation-a14-mellum-mode/README.md)),
 same profile and sampling as "Mellum as the primary agent" above: 10/15
 becomes 14/15, rung 5 from 0/3 to 3/3, the model reads 606 characters of

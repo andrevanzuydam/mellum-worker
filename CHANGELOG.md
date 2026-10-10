@@ -53,8 +53,18 @@ Versions match git tags; pin one in both install lines.
   rungs 6 to 9 with facts off, three repeats each: 1 of 12 passes under the
   added-tests-allowed rule (0 of 12 under the strict one), median 50
   requests. Its raw files are archived under the same release tag.
-- Mellum's request path (prompt, messages, tools, sampling, guards) and
-  the handoff block text are unchanged.
+- Mellum Mode forwards project facts: the bullets of a `## Mellum` section
+  in the project's `AGENTS.md` (600 characters at most; over that Mode
+  warns and ignores the section), and, when no test command is given and
+  `pyproject.toml` mentions pytest, `Test command: uv run --offline python
+  -m pytest -q`. They are appended to every user message Mode sends,
+  interactive or headless, so the prompt's "a command named in the task is
+  the command" rule sees the project's own test command; the session's
+  stored messages are unchanged. `MELLUM_MODE_FACTS=0` turns it off. The
+  run record gains `facts` (`source`, `testCommand`, `chars`) and the
+  handoff summary line names the source. Not yet shipped advice: the
+  ladder's A19 decides whether it stays.
+- Mellum's prompt (v5), tools, sampling and guards are unchanged.
 
 ### Changed
 
