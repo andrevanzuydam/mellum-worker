@@ -1,4 +1,4 @@
-"""The five ladder rungs: fixture, user sentence, test command, and pass check."""
+"""The nine ladder rungs: fixture, user sentence, test command, and pass check."""
 
 from __future__ import annotations
 
@@ -114,6 +114,84 @@ def check_edge(ws: Path, base: Path) -> CheckResult:
     return CheckResult(passed, unchanged, {"decoy_untouched": decoy})
 
 
+AGENTCLINIC_FACTS_CMD = [
+    "uv",
+    "run",
+    "--offline",
+    "python",
+    "-m",
+    "pytest",
+    "tests",
+    "-q",
+]
+AGENTCLINIC_ALLOWED = ("app.py", "models.py", "templates/", "tests/")
+HIDDEN_DIR = FIXTURES / "agentclinic-hidden"
+_NOT_TEST_DIRS = {"__pycache__", ".pytest_cache"}
+
+
+def outside_write_list(ws: Path, allowed: tuple[str, ...]) -> list[str]:
+    """Paths git reports as new, modified or deleted that the write-list does not cover.
+
+    An entry ending in ``/`` allows everything beneath that directory; any other
+    entry allows exactly that file. Ignored paths (``.venv/``) never show up
+    because git honours the workspace's ``.gitignore``.
+    """
+    proc = subprocess.run(
+        ["git", "status", "--porcelain", "-z", "--untracked-files=all", "--no-renames"],
+        cwd=ws,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    paths = [entry[3:] for entry in proc.stdout.split("\0") if len(entry) > 3]
+    return sorted(
+        path
+        for path in paths
+        if not any(
+            path.startswith(entry) if entry.endswith("/") else path == entry
+            for entry in allowed
+        )
+    )
+
+
+def _tests_dir_unchanged(ws: Path, base: Path) -> bool:
+    """Every file under the fixture's ``tests/`` is byte-identical in the workspace."""
+    return all(
+        _same(ws, base, str(path.relative_to(base)))
+        for path in sorted((base / "tests").rglob("*"))
+        if path.is_file() and not _NOT_TEST_DIRS & set(path.parts)
+    )
+
+
+def check_agentclinic(phase: int) -> Callable[[Path, Path], CheckResult]:
+    """Score an AgentClinic rung: facts command, hidden tests of phases 1..phase, tests intact, write-list kept."""
+
+    def check(ws: Path, base: Path) -> CheckResult:
+        # Before anything is copied in: the write-list and any hidden-file collision.
+        outside = outside_write_list(ws, AGENTCLINIC_ALLOWED)
+        hidden = [f"_hidden_p{k}.py" for k in range(1, phase + 1)]
+        collision = sorted(name for name in hidden if (ws / name).exists())
+        for name in hidden:
+            shutil.copy(HIDDEN_DIR / name, ws / name)
+        facts_pass = _tests_pass(AGENTCLINIC_FACTS_CMD, ws)
+        hidden_pass = _tests_pass(
+            ["uv", "run", "--offline", "python", "-m", "pytest", *hidden, "-q"], ws
+        )
+        unchanged = _tests_dir_unchanged(ws, base)
+        return CheckResult(
+            facts_pass and hidden_pass and unchanged and not outside,
+            unchanged,
+            {
+                "facts_cmd_pass": facts_pass,
+                "hidden_pass": hidden_pass,
+                "outside_write_list": outside,
+                "hidden_collision": collision,
+            },
+        )
+
+    return check
+
+
 RUNGS: dict[int, Rung] = {
     1: Rung(
         1,
@@ -134,4 +212,22 @@ RUNGS: dict[int, Rung] = {
     ),
     4: Rung(4, "feature", "make the failing test pass", PYTEST, check_feature),
     5: Rung(5, "edge", "the export is missing the totals row", PYTEST, check_edge),
+    **{
+        5 + phase: Rung(
+            5 + phase,
+            f"agentclinic-p{phase}",
+            f"Implement specs/{spec}.md",
+            AGENTCLINIC_FACTS_CMD,
+            check_agentclinic(phase),
+        )
+        for phase, spec in enumerate(
+            (
+                "phase-1-home",
+                "phase-2-board",
+                "phase-3-add",
+                "phase-4-resolve-reopen",
+            ),
+            start=1,
+        )
+    },
 }
