@@ -1,7 +1,10 @@
 # A18: Mellum Mode on the AgentClinic rungs 6–9, project facts off (baseline for M.7)
 
-**What is measured.** Mellum Mode as shipped (v0.1.2, prompt v5, guards on)
-with the project-facts block switched off, on the four AgentClinic rungs:
+**What is measured.** Mellum Mode at commit `38a4e64` (the extension that
+ships as v0.1.2 plus the M.7 ladder changes; `run.json` records `worker_git`
+`v0.1.2-36-g38a4e64`, prompt v5 in the request) with guards on and the
+project-facts block switched off (`--mode-facts off`), so the request
+behaviour is the shipped one, on the four AgentClinic rungs:
 build the project from `specs/phase-1-home.md` to `phase-4-resolve-reopen.md`,
 one phase per rung, from a fresh workspace each. Three repeats per rung.
 This is the baseline the M.7 ship rule compares A19 and A20 against.
@@ -64,47 +67,62 @@ ended on `length`.
 
 - **The import error, in 11 of 12 runs.** The tests do `from app import app`;
   `uv run --offline pytest -q` cannot import `app` (`ModuleNotFoundError: No
-  module named 'app'`). Only rung 6 r2 never reached it: it never ran pytest,
-  only `python app.py`. Eleven runs ran the prompt's `uv run --offline
-  pytest -q` first. Four (6 r1, 7 r2, 8 r2, 9 r3) did also try `python -m
-  pytest`, which puts the working directory on the path, and still went on to
-  add `__init__.py` or `pytest.ini`.
+  module named 'app'`). In 11 runs that exact command, run first, gave that
+  error (checked in each trace's tool results). Only rung 6 r2 never ran
+  pytest at all, only `python app.py`.
+- **Most runs found a working command.** Nine runs ran a `python -m pytest`
+  variant at some point (all but 6 r2, 8 r1, 9 r1). A `uv run [--offline]
+  python -m pytest` variant passed the visible tests in six of them (6 r1,
+  6 r3, 7 r1, 7 r2, 8 r2, 9 r3); bare `python -m pytest` (no `uv run`)
+  failed with the same import error. Six runs got the project and hidden
+  tests green, but the working command did not stop the extra files:
+  6 r1, 7 r2 and 8 r2 had already added or went on to add `__init__.py` or
+  `pytest.ini`.
 - **The fixes the model reached for are the write-list violations.** An
-  `__init__.py` at the root in 7 runs, a `pytest.ini` in 3 (6 r1, 8 r2, 9 r2),
-  `pyproject.toml` and `uv.lock` edits in 2 (6 r3, 8 r2). Six runs got the
-  project and hidden tests green (6 r1, 6 r3, 7 r1, 7 r2, 7 r3, 8 r2); five
-  of those carry a write-list entry, so the write-list alone turned five of
-  six behaviourally working runs into failures. That is the signal M.7's
-  facts block is meant to move.
-- **Edits to test imports.** Rung 7 r2 and r3, rung 8 r3 and rung 9 r2 edited
-  existing test files at module level (`sys.path.insert`, `from ..app import
-  app`, a removed blank line). Strict scoring counted these; rule 3 does not,
-  because no test function changed. Rung 8 r3's relative import left its
-  hidden tests failing.
+  `__init__.py` at the root in 7 runs (6 r1, 7 r2, 7 r3, 8 r1, 8 r2, 8 r3,
+  9 r2), a `pytest.ini` in 3 (6 r1, 8 r2, 9 r2), `pyproject.toml` and
+  `uv.lock` edits in 2 (6 r3, 8 r2). Six runs got the project and hidden
+  tests green (6 r1, 6 r3, 7 r1, 7 r2, 7 r3, 8 r2); five of those carry a
+  write-list entry, so the write-list alone turned five of six runs that
+  worked into failures.
+- **Edits to existing test files.** Six runs changed a starting test file,
+  which is why strict is 0/12 on those: 7 r1 only appended a test; 7 r2
+  added a test and put `sys.path` lines before the import; 7 r3, 8 r1 added
+  a test and changed `from app import app` to `from ..app import app`;
+  8 r3 and 9 r2 changed that import in two and three files. Rule 3 accepts
+  all six, because no starting test function changed. The relative import
+  is not a clean predictor: hidden tests passed in 7 r3 (it also added a
+  `tests/conftest.py` with a `sys.path` line) and failed in 8 r1 (deadline),
+  8 r3 and 9 r2. Why they failed was not checked; the 8 r3 trace shows
+  earlier `cannot import name 'RedirectResponse' from 'fastapi'` errors
+  from its own `app.py`.
 - **Deadlines and give-ups.** Rung 6 r2 spent 600 s and 25 requests writing
   `app.py` and `base.html` and never ran pytest. Rung 8 r1 and rung 9 r1
   hit the deadline still working around the import. Rung 9 r3 ended on
   `length` after 91 requests and 37 tool errors; its final text says the
   import error persists, then assumes the task is complete.
-- **Rung 9 never reached the hidden tests.** Hidden failed in all three
-  rung-9 runs, including the two with an empty write-list: the work was not
-  finished, not blocked by scoring.
+- **Rung 9 failed the hidden tests in all three runs**, including 9 r1 and
+  9 r3 with an empty write-list. 9 r3's own `uv run --offline python -m
+  pytest -q` passed (4 tests), so the visible tests do not cover the
+  phase-4 behaviour; why the hidden tests failed was not checked.
 - **Rung 7 r1 is the only pass.** It appended one test to `tests/test_app.py`
   (strict fail, rescored pass), wrote only `models.py` and a template beside
   `app.py`, and used one nudge.
 
 ## What is conjecture
 
-That the import error, and the missing hint to use `python -m pytest`, is
-the cause of most of the wasted requests and write-list entries. It recurs in
-11 of 12 traces, but this phase has no run that removes it. A19 (facts on)
-is the test.
+That the extra files are the model's answer to the import error from the
+prompt's `uv run --offline pytest -q`, and that a stated working test command
+would prevent them and the requests spent on them. The error recurs in 11 of
+12 traces and the write-list entries follow it, but this phase has no run that
+removes the cause, and nine runs found a working command and still added files
+or failed. A19 (facts on, which states the command) is the test.
 
 ## What would falsify this
 
 A19 with the same launch and `--mode-facts on` landing at or below A18's
-rescored passes, or at or above A18's median requests (50), would mean the
-test command was not the bottleneck.
+rescored passes, or at or above A18's median requests (50), would mean a stated
+test command was not what the baseline lacked.
 
 ## Risks
 
