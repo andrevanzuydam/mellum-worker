@@ -26,6 +26,7 @@ scorer column that was zero becomes non-zero.
 | [A15](ablation-a15-chunked-brief/README.md) | (Markdown brief, one prompt per step in one session) | 15/15 | no | 2.4× the time, 2.5× the output tokens of the sentence; bounded turns did not reduce empty finals |
 | [A16](ablation-a16-brief-one-prompt/README.md) | (the same brief as one prompt) | 11/15 | no | the model stops at the brief's first "reply" step; a one-prompt brief must not contain intermediate replies |
 | [A17](ablation-a17-mode-v012/README.md) | (Mellum Mode as shipped in mellum-worker v0.1.2, same launch as A14) | 14/15 | ships | no regression: 12.9 requests vs 13.1, wall 44 s vs 70 s (server state, not code); miss moved from rung 4 to rung 5 |
+| [A18](ablation-a18-agentclinic-facts-off/README.md) | (M.7 baseline: Mellum Mode on AgentClinic rungs 6–9, project facts off; 12 runs, not the 15-run rungs 1–5) | 1/12 rescored (0/12 strict) | baseline | scored under the later "added tests allowed" rule; median 50 requests; 11 of 12 runs hit `No module named 'app'` under `uv run --offline pytest -q`, and 5 of the 6 runs with green project and hidden tests failed only the write-list (`__init__.py`, `pytest.ini`, `pyproject.toml`/`uv.lock`); no pass on rung 9 |
 
 ## The worker, before and after
 

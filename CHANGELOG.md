@@ -48,6 +48,11 @@ Versions match git tags; pin one in both install lines.
   `uv run python -m ladder.archive_raw` (in `ladder/`) builds those
   tarballs. The first run from this checkout is the `smoke-m6-one-repo`
   record.
+- `docs/ladder/ablation-a18-agentclinic-facts-off/`: the A18 record, the
+  baseline for the project-facts work. Mellum Mode on the AgentClinic
+  rungs 6 to 9 with facts off, three repeats each: 1 of 12 passes under the
+  added-tests-allowed rule (0 of 12 under the strict one), median 50
+  requests. Its raw files are archived under the same release tag.
 - Mellum's request path (prompt, messages, tools, sampling, guards) and
   the handoff block text are unchanged.
 
