@@ -133,4 +133,30 @@ lifecycle: active
 
 ## Progress
 
-(Executors append here: task, failing-first evidence, commands and results.)
+Verdict: **SHIP**. Ledger with the rulings: `.superpowers/sdd/2026-10-09-m7-project-facts/progress.md`.
+
+- **Task 1** (`94cd7ff`): AgentClinic fixtures p1..p4 and done, hidden tests, self-check. Failing first: self-check written before the fixtures, `9 failed` (missing directories and hidden files). Ladder pytest 91 passed; `npm test` 102 pass.
+- **Task 2** (`6879db8`, fix `38a4e64`): rungs 6–9, write-list scoring, `--mode-facts` and `--strip-facts-section`. Failing first: ImportError on the new rung and check functions; the review round saw the switch-wiring test fail with the wiring broken (`assert None == '0'`, 4 failed) and the write-list check fail open (`[] != ['<git status failed>']`), then closed both. Ladder pytest 123 passed.
+- **Task 3** (`ac04bdc`, fix `ef07e59`): A18, facts off, 12 runs (rungs 6–9 x 3), 20:15–21:19 on 2026-10-09: strict 0/12, median requests 50 on every rung. No write to `~/.pi/agent` (run log stayed at 7 lines).
+- **Task 2b** (`6a869b8`, inserted before Task 4, Paul's rule change for rule 3 on 2026-10-09 after A18 7 r1 failed only for an appended test): rungs 6–9 now require that no existing test is removed or edited, and additions are allowed; rungs 1–5 unchanged. Failing first: 11 failed with a stub of the strict rule (appended test, `.gitkeep` removal and five rescore cases); edited, deleted and renamed cases are tightening-only and pass under the strict rule. Ladder pytest 146 passed. A18 rescored with `ladder.rescore`: **1/12** (strict 0/12); both scorings are in its README.
+- **Task 4** (`aff031a`): `extensions/mellum-facts.ts` parses `## Mellum` (600-character cap, `MELLUM_MODE_FACTS=0`, fallback `uv run --offline python -m pytest -q`), Mode forwards it with each kept user message, the on-marker names the source. Failing first: `npm test` `119 tests / 103 pass / 16 fail` (module missing, 8 hook and 7 mode tests). After: 134 pass.
+- **Task 5** (`4ea9bc7`, fix `4885e12`): A19 (facts on, 27 runs) and A20 (fallback only, 12 runs). Paul paused on 2026-10-09 21:41; A19 stood at 4 rows and was stopped, moved (not deleted) to the session scratchpad, and re-run from scratch on 2026-10-10 08:10. A19: rungs 1–5 **15/15**, rungs 6–9 **9/12**, median requests 26. A20 (`--strip-facts-section`): **7/12**, median 28. Run log still 7 lines after both. Review fix round: leftover deadline servers recorded, A17 nudge count corrected, a false spread claim replaced by numbers. `npm test` 134 pass.
+- **Verdict numbers** (spec §3): A19 rungs 1–5 15/15 against ≥ 13; rungs 6–9 9/12 against A18 rescored 1/12 + 3; median requests on 6–9, 26 against A18's 50. All three pass, so SHIP.
+- **Task 6** (`bb6b256`, `2e97fc4`, fix `840bcce`): README, recipe, setup skill step 08, CHANGELOG, ROADMAP and BACKLOG carry the verdict. Failing first: the skill-step test (step file and link absent), and in the fix round a test that the step's check is the anchored `^## Mellum$` (it first matched phase 6's `## Mellum Worker`). `npm test` 135 pass.
+- **Harness findings** (backlog, both reopen on the next ladder change): A20 9 r1's shell inherited the ladder's venv on PATH and pip-installed into `ladder/.venv` (restored with `uv sync --exact --offline`; scores used each workspace's own venv), in the backlog entry "Ladder PATH leaks its venv into Mellum's shell"; and deadline-cut runs left workspace servers running, which contaminated A19 8 r2 and A20 6 r2, in "Deadline leaves workspace servers running". The leftovers were stopped by hand.
+- **Task 7**: the four looser specs were copied byte-for-byte (`cmp` clean) to ac-demo `specs/loose/`, uncommitted; ac-demo `AGENTS.md` untouched.
+
+### For Paul
+
+1. Paste this section into ac-demo's `AGENTS.md` (Appendix A's bullets; I did not touch that file):
+
+```markdown
+## Mellum
+
+- Test command: uv run python -m pytest tests
+- Write only: app.py, models.py, templates/, tests/
+- Do not: install packages or add dependencies; remove or rewrite routes that already work; weaken tests
+```
+
+2. Release: publish the new tarballs `ablation-a18-agentclinic-facts-off`, `ablation-a19-facts-on` and `ablation-a20-facts-fallback-only` from `/Users/pauleveritt/projects/pauleveritt/mellum-worker-raw-research-2026-10-09/` as release `research-2026-10-09`.
+3. Merge `m7-project-facts` into `main`. `main` has since gained `1c12d2c`, which also appends to the end of `BACKLOG.md`, so expect an add/add conflict there; keep both entries. Then finish the phase per AGENTS.md (Status cell, `## Result`, archive the plan).
