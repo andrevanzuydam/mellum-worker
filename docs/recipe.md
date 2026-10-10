@@ -270,7 +270,7 @@ stripped so only the fallback is sent):
 | passes (rung 6 / 7 / 8 / 9) | 1/12 (0 / 1 / 0 / 0) | 9/12 (3 / 3 / 2 / 1) | 7/12 (1 / 2 / 3 / 1) |
 | requests per run, median (mean) | 50 (54) | 26 (32) | 28 (37) |
 | wall s per run, median (mean) | 261 (316) | 106 (163) | 143 (195) |
-| output tokens per run | not recorded | not recorded | not recorded |
+| output tokens per run | not in `run.json` | not in `run.json` | not in `run.json` |
 | runs with `No module named 'app'` | 11/12 | 0/12 | 5/12 |
 | runs that wrote outside the write-list | 8/12 | 0/12 | 5/12 |
 | runs cut at the deadline | 3/12 | 1/12 | 1/12 |

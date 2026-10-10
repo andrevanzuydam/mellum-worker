@@ -30,6 +30,9 @@ test("the optional project-facts phase is linked and states the section, the cap
 	assert.match(step, /600 characters/, "states the cap");
 	assert.match(step, /MELLUM_MODE_FACTS=0/, "names the switch");
 	assert.match(step, /uv run --offline python -m pytest -q/, "names the fallback");
+	// Phase 6 appends `## Mellum Worker`; the check must match only Mode's exact heading.
+	assert.ok(step.includes("grep -nE '^##[[:space:]]+Mellum[[:space:]]*$' AGENTS.md"), "check is anchored to the exact heading");
+	assert.match(text, /exactly `## Mellum`/, "SKILL.md check names the exact heading");
 });
 
 test("the smoke fixture is the failing calculator and its test command is the one in the recipe", () => {

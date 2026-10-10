@@ -189,7 +189,7 @@ list. Mellum Mode, 12 runs per column
 | passes | 1/12 | 9/12 | 7/12 |
 | Mellum requests, median | 50 | 26 | 28 |
 | wall s, median | 261 | 106 | 143 |
-| output tokens, median | not recorded | not recorded | not recorded |
+| output tokens, median | not in `run.json` | not in `run.json` | not in `run.json` |
 | runs that wrote outside the file list | 8/12 | 0/12 | 5/12 |
 | runs cut at the 600 s deadline | 3/12 | 1/12 | 1/12 |
 

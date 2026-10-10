@@ -40,7 +40,7 @@ Record the answer; phases 4 and 5 differ by host.
 | 5 | Worker | `mellum-worker` agent file exists in the host's user agents dir | Pi: [reference/05-worker-pi.md](reference/05-worker-pi.md), OpenCode: [reference/05-worker-opencode.md](reference/05-worker-opencode.md) |
 | 6 | Rules | user accepted or declined the AGENTS.md fragment | [reference/06-rules.md](reference/06-rules.md) |
 | 7 | Smoke test | the calculator fixture's tests exit 0 after the worker ran | [reference/07-smoke.md](reference/07-smoke.md) |
-| 8 | Project facts (optional, Pi) | the project's `AGENTS.md` has a `## Mellum` section, or the user declined | [reference/08-project-facts.md](reference/08-project-facts.md) |
+| 8 | Project facts (optional, Pi) | the project's `AGENTS.md` has a heading that is exactly `## Mellum` (not `## Mellum Worker`), or the user declined | [reference/08-project-facts.md](reference/08-project-facts.md) |
 
 Read a phase's reference file only when its check fails. Phase 8 is
 optional and per project; offer it in Pi once phase 7 passes. When the
