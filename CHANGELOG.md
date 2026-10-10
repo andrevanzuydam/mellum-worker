@@ -86,7 +86,9 @@ Versions match git tags; pin one in both install lines.
 - README and `docs/recipe.md` §4b: how to write the `## Mellum` section,
   what it fixes (the prompt's `uv run --offline pytest -q` cannot import a
   root `app.py`; facts off, 11 of 12 AgentClinic runs hit that error), the
-  fallback and the switch, and the rungs 6–9 numbers per condition
+  fallback and the switch (write the label as plain `Test command:`; a
+  bold or backticked label is not recognised), the caveat that facts were
+  measured headless only, and the rungs 6–9 numbers per condition
   (passes, median requests and wall seconds, write-list and deadline
   counts; output tokens are not in the ladder's `run.json`).
 - `mellum-setup` phase 8 (optional, Pi): offers to add a `## Mellum`

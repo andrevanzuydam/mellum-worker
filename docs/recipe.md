@@ -253,7 +253,12 @@ adds `uv run --offline python -m pytest -q`. `MELLUM_MODE_FACTS=0` turns
 both off. The session shows `[mellum-mode on] facts: <source>` when a
 span starts, and the run record's `facts` field and the handoff summary
 line name the same source (`agents-md`, `detected`, `agents-md+detected`,
-`none`, `off`). The prompt is unchanged (v5).
+`none`, `off`). The prompt is unchanged (v5). Write the label as plain
+`Test command:` and the command as plain text (no bold or code formatting
+on either): Mode recognises the test command only from a bullet whose
+label is exactly `Test command:`. `- **Test command:** make test` is not
+recognised, so in a pytest project Mode adds the fallback as a second test
+command, and a backticked command keeps its backticks.
 
 Measured on rungs 6–9 (AgentClinic: build a FastAPI app from four loose
 phase specs, one phase per rung, three runs each, 600 s deadline; a run
@@ -299,7 +304,12 @@ Cautions. The ladder measured the headless path; the interactive path
 (`on`, a second `on`, a task, `off`, a parent turn, a second `off`, the
 one-shot form) was verified over Pi's RPC mode with `ladder/ladder/probe_mode_rpc.py`,
 which showed each request carrying exactly the
-expected prompt, history and tools; the refusal to auto-compact while on
+expected prompt, history and tools. That probe predates project facts and
+used the Node calculator fixture: facts were measured headless only, and
+the interactive facts path (`/mellum on`, `/mellum <task>`, the
+`[mellum-mode on] facts:` line, the handoff's `facts:`) is unit-tested, not
+yet observed in a real Pi session (a probe on a Python fixture such as
+agentclinic-p1 would observe it). The refusal to auto-compact while on
 is unit-tested. Mellum Mode is loaded as a package extension; its payload filter rewrites the request it sees, and other packages' hooks may run before or after it. Load order was only verified for the `-e` form in the ladder. None of
 Superpowers, pi-subagents or context7 rewrites the payload today. Auto-compaction is refused while the mode is on
 (`/compact` still works); run `/mellum off` before a long parent turn.

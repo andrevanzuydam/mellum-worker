@@ -139,6 +139,11 @@ but with five write-list failures against none.
 
 ## Risks
 
+- Facts were measured headless only (`MELLUM_MODE=1`, no marker). The
+  interactive facts path (`/mellum on`, `/mellum <task>`, the marker
+  `[mellum-mode on] facts: <source>`, the handoff's `facts:`) is
+  unit-tested, not yet observed in a real Pi session; a probe on a Python
+  fixture such as agentclinic-p1 would observe it.
 - Three repeats per rung. 9/12 against 1/12 is a wide margin, but per-rung
   results (rung 9 at 1/3 in both A19 and A20) and the 75% share are not
   stable estimates.

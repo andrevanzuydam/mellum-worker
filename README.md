@@ -118,7 +118,12 @@ none wrote outside the write-list, and the median run took 26 requests
 Bullets only; any label is forwarded, and these three are the measured
 ones. The section ends at the next `#` or `##` heading, and its bullet
 text is capped at 600 characters (over that, Mode warns and ignores the
-section). Without the section, or without a `Test command:` bullet, a
+section). Write the label as plain `Test command:` and the command as
+plain text: Mode recognises the test command only from a bullet whose
+label is exactly `Test command:`, so `- **Test command:** make test` is not
+recognised (in a pytest project Mode then adds the fallback as a second
+test command) and a backticked command keeps its backticks. Without the
+section, or without a `Test command:` bullet, a
 project whose `pyproject.toml` mentions pytest gets `Test command: uv run
 --offline python -m pytest -q`; Node projects get nothing added.
 `MELLUM_MODE_FACTS=0` turns both off. Each span says which source applied

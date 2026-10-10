@@ -39,6 +39,10 @@ about 380 MB). They are archived per phase instead and listed in
 `.gitignore`, so new runs write them locally without committing them.
 Every one of the 30 phases had raw files, so there are 30 tarballs.
 
+Before the 30 tarballs were built, `git status --short --ignored
+docs/research/ladder` in the source checkout was empty and its HEAD was
+the source commit above, so the working tree matched the commit.
+
 A 31st phase, `smoke-m6-one-repo`, was added after the move: one rung-1 Mellum
 Mode run launched from this checkout (2026-10-09, commit `e5e72f3`). It is
 not part of the moved set, so it has no source commit; its raw files were
@@ -48,10 +52,6 @@ Three M.7 phases followed, each launched from this checkout and archived the
 same way: `ablation-a18-agentclinic-facts-off` (2026-10-09, commit
 `38a4e64`), `ablation-a19-facts-on` and `ablation-a20-facts-fallback-only`
 (2026-10-10, commit `aff031a`). That gives 34 tarballs in all.
-
-Before the tarballs were built, `git status --short --ignored
-docs/research/ladder` in the source checkout was empty and its HEAD was
-the commit above, so the working tree matched the commit.
 
 ## Raw archives
 

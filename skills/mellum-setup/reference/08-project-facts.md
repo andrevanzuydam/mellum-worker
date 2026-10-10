@@ -17,7 +17,7 @@ Check: the project's `AGENTS.md` already has a heading that is exactly
 does not count; Mode reads only the exact heading.
 
 ```bash
-grep -nE '^##[[:space:]]+Mellum[[:space:]]*$' AGENTS.md
+grep -niE '^##[[:space:]]+Mellum[[:space:]]*$' AGENTS.md
 ```
 
 Ask: "Do you want a `## Mellum` section in this project's AGENTS.md, so
@@ -31,7 +31,12 @@ If yes:
    project's code is what this section prevents. For a project whose
    `pyproject.toml` mentions pytest, Mode already falls back to
    `uv run --offline python -m pytest -q` when the section names no test
-   command; say so.
+   command; say so. Write the label as plain `Test command:` and the
+   command as plain text: Mode recognises the test command only from a
+   bullet whose label is exactly `Test command:` (no bold or code
+   formatting on the label or the command). `- **Test command:** make test`
+   is not recognised, so in a pytest project Mode would add the fallback as
+   a second test command, and a backticked command keeps its backticks.
 2. Offer two optional lines: `Write only:` (the files and directories
    Mellum may create or change) and `Do not:` (for example, install
    packages or add dependencies; weaken tests).
