@@ -18,12 +18,15 @@ Versions match git tags; pin one in both install lines.
 - `ladder/`: rungs 6 to 9, the four AgentClinic phases, to measure
   whether Mellum can build a small project from its specs. A rung passes
   only when the project's own tests, hidden behaviour tests and the
-  unchanged-tests check all pass and nothing was written outside the
-  `AGENTS.md` write-list; the write-list result is reported on its own as
+  existing-tests check all pass (no existing test is removed or edited;
+  added tests are allowed, in old or new files) and nothing was written
+  outside the `AGENTS.md` write-list; the write-list result is reported on its own as
   `outside_write_list`, and a workspace whose `git status` fails does not
   pass. The runner gains `--mode-facts {on,off}`
   (`off` sets `MELLUM_MODE_FACTS=0`) and `--strip-facts-section`, and
-  `run.json` records both.
+  `run.json` records both. `python -m ladder.rescore --existing-tests-kept
+  <phase dir>` rescores a recorded phase under that rule from its retained
+  workspaces, as `check_rescored` beside the original `check`.
 - Run record schema 2: `schema`, `version`, `promptVersion`, `host`
   (`tui`, `rpc`, `print`, `json`), `activation` (`one-shot`, `on`,
   `headless`), `taskNamesTestCommand`, `edits`, `filesMissingAtEnd`,

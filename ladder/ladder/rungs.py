@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import shutil
 import subprocess
 from collections.abc import Callable
@@ -174,17 +175,62 @@ def outside_write_list(ws: Path, allowed: tuple[str, ...]) -> list[str]:
     )
 
 
-def _tests_dir_unchanged(ws: Path, base: Path) -> bool:
-    """Every file under the fixture's ``tests/`` is byte-identical in the workspace."""
-    return all(
-        _same(ws, base, str(path.relative_to(base)))
-        for path in sorted((base / "tests").rglob("*"))
-        if path.is_file() and not _NOT_TEST_DIRS & set(path.parts)
-    )
+def _test_segments(path: Path) -> dict[str, tuple[str | None, ...]] | None:
+    """Qualified name -> source segment (decorators included) of each pytest-collected test.
+
+    Collected means module-level ``test*`` functions (``def`` or ``async def``)
+    and ``test*`` methods of module-level ``Test*`` classes, named ``func`` and
+    ``Class.method``. ``None`` when the file is missing or does not parse.
+    """
+    try:
+        source = path.read_bytes().decode()
+        tree = ast.parse(source)
+    except OSError, SyntaxError, ValueError:
+        return None
+
+    def segment(node: ast.FunctionDef | ast.AsyncFunctionDef) -> tuple[str | None, ...]:
+        return tuple(
+            ast.get_source_segment(source, part)
+            for part in (*node.decorator_list, node)
+        )
+
+    funcs = (ast.FunctionDef, ast.AsyncFunctionDef)
+    found: dict[str, tuple[str | None, ...]] = {}
+    for node in tree.body:
+        if isinstance(node, funcs) and node.name.startswith("test"):
+            found[node.name] = segment(node)
+        elif isinstance(node, ast.ClassDef) and node.name.startswith("Test"):
+            for member in node.body:
+                if isinstance(member, funcs) and member.name.startswith("test"):
+                    found[f"{node.name}.{member.name}"] = segment(member)
+    return found
+
+
+def existing_tests_kept(ws: Path, base: Path) -> bool:
+    """No existing test is removed or edited; additions are allowed (rungs 6-9, rule 3).
+
+    For every ``tests/**/*.py`` in the starting fixture ``base``: the file still
+    exists in ``ws`` and parses, and each pytest-collected test it held is still
+    there under the same qualified name with a byte-identical source segment.
+    New tests, in old or new files, are allowed; non-``.py`` files do not count.
+    """
+    for path in sorted((base / "tests").rglob("*.py")):
+        if _NOT_TEST_DIRS & set(path.parts):
+            continue
+        name = path.relative_to(base)
+        start = _test_segments(path)
+        if start is None:
+            if not _same(ws, base, str(name)):
+                return False
+            continue
+        now = _test_segments(ws / name)
+        if now is None or any(now.get(test) != code for test, code in start.items()):
+            return False
+    return True
 
 
 def check_agentclinic(phase: int) -> Callable[[Path, Path], CheckResult]:
-    """Score an AgentClinic rung: facts command, hidden tests of phases 1..phase, tests intact, write-list kept."""
+    """Score an AgentClinic rung: facts command, hidden tests of phases 1..phase, existing tests kept (additions allowed), write-list kept."""
 
     def check(ws: Path, base: Path) -> CheckResult:
         # Before anything is copied in: the write-list and any hidden-file collision.
@@ -197,7 +243,7 @@ def check_agentclinic(phase: int) -> Callable[[Path, Path], CheckResult]:
         hidden_pass = _tests_pass(
             ["uv", "run", "--offline", "python", "-m", "pytest", *hidden, "-q"], ws
         )
-        unchanged = _tests_dir_unchanged(ws, base)
+        unchanged = existing_tests_kept(ws, base)
         return CheckResult(
             facts_pass and hidden_pass and unchanged and not outside,
             unchanged,
