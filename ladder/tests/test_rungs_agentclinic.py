@@ -12,6 +12,7 @@ import pytest
 from ladder.run_ladder import prepare_workspace
 from ladder.rungs import (
     FIXTURES,
+    GIT_STATUS_FAILED,
     RUNGS,
     check_agentclinic,
     copy_fixture,
@@ -191,3 +192,33 @@ def test_check_reports_a_hidden_file_already_in_the_workspace(tmp_path):
 def test_copy_fixture_is_still_available_for_agentclinic(tmp_path):
     ws = copy_fixture("agentclinic-p1", tmp_path / "ws")
     assert (ws / "AGENTS.md").exists()
+
+
+def test_outside_write_list_fails_closed_when_git_status_fails(tmp_path):
+    """A workspace whose .git is gone must not read as a clean write-list."""
+    ws = baseline_repo(tmp_path / "ws")
+    shutil.rmtree(ws / ".git")
+    assert outside_write_list(ws, ALLOWED) == [GIT_STATUS_FAILED]
+
+
+def test_outside_write_list_fails_closed_when_git_status_times_out(
+    monkeypatch, tmp_path
+):
+    ws = baseline_repo(tmp_path / "ws")
+
+    def hang(*args, **kwargs):
+        raise subprocess.TimeoutExpired(args[0], 1)
+
+    monkeypatch.setattr(subprocess, "run", hang)
+    assert outside_write_list(ws, ALLOWED) == [GIT_STATUS_FAILED]
+
+
+@pytest.mark.slow
+def test_check_fails_and_says_why_when_the_workspace_is_not_a_git_repo(tmp_path):
+    rung = RUNGS[6]
+    ws = prepare_workspace(rung, tmp_path)
+    overlay(NEXT_STATE[1], ws)
+    shutil.rmtree(ws / ".git")
+    result = check_agentclinic(1)(ws, FIXTURES / rung.fixture)
+    assert result.details["outside_write_list"] == [GIT_STATUS_FAILED]
+    assert result.passed is False

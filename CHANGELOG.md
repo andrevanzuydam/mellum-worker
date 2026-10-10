@@ -20,7 +20,8 @@ Versions match git tags; pin one in both install lines.
   only when the project's own tests, hidden behaviour tests and the
   unchanged-tests check all pass and nothing was written outside the
   `AGENTS.md` write-list; the write-list result is reported on its own as
-  `outside_write_list`. The runner gains `--mode-facts {on,off}`
+  `outside_write_list`, and a workspace whose `git status` fails does not
+  pass. The runner gains `--mode-facts {on,off}`
   (`off` sets `MELLUM_MODE_FACTS=0`) and `--strip-facts-section`, and
   `run.json` records both.
 - Run record schema 2: `schema`, `version`, `promptVersion`, `host`

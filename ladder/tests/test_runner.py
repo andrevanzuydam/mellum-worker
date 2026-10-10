@@ -609,3 +609,55 @@ def test_the_check_runs_after_the_diff_is_staged_so_hidden_files_stay_out(
     assert "app.py" in (run_dir / "diff.patch").read_text()
     assert "_hidden_p1.py" not in record["files_created"]
     assert "_hidden_p1.py" not in record["diff_stat"]
+
+
+@pytest.mark.parametrize(
+    ("mode_facts", "strip", "expect_env"),
+    [("on", False, None), ("off", True, "0"), ("on", True, None), ("off", False, "0")],
+)
+def test_run_once_wires_the_switches_into_the_child_env_and_the_workspace(
+    monkeypatch, tmp_path, mode_facts, strip, expect_env
+):
+    """--mode-facts off is the A18 treatment: the child env must carry MELLUM_MODE_FACTS=0, and
+    --strip-facts-section must reach prepare_workspace."""
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    real = sp.run
+    child_envs, prepared = [], []
+
+    def fake(args, **kwargs):
+        if args[0] == "git":
+            return real(args, **kwargs)
+        child_envs.append(kwargs.get("env"))
+        return sp.CompletedProcess(args, 0, stdout="", stderr="")
+
+    def prepare(rung, scratch, **kw):
+        prepared.append(kw)
+        return scratch
+
+    monkeypatch.delenv("MELLUM_MODE_FACTS", raising=False)
+    monkeypatch.setattr(run_ladder.subprocess, "run", fake)
+    monkeypatch.setattr(run_ladder, "prepare_workspace", prepare)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    monkeypatch.setattr(
+        run_ladder, "mirror_agent_dir", lambda *a, **k: tmp_path / "agent"
+    )
+    rung = Rung(6, "x", "s", ["true"], lambda ws, base: CheckResult(True, True))
+    run_ladder.run_once(
+        rung,
+        "mode",
+        "baseline",
+        1,
+        tmp_path / "out",
+        5,
+        {},
+        False,
+        mode_facts=mode_facts,
+        strip_facts_section=strip,
+    )
+    assert len(child_envs) == 1
+    assert child_envs[0].get("MELLUM_MODE_FACTS") == expect_env
+    assert prepared == [{"strip_facts_section": strip}]

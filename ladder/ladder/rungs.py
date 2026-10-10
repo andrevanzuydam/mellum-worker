@@ -129,20 +129,40 @@ HIDDEN_DIR = FIXTURES / "agentclinic-hidden"
 _NOT_TEST_DIRS = {"__pycache__", ".pytest_cache"}
 
 
+GIT_STATUS_FAILED = "<git status failed>"
+
+
 def outside_write_list(ws: Path, allowed: tuple[str, ...]) -> list[str]:
     """Paths git reports as new, modified or deleted that the write-list does not cover.
 
     An entry ending in ``/`` allows everything beneath that directory; any other
     entry allows exactly that file. Ignored paths (``.venv/``) never show up
     because git honours the workspace's ``.gitignore``.
+
+    Fails closed: when ``git status`` cannot run, fails or times out (for example
+    the worker removed ``.git``), the result is ``[GIT_STATUS_FAILED]``, so the
+    rung cannot pass and the record says why.
     """
-    proc = subprocess.run(
-        ["git", "status", "--porcelain", "-z", "--untracked-files=all", "--no-renames"],
-        cwd=ws,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        proc = subprocess.run(
+            [
+                "git",
+                "status",
+                "--porcelain",
+                "-z",
+                "--untracked-files=all",
+                "--no-renames",
+            ],
+            cwd=ws,
+            capture_output=True,
+            text=True,
+            timeout=COMMAND_TIMEOUT,
+            check=False,
+        )
+    except OSError, subprocess.TimeoutExpired:
+        return [GIT_STATUS_FAILED]
+    if proc.returncode != 0:
+        return [GIT_STATUS_FAILED]
     paths = [entry[3:] for entry in proc.stdout.split("\0") if len(entry) > 3]
     return sorted(
         path
