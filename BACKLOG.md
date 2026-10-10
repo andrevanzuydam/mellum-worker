@@ -79,3 +79,18 @@ brief and the user's original text side by side. The worker prompt is
 unchanged, so this is not a measured setting. *Reopens when* M.9 is scheduled
 (M.5 has closed): compare loose `/mellum` against mediated runs on the
 ac-demo phase specs with schema-2 records.
+
+**`/mellum learn`: show users what happened and how to tune.** Run records
+hold the evidence (a test command failing in 7 to 25 variants before one
+passes; files written outside the project's layout; a success reply after a
+failed last command; deadline hits, nudges), but most users never find or
+read `~/.pi/agent/mellum-mode-runs.jsonl`. A `/mellum learn` subcommand reads
+the recent records for the current project, deterministically, with no
+model call, names each pattern in plain words with counts, and proposes the
+remedy: for test-command thrash, the `## Mellum` section with the command
+that finally passed. It shows the section and asks before writing it to
+`AGENTS.md`. Worker needs the same: the Pi child and the OpenCode subagent
+write no record today, so this needs a record from the guards extension and
+the OpenCode plugin, and a host-neutral analyser (`scripts/mellum-learn.mjs`)
+that a skill can run in either host. *Reopens when* M.7 closes with the facts
+block shipped; then it is scheduled as M.7A.
