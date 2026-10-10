@@ -119,5 +119,5 @@ that finally passed. It shows the section and asks before writing it to
 `AGENTS.md`. Worker needs the same: the Pi child and the OpenCode subagent
 write no record today, so this needs a record from the guards extension and
 the OpenCode plugin, and a host-neutral analyser (`scripts/mellum-learn.mjs`)
-that a skill can run in either host. *Reopen condition met:* M.7 shipped the facts
-block (2026-10-10); scheduled as M.7A on the roadmap.
+that a skill can run in either host. *Reopens when* M.7 closes with the facts block
+shipped; met 2026-10-10, scheduled as M.7A on the roadmap.
