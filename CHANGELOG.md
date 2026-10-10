@@ -16,7 +16,9 @@ Versions match git tags; pin one in both install lines.
 ### Added
 
 - `ladder/`: rungs 6 to 9, the four AgentClinic phases, to measure
-  whether Mellum can build a small project from its specs. A rung passes
+  whether Mellum can build a small project from its specs (looser phase
+  specs with a `## Mellum` section in each fixture's `AGENTS.md`, hidden
+  behaviour tests, and reference solutions for the earlier phases). A rung passes
   only when the project's own tests, hidden behaviour tests and the
   existing-tests check all pass (no existing test is removed or edited;
   added tests are allowed, in old or new files) and nothing was written
@@ -39,7 +41,12 @@ Versions match git tags; pin one in both install lines.
 - `ladder/`: the five-rung ladder that measures this checkout (runner,
   scorer, fixtures and ablation prompts), moved in from the research
   repo. `npm test` also runs its two JS hook tests; its Python tests run
-  with `cd ladder && uv run python -m pytest`.
+  with `cd ladder && uv run python -m pytest`. It measures what ships: it
+  renders the Worker agent from this checkout's own template, loads Mode
+  once, and each `run.json` records which checkout ran (`worker_version`,
+  `worker_git`). The Mode RPC probe (`ladder/ladder/probe_mode_rpc.py`)
+  writes its run records under its scratch directory, not to your
+  `~/.pi/agent/mellum-mode-runs.jsonl`.
 - `docs/ladder/`: the phase records (A0 to A17 and the earlier phases:
   READMEs, tables, run records, final answers and briefs), moved in from
   the research repo. Raw traces, stdout and diffs are archived per phase
@@ -90,6 +97,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- `docs/ladder/ablation-a17-mode-v012/README.md`: the nudge and tool-error
+  rows gave runs-with-one counts labelled as totals (A17 2 and 8); they
+  now give both, totals first (A17 3 and 12, A14 7 and 13), matching each
+  phase's `table.md`.
 - Links to the research and the phase records now point inside this repo
   (`docs/ladder/`, `docs/superpowers/research/`) instead of the research
   repo, so they keep working if that repo goes private. The research notes
