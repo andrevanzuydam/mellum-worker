@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from ladder.pi_profile import REPO_ROOT
 from ladder.run_ladder import (
     GUARDS_EXT,
@@ -82,7 +84,9 @@ def test_run_once_never_inherits_stdin(monkeypatch, tmp_path):
         return sp.CompletedProcess(args, 0, stdout="", stderr="")
 
     monkeypatch.setattr(run_ladder.subprocess, "run", fake_run)
-    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch: scratch)
+    monkeypatch.setattr(
+        run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch
+    )
     monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
     rung = Rung(
         1, "calculator", "fix it", ["true"], lambda ws, base: CheckResult(False, True)
@@ -104,7 +108,9 @@ def test_run_record_carries_the_guards_override(monkeypatch, tmp_path):
         "run",
         lambda args, **kw: sp.CompletedProcess(args, 0, stdout="", stderr=""),
     )
-    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch: scratch)
+    monkeypatch.setattr(
+        run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch
+    )
     monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
     monkeypatch.setenv("MELLUM_GUARDS", '{"emptyFinalNudge":3,"loopBreaker":true}')
     rung = Rung(
@@ -256,7 +262,9 @@ def test_run_record_leaves_direct_only_fields_empty_in_other_modes(
         "run",
         lambda args, **kw: sp.CompletedProcess(args, 0, stdout="", stderr=""),
     )
-    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch: scratch)
+    monkeypatch.setattr(
+        run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch
+    )
     monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
     monkeypatch.setattr(run_ladder, "prepare_pi_workspace", lambda ws, ext: ws)
     monkeypatch.setattr(run_ladder, "mirror_agent_dir", lambda s, d, t, **kw: d)
@@ -350,7 +358,9 @@ def test_mode_runs_record_guards_on_because_the_mode_always_loads_them(
         "run",
         lambda args, **kw: sp.CompletedProcess(args, 0, stdout="", stderr=""),
     )
-    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch: scratch)
+    monkeypatch.setattr(
+        run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch
+    )
     monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
     monkeypatch.setattr(run_ladder, "mirror_agent_dir", lambda s, d, t, **kw: d)
     rung = Rung(
@@ -430,7 +440,9 @@ def test_run_record_names_the_brief_file_relative_to_the_repo(monkeypatch, tmp_p
         "run",
         lambda args, **kw: sp.CompletedProcess(args, 0, stdout="", stderr=""),
     )
-    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch: scratch)
+    monkeypatch.setattr(
+        run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch
+    )
     monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
     rung = Rung(
         1, "calculator", "fix it", ["true"], lambda ws, base: CheckResult(False, True)
@@ -443,3 +455,209 @@ def test_run_record_names_the_brief_file_relative_to_the_repo(monkeypatch, tmp_p
     assert (REPO_ROOT / record["brief_file"]).is_file()
     # subprocess.run is stubbed above, so git describe yields None here.
     assert record["worker_version"] and "worker_git" in record
+
+
+def test_mode_env_turns_facts_off_only_when_asked(tmp_path):
+    from ladder.run_ladder import mode_env
+
+    args = ({"HOME": "/h"}, tmp_path / "trace.jsonl", tmp_path / "agent", tmp_path)
+    assert "MELLUM_MODE_FACTS" not in mode_env(*args)
+    assert "MELLUM_MODE_FACTS" not in mode_env(*args, facts=True)
+    assert mode_env(*args, facts=False)["MELLUM_MODE_FACTS"] == "0"
+
+
+def test_strip_mellum_section_drops_the_section_and_keeps_the_rest_exactly():
+    from ladder.run_ladder import strip_mellum_section
+
+    text = (
+        "# Title\r\n\r\nintro\n\n## Mellum\n\n- Test command: x\n### Sub\n- y\n\n"
+        "## Other\n\nkeep  \n\ttabbed\n"
+    )
+    assert strip_mellum_section(text) == (
+        "# Title\r\n\r\nintro\n\n## Other\n\nkeep  \n\ttabbed\n"
+    )
+
+
+def test_strip_mellum_section_runs_to_eof_and_stops_at_a_level_one_heading():
+    from ladder.run_ladder import strip_mellum_section
+
+    assert strip_mellum_section("# A\n\n## Mellum\n- x\n- y") == "# A\n\n"
+    assert strip_mellum_section("## Mellum\n- x\n# B\nz\n") == "# B\nz\n"
+
+
+def test_strip_mellum_section_leaves_a_file_without_the_section_unchanged():
+    from ladder.run_ladder import strip_mellum_section
+
+    for text in ("", "# A\n\ntext", "# A\n### Mellum\n- x\n", "# A\n## Mellumx\n"):
+        assert strip_mellum_section(text) == text
+
+
+@pytest.mark.slow
+def test_prepare_workspace_strips_the_section_before_the_baseline_commit(tmp_path):
+    from ladder.run_ladder import git, prepare_workspace
+    from ladder.rungs import RUNGS
+
+    ws = prepare_workspace(RUNGS[6], tmp_path, strip_facts_section=True)
+    agents = (ws / "AGENTS.md").read_text()
+    assert "## Mellum" not in agents and "Test command" not in agents
+    assert agents.startswith("# AgentClinic")
+    assert git(ws, "status", "--porcelain").strip() == ""
+    assert "Test command" not in git(ws, "show", "HEAD:AGENTS.md")
+
+
+@pytest.mark.slow
+def test_prepare_workspace_keeps_the_section_by_default(tmp_path):
+    from ladder.run_ladder import prepare_workspace
+    from ladder.rungs import RUNGS
+
+    ws = prepare_workspace(RUNGS[6], tmp_path)
+    assert "## Mellum" in (ws / "AGENTS.md").read_text()
+
+
+def test_parser_defaults_to_facts_on_and_no_strip():
+    from ladder.run_ladder import build_parser
+
+    base = ["--profile", "baseline", "--rung", "6", "--out", "x"]
+    args = build_parser().parse_args(base)
+    assert args.mode_facts == "on" and args.strip_facts_section is False
+    args = build_parser().parse_args(
+        [*base, "--mode-facts", "off", "--strip-facts-section"]
+    )
+    assert args.mode_facts == "off" and args.strip_facts_section is True
+
+
+def _real_run_for_git(monkeypatch, run_ladder):
+    """Let git run for real while the child (pi) call is faked."""
+    import subprocess as sp
+
+    real = sp.run
+
+    def fake(args, **kwargs):
+        if args[0] == "git":
+            return real(args, **kwargs)
+        return sp.CompletedProcess(args, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(run_ladder.subprocess, "run", fake)
+
+
+def test_run_record_names_the_facts_switches(monkeypatch, tmp_path):
+    import json
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    _real_run_for_git(monkeypatch, run_ladder)
+    monkeypatch.setattr(
+        run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch
+    )
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    monkeypatch.setattr(
+        run_ladder, "mirror_agent_dir", lambda *a, **k: tmp_path / "agent"
+    )
+    rung = Rung(6, "x", "s", ["true"], lambda ws, base: CheckResult(True, True))
+    run_ladder.run_once(
+        rung,
+        "mode",
+        "baseline",
+        1,
+        tmp_path / "out",
+        5,
+        {},
+        False,
+        mode_facts="off",
+        strip_facts_section=True,
+    )
+    record = json.loads(next((tmp_path / "out").glob("*/run.json")).read_text())
+    assert record["mode_facts"] == "off"
+    assert record["strip_facts_section"] is True
+
+
+def test_the_check_runs_after_the_diff_is_staged_so_hidden_files_stay_out(
+    monkeypatch, tmp_path
+):
+    """The scorer copies _hidden_p*.py into the workspace; diff.patch and files_created must not show them."""
+    import json
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    (ws / "app.py").write_text("a\n")
+
+    def prepare(rung, scratch, **kw):
+        run_ladder.git(ws, "init", "-q")
+        run_ladder.git(ws, "add", "-A")
+        run_ladder.git(
+            ws, "-c", "user.name=t", "-c", "user.email=t@l", "commit", "-qm", "b"
+        )
+        (ws / "app.py").write_text("a\nb\n")  # stands in for the run's own edit
+        return ws
+
+    def check(ws_, base):
+        (ws_ / "_hidden_p1.py").write_text("def test_x():\n    pass\n")
+        return CheckResult(True, True)
+
+    _real_run_for_git(monkeypatch, run_ladder)
+    monkeypatch.setattr(run_ladder, "prepare_workspace", prepare)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    rung = Rung(6, "x", "s", ["true"], check)
+    run_ladder.run_once(rung, "direct", "baseline", 1, tmp_path / "out", 5, {}, False)
+    run_dir = next((tmp_path / "out").glob("rung6-*"))
+    record = json.loads((run_dir / "run.json").read_text())
+    assert "_hidden_p1.py" not in (run_dir / "diff.patch").read_text()
+    assert "app.py" in (run_dir / "diff.patch").read_text()
+    assert "_hidden_p1.py" not in record["files_created"]
+    assert "_hidden_p1.py" not in record["diff_stat"]
+
+
+@pytest.mark.parametrize(
+    ("mode_facts", "strip", "expect_env"),
+    [("on", False, None), ("off", True, "0"), ("on", True, None), ("off", False, "0")],
+)
+def test_run_once_wires_the_switches_into_the_child_env_and_the_workspace(
+    monkeypatch, tmp_path, mode_facts, strip, expect_env
+):
+    """--mode-facts off is the A18 treatment: the child env must carry MELLUM_MODE_FACTS=0, and
+    --strip-facts-section must reach prepare_workspace."""
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    real = sp.run
+    child_envs, prepared = [], []
+
+    def fake(args, **kwargs):
+        if args[0] == "git":
+            return real(args, **kwargs)
+        child_envs.append(kwargs.get("env"))
+        return sp.CompletedProcess(args, 0, stdout="", stderr="")
+
+    def prepare(rung, scratch, **kw):
+        prepared.append(kw)
+        return scratch
+
+    monkeypatch.delenv("MELLUM_MODE_FACTS", raising=False)
+    monkeypatch.setattr(run_ladder.subprocess, "run", fake)
+    monkeypatch.setattr(run_ladder, "prepare_workspace", prepare)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    monkeypatch.setattr(
+        run_ladder, "mirror_agent_dir", lambda *a, **k: tmp_path / "agent"
+    )
+    rung = Rung(6, "x", "s", ["true"], lambda ws, base: CheckResult(True, True))
+    run_ladder.run_once(
+        rung,
+        "mode",
+        "baseline",
+        1,
+        tmp_path / "out",
+        5,
+        {},
+        False,
+        mode_facts=mode_facts,
+        strip_facts_section=strip,
+    )
+    assert len(child_envs) == 1
+    assert child_envs[0].get("MELLUM_MODE_FACTS") == expect_env
+    assert prepared == [{"strip_facts_section": strip}]

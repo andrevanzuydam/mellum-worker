@@ -135,14 +135,19 @@ def child_env(
     return env
 
 
-def mode_env(parent: dict, trace: Path, agent_dir: Path, scratch: Path) -> dict:
+def mode_env(
+    parent: dict, trace: Path, agent_dir: Path, scratch: Path, facts: bool = True
+) -> dict:
     """Mode runs: headless Mode, the mirrored profile, and a run log under scratch.
 
     MELLUM_MODE_RUNS keeps the run out of the operator's real
-    ~/.pi/agent/mellum-mode-runs.jsonl.
+    ~/.pi/agent/mellum-mode-runs.jsonl. ``facts=False`` sets MELLUM_MODE_FACTS=0,
+    which turns the project-facts block off (Mode as shipped before it).
     """
     env = child_env(parent, str(trace), agent_dir, offline=False, mode=True)
     env["MELLUM_MODE_RUNS"] = str(scratch / "mellum-mode-runs.jsonl")
+    if not facts:
+        env["MELLUM_MODE_FACTS"] = "0"
     return env
 
 
@@ -345,8 +350,28 @@ def git(ws: Path, *args: str) -> str:
     ).stdout
 
 
-def prepare_workspace(rung: Rung, scratch: Path) -> Path:
+def strip_mellum_section(text: str) -> str:
+    """Drop each ``## Mellum`` section: its heading through the line before the next
+    level-1 or level-2 heading, or to the end of the file. Everything else is kept byte for byte."""
+    out, skipping = [], False
+    for line in text.splitlines(keepends=True):
+        if re.match(r"##[ \t]+Mellum[ \t]*$", line.rstrip("\r\n")):
+            skipping = True
+        elif skipping and re.match(r"#{1,2}[ \t]", line):
+            skipping = False
+        if not skipping:
+            out.append(line)
+    return "".join(out)
+
+
+def prepare_workspace(
+    rung: Rung, scratch: Path, strip_facts_section: bool = False
+) -> Path:
     ws = copy_fixture(rung.fixture, scratch / f"rung{rung.number}")
+    agents = ws / "AGENTS.md"
+    if strip_facts_section and agents.exists():
+        # Before the baseline commit, so the stripped file is the baseline.
+        agents.write_bytes(strip_mellum_section(agents.read_bytes().decode()).encode())
     git(ws, "init", "-q")
     git(ws, "add", "-A")
     git(
@@ -398,9 +423,11 @@ def run_once(
     subagents_config: dict | None = None,
     strip_thinking: bool = False,
     budget_hook: bool = False,
+    mode_facts: str = "on",
+    strip_facts_section: bool = False,
 ) -> dict:
     scratch = Path(tempfile.mkdtemp(prefix="ladder-"))
-    ws = prepare_workspace(rung, scratch)
+    ws = prepare_workspace(rung, scratch, strip_facts_section=strip_facts_section)
     paths, lines = baseline_index(ws)
     trace = scratch / "trace.jsonl"
     if mode == "delegated":
@@ -438,7 +465,9 @@ def run_once(
             [ws],
             exclude_packages=("mellum-worker",),
         )
-        env = mode_env(dict(os.environ), trace, agent_dir, scratch)
+        env = mode_env(
+            dict(os.environ), trace, agent_dir, scratch, facts=mode_facts == "on"
+        )
         args = build_pi_mode_args(rung.sentence)
         guards = True  # the mode always loads the guard extension
     else:
@@ -519,6 +548,8 @@ def run_once(
         if mode in ("chunked", "brief")
         else None,
         "budget_hook": budget_hook if mode == "direct" else None,
+        "mode_facts": mode_facts if mode == "mode" else None,
+        "strip_facts_section": strip_facts_section,
         "guards_env": json.loads(os.environ["MELLUM_GUARDS"])
         if os.environ.get("MELLUM_GUARDS")
         else None,
@@ -604,7 +635,7 @@ def tool_version(cmd: list[str]) -> str:
         return "unknown"
 
 
-def main(argv: list[str] | None = None) -> None:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--harness", choices=["pi"], default="pi")
     parser.add_argument(
@@ -653,9 +684,24 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="direct mode: map --thinking to oMLX's request-level thinking_budget",
     )
+    parser.add_argument(
+        "--mode-facts",
+        choices=["on", "off"],
+        default="on",
+        help="mode mode: off sets MELLUM_MODE_FACTS=0 (Mode without the project-facts block)",
+    )
+    parser.add_argument(
+        "--strip-facts-section",
+        action="store_true",
+        help="remove the `## Mellum` section from the workspace's AGENTS.md before the run (fallback-only condition)",
+    )
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--omlx", default="http://127.0.0.1:8001")
-    args = parser.parse_args(argv)
+    return parser
+
+
+def main(argv: list[str] | None = None) -> None:
+    args = build_parser().parse_args(argv)
     # Absolute, so the record's prompt_file is relative to REPO_ROOT; run from ladder/,
     # `prompts/ablation/v4a-no-procedure.md` is ladder/prompts/ablation/....
     args.prompt = args.prompt.resolve()
@@ -699,6 +745,8 @@ def main(argv: list[str] | None = None) -> None:
                     args.subagents_config,
                     args.strip_thinking,
                     args.budget_hook,
+                    args.mode_facts,
+                    args.strip_facts_section,
                 )
                 row = table_row(record)
                 with table.open("a") as stream:

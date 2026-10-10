@@ -1,0 +1,112 @@
+{
+  "rung": 7,
+  "repeat": 3,
+  "profile": "baseline",
+  "mode": "mode",
+  "harness": "pi",
+  "plain": false,
+  "guards": true,
+  "subagents_config": null,
+  "strip_thinking": null,
+  "prompts": 1,
+  "prompts_planned": 1,
+  "brief_file": null,
+  "budget_hook": null,
+  "mode_facts": "off",
+  "strip_facts_section": false,
+  "guards_env": null,
+  "prompt_version": null,
+  "prompt_file": null,
+  "prompt_mode": null,
+  "thinking": null,
+  "versions": {
+    "pi": "1.0.2",
+    "omlx": "0.6.4",
+    "model_settings": {
+      "max_tokens": 4096,
+      "thinking_budget_tokens": null,
+      "presence_penalty": 0.0,
+      "max_tool_result_tokens": null
+    }
+  },
+  "sentence": "Implement specs/phase-2-board.md",
+  "started": 1791592675.4608488,
+  "wall_seconds_untrusted": 134.8,
+  "deadline_hit": false,
+  "stop_reason": "stop",
+  "final_text_chars": 53,
+  "thinking_reentries": 0,
+  "final_text_is": "worker",
+  "parent": null,
+  "baseline_lines": {
+    "specs/phase-1-home.md": 7,
+    "specs/phase-2-board.md": 7,
+    "AGENTS.md": 7,
+    "pyproject.toml": 13,
+    ".gitignore": 3,
+    "tests/test_app.py": 11,
+    "app.py": 15,
+    "uv.lock": 1212,
+    "templates/home.html": 7,
+    "templates/base.html": 25
+  },
+  "check": {
+    "passed": false,
+    "tests_unchanged": false,
+    "details": {
+      "facts_cmd_pass": true,
+      "hidden_pass": true,
+      "outside_write_list": [
+        "__init__.py"
+      ],
+      "hidden_collision": []
+    }
+  },
+  "score": {
+    "requests": 42,
+    "largest_prompt_chars": 79019,
+    "tool_calls_by_name": {
+      "find": 3,
+      "read": 8,
+      "ls": 5,
+      "grep": 1,
+      "write": 5,
+      "edit": 4,
+      "bash": 15
+    },
+    "tool_errors": 11,
+    "edit_anchor_failures": 0,
+    "noop_edits": 0,
+    "write_existing": 0,
+    "bash_file_mutations": 0,
+    "max_identical_streak": 1,
+    "write_shrink": 0,
+    "nudges": 0,
+    "max_identical_in_window": 1,
+    "loop_breaker_would_block": 0,
+    "effective_params": {
+      "temperature": 1,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0,
+      "max_tokens": 16384,
+      "presence_penalty": 0
+    }
+  },
+  "diff_stat": " __init__.py               |  0\n app.py                    |  6 ++++++\n models.py                 | 15 +++++++++++++++\n templates/complaints.html | 15 +++++++++++++++\n tests/__init__.py         |  0\n tests/conftest.py         |  3 +++\n tests/test_app.py         |  8 +++++++-\n 7 files changed, 46 insertions(+), 1 deletion(-)\n",
+  "files_created": [
+    "__init__.py",
+    "models.py",
+    "templates/complaints.html",
+    "tests/__init__.py",
+    "tests/conftest.py"
+  ],
+  "workspace": "/var/folders/m4/jc_jynrj6z10mk0t80pkj8l80000gn/T/ladder-y32575ur/rung7",
+  "worker_version": "0.1.2",
+  "worker_git": "v0.1.2-36-g38a4e64",
+  "check_rescored": {
+    "passed": false,
+    "tests_unchanged": true,
+    "rule": "existing-tests-kept"
+  }
+}

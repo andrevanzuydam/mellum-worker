@@ -24,6 +24,7 @@ import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { commandMutatesFiles } from "./mellum-commands.ts";
 import { createGuardSet, type GuardSet } from "./mellum-guards.ts";
+import { factsBlock, readProjectFacts, type ProjectFacts } from "./mellum-facts.ts";
 
 export const MARK_ON = "[mellum-mode on]";
 export const MARK_OFF = "[mellum-mode off]";
@@ -41,7 +42,27 @@ function textOf(m: Msg): string {
 
 const INSTRUCTION_ROLES = new Set(["system", "developer"]);
 
-export function filterForMellum(payload: any, systemPrompt: string, opts: { expectMarker?: boolean } = {}) {
+/**
+ * A copy of a user message with the project facts appended: to string content, to the
+ * last text part of array content, or as a new text part when there is none. Never
+ * mutates `m`; a message that already ends with the block is returned as is.
+ */
+function withFacts(m: Msg, facts: string): Msg {
+	if (typeof m.content === "string") return m.content.endsWith(facts) ? m : { ...m, content: m.content + facts };
+	if (!Array.isArray(m.content)) return { ...m, content: facts.replace(/^\n+/, "") };
+	const parts: any[] = [...m.content];
+	for (let i = parts.length - 1; i >= 0; i--) {
+		const p = parts[i];
+		if (p && p.type === "text" && typeof p.text === "string") {
+			if (!p.text.endsWith(facts)) parts[i] = { ...p, text: p.text + facts };
+			return { ...m, content: parts };
+		}
+	}
+	parts.push({ type: "text", text: facts.replace(/^\n+/, "") });
+	return { ...m, content: parts };
+}
+
+export function filterForMellum(payload: any, systemPrompt: string, opts: { expectMarker?: boolean; facts?: string } = {}) {
 	if (!payload || !Array.isArray(payload.messages)) return payload;
 	const msgs: Msg[] = payload.messages;
 	const isMarker = (m: Msg) => m.role === "user" && (textOf(m).includes(MARK_ON) || textOf(m).includes(MARK_OFF));
@@ -77,9 +98,11 @@ export function filterForMellum(payload: any, systemPrompt: string, opts: { expe
 			}
 		}
 	}
+	const facts = opts.facts ?? "";
 	const kept = msgs
 		.slice(start)
-		.filter((m) => !INSTRUCTION_ROLES.has(m.role ?? "") && !isMarker(m) && !isBootstrap(m));
+		.filter((m) => !INSTRUCTION_ROLES.has(m.role ?? "") && !isMarker(m) && !isBootstrap(m))
+		.map((m) => (facts && m.role === "user" ? withFacts(m, facts) : m));
 	const out: any = { ...payload, messages: [{ role: "system", content: systemPrompt }, ...kept] };
 	if (Array.isArray(payload.tools)) {
 		// pi-subagents re-adds its own tools after setActiveTools; the worker gets only its seven.
@@ -131,7 +154,8 @@ export function collapseHandoffs(messages: Msg[], opts: HandoffOptions = {}): Ms
 			const trailing = span.slice(tail);
 			span = span.slice(0, tail);
 			const task = prev ? textOf(prev) : textOf(span.find((x) => x.role === "user") ?? {});
-			out.push(handoffMessage(task, span, opts), ...trailing);
+			const factsSource = /facts: (\S+)/.exec(textOf(m))?.[1];
+			out.push(handoffMessage(task, span, opts, factsSource), ...trailing);
 			i = j + 1;
 			continue;
 		}
@@ -233,14 +257,14 @@ export function spanStats(span: Msg[]): SpanStats {
 
 const MAX_HANDOFF_COMMANDS = 15;
 
-function summaryLine(stats: SpanStats): string {
+function summaryLine(stats: SpanStats, factsSource?: string): string {
 	const n = stats.requests;
 	const wall = stats.wallSeconds === undefined ? "wall unknown" : `${stats.wallSeconds} s`;
 	const last = { ok: "last command ok", failed: "last command failed", unfinished: "last command did not finish", none: "no commands" }[stats.lastCommand];
-	return `Mellum: ${n} request${n === 1 ? "" : "s"}, ${stats.usage.output.toLocaleString("en-US")} output tokens, ${wall}, ${last}`;
+	return `Mellum: ${n} request${n === 1 ? "" : "s"}, ${stats.usage.output.toLocaleString("en-US")} output tokens, ${wall}, ${last}${factsSource ? `, facts: ${factsSource}` : ""}`;
 }
 
-function handoffMessage(task: string, span: Msg[], opts: HandoffOptions = {}): Msg {
+function handoffMessage(task: string, span: Msg[], opts: HandoffOptions = {}, factsSource?: string): Msg {
 	const stats = spanStats(span);
 	const clip = (s: string, n: number) => (s.length > n ? s.slice(0, n) + "…" : s);
 	const oneLine = (s: string) => s.replace(/\s+/g, " ").trim();
@@ -250,7 +274,7 @@ function handoffMessage(task: string, span: Msg[], opts: HandoffOptions = {}): M
 	const commandLines = shown.map((c) => `- ${clip(oneLine(c.command), 200)}${!c.finished ? " (no result)" : c.failed ? " (failed)" : ""}`);
 	const body = [
 		"[mellum-mode handoff] Mellum ran a task in this session; its tool calls are in the transcript but not repeated here.",
-		summaryLine(stats),
+		summaryLine(stats, factsSource),
 		`Task: ${clip(task.trim(), 400)}`,
 		`Files edited or written: ${fileList.length ? fileList.join(", ") : "none"}`,
 		commandLines.length
@@ -291,6 +315,7 @@ export interface RecordMeta {
 	promptVersion?: string;
 	nudges?: number;
 	guardBlocks?: number;
+	facts?: { source: string; testCommand: string | null; chars: number };
 }
 
 export interface RunRecord {
@@ -317,6 +342,7 @@ export interface RunRecord {
 	finalTurn: SpanStats["finalTurn"];
 	nudges: number;
 	guardBlocks: number;
+	facts?: { source: string; testCommand: string | null; chars: number };
 }
 
 /** One JSONL line per span, for analysis outside the session. Same fields as the handoff, plus schema 2 additions. */
@@ -347,6 +373,7 @@ export function runRecord(task: string, span: Msg[], meta: RecordMeta): RunRecor
 		finalTurn: stats.finalTurn,
 		nudges: meta.nudges ?? 0,
 		guardBlocks: meta.guardBlocks ?? 0,
+		...(meta.facts ? { facts: meta.facts } : {}),
 	};
 }
 
@@ -420,6 +447,7 @@ export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
 	let promptVersion = "unknown";
 	let nudges = 0;
 	let guardBlocks = 0;
+	let spanFacts: ProjectFacts = { source: "none", bullets: [], testCommand: null, chars: 0 };
 
 	// Same resolver for the handoff collapse and the run record: absolute, else relative to the cwd.
 	const existsInCwd = (p: string) => existsSync(isAbsolute(p) ? p : resolve(process.cwd(), p));
@@ -458,7 +486,10 @@ export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
 		guardBlocks = 0;
 		interactive = notify;
 		warnedMissing = false;
-		if (notify) pi.sendMessage({ customType: "mellum-mode", content: MARK_ON, display: true }, { deliverAs: "nextTurn" });
+		// Read once per span, headless or not: the request hook forwards the same block every time.
+		spanFacts = readProjectFacts(process.cwd(), { read: (p) => (existsSync(p) ? readFileSync(p, "utf8") : undefined) });
+		if (spanFacts.warning) warn(ctx, spanFacts.warning, "warning");
+		if (notify) pi.sendMessage({ customType: "mellum-mode", content: `${MARK_ON} facts: ${spanFacts.source}`, display: true }, { deliverAs: "nextTurn" });
 		if (notify) ctx.ui?.notify?.(`mellum-mode on: ${provider}/${id}, tools ${WORKER_TOOLS.join(",")}`, "info");
 	}
 
@@ -494,7 +525,7 @@ export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
 			const open = openSpan([...lastContext, ...turnsSinceContext]);
 			if (!open) return;
 			mkdirSync(dirname(file), { recursive: true });
-			appendFileSync(file, JSON.stringify(runRecord(open.task, open.span, { endedAt: Date.now(), cwd: process.cwd(), model: activeModel, exists: existsInCwd, host, activation, promptVersion, nudges, guardBlocks })) + "\n");
+			appendFileSync(file, JSON.stringify(runRecord(open.task, open.span, { endedAt: Date.now(), cwd: process.cwd(), model: activeModel, exists: existsInCwd, host, activation, promptVersion, nudges, guardBlocks, facts: { source: spanFacts.source, testCommand: spanFacts.testCommand, chars: spanFacts.chars } })) + "\n");
 		} catch (error) {
 			warn(ctx, `mellum-mode: could not write the run record${file ? ` to ${file}` : ""}: ${(error as Error)?.message ?? String(error)}`, "warning");
 		}
@@ -608,7 +639,7 @@ export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
 	pi.on("before_provider_request", (event: any, ctx: any) => {
 		if (!active) return undefined;
 		span.requests += 1;
-		const out = filterForMellum(event.payload, prompt, { expectMarker: interactive });
+		const out = filterForMellum(event.payload, prompt, { expectMarker: interactive, facts: factsBlock(spanFacts) });
 		if (out?.mellumModeMarkerMissing) {
 			delete out.mellumModeMarkerMissing;
 			if (!warnedMissing) {

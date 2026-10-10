@@ -22,6 +22,19 @@ test("every phase referenced by SKILL.md exists", () => {
 	for (const r of new Set(refs)) assert.ok(existsSync(resolve(SKILL, "reference", r)), `${r} missing`);
 });
 
+test("the optional project-facts phase is linked and states the section, the cap and the switch", () => {
+	const text = readFileSync(resolve(SKILL, "SKILL.md"), "utf8");
+	assert.match(text, /reference\/08-project-facts\.md/);
+	const step = readFileSync(resolve(SKILL, "reference", "08-project-facts.md"), "utf8");
+	assert.match(step, /^## Mellum$/m, "shows the section heading");
+	assert.match(step, /600 characters/, "states the cap");
+	assert.match(step, /MELLUM_MODE_FACTS=0/, "names the switch");
+	assert.match(step, /uv run --offline python -m pytest -q/, "names the fallback");
+	// Phase 6 appends `## Mellum Worker`; the check must match only Mode's exact heading.
+	assert.ok(step.includes("grep -niE '^##[[:space:]]+Mellum[[:space:]]*$' AGENTS.md"), "check is anchored to the exact heading");
+	assert.match(text, /exactly `## Mellum`/, "SKILL.md check names the exact heading");
+});
+
 test("the smoke fixture is the failing calculator and its test command is the one in the recipe", () => {
 	const dir = resolve(SKILL, "smoke", "calculator");
 	const pkg = JSON.parse(readFileSync(resolve(dir, "package.json"), "utf8"));

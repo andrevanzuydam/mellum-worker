@@ -486,3 +486,127 @@ test("with a UI, a missing Mellum model is a notify error and nothing goes to st
 	assert.ok(h.calls.notify.some(([m, l]) => m.includes("not found") && l === "error"), "notify called with level error");
 	modeIsOff(h.handlers);
 });
+
+// Runs `body(dir)` with the process in a fresh project directory holding `files`, restoring cwd and env.
+async function inProject(files, body, { env = {} } = {}) {
+	const { mkdtempSync, writeFileSync, realpathSync } = await import("node:fs");
+	const { tmpdir } = await import("node:os");
+	const dir = realpathSync(mkdtempSync(join_(tmpdir(), "mellum-proj-")));
+	for (const [name, content] of Object.entries(files)) writeFileSync(join_(dir, name), content);
+	const cwd = process.cwd();
+	const saved = Object.fromEntries(Object.keys(env).map((k) => [k, process.env[k]]));
+	Object.assign(process.env, env);
+	process.chdir(dir);
+	try {
+		return await body(dir);
+	} finally {
+		process.chdir(cwd);
+		for (const [k, v] of Object.entries(saved)) {
+			if (v === undefined) delete process.env[k];
+			else process.env[k] = v;
+		}
+	}
+}
+
+const FACTS_MD = "# P\n\n## Mellum\n\n- Test command: make test\n- Do not: add dependencies\n";
+const userMsg = (text) => ({ role: "user", content: [{ type: "text", text }] });
+
+test("/mellum on reads the project's facts, marks the source, and forwards the block on every request", async () => {
+	await inProject({ "AGENTS.md": FACTS_MD }, async () => {
+		const { handlers, ctx, calls, mellum } = recordingPi({ mode: "tui" });
+		await mellum("on");
+		const on = calls.sendMessage.find((m) => String(m.content).includes("[mellum-mode on]"));
+		assert.equal(on.content, "[mellum-mode on] facts: agents-md");
+		const payload = { messages: [userMsg("[mellum-mode on] facts: agents-md"), userMsg("task one")] };
+		for (let i = 0; i < 2; i++) {
+			const out = handlers.before_provider_request({ payload }, ctx);
+			assert.equal(out.messages[1].content[0].text, "task one\n\nProject facts:\n- Test command: make test\n- Do not: add dependencies");
+		}
+		assert.equal(payload.messages[1].content[0].text, "task one", "the session's message is unchanged");
+	});
+});
+
+test("headless activation (MELLUM_MODE=1, no marker) forwards the facts to the task message", async () => {
+	await inProject({ "AGENTS.md": FACTS_MD }, async () => {
+		const { handlers, ctx, calls } = recordingPi({ mode: "json" });
+		const saved = process.env.MELLUM_MODE;
+		process.env.MELLUM_MODE = "1";
+		try {
+			await handlers.session_start({}, ctx);
+		} finally {
+			if (saved === undefined) delete process.env.MELLUM_MODE;
+			else process.env.MELLUM_MODE = saved;
+		}
+		assert.equal(calls.sendMessage.length, 0, "headless sends no marker");
+		const out = handlers.before_provider_request({ payload: { messages: [{ role: "system", content: "pi" }, userMsg("Implement specs/phase-1.md")] } }, ctx);
+		assert.deepEqual(out.messages.map((m) => m.role), ["system", "user"]);
+		assert.match(out.messages[1].content[0].text, /^Implement specs\/phase-1\.md\n\nProject facts:\n- Test command: make test\n/);
+	});
+});
+
+test("the run record carries facts: source, test command, chars", async () => {
+	const rec = await inProject({ "AGENTS.md": FACTS_MD }, () => withRunsFile(async () => {
+		const { handlers, mellum } = recordingPi({ mode: "tui" });
+		await mellum("on");
+		handlers.context({ messages: snapshot });
+		await mellum("off");
+	}));
+	assert.deepEqual(rec.facts, { source: "agents-md", testCommand: "make test", chars: "Test command: make test".length + "Do not: add dependencies".length });
+});
+
+test("the fallback is detected from a pytest pyproject and recorded", async () => {
+	const rec = await inProject({ "pyproject.toml": '[dependency-groups]\ndev = ["pytest"]\n' }, () => withRunsFile(async () => {
+		const { handlers, mellum } = recordingPi({ mode: "tui" });
+		await mellum("on");
+		handlers.context({ messages: snapshot });
+		await mellum("off");
+	}));
+	assert.deepEqual(rec.facts, { source: "detected", testCommand: "uv run --offline python -m pytest -q", chars: "Test command: uv run --offline python -m pytest -q".length });
+});
+
+test("MELLUM_MODE_FACTS=0 records off, marks off, and forwards nothing", async () => {
+	await inProject({ "AGENTS.md": FACTS_MD }, async () => {
+		const rec = await withRunsFile(async () => {
+			const { handlers, ctx, calls, mellum } = recordingPi({ mode: "tui" });
+			await mellum("on");
+			assert.equal(calls.sendMessage.find((m) => String(m.content).includes("[mellum-mode on]")).content, "[mellum-mode on] facts: off");
+			const out = handlers.before_provider_request({ payload: { messages: [userMsg("[mellum-mode on]"), userMsg("t")] } }, ctx);
+			assert.equal(out.messages[1].content[0].text, "t");
+			handlers.context({ messages: snapshot });
+			await mellum("off");
+		});
+		assert.deepEqual(rec.facts, { source: "off", testCommand: null, chars: 0 });
+	}, { env: { MELLUM_MODE_FACTS: "0" } });
+});
+
+test("a section over the cap warns on activation and falls back", async () => {
+	await inProject({ "AGENTS.md": `## Mellum\n- Do not: ${"x".repeat(700)}\n` }, async () => {
+		const { calls, mellum } = recordingPi({ mode: "tui" });
+		await mellum("on");
+		assert.ok(calls.notify.some(([m, l]) => /600/.test(m) && l === "warning"), JSON.stringify(calls.notify));
+		assert.equal(calls.sendMessage.find((m) => String(m.content).includes("[mellum-mode on]")).content, "[mellum-mode on] facts: none");
+	});
+});
+
+test("without a UI the over-cap warning goes to stderr", async () => {
+	await inProject({ "AGENTS.md": `## Mellum\n- Do not: ${"x".repeat(700)}\n` }, async () => {
+		const { calls, mellum } = recordingPi({ mode: "print", hasUI: false });
+		const errs = [];
+		const orig = console.error;
+		console.error = (...a) => errs.push(a.join(" "));
+		try {
+			await mellum("on");
+		} finally {
+			console.error = orig;
+		}
+		assert.ok(errs.some((m) => /600/.test(m)), JSON.stringify(errs));
+		assert.ok(!calls.notify.some(([, l]) => l === "warning"), "no UI notification for the warning");
+	});
+});
+
+test("the parent's handoff summary line names the facts source from the span's on-marker", async () => {
+	const { handlers } = recordingPi();
+	const out = handlers.context({ messages: [userMsg("task"), { role: "custom", customType: "mellum-mode", content: "[mellum-mode on] facts: detected" }, { role: "assistant", content: [{ type: "text", text: "done" }] }, { role: "custom", customType: "mellum-mode", content: "[mellum-mode off]" }, userMsg("next")] });
+	const handoff = out.messages.find((m) => JSON.stringify(m).includes("handoff"));
+	assert.match(JSON.stringify(handoff), /, facts: detected/);
+});

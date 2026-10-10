@@ -1,0 +1,1 @@
+Implementation complete. The complaints board now includes a form for submitting new complaints, and POST /complaints adds complaints with a 303 redirect to the board. Tests pass.

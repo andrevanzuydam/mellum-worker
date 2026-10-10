@@ -1,6 +1,6 @@
 ---
 name: mellum-setup
-description: Set up Mellum 2.1 as a bounded coding worker in OpenCode or Pi. Use when the user asks to install, configure, or verify Mellum Worker or Mellum Mode, or to get the Mellum model running on oMLX. Walks through weights, server, provider, agent, rules, and a smoke test, one checked phase at a time.
+description: Set up Mellum 2.1 as a bounded coding worker in OpenCode or Pi. Use when the user asks to install, configure, or verify Mellum Worker or Mellum Mode, or to get the Mellum model running on oMLX. Walks through weights, server, provider, agent, rules, a smoke test, and optional project facts for Mellum Mode, one checked phase at a time.
 ---
 
 # Mellum setup
@@ -40,8 +40,10 @@ Record the answer; phases 4 and 5 differ by host.
 | 5 | Worker | `mellum-worker` agent file exists in the host's user agents dir | Pi: [reference/05-worker-pi.md](reference/05-worker-pi.md), OpenCode: [reference/05-worker-opencode.md](reference/05-worker-opencode.md) |
 | 6 | Rules | user accepted or declined the AGENTS.md fragment | [reference/06-rules.md](reference/06-rules.md) |
 | 7 | Smoke test | the calculator fixture's tests exit 0 after the worker ran | [reference/07-smoke.md](reference/07-smoke.md) |
+| 8 | Project facts (optional, Pi) | the project's `AGENTS.md` has a heading that is exactly `## Mellum` (not `## Mellum Worker`), or the user declined | [reference/08-project-facts.md](reference/08-project-facts.md) |
 
-Read a phase's reference file only when its check fails. When all seven
+Read a phase's reference file only when its check fails. Phase 8 is
+optional and per project; offer it in Pi once phase 7 passes. When the
 checks pass, tell the user:
 
 - Pi: "Mellum Worker is available to pi-subagents as `mellum-worker`, and

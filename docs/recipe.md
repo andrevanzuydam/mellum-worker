@@ -213,8 +213,8 @@ the file is append-only across upgrades, so lines without a `schema`
 field are schema 1.
 In the probe this took the parent's next request from 18 messages to 3.
 
-Measured in the ladder ([A14](ladder/ablation-a14-mellum-mode/README.md)),
-same profile and sampling as "Mellum as the primary agent" above: 10/15
+Measured in the ladder ([A14](ladder/ablation-a14-mellum-mode/README.md),
+before project facts existed), same profile and sampling as "Mellum as the primary agent" above: 10/15
 becomes 14/15, rung 5 from 0/3 to 3/3, the model reads 606 characters of
 prompt instead of 17k, and the wall time is the same (prefill is cached;
 the time is generation). What you give up against delegation is the
@@ -241,11 +241,75 @@ protecting: the hosted model's tokens (Mode spends none), or wall time on
 multi-file tasks (Worker). Both leave the main conversation a short
 summary: the Worker's parent writes one, the Mode's handoff block is one.
 
+**Project facts.** Mode reads the `## Mellum` section of `AGENTS.md` in
+the working directory once per span, and appends its bullets (any label;
+`Test command:`, `Write only:` and `Do not:` are the measured ones) as
+`Project facts:` to every user message it sends, so the prompt's "a
+command named in the task is the command" rule sees your test command.
+The section ends at the next `#` or `##` heading and is capped at 600
+characters of bullets; over that, Mode warns and ignores it. With no
+`Test command:` bullet and a `pyproject.toml` that mentions pytest, Mode
+adds `uv run --offline python -m pytest -q`. `MELLUM_MODE_FACTS=0` turns
+both off. The session shows `[mellum-mode on] facts: <source>` when a
+span starts, and the run record's `facts` field and the handoff summary
+line name the same source (`agents-md`, `detected`, `agents-md+detected`,
+`none`, `off`). The prompt is unchanged (v5). Write the label as plain
+`Test command:` and the command as plain text (no bold or code formatting
+on either): Mode recognises the test command only from a bullet whose
+label is exactly `Test command:`. `- **Test command:** make test` is not
+recognised, so in a pytest project Mode adds the fallback as a second test
+command, and a backticked command keeps its backticks.
+
+Measured on rungs 6–9 (AgentClinic: build a FastAPI app from four loose
+phase specs, one phase per rung, three runs each, 600 s deadline; a run
+passes when the project's tests and hidden behaviour tests pass, no
+existing test was removed or edited, and nothing was written outside the
+`AGENTS.md` write-list), Mode at prompt v5 with guards, 12 runs per
+condition ([A18](ladder/ablation-a18-agentclinic-facts-off/README.md)
+facts off, [A19](ladder/ablation-a19-facts-on/README.md) the section,
+[A20](ladder/ablation-a20-facts-fallback-only/README.md) the section
+stripped so only the fallback is sent):
+
+| rungs 6–9 | facts off (A18) | section (A19) | fallback only (A20) |
+| --- | --- | --- | --- |
+| passes (rung 6 / 7 / 8 / 9) | 1/12 (0 / 1 / 0 / 0) | 9/12 (3 / 3 / 2 / 1) | 7/12 (1 / 2 / 3 / 1) |
+| requests per run, median (mean) | 50 (54) | 26 (32) | 28 (37) |
+| wall s per run, median (mean) | 261 (316) | 106 (163) | 143 (195) |
+| output tokens per run | not in `run.json` | not in `run.json` | not in `run.json` |
+| runs with `No module named 'app'` | 11/12 | 0/12 | 5/12 |
+| runs that wrote outside the write-list | 8/12 | 0/12 | 5/12 |
+| runs cut at the deadline | 3/12 | 1/12 | 1/12 |
+
+A18 ran under a strict rule (every starting test file byte-identical,
+0/12) and is shown rescored under the added-tests rule A19 and A20 use.
+Wall is the runner's untrusted clock, with deadline runs at 600 s;
+`run.json` records requests and wall time, not output tokens. On rungs
+1–5, A19 passes 15/15 (A17, Mode as shipped in v0.1.2: 14/15) at a mean
+of 13.8 requests (12.9) and 51 s (44 s); rungs 2–5 got the fallback,
+rung 1 (Node) nothing.
+
+What the numbers say: with the section, the first pytest command of all
+12 runs was the forwarded one and the import error did not occur. The
+fallback alone recovers 75% of the gain ((7 − 1) / (9 − 1)); in A20 the
+five runs that ran the prompt's default first are the five with the
+import error, and four of them failed with write-list entries. Not
+fixed by facts: all four rung-9 failures in A19 and A20 broke the
+phase-4 id rule (checked by rerunning the hidden tests), and every
+rung-8 run in all three phases tried `from fastapi import
+RedirectResponse`. Three repeats per rung; per-rung results are not
+stable estimates. The verdict and the rest are in the
+[research note](superpowers/research/2026-10-09-m7-project-facts.md).
+
 Cautions. The ladder measured the headless path; the interactive path
 (`on`, a second `on`, a task, `off`, a parent turn, a second `off`, the
 one-shot form) was verified over Pi's RPC mode with `ladder/ladder/probe_mode_rpc.py`,
 which showed each request carrying exactly the
-expected prompt, history and tools; the refusal to auto-compact while on
+expected prompt, history and tools. That probe predates project facts and
+used the Node calculator fixture: facts were measured headless only, and
+the interactive facts path (`/mellum on`, `/mellum <task>`, the
+`[mellum-mode on] facts:` line, the handoff's `facts:`) is unit-tested, not
+yet observed in a real Pi session (a probe on a Python fixture such as
+agentclinic-p1 would observe it). The refusal to auto-compact while on
 is unit-tested. Mellum Mode is loaded as a package extension; its payload filter rewrites the request it sees, and other packages' hooks may run before or after it. Load order was only verified for the `-e` form in the ladder. None of
 Superpowers, pi-subagents or context7 rewrites the payload today. Auto-compaction is refused while the mode is on
 (`/compact` still works); run `/mellum off` before a long parent turn.

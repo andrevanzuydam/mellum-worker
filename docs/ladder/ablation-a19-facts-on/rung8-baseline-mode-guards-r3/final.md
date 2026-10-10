@@ -1,0 +1,1 @@
+The task has been completed successfully. The Complaints Board now includes a form for submitting new complaints via POST /complaints, and the redirect and listing functionality works as specified. Tests pass.

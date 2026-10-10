@@ -12,3 +12,8 @@ dev = [
 
 [tool.uv]
 package = false
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: syncs and runs a whole fixture workspace; runs by default, deselect with -m 'not slow'",
+]

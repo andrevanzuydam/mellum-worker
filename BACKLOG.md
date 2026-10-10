@@ -10,24 +10,20 @@ line number.
 
 Reopen conditions, not promises.
 
-**Prompt default `python -m pytest`.** Prompt v5 guesses `uv run --offline
-pytest -q`, which runs the `pytest` entry point without the project root on
-`sys.path`; `python -m pytest` would have passed both clean ac-demo runs
-first time. The prompt is measured, and the ladder as it stands cannot see
-the change: all four pytest fixtures keep the test beside the module with
-`testpaths = ["."]`, so both commands pass every rung. The experiment is
-sized in the [steering note](docs/superpowers/research/2026-10-09-steering-and-next-phase.md)
-§2: a sixth fixture shaped like ac-demo, a `v6` prompt variant, direct and
-mode phases against A3 and A17. *Reopens when* Paul schedules that phase in
-`ladder/`.
-
-**Mode-side test-command preflight.** Instead of the prompt, Mode could
-detect a pyproject with pytest, no `pythonpath`, and a `tests/` directory
-without `__init__.py`, and append "Test command: uv run --offline python -m
-pytest -q" to the task. It changes what Mellum reads, the current fixtures
-would never trigger it, and the ladder's headless path does not run the
-command handler, so it would be measured in name only. *Reopens when* the
-prompt-default phase above fails the ladder and the sixth fixture exists.
+**Prompt default `python -m pytest` (Worker).** Prompt v5 guesses `uv run
+--offline pytest -q`, which runs the `pytest` entry point without the
+project root on `sys.path`. Since M.7, Mellum Mode forwards the `## Mellum`
+test command, or `uv run --offline python -m pytest -q` for a pytest
+pyproject (AgentClinic rungs 6–9: section 9/12,
+fallback only 7/12, facts off 1/12 rescored;
+[research note](docs/superpowers/research/2026-10-09-m7-project-facts.md)).
+The Worker's child still sees only the brief and the prompt, so a parent
+that omits the test command gets the guess. A `v6` default is a prompt
+change for both paths, sized in the
+[steering note](docs/superpowers/research/2026-10-09-steering-and-next-phase.md)
+§2; rungs 6–9 are the ac-demo-shaped fixture it asked for. *Reopens when*
+Paul schedules a delegated phase on rungs 6–9 in `ladder/`, or a Worker run
+is recorded failing on the guessed command.
 
 **Ladder drives the one-shot command.** After M.5, `pi -p "/mellum
 <sentence>"` works, so the ladder could launch the shipped command (and get
@@ -47,11 +43,6 @@ with `filesMissingAtEnd` non-empty or `lastCommand` not `ok`.
 **One change, then test.** In the ac-demo run Mellum made two edits between
 test runs and left dead code behind. A prompt line enforcing one change per
 test run is a prompt change. *Reopens when* the ladder measures it.
-
-**Mode and the project's AGENTS.md.** Mode deliberately sends only the worker
-prompt; project rules never reach Mellum. An opt-in that forwards a named
-section of AGENTS.md is unmeasured. *Reopens when* a user reports a task that
-cannot be stated in one line because the project rules are too long.
 
 **OpenCode 2.x plugin shape.** The V2 host reads `default.setup`, not
 `server`, and uses a flat `skills` array. *Reopens when* a 2.x host is
@@ -76,9 +67,45 @@ leash: a main model rewriting a handoff packet has gone wrong in other
 projects, so the brief is shown before it runs, is checked against a fixed
 shape (files, test command, constraints, nothing else), and Mode records the
 brief and the user's original text side by side. The worker prompt is
-unchanged, so this is not a measured setting. *Reopens when* M.9 is scheduled
-(M.5 has closed): compare loose `/mellum` against mediated runs on the
-ac-demo phase specs with schema-2 records.
+unchanged, so this is not a measured setting. *Reopens when* M.10 is
+scheduled: compare mediated runs on rungs 6–9 against A18 (loose `/mellum`,
+facts off) and A19 (the `## Mellum` section), with schema-2 records.
+
+**Write-only guard: refuse writes outside the facts block's list.** Mode
+forwards the `## Mellum` section's `Write only:` line as text; nothing
+enforces it. On AgentClinic rungs 6–9 the text was enough: with the section
+forwarded, 0/12 runs had a non-empty `outside_write_list`
+([A19](docs/ladder/ablation-a19-facts-on/README.md)), against 8/12 with facts
+off (A18) and 5/12 with the fallback only (A20, no list sent). A guard that refuses `write`/`edit` outside the list is a guard
+decision, so it is measured before it ships.
+*Reopens when* a facts-on ladder phase or a run record shows a non-empty
+`outside_write_list` with the list forwarded.
+
+**Ladder PATH leaks its venv into Mellum's shell.** `uv run` in `ladder/`
+puts `ladder/.venv/bin` first on `PATH`, and Mellum's bash inherits it, so
+bare `python` is the ladder's own interpreter. A20 9 r1 ran `python -m
+ensurepip` and `python -m pip install` (`starlette`, `httpx2`, the last
+downloaded) there; the controller restored it with `uv sync --exact
+--offline`. Scores were unaffected: each workspace
+used its own `.venv` ([A20](docs/ladder/ablation-a20-facts-fallback-only/README.md)).
+Remedy: `child_env` (and `mode_env` through it) drops `ladder/.venv/bin`
+from `PATH` as it already drops `VIRTUAL_ENV`; optionally the scorer flags
+a run whose commands touched the ladder's venv. *Reopens when* the next
+change to `ladder/`, or any record showing a mutation outside the
+workspace.
+
+**Deadline leaves workspace servers running.** Every run cut at the 600 s
+deadline in M.7 (A18 6 r2, 8 r1, 9 r1; A19 8 r2; A20 6 r2) ended on a
+foreground `uvicorn`/app server, and the runner left it listening on ports
+8000–8003. A19 8 r2 and A20 6 r2 hit those ports (`Address already in
+use`); scores were unaffected, and the controller stopped the servers on
+2026-10-10 about 09:50 EDT
+([A19](docs/ladder/ablation-a19-facts-on/README.md),
+[A20](docs/ladder/ablation-a20-facts-fallback-only/README.md) Risks).
+Remedy: at the deadline and at run end the runner kills the run's process
+group and any listener whose cwd is the workspace, and records it.
+*Reopens when* the next change to `ladder/`, or any record showing a
+leftover process.
 
 **`/mellum learn`: show users what happened and how to tune.** Run records
 hold the evidence (a test command failing in 7 to 25 variants before one
@@ -92,5 +119,5 @@ that finally passed. It shows the section and asks before writing it to
 `AGENTS.md`. Worker needs the same: the Pi child and the OpenCode subagent
 write no record today, so this needs a record from the guards extension and
 the OpenCode plugin, and a host-neutral analyser (`scripts/mellum-learn.mjs`)
-that a skill can run in either host. *Reopens when* M.7 closes with the facts
-block shipped; then it is scheduled as M.7A.
+that a skill can run in either host. *Reopen condition met:* M.7 shipped the facts
+block (2026-10-10); scheduled as M.7A on the roadmap.

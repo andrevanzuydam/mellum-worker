@@ -357,3 +357,116 @@ test("promptVersionOf reads the version marker from the first line", async () =>
 	assert.equal(promptVersionOf("<!-- mellum-worker prompt v5 -->\nYou edit"), "v5");
 	assert.equal(promptVersionOf("no marker"), "unknown");
 });
+
+const FACTS = "\n\nProject facts:\n- Test command: make test";
+const userText = (m) => (typeof m.content === "string" ? m.content : m.content.map((p) => p.text ?? "").join("|"));
+
+test("facts are appended to each user message after the on-marker, not to tool or earlier messages", () => {
+	const payload = {
+		messages: [
+			{ role: "system", content: "pi" },
+			text("user", "parent task"),
+			{ role: "assistant", content: "parent answer" },
+			text("user", MARK_ON),
+			{ role: "user", content: "string task" },
+			{ role: "assistant", content: "", tool_calls: [{ id: "1" }] },
+			{ role: "tool", tool_call_id: "1", content: "r" },
+			text("user", "second task"),
+		],
+	};
+	const out = filterForMellum(payload, "v5", { facts: FACTS });
+	const users = out.messages.filter((m) => m.role === "user");
+	assert.equal(users.length, 2);
+	assert.equal(users[0].content, "string task" + FACTS);
+	assert.equal(users[1].content[0].text, "second task" + FACTS);
+	assert.equal(out.messages.find((m) => m.role === "tool").content, "r", "tool result untouched");
+	assert.equal(out.messages[0].content, "v5", "system prompt untouched");
+	assert.ok(!JSON.stringify(out).includes("parent task"), "pre-marker messages are not sent");
+	assert.equal(payload.messages[4].content, "string task", "input not mutated");
+	assert.equal(payload.messages[7].content[0].text, "second task", "input content arrays not mutated");
+});
+
+test("the task Pi queued just before the on-marker also gets the facts", () => {
+	const payload = { messages: [text("user", "fix the cart"), text("user", MARK_ON)] };
+	const out = filterForMellum(payload, "v5", { facts: FACTS });
+	assert.equal(out.messages.length, 2);
+	assert.equal(out.messages[1].content[0].text, "fix the cart" + FACTS);
+});
+
+test("headless: no marker, expectMarker false, every kept user message gets the facts but the bootstrap and assistants do not", () => {
+	const payload = {
+		messages: [
+			{ role: "system", content: "pi" },
+			text("user", `${BOOTSTRAP_MARKER} ... superpowers`),
+			text("user", "the task"),
+			{ role: "assistant", content: "ok" },
+			text("user", "a follow-up"),
+		],
+	};
+	const out = filterForMellum(payload, "v5", { expectMarker: false, facts: FACTS });
+	assert.deepEqual(out.messages.map((m) => m.role), ["system", "user", "assistant", "user"]);
+	assert.equal(out.messages[1].content[0].text, "the task" + FACTS);
+	assert.equal(out.messages[2].content, "ok");
+	assert.equal(out.messages[3].content[0].text, "a follow-up" + FACTS);
+});
+
+test("array content goes in the last text part, or a new text part after an image-only part", () => {
+	const img = { type: "image_url", image_url: { url: "data:image/png;base64,AAAA" } };
+	const payload = {
+		messages: [
+			text("user", MARK_ON),
+			{ role: "user", content: [{ type: "text", text: "look" }, img, { type: "text", text: "and fix" }, img] },
+			{ role: "user", content: [img] },
+			{ role: "user", content: [] },
+		],
+	};
+	const out = filterForMellum(payload, "v5", { facts: FACTS });
+	const [a, b, c] = out.messages.slice(1).map((m) => m.content);
+	assert.equal(a[0].text, "look");
+	assert.equal(a[2].text, "and fix" + FACTS);
+	assert.deepEqual(a[3], img);
+	assert.deepEqual(b[0], img);
+	assert.equal(b[1].type, "text");
+	assert.match(b[1].text, /^Project facts:\n- Test command: make test$/);
+	assert.equal(c.length, 1);
+	assert.equal(c[0].type, "text");
+	assert.equal(payload.messages[2].content.length, 1, "input not mutated");
+});
+
+test("applying the filter twice to the same input gives one facts block per message", () => {
+	const payload = { messages: [text("user", MARK_ON), text("user", "t1"), { role: "user", content: "t2" }] };
+	const once = filterForMellum(payload, "v5", { facts: FACTS });
+	const twice = filterForMellum(payload, "v5", { facts: FACTS });
+	assert.deepEqual(twice, once);
+	for (const m of twice.messages.filter((x) => x.role === "user")) assert.equal(userText(m).split("Project facts:").length, 2);
+	// and a payload that already carries the block does not get a second one
+	const again = filterForMellum({ messages: [text("user", MARK_ON), ...once.messages.slice(1)] }, "v5", { facts: FACTS });
+	for (const m of again.messages.filter((x) => x.role === "user")) assert.equal(userText(m).split("Project facts:").length, 2);
+});
+
+test("empty or absent facts leave the payload as before", () => {
+	const payload = { messages: [text("user", MARK_ON), text("user", "t1")] };
+	const base = filterForMellum(payload, "v5");
+	assert.deepEqual(filterForMellum(payload, "v5", { facts: "" }), base);
+	assert.equal(base.messages[1].content[0].text, "t1");
+});
+
+test("runRecord carries facts from the meta, and omits the field when there is none", async () => {
+	const { runRecord } = await import("../extensions/mellum-mode.ts");
+	const meta = { endedAt: 1, cwd: "/p", model: "omlx/M" };
+	const rec = runRecord("t", [], { ...meta, facts: { source: "detected", testCommand: "uv run --offline python -m pytest -q", chars: 50 } });
+	assert.deepEqual(rec.facts, { source: "detected", testCommand: "uv run --offline python -m pytest -q", chars: 50 });
+	assert.equal("facts" in JSON.parse(JSON.stringify(runRecord("t", [], meta))), false);
+});
+
+test("the handoff summary line carries facts: <source> when the on-marker does", async () => {
+	const { collapseHandoffs } = await import("../extensions/mellum-mode.ts");
+	const build = (on) => collapseHandoffs([text("user", "task"), text("user", on), { role: "assistant", content: [{ type: "text", text: "done" }] }, text("user", MARK_OFF), text("user", "next")]);
+	const withFacts = build(`${MARK_ON} facts: agents-md+detected`).map((m) => textOf(m)).join("\n");
+	assert.match(withFacts, /, facts: agents-md\+detected\n/);
+	const without = build(MARK_ON).map((m) => textOf(m)).join("\n");
+	assert.doesNotMatch(without, /facts:/);
+});
+function textOf(m) {
+	return typeof m.content === "string" ? m.content : m.content.map((p) => p.text ?? "").join("\n");
+}

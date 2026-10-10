@@ -21,8 +21,8 @@ between the two extensions.
 | requests per run, mean | 13.1 | 12.9 |
 | wall s per run, mean | 70 | 44 |
 | wall by rung | 24 / 76 / 31 / 99 / 122 | 12 / 42 / 24 / 75 / 66 |
-| nudges | 4 | 2 |
-| tool errors | 7 | 8 |
+| nudges, total (runs with one) | 7 (4) | 3 (2) |
+| tool errors, total (runs with one) | 13 (7) | 12 (8) |
 
 The one failure ended with the text "Now let's run the tests again." and a
 `stop`: a final turn with words but no tool call, which the empty-final

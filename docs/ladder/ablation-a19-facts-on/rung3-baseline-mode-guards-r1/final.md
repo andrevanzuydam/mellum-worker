@@ -1,0 +1,1 @@
+Renamed `fetch_rows` to `load_rows` in `rows.py` and `report.py`, updated imports and function calls. Tests pass.

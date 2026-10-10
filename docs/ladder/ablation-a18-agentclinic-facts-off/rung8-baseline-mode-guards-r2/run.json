@@ -1,0 +1,115 @@
+{
+  "rung": 8,
+  "repeat": 2,
+  "profile": "baseline",
+  "mode": "mode",
+  "harness": "pi",
+  "plain": false,
+  "guards": true,
+  "subagents_config": null,
+  "strip_thinking": null,
+  "prompts": 1,
+  "prompts_planned": 1,
+  "brief_file": null,
+  "budget_hook": null,
+  "mode_facts": "off",
+  "strip_facts_section": false,
+  "guards_env": null,
+  "prompt_version": null,
+  "prompt_file": null,
+  "prompt_mode": null,
+  "thinking": null,
+  "versions": {
+    "pi": "1.0.2",
+    "omlx": "0.6.4",
+    "model_settings": {
+      "max_tokens": 4096,
+      "thinking_budget_tokens": null,
+      "presence_penalty": 0.0,
+      "max_tool_result_tokens": null
+    }
+  },
+  "sentence": "Implement specs/phase-3-add.md",
+  "started": 1791593413.586533,
+  "wall_seconds_untrusted": 314.8,
+  "deadline_hit": false,
+  "stop_reason": "stop",
+  "final_text_chars": 1865,
+  "thinking_reentries": 0,
+  "final_text_is": "worker",
+  "parent": null,
+  "baseline_lines": {
+    "specs/phase-1-home.md": 7,
+    "templates/complaints.html": 14,
+    "specs/phase-2-board.md": 7,
+    "AGENTS.md": 7,
+    "pyproject.toml": 13,
+    ".gitignore": 3,
+    "tests/test_app.py": 11,
+    "app.py": 24,
+    "tests/test_board.py": 11,
+    "specs/phase-3-add.md": 6,
+    "templates/home.html": 7,
+    "uv.lock": 1212,
+    "templates/base.html": 25,
+    "models.py": 17
+  },
+  "check": {
+    "passed": false,
+    "tests_unchanged": true,
+    "details": {
+      "facts_cmd_pass": true,
+      "hidden_pass": true,
+      "outside_write_list": [
+        "__init__.py",
+        "pyproject.toml",
+        "pytest.ini",
+        "uv.lock"
+      ],
+      "hidden_collision": []
+    }
+  },
+  "score": {
+    "requests": 93,
+    "largest_prompt_chars": 175650,
+    "tool_calls_by_name": {
+      "find": 6,
+      "read": 18,
+      "ls": 2,
+      "edit": 6,
+      "bash": 57,
+      "write": 2
+    },
+    "tool_errors": 32,
+    "edit_anchor_failures": 0,
+    "noop_edits": 0,
+    "write_existing": 0,
+    "bash_file_mutations": 0,
+    "max_identical_streak": 1,
+    "write_shrink": 0,
+    "nudges": 1,
+    "max_identical_in_window": 1,
+    "loop_breaker_would_block": 0,
+    "effective_params": {
+      "temperature": 1,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0,
+      "max_tokens": 16384,
+      "presence_penalty": 0
+    }
+  },
+  "diff_stat": " __init__.py               |  0\n app.py                    | 11 ++++++++++-\n pyproject.toml            |  1 +\n pytest.ini                |  2 ++\n templates/complaints.html | 11 +++++++++++\n uv.lock                   |  9 ++++++---\n 6 files changed, 30 insertions(+), 4 deletions(-)\n",
+  "files_created": [
+    "__init__.py",
+    "pytest.ini"
+  ],
+  "workspace": "/var/folders/m4/jc_jynrj6z10mk0t80pkj8l80000gn/T/ladder-crrgzw6g/rung8",
+  "worker_version": "0.1.2",
+  "worker_git": "v0.1.2-36-g38a4e64",
+  "check_rescored": {
+    "passed": false,
+    "tests_unchanged": true,
+    "rule": "existing-tests-kept"
+  }
+}
