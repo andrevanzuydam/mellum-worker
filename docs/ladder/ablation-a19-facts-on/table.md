@@ -1,0 +1,29 @@
+| rung | profile | mode | rep | result | tests_unchanged | requests | tool_errors | anchor_fail | noop_edit | write_existing | write_shrink | bash_mut | max_streak | largest_prompt_chars | nudges | stop | final_chars | reentries | deadline | wall_s (untrusted) | deleg | brief_chars |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | baseline+guards | mode | 1 | pass | True | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 11210 | 0 | stop | 83 | 0 | False | 9.3 |  |  |
+| 1 | baseline+guards | mode | 2 | pass | True | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 15661 | 0 | stop | 66 | 0 | False | 15.5 |  |  |
+| 1 | baseline+guards | mode | 3 | pass | True | 7 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 11970 | 0 | stop | 51 | 0 | False | 8.7 |  |  |
+| 2 | baseline+guards | mode | 1 | pass | True | 16 | 1 | 1 | 0 | 0 | 0 | 0 | 1 | 43097 | 0 | stop | 33 | 0 | False | 70.8 |  |  |
+| 2 | baseline+guards | mode | 2 | pass | True | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 19348 | 0 | stop | 69 | 0 | False | 24.1 |  |  |
+| 2 | baseline+guards | mode | 3 | pass | True | 10 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 18971 | 0 | stop | 110 | 0 | False | 26.4 |  |  |
+| 3 | baseline+guards | mode | 1 | pass | True | 12 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 17811 | 0 | stop | 113 | 0 | False | 24.5 |  |  |
+| 3 | baseline+guards | mode | 2 | pass | True | 19 | 1 | 1 | 0 | 0 | 0 | 0 | 1 | 23029 | 0 | stop | 60 | 0 | False | 33.7 |  |  |
+| 3 | baseline+guards | mode | 3 | pass | True | 20 | 3 | 3 | 0 | 0 | 0 | 0 | 1 | 29958 | 0 | stop | 66 | 0 | False | 50.6 |  |  |
+| 4 | baseline+guards | mode | 1 | pass | True | 13 | 3 | 0 | 0 | 0 | 0 | 0 | 1 | 27536 | 0 | stop | 26 | 0 | False | 46.9 |  |  |
+| 4 | baseline+guards | mode | 2 | pass | True | 14 | 1 | 0 | 0 | 0 | 0 | 0 | 2 | 27609 | 0 | stop | 48 | 0 | False | 53.8 |  |  |
+| 4 | baseline+guards | mode | 3 | pass | True | 17 | 2 | 0 | 0 | 0 | 0 | 0 | 1 | 37271 | 1 | stop | 158 | 0 | False | 76.6 |  |  |
+| 5 | baseline+guards | mode | 1 | pass | True | 16 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 37402 | 0 | stop | 169 | 0 | False | 78.6 |  |  |
+| 5 | baseline+guards | mode | 2 | pass | True | 16 | 3 | 1 | 0 | 0 | 0 | 0 | 1 | 53664 | 0 | stop | 103 | 0 | False | 122.6 |  |  |
+| 5 | baseline+guards | mode | 3 | pass | True | 20 | 2 | 0 | 0 | 0 | 0 | 0 | 1 | 46686 | 3 | stop | 631 | 0 | False | 118.1 |  |  |
+| 6 | baseline+guards | mode | 1 | pass | True | 36 | 7 | 0 | 0 | 0 | 0 | 0 | 1 | 64871 | 0 | stop | 648 | 0 | False | 108.3 |  |  |
+| 6 | baseline+guards | mode | 2 | pass | True | 25 | 0 | 0 | 0 | 0 | 0 | 0 | 2 | 43097 | 0 | stop | 130 | 0 | False | 70.2 |  |  |
+| 6 | baseline+guards | mode | 3 | pass | True | 21 | 1 | 0 | 0 | 0 | 0 | 0 | 1 | 40057 | 0 | stop | 24 | 0 | False | 61.2 |  |  |
+| 7 | baseline+guards | mode | 1 | pass | True | 25 | 3 | 1 | 0 | 1 | 0 | 0 | 1 | 50824 | 3 | stop | 0 | 0 | False | 89.6 |  |  |
+| 7 | baseline+guards | mode | 2 | pass | True | 27 | 1 | 0 | 0 | 0 | 0 | 0 | 2 | 52776 | 1 | stop | 1250 | 0 | False | 91.4 |  |  |
+| 7 | baseline+guards | mode | 3 | pass | True | 20 | 1 | 0 | 0 | 1 | 0 | 0 | 1 | 40771 | 1 | stop | 1600 | 0 | False | 72.8 |  |  |
+| 8 | baseline+guards | mode | 1 | pass | True | 88 | 25 | 6 | 0 | 0 | 0 | 0 | 2 | 210916 | 2 | stop | 1530 | 0 | False | 399.4 |  |  |
+| 8 | baseline+guards | mode | 2 | FAIL | True | 43 | 8 | 2 | 0 | 0 | 0 | 0 | 2 | 119317 | 0 | toolUse | 0 | 0 | True | 600.0 |  |  |
+| 8 | baseline+guards | mode | 3 | pass | True | 33 | 5 | 0 | 0 | 0 | 0 | 0 | 1 | 75796 | 0 | stop | 209 | 0 | False | 102.9 |  |  |
+| 9 | baseline+guards | mode | 1 | FAIL | True | 28 | 3 | 3 | 0 | 0 | 0 | 0 | 2 | 74985 | 0 | stop | 596 | 0 | False | 122.7 |  |  |
+| 9 | baseline+guards | mode | 2 | FAIL | True | 24 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 66162 | 0 | stop | 4 | 0 | False | 115.8 |  |  |
+| 9 | baseline+guards | mode | 3 | pass | True | 16 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 55310 | 0 | stop | 285 | 0 | False | 115.7 |  |  |

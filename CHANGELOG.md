@@ -53,6 +53,13 @@ Versions match git tags; pin one in both install lines.
   rungs 6 to 9 with facts off, three repeats each: 1 of 12 passes under the
   added-tests-allowed rule (0 of 12 under the strict one), median 50
   requests. Its raw files are archived under the same release tag.
+- `docs/ladder/ablation-a19-facts-on/` and
+  `ablation-a20-facts-fallback-only/`: the records that decide the
+  project-facts work. With the `## Mellum` section forwarded, Mode passes
+  9 of 12 AgentClinic runs (A18: 1) at a median of 26 requests (A18: 50)
+  and 15 of 15 on rungs 1 to 5, so the ship rule holds; with only the
+  `python -m pytest` fallback it passes 7 of 12. Write-up in
+  `docs/superpowers/research/2026-10-09-m7-project-facts.md`.
 - Mellum Mode forwards project facts: the bullets of a `## Mellum` section
   in the project's `AGENTS.md` (600 characters at most; over that Mode
   warns and ignores the section), and, when no test command is given and

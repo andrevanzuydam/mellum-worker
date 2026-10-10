@@ -1,0 +1,1 @@
+Added balance() function and tests. Test command passed successfully.

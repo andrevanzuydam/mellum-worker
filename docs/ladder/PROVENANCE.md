@@ -44,6 +44,11 @@ Mode run launched from this checkout (2026-10-09, commit `e5e72f3`). It is
 not part of the moved set, so it has no source commit; its raw files were
 archived the same way, giving 31 tarballs in all.
 
+Three M.7 phases followed, each launched from this checkout and archived the
+same way: `ablation-a18-agentclinic-facts-off` (2026-10-09, commit
+`38a4e64`), `ablation-a19-facts-on` and `ablation-a20-facts-fallback-only`
+(2026-10-10, commit `aff031a`). That gives 34 tarballs in all.
+
 Before the tarballs were built, `git status --short --ignored
 docs/research/ladder` in the source checkout was empty and its HEAD was
 the commit above, so the working tree matched the commit.
@@ -99,3 +104,6 @@ The command prints `<phase> <sha256>` per tarball; compare with the table.
 | phase3a-delegated-noskill | `phase3a-delegated-noskill.tar.gz` | `bc1997d958a0934d7a38973f36692c279d8632605665f7435cc6982a9239cf8e` |
 | phase3b-delegated-skill | `phase3b-delegated-skill.tar.gz` | `1da9291896c9246b24770786d27b3bac6f18b4282daf2efb8d962febf0cd5d9a` |
 | smoke-m6-one-repo | `smoke-m6-one-repo.tar.gz` | `b68eb25192c06676486be6bba7fdb18c25315a8438c3a648c88edae2d918ef0c` |
+| ablation-a18-agentclinic-facts-off | `ablation-a18-agentclinic-facts-off.tar.gz` | `de705fd02d80afd57e0ab9ddf154e35886cd8d8e05180e5401bb59e9ccdf83fe` |
+| ablation-a19-facts-on | `ablation-a19-facts-on.tar.gz` | `aca9d936997ef15ffb33e4eea5b71af60d64a5956326b7cedff6121ac5aab895` |
+| ablation-a20-facts-fallback-only | `ablation-a20-facts-fallback-only.tar.gz` | `b549e06a201fbffdd0badb268cb52ee6eaec4ab9ce90ffa74796962fdc3e84d0` |
