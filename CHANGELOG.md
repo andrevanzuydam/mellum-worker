@@ -68,9 +68,24 @@ Versions match git tags; pin one in both install lines.
   interactive or headless, so the prompt's "a command named in the task is
   the command" rule sees the project's own test command; the session's
   stored messages are unchanged. `MELLUM_MODE_FACTS=0` turns it off. The
-  run record gains `facts` (`source`, `testCommand`, `chars`) and the
-  handoff summary line names the source. Not yet shipped advice: the
-  ladder's A19 decides whether it stays.
+  run record gains `facts` (`source`, `testCommand`, `chars`), the
+  handoff summary line names the source, and the session shows
+  `[mellum-mode on] facts: <source>` when a span starts. Shipped on the
+  ladder's verdict: on the four AgentClinic rungs (12 runs each), 9 of 12
+  pass with the section against 1 of 12 with facts off (rescored under
+  the added-tests rule) and 7 of 12 with the fallback alone; median
+  requests 26 against 50; no run writes outside the write-list (facts off:
+  8 of 12); rungs 1 to 5 pass 15 of 15.
+- README and `docs/recipe.md` §4b: how to write the `## Mellum` section,
+  what it fixes (the prompt's `uv run --offline pytest -q` cannot import a
+  root `app.py`; facts off, 11 of 12 AgentClinic runs hit that error), the
+  fallback and the switch, and the rungs 6–9 numbers per condition
+  (passes, median requests and wall seconds, write-list and deadline
+  counts; output tokens are not in the ladder's `run.json`).
+- `mellum-setup` phase 8 (optional, Pi): offers to add a `## Mellum`
+  section to the current project's `AGENTS.md`, asking for the test
+  command and the optional write-only and do-not lines, and shows the
+  section before asking to write it.
 - Mellum's prompt (v5), tools, sampling and guards are unchanged.
 
 ### Changed

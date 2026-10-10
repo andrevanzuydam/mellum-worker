@@ -89,10 +89,43 @@ field are schema 1.
 `pi -p "/mellum <task>"` runs one task headlessly: it waits for Mellum to
 finish, switches back, writes the record, and exits.
 
-Mode sends Mellum only the worker prompt and your task. It does not send
-your project's AGENTS.md, your earlier conversation, or any skill. If the
-project has a test command, a layout rule, or a file it must not touch,
-say so in the task.
+**Project facts (Mode).** Mode sends Mellum only the worker prompt and
+your task: not your earlier conversation, not any skill, and not your
+`AGENTS.md`, except one section of it. Without the project's test
+command, Mellum guesses the prompt's `uv run --offline pytest -q`, which
+cannot import a root `app.py` from tests in `tests/`. In a four-run probe
+on loose briefs it then spent 7 to 25 commands bending the project to
+that command (`tests/__init__.py`, `pytest.ini`, relative imports,
+`pip install .`). On the ladder's AgentClinic rungs with facts off
+(12 runs), 11 runs hit that import error, 8 wrote files outside the
+project's write-list, 3 were cut at the 600 s deadline, and 1 passed
+(rescored under the added-tests rule). The remedy is a `## Mellum`
+section in the `AGENTS.md` of the directory you start Pi in: Mode reads
+its bullets once per span and appends them, as `Project facts:`, to every
+task it sends, so the prompt's "a command named in the task is the
+command" rule sees your test command. With the section, 9 of 12 passed,
+none wrote outside the write-list, and the median run took 26 requests
+(facts off: 50).
+
+```markdown
+## Mellum
+
+- Test command: uv run python -m pytest tests
+- Write only: app.py, models.py, templates/, tests/
+- Do not: install packages or add dependencies; remove or rewrite routes that already work; weaken tests
+```
+
+Bullets only; any label is forwarded, and these three are the measured
+ones. The section ends at the next `#` or `##` heading, and its bullet
+text is capped at 600 characters (over that, Mode warns and ignores the
+section). Without the section, or without a `Test command:` bullet, a
+project whose `pyproject.toml` mentions pytest gets `Test command: uv run
+--offline python -m pytest -q`; Node projects get nothing added.
+`MELLUM_MODE_FACTS=0` turns both off. Each span says which source applied
+in the session (`[mellum-mode on] facts: agents-md`), in the handoff
+summary line and in the run record's `facts` field. `/skill:mellum-setup`
+offers to write the section for you (phase 8). Anything else the task
+needs, say in the task.
 
 **Mellum Worker (Pi, needs pi-subagents).** In a normal session say
 "Use mellum-worker to do this: the cart total ignores quantity, fix it. Test
@@ -108,7 +141,8 @@ not a plan:
 
 - Name the exact file or a literal string to grep for. "The export is
   missing the totals row" works; "look around the reports code" does not.
-- Name the test command. Without one the prompt guesses `uv run --offline
+- Name the test command, in the task or once in the `## Mellum` section
+  (Mode). Without one the prompt guesses `uv run --offline
   pytest -q` or `node --test <file>`, and a wrong guess costs a round trip
   or ends the run. The guess runs the `pytest` entry point, which does not
   put the project root on `sys.path`; a project whose tests import a root
@@ -135,12 +169,35 @@ not a plan:
 
 The ladder is five coding tasks run three times each, in
 [the ladder](docs/ladder/ablation-summary.md),
-on an M5 Max through oMLX. The same tasks with Mellum as the primary agent:
+on an M5 Max through oMLX (rungs 1–5; the Mode row is Mode without
+project facts). The same tasks with Mellum as the primary agent:
 8/15 in bare Pi (51 s) and 10/15 in a full Superpowers profile (72 s).
 Mode and Worker trade cost for wall time: Mode spends nothing on your main
 model and leaves Mellum's tool results in your session; Worker is faster on
 multi-file tasks and keeps your session clean, but its parent turns cost
 hosted tokens. The recipe's cost section has the per-rung numbers.
+
+Rungs 6–9 build a small FastAPI app (AgentClinic) from four loose phase
+specs, one phase per rung, three runs each; a run passes when the
+project's tests and hidden behaviour tests pass, no existing test was
+removed or edited, and nothing was written outside the `AGENTS.md` file
+list. Mellum Mode, 12 runs per column
+([research note](docs/superpowers/research/2026-10-09-m7-project-facts.md)):
+
+| Rungs 6–9, per run | facts off ([A18](docs/ladder/ablation-a18-agentclinic-facts-off/README.md)) | `## Mellum` section ([A19](docs/ladder/ablation-a19-facts-on/README.md)) | fallback command only ([A20](docs/ladder/ablation-a20-facts-fallback-only/README.md)) |
+| --- | --- | --- | --- |
+| passes | 1/12 | 9/12 | 7/12 |
+| Mellum requests, median | 50 | 26 | 28 |
+| wall s, median | 261 | 106 | 143 |
+| output tokens, median | not recorded | not recorded | not recorded |
+| runs that wrote outside the file list | 8/12 | 0/12 | 5/12 |
+| runs cut at the 600 s deadline | 3/12 | 1/12 | 1/12 |
+
+A18's 1/12 is rescored under the added-tests rule the other two columns
+use (0/12 under the strict byte-identical rule it ran with). Wall is the
+runner's untrusted clock, with deadline runs counted at 600 s. `run.json`
+records requests and wall time per run, not output tokens. With facts on,
+rungs 1–5 pass 15/15 (Mode as shipped in v0.1.2: 14/15).
 
 ## Findings
 
@@ -181,7 +238,8 @@ file tools, and, in Pi, two guards: a nudge when a turn ends empty (at most
 three) and a loop breaker. The prompt's default test commands are
 `uv run --offline pytest -q` for a pyproject with pytest and
 `node --test <file>` for a package.json with a test file; a command named
-in the brief overrides them. Full detail: [docs/recipe.md](docs/recipe.md).
+in the brief overrides them, and Mode names one from the project's
+`## Mellum` section or the `python -m pytest` fallback. Full detail: [docs/recipe.md](docs/recipe.md).
 
 This package registers nothing at load time. Pi loads Mellum Mode, dormant
 until you type `/mellum`; OpenCode loads a one-hook plugin that makes the
