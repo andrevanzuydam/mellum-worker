@@ -8,6 +8,7 @@ Versions match git tags; pin one in both install lines.
 
 - README: a Future work section lists what is on the roadmap, in order,
   with links to ROADMAP.md and BACKLOG.md.
+- README: about 40% shorter; same install lines, numbers and links.
 
 ## [0.1.3] - 2026-10-10
 
