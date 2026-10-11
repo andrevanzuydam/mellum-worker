@@ -31,7 +31,8 @@ to that list; edit the file with the edit tool, do not rewrite it.
 Why these fields: `supportsDeveloperRole: false` keeps Pi from sending the
 system prompt as a `developer` message, which this server does not expect;
 `thinkingFormat: qwen-chat-template` matches how the model emits thinking;
-`maxTokens 16384` and `contextWindow 56000` match the server. Sampling is
-the model card's agentic setting, 1 / 0.95 / 20.
+`maxTokens 16384` is the output limit Pi sends with each request (oMLX
+honours it over the server's value), and `contextWindow 56000` matches the
+server. Sampling is the model card's agentic setting, 1 / 0.95 / 20.
 
 Re-run the check. Restart Pi if it was open; it reads models.json at start.

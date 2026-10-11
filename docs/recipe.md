@@ -39,18 +39,27 @@ converted. Settings: 56,000-token context window, native hybrid cache,
 cache quantization off, one concurrent request.
 
 **Which settings actually apply.** oMLX gives a request's sampling and cap
-values precedence over the per-model profile. Pi sends `max_tokens`,
-`temperature`, `top_p`, `top_k`, `min_p`, `seed`, and `presence_penalty` on
-every request from its `models.json` entry. So:
+values precedence over the per-model profile, except that `force_sampling`
+makes the server's temperature, top_p and top_k win and `forced_ct_kwargs`
+makes the server's listed chat-template keys win. Pi sends `max_tokens`,
+`temperature`, `top_p`, `top_k`, `min_p`, `presence_penalty` and
+`repetition_penalty` on every request from its `models.json` entry, and
+with `thinkingFormat: qwen-chat-template` it sends `chat_template_kwargs`
+with `enable_thinking` and `preserve_thinking` true. The archived traces of the Mode and Worker
+phases (A10, A17 and A19, so also A14 and A18–A20) show every Mellum request
+carrying `max_tokens` 16,384, thinking on and sampling 1 / 0.95 / 20, so the
+`baseline` server profile's `max_tokens` 4,096 was overridden; only the
+direct-mode research phases (A3 and earlier), where the ladder sends its own
+request values, ran at 4,096. So:
 
 | setting | where it is decided | value used |
 | --- | --- | --- |
-| `max_tokens` | Pi `models.json` → `maxTokens` | 16,384 (model-card per-turn budget); a 4,096 cap cut off one three-file run mid-thought ([phases 1c/1d](ladder/phase1d-tuned-effective/README.md)) |
+| `max_tokens` | Pi `models.json` → `maxTokens`, which wins over the server profile | 16,384 (model-card per-turn budget) in every Mode and Worker request; in direct mode a 4,096 cap cut off one three-file run mid-thought ([phases 1c/1d](ladder/phase1d-tuned-effective/README.md)) |
 | temperature / top_p / top_k | Pi `models.json` → `samplingParams`, else Pi defaults | Pi default is 1 / 0.95 / 20 (the model card's agentic sampling) |
 | presence / repetition penalty | request | 0 / 1.0 — 0.5 showed nothing measurable (1c vs 1d: 13/15 vs 14/15, same request and error counts), though that comparison changed the cap at the same time |
-| thinking budget | server profile only | off — a 4,096-per-block budget was never triggered in 15 runs; the request cap is what binds |
-| `max_tool_result_tokens` | server profile only | off — the largest tool result in 30 runs was 2,639 characters |
-| `forced_ct_kwargs: ["enable_thinking"]` | server profile only | on — a client cannot switch thinking off |
+| thinking budget | server profile only | off — a 4,096-per-block budget was never triggered in 15 runs; the request cap is what binds. On a server with `reasoning_parser` set (such as `qwen_3`) a server thinking budget may take effect, unlike in A13 (oMLX builds the budget processor when its output parser knows the think-close token), so `/mellum check` fails when it is on |
+| `max_tool_result_tokens` | server profile only | off — the largest tool result in 30 runs was 2,639 characters; `/mellum check` fails when a cap is set |
+| thinking on/off | request: `chat_template_kwargs` from `thinkingFormat`; a server `forced_ct_kwargs` would override it | on in every Mode and Worker request; the ladder's server profile left `forced_ct_kwargs` unset, and setup step 3 forces it on for clients that send nothing |
 | thinking level (`thinking:` in the agent file, `--thinking`) | nowhere | inert: Pi's level does not reach an `openai-completions` provider; two runs at "high" and "medium" sent byte-identical requests ([ablation A5](ladder/ablation-a5-thinking-medium/README.md)) |
 | `thinking_budget` (request field) | a hook could send it (`ladder/ladder/thinking-budget.js`) | not enforced for this model: oMLX needs a reasoning parser configured to build its budget processor ([A13](ladder/ablation-a13-budget-medium/README.md)) |
 
@@ -313,6 +322,52 @@ agentclinic-p1 would observe it). The refusal to auto-compact while on
 is unit-tested. Mellum Mode is loaded as a package extension; its payload filter rewrites the request it sees, and other packages' hooks may run before or after it. Load order was only verified for the `-e` form in the ladder. None of
 Superpowers, pi-subagents or context7 rewrites the payload today. Auto-compaction is refused while the mode is on
 (`/compact` still works); run `/mellum off` before a long parent turn.
+
+## 4c. Records, learn and check
+
+Every Mode span appends a record (§4b). `/mellum learn [n]` and
+`node <package dir>/scripts/mellum.mjs learn` read the last n records for
+the current directory, no model call, and count seven patterns from these
+fields: `cwd`, `endedAt`, `requests`, `commands[]` (`command`, `failed`,
+`mutates`), `files`, `lastCommand`, `finalReply`, `finalTurn` (`hadText`,
+`hadToolCall`) and `server`. A record without `kind` is a Mode record; the
+Pi Worker and OpenCode writers join in M.7B.
+
+| pattern | fires when | suggests |
+| --- | --- | --- |
+| `test-thrash` | two or more runs failed a test command first, then passed another | `Test command:` with the one that passed |
+| `bent-project` | a run wrote `__init__.py`, `pytest.ini`, `setup.cfg`, `pyproject.toml`, `uv.lock`, a root `conftest.py`, or ran `pip install`, `uv add`, `uv pip` | `Write only:` and `Do not: install packages or add dependencies` |
+| `false-success` | the reply claims success but the last command did not pass | nothing; run the tests yourself |
+| `long-run` | a run took more than 30 requests | nothing; split the task |
+| `servers` | a run started a server | `Do not: start servers` |
+| `drift` | the record's `server.match` is false | nothing; run `/mellum check` |
+| `announce-stop` | the final turn had text and no tool call, and the last command did not pass | nothing |
+
+The suggestion is a `## Mellum` section of the bullets in [Project
+facts](../README.md#use-it): shown first, written to `AGENTS.md` only after
+a yes, only the missing lines, never past the 600-character cap, and a line
+you have with another value is reported as a conflict, not rewritten.
+The thresholds are judgement on little data; each message states its count.
+
+`/mellum check` and `scripts/mellum.mjs check` read `/v1/models`,
+`/admin/api/models` and `/admin/api/global-settings` (GET only) and your
+provider entry, and report `server`, `model`, `settings`, `global`,
+`provider`, `advice` and `admin` findings, worst first. The expected values
+are in `templates/omlx-model-settings.json`. A `settings` difference fails
+when no request can undo it: a `serverOnly` key (context window, TurboQuant,
+thinking budget, tool-result cap; a test ties all but TurboQuant, which the
+ladder never set, to its baseline profile), thinking forced off (`forced_ct_kwargs` lists `enable_thinking`
+and the server's `enable_thinking` is false), or, with `force_sampling` on,
+a temperature, top_p or top_k other than `forcedSampling` (1 / 0.95 / 20,
+what Pi sends). A difference in `overridden` (`max_tokens`, thinking,
+penalties), which each request sends, is info. The provider entry is
+compared with the host's template; a different `maxTokens` or sampling
+value fails, since that is what binds. A settings fix prints as the `PUT` to
+run yourself. On each activation Mode reads the same binding settings (one
+second at most, silent when unreadable) and warns once: `Mellum server settings differ:
+<key> <actual> (expected <expected>). Run /mellum check.` The record's
+`server` field (`match`, and the differing keys) lets `learn` tell a run on
+drifted settings apart later.
 
 ## 5. Measuring
 

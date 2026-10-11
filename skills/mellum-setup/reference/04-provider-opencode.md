@@ -14,7 +14,8 @@ comments, so do not run it through the merge script. Read
   Do not touch the user's other models or their `options`.
 
 Show the user the exact insertion before making it. The `limit` block
-(context 56,000, output 16,384) matches the server from phase 3; a
-smaller output limit cuts long tasks off.
+(context 56,000, output 16,384) sets the limits; the output limit is what
+OpenCode sends with each request, and oMLX honours it over the server's
+value. A smaller output limit cuts long tasks off.
 
 Re-run the check.

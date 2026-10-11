@@ -7,6 +7,13 @@
  *                     the run, switches back and writes the run record before it returns.
  *   /mellum on      – stay on for several turns (switch model, tools, mark the start)
  *   /mellum off     – restore the previous model and tools
+ *   /mellum check   – compare the oMLX server and the Pi provider entry with the measured
+ *                     settings and print the findings; never switches, never writes
+ *   /mellum learn [n] – name what went wrong in the last n runs (default 10) in this directory
+ *                     and suggest a ## Mellum section; AGENTS.md is written only on a yes
+ *
+ * Each activation GETs the server's model settings (1 s at most) and warns once when they
+ * differ from the measured profile; the run record keeps the result as `server`.
  *
  * While on, before_provider_request rewrites the outgoing payload: the system message
  * becomes the worker prompt (prompts/mellum-worker.md, or $MELLUM_MODE_PROMPT), and the
@@ -19,12 +26,15 @@
  * Headless: MELLUM_MODE=1 activates at session start (the ladder's "mode" runner).
  * Installed as a Pi package extension it loads in every parent session and stays dormant until /mellum. While on, it runs the child guards (createGuardSet) itself, so no second extension is needed.
  */
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { adminBaseOf, checkSetup, type Diff, fetchJson, formatFindings, gatherInputs, loadExpected, readProvider, settingsDiffs } from "./mellum-check.ts";
 import { commandMutatesFiles } from "./mellum-commands.ts";
 import { createGuardSet, type GuardSet } from "./mellum-guards.ts";
 import { factsBlock, readProjectFacts, type ProjectFacts } from "./mellum-facts.ts";
+import { formatMerge, formatReport, learnFromTexts, mergeSuggestion, modeRunsFile, overCap, recordFiles } from "./mellum-learn.ts";
 
 export const MARK_ON = "[mellum-mode on]";
 export const MARK_OFF = "[mellum-mode off]";
@@ -305,6 +315,30 @@ export function promptVersionOf(prompt: string): string {
 
 export type Activation = "one-shot" | "on" | "headless";
 
+/** The activation check of the server's model settings: null when they could not be read. */
+export interface ServerCheck {
+	match: boolean | null;
+	diffs: Diff[];
+}
+
+export type Subcommand = { cmd: "on" | "off" | "check" | "learn" | "task"; n?: number; task?: string };
+
+/** `/mellum` arguments: on (or nothing), off, check, learn [n]; anything else is a task. */
+export function parseSubcommand(args: string): Subcommand {
+	const want = (args || "").trim();
+	if (want === "" || want === "on") return { cmd: "on" };
+	if (want === "off" || want === "check") return { cmd: want };
+	const learn = /^learn(?:\s+(\d+))?$/.exec(want);
+	if (learn) return { cmd: "learn", n: learn[1] === undefined ? 10 : Number(learn[1]) };
+	return { cmd: "task", task: want };
+}
+
+/** The one line shown on activation when the server's settings differ. */
+export function serverWarning(diffs: Diff[]): string {
+	const show = (v: unknown) => JSON.stringify(v) ?? "missing";
+	return `Mellum server settings differ: ${diffs.map((d) => `${d.key} ${show(d.actual)} (expected ${show(d.expected)})`).join(", ")}. Run /mellum check.`;
+}
+
 export interface RecordMeta {
 	endedAt: number;
 	cwd: string;
@@ -316,6 +350,7 @@ export interface RecordMeta {
 	nudges?: number;
 	guardBlocks?: number;
 	facts?: { source: string; testCommand: string | null; chars: number };
+	server?: ServerCheck;
 }
 
 export interface RunRecord {
@@ -343,6 +378,7 @@ export interface RunRecord {
 	nudges: number;
 	guardBlocks: number;
 	facts?: { source: string; testCommand: string | null; chars: number };
+	server?: ServerCheck;
 }
 
 /** One JSONL line per span, for analysis outside the session. Same fields as the handoff, plus schema 2 additions. */
@@ -374,6 +410,7 @@ export function runRecord(task: string, span: Msg[], meta: RecordMeta): RunRecor
 		nudges: meta.nudges ?? 0,
 		guardBlocks: meta.guardBlocks ?? 0,
 		...(meta.facts ? { facts: meta.facts } : {}),
+		...(meta.server ? { server: meta.server } : {}),
 	};
 }
 
@@ -396,10 +433,8 @@ export function openSpan(messages: Msg[]): { task: string; span: Msg[] } | undef
 }
 
 function runsFile(): string | undefined {
-	const env = process.env.MELLUM_MODE_RUNS;
-	if (env === "0" || env === "") return undefined;
-	if (env) return env.replace(/^~(?=$|\/)/, process.env.HOME ?? "~");
-	return resolve(process.env.HOME ?? ".", ".pi", "agent", "mellum-mode-runs.jsonl");
+	const file = modeRunsFile(process.env, process.env.HOME ?? ".");
+	return file === undefined ? undefined : resolve(file);
 }
 
 function toMillis(value: unknown): number | undefined {
@@ -428,7 +463,19 @@ function warn(ctx: any, msg: string, level: "warning" | "error") {
 	} catch {}
 }
 
-export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
+/** Shows output the user asked for: notify with a UI, stdout without one. */
+function say(ctx: any, msg: string, level: "info" | "warning" | "error" = "info") {
+	if (ctx?.hasUI === false) console.log(msg);
+	else ctx?.ui?.notify?.(msg, level);
+}
+
+const home = () => process.env.HOME || homedir();
+const readIfExists = (p: string) => (existsSync(p) ? readFileSync(p, "utf8") : undefined);
+
+/**
+ * `options.fetch` replaces the global fetch for the server checks (tests pass a fake).
+ */
+export default function (pi: any, options: { startTimeoutMs?: number; fetch?: typeof fetch } = {}) {
 	let active = false;
 	let interactive = false;
 	let saved: { model: any; tools: string[] } | undefined;
@@ -448,6 +495,71 @@ export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
 	let nudges = 0;
 	let guardBlocks = 0;
 	let spanFacts: ProjectFacts = { source: "none", bullets: [], testCommand: null, chars: 0 };
+	let server: ServerCheck = { match: null, diffs: [] };
+
+	// The activation check: one admin GET, at most 1 s, never throws; unreadable gives match null.
+	async function checkServer(): Promise<ServerCheck> {
+		try {
+			const { baseUrl } = readProvider("pi", home(), readIfExists);
+			const got = await fetchJson(`${adminBaseOf(baseUrl)}/admin/api/models`, { timeoutMs: 1000, fetch: options.fetch });
+			const diffs = got.ok ? settingsDiffs(got.value, loadExpected()) : null;
+			return diffs === null ? { match: null, diffs: [] } : { match: diffs.length === 0, diffs };
+		} catch {
+			return { match: null, diffs: [] };
+		}
+	}
+
+	// /mellum check: the whole check for Pi, printed. Never activates, never writes.
+	async function runCheck(ctx: any) {
+		try {
+			const inputs = await gatherInputs("pi", { home: home(), read: readIfExists, get: (url) => fetchJson(url, { timeoutMs: 3000, fetch: options.fetch }) });
+			const findings = checkSetup(inputs, loadExpected());
+			const level = findings.some((f) => f.level === "fail") ? "error" : findings.some((f) => f.level === "warn") ? "warning" : "info";
+			say(ctx, formatFindings(findings), level);
+		} catch (error) {
+			warn(ctx, `mellum check: ${(error as Error)?.message ?? String(error)}`, "error");
+		}
+	}
+
+	// /mellum learn [n]: the report for this directory, from Mode's and the Worker's records.
+	// AGENTS.md is written only when the user answers yes; without a UI, or past the facts cap,
+	// nothing is asked or written. After the yes it is read and merged again, and written only
+	// when the lines to add are still the ones asked about and still within the cap.
+	async function runLearn(ctx: any, n: number | undefined) {
+		if (n === undefined || !Number.isInteger(n) || n < 1) return warn(ctx, "mellum learn: n must be a whole number above 0", "warning");
+		const cwd: string = typeof ctx?.cwd === "string" ? ctx.cwd : process.cwd();
+		const agentsPath = resolve(cwd, "AGENTS.md");
+		let merged: ReturnType<typeof mergeSuggestion>;
+		let suggestion: string[];
+		try {
+			const report = learnFromTexts(recordFiles(process.env, home()).map(readIfExists), { cwd, n });
+			suggestion = report.suggestion;
+			merged = mergeSuggestion(readIfExists(agentsPath), suggestion);
+			say(ctx, formatReport(report, cwd, merged.added) + formatMerge(merged, suggestion));
+		} catch (error) {
+			return warn(ctx, `mellum learn: ${(error as Error)?.message ?? String(error)}`, "error");
+		}
+		// Past the facts cap Mode would ignore the whole section, so do not offer the write.
+		if (ctx?.hasUI === false || merged.added.length === 0 || overCap(merged) || typeof ctx?.ui?.confirm !== "function") return;
+		let yes = false;
+		try {
+			yes = (await ctx.ui.confirm("Add these lines to AGENTS.md?", merged.added.map((b) => `- ${b}`).join("\n"))) === true;
+		} catch (error) {
+			return warn(ctx, `mellum learn: ${(error as Error)?.message ?? String(error)}`, "error");
+		}
+		if (!yes) return;
+		try {
+			const now = mergeSuggestion(readIfExists(agentsPath), suggestion);
+			if (overCap(now) || JSON.stringify(now.added) !== JSON.stringify(merged.added)) {
+				return warn(ctx, "mellum learn: AGENTS.md changed while asking; run /mellum learn again", "warning");
+			}
+			writeFileSync(agentsPath, now.text);
+			const k = merged.added.length;
+			say(ctx, `mellum learn: added ${k} line${k === 1 ? "" : "s"} to ${agentsPath}`);
+		} catch (error) {
+			warn(ctx, `mellum learn: could not write AGENTS.md: ${(error as Error)?.message ?? String(error)}`, "error");
+		}
+	}
 
 	// Same resolver for the handoff collapse and the run record: absolute, else relative to the cwd.
 	const existsInCwd = (p: string) => existsSync(isAbsolute(p) ? p : resolve(process.cwd(), p));
@@ -466,6 +578,8 @@ export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
 		}
 		const previous = { model: ctx.model, tools: pi.getActiveTools() };
 		prompt = loadPrompt();
+		// Runs while the model switches; awaited below, so it adds at most its own timeout.
+		const serverCheck = checkServer();
 		const switched = await pi.setModel(model);
 		if (!switched) {
 			warn(ctx, `mellum-mode: could not select ${provider}/${id} (auth or provider error); mode stays off`, "error");
@@ -489,6 +603,8 @@ export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
 		// Read once per span, headless or not: the request hook forwards the same block every time.
 		spanFacts = readProjectFacts(process.cwd(), { read: (p) => (existsSync(p) ? readFileSync(p, "utf8") : undefined) });
 		if (spanFacts.warning) warn(ctx, spanFacts.warning, "warning");
+		server = await serverCheck;
+		if (server.match === false) warn(ctx, serverWarning(server.diffs), "warning");
 		if (notify) pi.sendMessage({ customType: "mellum-mode", content: `${MARK_ON} facts: ${spanFacts.source}`, display: true }, { deliverAs: "nextTurn" });
 		if (notify) ctx.ui?.notify?.(`mellum-mode on: ${provider}/${id}, tools ${WORKER_TOOLS.join(",")}`, "info");
 	}
@@ -525,7 +641,7 @@ export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
 			const open = openSpan([...lastContext, ...turnsSinceContext]);
 			if (!open) return;
 			mkdirSync(dirname(file), { recursive: true });
-			appendFileSync(file, JSON.stringify(runRecord(open.task, open.span, { endedAt: Date.now(), cwd: process.cwd(), model: activeModel, exists: existsInCwd, host, activation, promptVersion, nudges, guardBlocks, facts: { source: spanFacts.source, testCommand: spanFacts.testCommand, chars: spanFacts.chars } })) + "\n");
+			appendFileSync(file, JSON.stringify(runRecord(open.task, open.span, { endedAt: Date.now(), cwd: process.cwd(), model: activeModel, exists: existsInCwd, host, activation, promptVersion, nudges, guardBlocks, facts: { source: spanFacts.source, testCommand: spanFacts.testCommand, chars: spanFacts.chars }, server })) + "\n");
 		} catch (error) {
 			warn(ctx, `mellum-mode: could not write the run record${file ? ` to ${file}` : ""}: ${(error as Error)?.message ?? String(error)}`, "warning");
 		}
@@ -549,11 +665,14 @@ export default function (pi: any, options: { startTimeoutMs?: number } = {}) {
 	}
 
 	pi.registerCommand("mellum", {
-		description: "mellum <task> | on | off — run Mellum with the worker prompt and tools inside this session",
+		description: "mellum <task> | on | off | check | learn [n] — run Mellum with the worker prompt and tools inside this session",
 		handler: async (args: string, ctx: any) => {
-			const want = (args || "").trim();
-			if (want === "off") return deactivate(ctx);
-			if (want === "on" || want === "") return activate(ctx, true, "on");
+			const sub = parseSubcommand(args);
+			if (sub.cmd === "off") return deactivate(ctx);
+			if (sub.cmd === "on") return activate(ctx, true, "on");
+			if (sub.cmd === "check") return runCheck(ctx);
+			if (sub.cmd === "learn") return runLearn(ctx, sub.n);
+			const want = sub.task ?? "";
 			// One shot: the task runs under the mode and the mode ends when the agent settles.
 			if (active) {
 				warn(ctx, "mellum-mode is already on; type the task as a normal prompt, or /mellum off first", "warning");

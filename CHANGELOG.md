@@ -4,11 +4,98 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Added
+
+- `/mellum check` in Pi Mode: checks that oMLX answers and lists the
+  model, that the server settings no request can undo match the measured
+  profile (context window, TurboQuant, thinking budget off, no tool-result
+  cap, thinking not forced off, and sampling 1 / 0.95 / 20 when the server
+  forces its own), and that your provider entry matches the template,
+  failing on a different `maxTokens` or sampling value since those are what
+  each request sends. Server values a request overrides (`max_tokens`,
+  thinking, penalties) show as info. It only reads; a settings fix is
+  printed as the `PUT` to run yourself.
+- `node <package dir>/scripts/mellum.mjs check --host pi|opencode [--json]`:
+  the same check from the terminal, for OpenCode and Pi Worker; exits 1 on
+  any fail.
+- Each `/mellum` activation reads the server's model settings (one second
+  at most) and warns in one line when one of those binding values differs
+  from the measured profile, since other clients of the
+  same model can change them. Silent when the server cannot be read.
+- `/mellum learn [n]` in Pi Mode: reads the last n run records (default
+  10) for the current directory, names what went wrong (guessed test
+  command, bent project, false success, long runs, servers, settings
+  drift, announced-but-not-taken steps) and suggests `## Mellum` lines. It
+  adds only the missing lines to `AGENTS.md`, and only after you answer
+  yes; an existing line with another value is shown as a conflict, never
+  rewritten, and the section never goes past the 600-character facts cap.
+- `node <package dir>/scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]`:
+  the same report from the terminal (run it from the project), for OpenCode
+  and Pi Worker; it only prints.
+- The setup skill's last step runs `scripts/mellum.mjs check` for your host
+  and shows its output, so a wrong server setting shows up before the first
+  task. `docs/recipe.md` gains a section on the run record, the seven
+  `learn` patterns and the check.
+- README: a What helped section after the results: telling Mellum the
+  test command made most of the difference on the AgentClinic rungs, with
+  the A18–A20 numbers in one table and their caveats.
+- The run record gains `server` (`match`, and the differing settings), so
+  a run on drifted settings can be told apart later; `match` is null when
+  the settings could not be read.
+
 ### Changed
 
+- The expected oMLX values live in `templates/omlx-model-settings.json`,
+  split into server-only values (context window, TurboQuant; a test ties
+  the context window to the ladder's baseline profile) and the values each
+  request overrides (`max_tokens` 16,384, forced thinking, penalties), which
+  the setup skill's step 3 still writes for clients that send none. The
+  README's Model settings table says which values your provider entry sends
+  per request and which only the server sets.
+- README: Use it explains Model settings, Check your setup, Learn from your
+  runs (with an example report) and Project facts as one flow, with the
+  commands for Pi Mode, the terminal, OpenCode and Pi Worker.
 - README: a Future work section lists what is on the roadmap, in order,
   with links to ROADMAP.md and BACKLOG.md.
 - README: about 40% shorter; same install lines, numbers and links.
+- README: says the 6-bit weights are MLX weights, for Apple Silicon and
+  served by oMLX, so nobody downloads them for another runtime.
+- README: says `check --host pi` covers Pi Mode and Pi Worker and
+  `--host opencode` covers OpenCode, and that Pi Worker and OpenCode runs
+  write no records until M.7B (`learn` finds 0 runs there today). Its
+  `learn` example is now real output on a test fixture.
+- `learn` treats `Do not:` as a list: values your `AGENTS.md` already has
+  (split on `;`, any case) are left out and the rest go in one new bullet,
+  instead of printing a conflict for a line that only needed adding to.
+- `learn` shows only the lines it would add to `AGENTS.md` (text and
+  `--json` `suggestion`), and no Suggested block when it would add none, so
+  the report no longer suggests a line it then reports as kept. A conflict
+  on a label other than `Test command:` reads "runs suggest:", not "runs
+  passed with:".
+
+### Fixed
+
+- Setup step 3 now also sets `enable_thinking` true, the thinking budget
+  off and no tool-result cap. With `forced_ct_kwargs` forcing
+  `enable_thinking`, a false value would turn thinking off for every client,
+  and a server thinking budget or tool-result cap binds every client too.
+- The README now states the cap the measured Mode and Worker runs used:
+  `max_tokens` 16,384 with thinking on, verified in the A10, A17 and A19
+  traces, which oMLX honours over the server profile's 4,096; only the
+  direct-mode research phases ran at 4,096. The recipe and oMLX guide say
+  the same, and note the two server settings that beat a request
+  (`forced_ct_kwargs`, `force_sampling`). The planned "test 16,384 against
+  4,096" run is withdrawn: 16,384 is what was measured.
+- `learn` no longer stops on a hand-edited run record of the wrong shape
+  (a `null` command, a numeric `endedAt`, `server.diffs` not a list): the
+  bad entries or fields are dropped and the rest of the record still counts.
+- `/mellum learn` reads `AGENTS.md` again after you answer yes and writes
+  nothing if it changed in a way that alters the lines to add, so an edit
+  made while it asked is never overwritten.
+- `learn`'s `Write only:` no longer lists `/` or `../` for files written
+  outside the project, and the report says "1 run", not "1 runs".
+- `scripts/mellum.mjs learn --file` with no path exits 2 with the usage
+  line instead of quietly reading the default records.
 
 ## [0.1.3] - 2026-10-10
 

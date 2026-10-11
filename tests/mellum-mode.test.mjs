@@ -470,3 +470,26 @@ test("the handoff summary line carries facts: <source> when the on-marker does",
 function textOf(m) {
 	return typeof m.content === "string" ? m.content : m.content.map((p) => p.text ?? "").join("\n");
 }
+
+test("parseSubcommand: on, off, check and learn [n] are commands; anything longer is a task", async () => {
+	const { parseSubcommand } = await import("../extensions/mellum-mode.ts");
+	assert.deepEqual(parseSubcommand(""), { cmd: "on" });
+	assert.deepEqual(parseSubcommand("  "), { cmd: "on" });
+	assert.deepEqual(parseSubcommand("on"), { cmd: "on" });
+	assert.deepEqual(parseSubcommand(" off "), { cmd: "off" });
+	assert.deepEqual(parseSubcommand("check"), { cmd: "check" });
+	assert.deepEqual(parseSubcommand("learn"), { cmd: "learn", n: 10 });
+	assert.deepEqual(parseSubcommand("learn 25"), { cmd: "learn", n: 25 });
+	assert.deepEqual(parseSubcommand("check the export totals"), { cmd: "task", task: "check the export totals" });
+	assert.deepEqual(parseSubcommand("learn how the cache works"), { cmd: "task", task: "learn how the cache works" });
+	assert.deepEqual(parseSubcommand(" fix the cart "), { cmd: "task", task: "fix the cart" });
+});
+
+test("runRecord carries the server settings check from the meta, and omits the field when there is none", async () => {
+	const { runRecord } = await import("../extensions/mellum-mode.ts");
+	const meta = { endedAt: 1, cwd: "/p", model: "omlx/M" };
+	const diffs = [{ key: "max_context_window", expected: 56000, actual: 32768 }];
+	assert.deepEqual(runRecord("t", [], { ...meta, server: { match: false, diffs } }).server, { match: false, diffs });
+	assert.deepEqual(runRecord("t", [], { ...meta, server: { match: null, diffs: [] } }).server, { match: null, diffs: [] });
+	assert.equal("server" in JSON.parse(JSON.stringify(runRecord("t", [], meta))), false);
+});
