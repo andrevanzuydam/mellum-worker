@@ -523,16 +523,19 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 
 	// /mellum learn [n]: the report for this directory, from Mode's and the Worker's records.
 	// AGENTS.md is written only when the user answers yes; without a UI, or past the facts cap,
-	// nothing is asked or written.
+	// nothing is asked or written. After the yes it is read and merged again, and written only
+	// when the lines to add are still the ones asked about and still within the cap.
 	async function runLearn(ctx: any, n: number | undefined) {
 		if (n === undefined || !Number.isInteger(n) || n < 1) return warn(ctx, "mellum learn: n must be a whole number above 0", "warning");
 		const cwd: string = typeof ctx?.cwd === "string" ? ctx.cwd : process.cwd();
 		const agentsPath = resolve(cwd, "AGENTS.md");
 		let merged: ReturnType<typeof mergeSuggestion>;
+		let suggestion: string[];
 		try {
 			const report = learnFromTexts(recordFiles(process.env, home()).map(readIfExists), { cwd, n });
-			merged = mergeSuggestion(readIfExists(agentsPath), report.suggestion);
-			say(ctx, formatReport(report, cwd) + formatMerge(merged, report.suggestion));
+			suggestion = report.suggestion;
+			merged = mergeSuggestion(readIfExists(agentsPath), suggestion);
+			say(ctx, formatReport(report, cwd, merged.added) + formatMerge(merged, suggestion));
 		} catch (error) {
 			return warn(ctx, `mellum learn: ${(error as Error)?.message ?? String(error)}`, "error");
 		}
@@ -546,7 +549,11 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 		}
 		if (!yes) return;
 		try {
-			writeFileSync(agentsPath, merged.text);
+			const now = mergeSuggestion(readIfExists(agentsPath), suggestion);
+			if (overCap(now) || JSON.stringify(now.added) !== JSON.stringify(merged.added)) {
+				return warn(ctx, "mellum learn: AGENTS.md changed while asking; run /mellum learn again", "warning");
+			}
+			writeFileSync(agentsPath, now.text);
 			const k = merged.added.length;
 			say(ctx, `mellum learn: added ${k} line${k === 1 ? "" : "s"} to ${agentsPath}`);
 		} catch (error) {

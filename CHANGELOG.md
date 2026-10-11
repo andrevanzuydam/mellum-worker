@@ -51,6 +51,27 @@ Versions match git tags; pin one in both install lines.
 - README: a Future work section lists what is on the roadmap, in order,
   with links to ROADMAP.md and BACKLOG.md.
 - README: about 40% shorter; same install lines, numbers and links.
+- `learn` treats `Do not:` as a list: values your `AGENTS.md` already has
+  (split on `;`, any case) are left out and the rest go in one new bullet,
+  instead of printing a conflict for a line that only needed adding to.
+- `learn` shows only the lines it would add to `AGENTS.md` (text and
+  `--json` `suggestion`), and no Suggested block when it would add none, so
+  the report no longer suggests a line it then reports as kept. A conflict
+  on a label other than `Test command:` reads "runs suggest:", not "runs
+  passed with:".
+
+### Fixed
+
+- `learn` no longer stops on a hand-edited run record of the wrong shape
+  (a `null` command, a numeric `endedAt`, `server.diffs` not a list): the
+  bad entries or fields are dropped and the rest of the record still counts.
+- `/mellum learn` reads `AGENTS.md` again after you answer yes and writes
+  nothing if it changed in a way that alters the lines to add, so an edit
+  made while it asked is never overwritten.
+- `learn`'s `Write only:` no longer lists `/` or `../` for files written
+  outside the project, and the report says "1 run", not "1 runs".
+- `scripts/mellum.mjs learn --file` with no path exits 2 with the usage
+  line instead of quietly reading the default records.
 
 ## [0.1.3] - 2026-10-10
 

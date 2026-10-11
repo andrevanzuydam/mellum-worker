@@ -151,7 +151,8 @@ test("learn prints the patterns and the suggestion, and a conflict with AGENTS.m
 	const r = learnRun(["learn", "--file", p.runs], { cwd: p.dir });
 	assert.equal(r.status, 0, r.stderr);
 	assert.match(r.stdout, /Test command guessed wrong in 3 of 6 runs/);
-	assert.match(r.stdout, /Suggested for AGENTS\.md:\n\n## Mellum\n- Test command: uv run python -m pytest tests/);
+	// the only suggested line conflicts, so nothing would be added and no Suggested block prints
+	assert.doesNotMatch(r.stdout, /Suggested for AGENTS\.md/);
 	assert.match(r.stdout, /- your Test command: npm test; runs passed with: uv run python -m pytest tests/);
 	assert.equal(readFileSync(join(p.dir, "AGENTS.md"), "utf8"), agents);
 });
@@ -193,9 +194,21 @@ test("learn near the 600-character facts cap says so, in text and in JSON", () =
 
 test("learn usage errors exit 2: --n not a whole number above 0, a missing --file, an unknown flag", () => {
 	const dir = realpathSync(temp("mellum-cli-proj-"));
-	for (const args of [["learn", "--n", "0"], ["learn", "--n", "ten"], ["learn", "--n"], ["learn", "--file", join(dir, "nope.jsonl")], ["learn", "--host", "pi"]]) {
+	for (const args of [["learn", "--n", "0"], ["learn", "--n", "ten"], ["learn", "--n"], ["learn", "--file", join(dir, "nope.jsonl")], ["learn", "--file"], ["learn", "--file", "--json"], ["learn", "--host", "pi"]]) {
 		const r = learnRun(args, { cwd: dir });
 		assert.equal(r.status, 2, `${args.join(" ")}: ${r.stdout}${r.stderr}`);
 		assert.match(r.stderr, /usage: node [\s\S]*mellum\.mjs learn \[--n 10\]/);
 	}
+});
+
+test("learn --json: suggestion holds only the lines that would be added (a Do not value AGENTS.md has is left out)", () => {
+	const p = project("servers");
+	writeFileSync(join(p.dir, "AGENTS.md"), "## Mellum\n\n- Do not: start servers\n");
+	const all = JSON.parse(learnRun(["learn", "--json", "--file", p.runs], { cwd: p.dir }).stdout);
+	assert.deepEqual(all.suggestion, []);
+	assert.deepEqual(all.added, []);
+	assert.deepEqual(all.conflicts, []);
+	const none = learnRun(["learn", "--file", p.runs], { cwd: p.dir });
+	assert.doesNotMatch(none.stdout, /Suggested/);
+	assert.match(none.stdout, /AGENTS\.md already has these lines\.\n$/);
 });

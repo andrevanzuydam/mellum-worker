@@ -11,7 +11,8 @@
  * learn names what went wrong in the last n runs (default 10) under the current directory,
  * from $MELLUM_MODE_RUNS (or ~/.pi/agent/mellum-mode-runs.jsonl) and
  * ~/.pi/agent/mellum-worker-runs.jsonl, or only --file. It prints the suggested ## Mellum
- * section and any conflict with ./AGENTS.md, and never writes: /mellum learn in Pi does that.
+ * lines that ./AGENTS.md lacks and any conflict with it, and never writes: /mellum learn in
+ * Pi does that.
  *
  * MELLUM_CHECK_FIXTURES=<dir> (tests) reads <dir>/v1-models.json, admin-models.json and
  * global-settings.json in place of the three GETs.
@@ -64,7 +65,10 @@ function parseArgs(argv) {
 		if (rest[i] === "--json") opts.json = true;
 		else if (rest[i] === "--host" && cmd === "check") opts.host = rest[++i];
 		else if (rest[i] === "--n" && cmd === "learn") opts.n = /^\d+$/.test(rest[++i] ?? "") ? Number(rest[i]) : 0;
-		else if (rest[i] === "--file" && cmd === "learn") opts.file = rest[++i];
+		else if (rest[i] === "--file" && cmd === "learn") {
+			opts.file = rest[++i];
+			if (opts.file === undefined || opts.file.startsWith("--")) fail("--file needs a path");
+		}
 		else fail(`unknown argument: ${rest[i]}`);
 	}
 	if (opts.host !== "pi" && opts.host !== "opencode") fail(`unknown host: ${opts.host}`);
@@ -101,7 +105,9 @@ async function learn(opts) {
 	const files = opts.file !== undefined ? [opts.file] : m.recordFiles(process.env, process.env.HOME || homedir());
 	const report = m.learnFromTexts(files.map(read), { cwd, n: opts.n });
 	const merged = m.mergeSuggestion(read(join(cwd, "AGENTS.md")), report.suggestion);
-	console.log(opts.json ? JSON.stringify({ cwd, ...report, added: merged.added, conflicts: merged.conflicts, chars: merged.chars }, null, 2) : m.formatReport(report, cwd) + m.formatMerge(merged, report.suggestion));
+	// The suggestion shown (text and JSON) is only what the merge with ./AGENTS.md would add.
+	const out = { cwd, ...report, suggestion: merged.added, added: merged.added, conflicts: merged.conflicts, chars: merged.chars };
+	console.log(opts.json ? JSON.stringify(out, null, 2) : m.formatReport(report, cwd, merged.added) + m.formatMerge(merged, report.suggestion));
 }
 
 const opts = parseArgs(process.argv.slice(2));

@@ -968,6 +968,63 @@ test("/mellum learn 0 warns and reads nothing; a failed write warns and does not
 	});
 });
 
+test("/mellum learn: no Suggested block when AGENTS.md already has every line; a missing Do not value is added as its own bullet", async () => {
+	await withLearn("servers", async (cwd) => {
+		const before = "## Mellum\n\n- Do not: start servers\n";
+		writeFileSync(`${cwd}/AGENTS.md`, before);
+		const { calls, mellum } = learnPi(cwd, { answer: true });
+		await mellum("learn");
+		const out = calls.notify[0][0];
+		assert.doesNotMatch(out, /Suggested for AGENTS\.md/);
+		assert.doesNotMatch(out, /Kept as written/);
+		assert.match(out, /\nAGENTS\.md already has these lines\.$/);
+		assert.deepEqual(calls.confirm, []);
+		assert.equal(readFileSync(`${cwd}/AGENTS.md`, "utf8"), before);
+	});
+	await withLearn("servers", async (cwd) => {
+		const before = "## Mellum\n\n- Do not: install packages or add dependencies\n";
+		writeFileSync(`${cwd}/AGENTS.md`, before);
+		const { calls, mellum } = learnPi(cwd, { answer: true });
+		await mellum("learn");
+		assert.match(calls.notify[0][0], /Suggested for AGENTS\.md:\n\n## Mellum\n- Do not: start servers$/);
+		assert.deepEqual(calls.confirm, [["Add these lines to AGENTS.md?", "- Do not: start servers"]]);
+		assert.equal(readFileSync(`${cwd}/AGENTS.md`, "utf8"), `${before}- Do not: start servers\n`);
+	});
+});
+
+test("/mellum learn re-reads AGENTS.md after yes: an edit that changes the lines to add (or the cap) writes nothing; any other edit is kept", async () => {
+	const answerAfter = (h, edit) => {
+		h.ctx.ui.confirm = async (title, message) => {
+			h.calls.confirm.push([title, message]);
+			edit();
+			return true;
+		};
+	};
+	await withLearn("servers", async (cwd) => {
+		const edited = "## Mellum\n\n- Do not: start servers\n";
+		const h = learnPi(cwd);
+		answerAfter(h, () => writeFileSync(`${cwd}/AGENTS.md`, edited));
+		await h.mellum("learn");
+		assert.equal(h.calls.confirm.length, 1);
+		assert.equal(readFileSync(`${cwd}/AGENTS.md`, "utf8"), edited);
+		assert.ok(h.calls.notify.some(([m]) => m === "mellum learn: AGENTS.md changed while asking; run /mellum learn again"), JSON.stringify(h.calls.notify));
+	});
+	await withLearn("servers", async (cwd) => {
+		const edited = `## Mellum\n\n- Note: ${"x".repeat(584)}\n`;
+		const h = learnPi(cwd);
+		answerAfter(h, () => writeFileSync(`${cwd}/AGENTS.md`, edited));
+		await h.mellum("learn");
+		assert.equal(readFileSync(`${cwd}/AGENTS.md`, "utf8"), edited, "past the cap after the edit: nothing written");
+		assert.ok(h.calls.notify.some(([m]) => m === "mellum learn: AGENTS.md changed while asking; run /mellum learn again"), JSON.stringify(h.calls.notify));
+	});
+	await withLearn("servers", async (cwd) => {
+		const h = learnPi(cwd);
+		answerAfter(h, () => writeFileSync(`${cwd}/AGENTS.md`, "# Edited\n"));
+		await h.mellum("learn");
+		assert.equal(readFileSync(`${cwd}/AGENTS.md`, "utf8"), "# Edited\n\n## Mellum\n\n- Do not: start servers\n");
+	});
+});
+
 test("/mellum check <words> is a one-shot task, not the check", async () => {
 	const server = fakeServer("admin-models-match.json");
 	const { calls, mellum } = recordingPi({ mode: "tui", hasUI: true, fetch: server.fetch });

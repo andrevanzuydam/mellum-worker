@@ -26,7 +26,37 @@ export interface Report {
 	suggestion: string[];
 }
 
-/** Non-JSON lines count as bad, lines without `schema` (or below 2) as old; blank lines are ignored. */
+const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
+
+/**
+ * The fields the patterns read, coerced to their types so a hand-edited record cannot make
+ * `learn` throw. A malformed entry or field is dropped, not the record: `commands` keeps
+ * entries with a string `command`; `files` keeps strings; `server.diffs` keeps objects with a
+ * string `key` (`[]` when not an array); `cwd`, `endedAt`, `requests`, `finalReply`,
+ * `lastCommand`, `finalTurn` and `server` are dropped when of the wrong type.
+ */
+function normalise(rec: Record<string, unknown>): RunLine {
+	const out: Record<string, unknown> = { ...rec, schema: rec.schema, kind: rec.kind === "worker" ? "worker" : "mode" };
+	out.commands = (Array.isArray(rec.commands) ? rec.commands : [])
+		.filter((c): c is Record<string, unknown> => isObject(c) && typeof c.command === "string")
+		.map((c) => ({ ...c, command: c.command, failed: c.failed === true, mutates: c.mutates === true }));
+	out.files = (Array.isArray(rec.files) ? rec.files : []).filter((f) => typeof f === "string");
+	for (const [k, type] of [["cwd", "string"], ["endedAt", "string"], ["requests", "number"], ["finalReply", "string"], ["lastCommand", "string"]] as const) {
+		if (typeof rec[k] !== type) delete out[k];
+	}
+	if (isObject(rec.finalTurn)) out.finalTurn = { ...rec.finalTurn, hadText: rec.finalTurn.hadText === true, hadToolCall: rec.finalTurn.hadToolCall === true };
+	else delete out.finalTurn;
+	if (isObject(rec.server)) {
+		const diffs = Array.isArray(rec.server.diffs) ? rec.server.diffs : [];
+		out.server = { ...rec.server, diffs: diffs.filter((d) => isObject(d) && typeof d.key === "string") };
+	} else delete out.server;
+	return out as RunLine;
+}
+
+/**
+ * Non-JSON lines and JSON that is not an object count as bad, lines without `schema` (or below
+ * 2) as old; blank lines are ignored. Every kept record is normalised (see `normalise`).
+ */
 export function readRecords(text: string): { records: RunLine[]; bad: number; old: number } {
 	const records: RunLine[] = [];
 	let bad = 0;
@@ -49,7 +79,7 @@ export function readRecords(text: string): { records: RunLine[]; bad: number; ol
 			old++;
 			continue;
 		}
-		records.push({ ...rec, schema: rec.schema, kind: rec.kind === "worker" ? "worker" : "mode" } as RunLine);
+		records.push(normalise(rec));
 	}
 	return { records, bad, old };
 }
@@ -77,6 +107,9 @@ function relativeTo(path: string, cwd: string | undefined): string {
 	if (cwd !== undefined && isUnder(p, cwd) && p !== trimSlashes(cwd)) p = p.slice(trimSlashes(cwd).length + 1);
 	return p;
 }
+
+/** A relative path that stays inside the cwd: not absolute, no `..` segment. */
+const inside = (p: string) => !p.startsWith("/") && !p.split("/").includes("..");
 
 /** `__init__.py`, `pytest.ini`, `setup.cfg`, `pyproject.toml`, `uv.lock` anywhere; `conftest.py` at the root only. */
 function isBent(path: string): boolean {
@@ -146,7 +179,7 @@ function bentProject(runs: RunLine[]): Pattern | undefined {
 		count++;
 		bentFiles.push(...bentRecorded, ...viaCommands);
 		bentCommands.push(...installs);
-		written.push(...recorded.filter((f) => !isBent(f)));
+		written.push(...recorded.filter((f) => !isBent(f) && inside(f)));
 	}
 	if (count === 0) return undefined;
 	const files = unique(bentFiles).sort();
@@ -250,10 +283,15 @@ export function learn(
 	};
 }
 
-export function formatReport(r: Report, cwd: string): string {
+/**
+ * The report as text. `added` is what the merge with AGENTS.md would add (mergeSuggestion's
+ * `added`); the Suggested block shows only those lines and is left out when there are none.
+ * It defaults to the whole suggestion, which is what a project without AGENTS.md gets.
+ */
+export function formatReport(r: Report, cwd: string, added: string[] = r.suggestion): string {
 	const lines: string[] = [];
 	const span = r.window ? ` (${r.window.from.slice(0, 10)} to ${r.window.to.slice(0, 10)})` : "";
-	lines.push(`mellum learn: ${r.runs} runs in ${cwd}${span}`);
+	lines.push(`mellum learn: ${r.runs} run${r.runs === 1 ? "" : "s"} in ${cwd}${span}`);
 	if (r.skipped.old > 0 || r.skipped.bad > 0) {
 		lines.push(`Skipped ${r.skipped.old} old and ${r.skipped.bad} bad lines.`);
 	}
@@ -263,8 +301,8 @@ export function formatReport(r: Report, cwd: string): string {
 	}
 	lines.push("");
 	for (const p of r.patterns) lines.push(`- ${p.message}`);
-	if (r.suggestion.length > 0) {
-		lines.push("", "Suggested for AGENTS.md:", "", "## Mellum", ...r.suggestion.map((b) => `- ${b}`));
+	if (added.length > 0) {
+		lines.push("", "Suggested for AGENTS.md:", "", "## Mellum", ...added.map((b) => `- ${b}`));
 	}
 	return lines.join("\n");
 }
@@ -297,13 +335,17 @@ export function learnFromTexts(texts: Array<string | undefined>, opts: { cwd: st
 	return learn(records, { ...opts, skipped });
 }
 
+const DO_NOT = "do not";
+const splitValues = (v: string) => v.split(";").map((x) => x.trim()).filter(Boolean);
 const labelOf = (b: string) => (b.includes(":") ? b.slice(0, b.indexOf(":")).trim().toLowerCase() : b.trim().toLowerCase());
 const valueOf = (b: string) => (b.includes(":") ? b.slice(b.indexOf(":") + 1).trim() : "");
 
 /**
  * Merges the suggested bullets into AGENTS.md's text (undefined: no file). Only labels the
  * `## Mellum` section lacks are added, after its last bullet and before the next heading; a
- * label it has with another value is a conflict, never rewritten. Every other byte is kept;
+ * label it has with another value is a conflict, never rewritten. `Do not:` is additive: its
+ * values (split on `;`, matched case-insensitively) that no existing `Do not:` bullet has go
+ * in one new `Do not:` bullet, and it is never a conflict. Every other byte is kept;
  * a missing final newline is added where the new lines join. `chars` is the merged section's
  * bullet total as readProjectFacts counts it: past FACTS_CAP, Mode would ignore the section.
  */
@@ -335,10 +377,19 @@ export function mergeSuggestion(
 		: [];
 	const added: string[] = [];
 	const conflicts: string[] = [];
+	const have = new Set(existing.filter((e) => labelOf(e) === DO_NOT).flatMap((e) => splitValues(valueOf(e)).map((x) => x.toLowerCase())));
 	for (const b of bullets) {
+		if (labelOf(b) === DO_NOT) {
+			// Additive: a new bullet with only the values no existing Do not: bullet has.
+			const missing = splitValues(valueOf(b)).filter((x) => !have.has(x.toLowerCase()));
+			if (missing.length > 0) added.push(`${b.slice(0, b.indexOf(":"))}: ${missing.join("; ")}`);
+			continue;
+		}
 		const same = existing.find((e) => labelOf(e) === labelOf(b));
 		if (same === undefined) added.push(b);
-		else if (same !== b && valueOf(same) !== valueOf(b)) conflicts.push(`your ${same}; runs passed with: ${valueOf(b)}`);
+		else if (same !== b && valueOf(same) !== valueOf(b)) {
+			conflicts.push(`your ${same}; ${labelOf(b) === "test command" ? "runs passed with" : "runs suggest"}: ${valueOf(b)}`);
+		}
 	}
 	const chars = total([...existing, ...added]);
 	if (added.length === 0) return { text: agentsMd, added, conflicts, chars };
@@ -368,12 +419,11 @@ export function mergeSuggestion(
 /** True when writing `m.added` would take the section past FACTS_CAP, so Mode would ignore it. */
 export const overCap = (m: { added: string[]; chars?: number }) => m.added.length > 0 && (m.chars ?? 0) > FACTS_CAP;
 
-/** The lines front ends print after the report: conflicts, then what is missing or that nothing is, then the cap. */
+/** The lines front ends print after the report: conflicts, then that nothing is missing, then the cap. */
 export function formatMerge(m: { added: string[]; conflicts: string[]; chars?: number }, suggestion: string[]): string {
 	const lines: string[] = [];
 	if (m.conflicts.length > 0) lines.push("", "Kept as written in AGENTS.md:", ...m.conflicts.map((c) => `- ${c}`));
 	if (suggestion.length > 0 && m.added.length === 0 && m.conflicts.length === 0) lines.push("", "AGENTS.md already has these lines.");
-	else if (m.added.length > 0 && m.added.length < suggestion.length) lines.push("", "Missing from AGENTS.md:", ...m.added.map((b) => `- ${b}`));
 	if (overCap(m)) lines.push("", `Adding these would take the section past ${FACTS_CAP} characters; Mode would ignore it.`);
 	return lines.join("\n");
 }

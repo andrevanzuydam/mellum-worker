@@ -292,7 +292,8 @@ test("mergeSuggestion: nothing to suggest leaves the text as it was", () => {
 
 test("formatMerge: conflicts, what is missing, or nothing to add", () => {
 	assert.equal(formatMerge({ added: [], conflicts: ["your Test command: a; runs passed with: b"] }, [TC]), "\nKept as written in AGENTS.md:\n- your Test command: a; runs passed with: b");
-	assert.equal(formatMerge({ added: [DN], conflicts: [] }, [TC, DN]), `\nMissing from AGENTS.md:\n- ${DN}`);
+	// some lines missing: formatReport's Suggested block shows them, formatMerge adds nothing
+	assert.equal(formatMerge({ added: [DN], conflicts: [] }, [TC, DN]), "");
 	assert.equal(formatMerge({ added: [TC, DN], conflicts: [] }, [TC, DN]), "");
 	assert.equal(formatMerge({ added: [], conflicts: [] }, [TC]), "\nAGENTS.md already has these lines.");
 	assert.equal(formatMerge({ added: [], conflicts: [] }, []), "");
@@ -333,4 +334,90 @@ test("mergeSuggestion near the cap: chars goes past 600, which readProjectFacts 
 	assert.equal(formatMerge(m, [DN]), "\nAdding these would take the section past 600 characters; Mode would ignore it.");
 	// within the cap, no such line
 	assert.doesNotMatch(formatMerge(mergeSuggestion(undefined, [DN]), [DN]), /600/);
+});
+
+// ---- final review fix wave ----
+
+test("readRecords: valid JSON of the wrong shape never makes learn throw; malformed entries and fields are dropped", () => {
+	const lines = text("patterns/wrong-shape.jsonl").split("\n").filter(Boolean);
+	for (const [i, line] of lines.entries()) {
+		assert.doesNotThrow(() => {
+			const { records } = readRecords(line);
+			formatReport(learn(records, { cwd: "/home/user/proj", n: 10 }), "/home/user/proj");
+		}, `line ${i + 1}`);
+	}
+	const { records, bad, old } = readRecords(text("patterns/wrong-shape.jsonl"));
+	assert.equal(records.length, 8);
+	assert.deepEqual({ bad, old }, { bad: 0, old: 0 });
+	// commands: entries without a string command are dropped, the rest kept
+	assert.deepEqual(records[0].commands.map((c) => c.command), ["uvicorn app:app"]);
+	assert.deepEqual(records[1].commands, []);
+	// files: strings only; endedAt: a string or dropped; server.diffs: an array of objects with a key
+	assert.deepEqual(records[2].files, ["src/a.py"]);
+	assert.equal(records[3].endedAt, undefined);
+	assert.deepEqual(records[4].server, { match: false, diffs: [] });
+	assert.deepEqual(records[5].server.diffs.map((d) => d.key), ["max_tokens"]);
+	// requests a number, finalReply a string, finalTurn an object, lastCommand a string, or dropped
+	for (const k of ["requests", "finalReply", "finalTurn", "lastCommand"]) assert.equal(records[6][k], undefined, k);
+	// non-array commands and files read as none; a non-object server is dropped
+	assert.deepEqual([records[7].commands, records[7].files, records[7].server, records[7].finalTurn], [[], [], undefined, undefined]);
+	const r = learn(records, { cwd: "/home/user/proj", n: 10 });
+	assert.deepEqual(ids(r), ["servers", "drift"]);
+	assert.equal(pat(r, "servers").count, 1);
+	assert.equal(pat(r, "drift").message, "Server settings differed in 2 runs: max_tokens. Run /mellum check.");
+	assert.doesNotThrow(() => formatReport(r, "/home/user/proj"));
+});
+
+test("bent-project: Write only drops absolute paths outside the cwd and .. paths", () => {
+	const mk = (files) => ({ schema: 2, kind: "mode", cwd: "/home/user/proj", endedAt: "2026-10-01T00:00:00.000Z", files, commands: [] });
+	const r = learn([mk(["/tmp/scratch/out.txt", "../other/x.py", "src/../../y.py", "/home/user/proj/lib/b.py", "src/a.py", "pyproject.toml"])], { cwd: "/home/user/proj", n: 10 });
+	assert.deepEqual(pat(r, "bent-project").bullets, ["Write only: lib/, src/", "Do not: install packages or add dependencies"]);
+	const only = learn([mk(["/tmp/out.txt", "pyproject.toml"])], { cwd: "/home/user/proj", n: 10 });
+	assert.deepEqual(pat(only, "bent-project").bullets, ["Do not: install packages or add dependencies"]);
+});
+
+test("formatReport: one run is '1 run'", () => {
+	const r = run("long-run", { n: 1 });
+	assert.match(formatReport(r, "/home/user/proj"), /^mellum learn: 1 run in \/home\/user\/proj \(/);
+	assert.match(formatReport(run("long-run"), "/home/user/proj"), /^mellum learn: 3 runs in /);
+});
+
+const DN2 = "Do not: install packages or add dependencies; start servers";
+
+test("mergeSuggestion: Do not is additive; one new bullet with only the missing values, no conflict, other bytes kept", () => {
+	const prefix = "# P\n\n## Mellum\n\n- Do not: start servers\n";
+	const suffix = "\n## Notes\n";
+	const m = mergeSuggestion(prefix + suffix, [DN2]);
+	assert.deepEqual(m.added, ["Do not: install packages or add dependencies"]);
+	assert.deepEqual(m.conflicts, []);
+	assert.equal(m.text, `${prefix}- Do not: install packages or add dependencies\n${suffix}`);
+	// values split on ';', trimmed, case-insensitive, over every existing Do not bullet
+	const all = mergeSuggestion("## Mellum\n\n- do not: Start Servers\n- Do not:  INSTALL packages or add dependencies ; other\n", [DN2]);
+	assert.deepEqual([all.added, all.conflicts], [[], []]);
+	// the facts cap still applies to the added bullet
+	const near = mergeSuggestion(`## Mellum\n\n- Note: ${"x".repeat(584)}\n- Do not: start servers\n`, [DN2]);
+	assert.deepEqual(near.added, ["Do not: install packages or add dependencies"]);
+	assert.ok(near.chars > 600);
+});
+
+test("mergeSuggestion: 'runs passed with:' only for Test command; other labels say 'runs suggest:'", () => {
+	const m = mergeSuggestion("## Mellum\n\n- Write only: src/\n- Test command: npm test\n", ["Test command: uv run pytest", "Write only: app.py, src/"]);
+	assert.deepEqual(m.conflicts, ["your Test command: npm test; runs passed with: uv run pytest", "your Write only: src/; runs suggest: app.py, src/"]);
+	assert.deepEqual(m.added, []);
+});
+
+test("formatReport: the Suggested block shows only the lines that would be added, and is omitted when none would", () => {
+	const r = learn(
+		["bent-project", "servers"].flatMap((n) => readRecords(text(`patterns/${n}.jsonl`)).records),
+		{ cwd: "/home/user/proj", n: 100 },
+	);
+	const m = mergeSuggestion("## Mellum\n\n- Do not: start servers\n- Write only: app.py, lib/, src/, tests/\n", r.suggestion);
+	const out = formatReport(r, "/home/user/proj", m.added) + formatMerge(m, r.suggestion);
+	assert.match(out, /Suggested for AGENTS\.md:\n\n## Mellum\n- Do not: install packages or add dependencies$/);
+	assert.doesNotMatch(out, /start servers/);
+	const none = mergeSuggestion("## Mellum\n\n- Do not: start servers; install packages or add dependencies\n- Write only: app.py, lib/, src/, tests/\n", r.suggestion);
+	const outNone = formatReport(r, "/home/user/proj", none.added) + formatMerge(none, r.suggestion);
+	assert.doesNotMatch(outNone, /Suggested/);
+	assert.doesNotMatch(outNone, /Kept as written/);
+	assert.match(outNone, /\nAGENTS\.md already has these lines\.$/);
 });
