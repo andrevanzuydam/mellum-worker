@@ -73,12 +73,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
-- The README said every rungs 6–9 run used a 4,096 generation ceiling. The
-  archived A10, A17 and A19 traces show every Mode and Worker request sent
-  `max_tokens` 16,384 with thinking on, which oMLX honours over the server
-  profile's 4,096; only the direct-mode research phases ran at 4,096. The
-  README, recipe, oMLX guide and provider notes now say so, and the planned
-  "measure a 16,384 ceiling" run is withdrawn: it is what was measured.
+- The README now states the cap the measured Mode and Worker runs used:
+  `max_tokens` 16,384 with thinking on, verified in the A10, A17 and A19
+  traces, which oMLX honours over the server profile's 4,096; only the
+  direct-mode research phases ran at 4,096. The recipe and oMLX guide say
+  the same, and note the two server settings that beat a request
+  (`forced_ct_kwargs`, `force_sampling`). The planned "test 16,384 against
+  4,096" run is withdrawn: 16,384 is what was measured.
 - `learn` no longer stops on a hand-edited run record of the wrong shape
   (a `null` command, a numeric `endedAt`, `server.diffs` not a list): the
   bad entries or fields are dropped and the rest of the record still counts.

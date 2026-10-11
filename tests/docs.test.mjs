@@ -55,7 +55,9 @@ test("README Use it says how to run learn in Pi Mode and from the terminal, afte
 test("README Model settings says which values the provider entry sends per request and which only the server sets", () => {
 	const use = read("README.md").split("\n## Use it\n")[1].split("\n## What you get\n")[0];
 	const settings = use.split("**Model settings.**")[1].split("**Check your setup.**")[0];
-	assert.match(settings, /Pi and OpenCode\s+send[^.]*per\s+request/);
+	assert.match(settings, /Pi\s+sends[^.]*per\s+request/);
+	assert.match(settings, /OpenCode's\s+template\s+sets\s+only\s+the\s+output\s+limit/);
+	assert.match(settings, /force_sampling/);
 	assert.match(settings, /honours/);
 	assert.match(settings, /server-only/);
 	const check = use.split("**Check your setup.**")[1].split("**Learn from your runs.**")[0];
@@ -71,6 +73,8 @@ test("README states the cap the Mode and Worker runs actually used, and no 4,096
 	assert.doesNotMatch(read("BACKLOG.md"), /Measure a 16,384 ceiling/);
 	assert.doesNotMatch(read("docs/recipe.md"), /4,096, the measured baseline/);
 	assert.match(read("docs/recipe.md"), /A10, A17 and A19/, "the recipe records the trace finding");
+	assert.match(read("docs/recipe.md"), /`min_p`,\s+`presence_penalty`\s+and\s+`repetition_penalty`/, "Pi sends no seed");
+	assert.doesNotMatch(readme, /12 runs per column/);
 });
 
 test("README What helped follows the rungs 6-9 results, and the results table no longer repeats it", () => {
@@ -123,6 +127,8 @@ test("the oMLX backend guide lists step 3's server values; no doc calls 4,096 th
 	const omlx = read("docs/backends/omlx.md");
 	assert.match(omlx, /\| `max_tokens` \| 16384 \|/);
 	assert.match(omlx, /\| `forced_ct_kwargs` \| `\["enable_thinking"\]` \|/);
+	assert.match(omlx, /force_sampling/, "says force_sampling makes the server's sampling win");
+	assert.doesNotMatch(omlx, /Pi and OpenCode send `max_tokens` 16,384 and thinking/);
 	assert.doesNotMatch(read("skills/mellum-setup/reference/04-provider-pi.md"), /server's 4,096/);
 	assert.doesNotMatch(read("skills/mellum-setup/reference/04-provider-opencode.md"), /4,096/);
 	assert.doesNotMatch(read("skills/mellum-setup/reference/04-provider-pi.md"), /match the server/);

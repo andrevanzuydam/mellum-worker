@@ -228,11 +228,12 @@ export function checkSetup(inputs: CheckInputs, expected: Expected): Finding[] {
 		}
 		const o = settingsDiffs(inputs.adminModels.value, expected, "overridden") ?? [];
 		if (o.length > 0) {
-			out.push({
-				id: "settings",
-				level: "info",
-				message: `server values differ from the advised ones, overridden by the client's request values:\n${lines(o, "advised").join("\n")}`,
-			});
+			// Pi's template sends the cap, sampling and thinking flag; OpenCode's only the cap.
+			const why =
+				inputs.provider.host === "opencode"
+					? "OpenCode's template sends only max_tokens, so the server's other values apply"
+					: "overridden by the client's request values";
+			out.push({ id: "settings", level: "info", message: `server values differ from the advised ones, ${why}:\n${lines(o, "advised").join("\n")}` });
 		}
 	}
 

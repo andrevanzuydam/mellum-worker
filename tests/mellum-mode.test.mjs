@@ -488,7 +488,7 @@ test("parseSubcommand: on, off, check and learn [n] are commands; anything longe
 test("runRecord carries the server settings check from the meta, and omits the field when there is none", async () => {
 	const { runRecord } = await import("../extensions/mellum-mode.ts");
 	const meta = { endedAt: 1, cwd: "/p", model: "omlx/M" };
-	const diffs = [{ key: "max_tokens", expected: 4096, actual: 16384 }];
+	const diffs = [{ key: "max_context_window", expected: 56000, actual: 32768 }];
 	assert.deepEqual(runRecord("t", [], { ...meta, server: { match: false, diffs } }).server, { match: false, diffs });
 	assert.deepEqual(runRecord("t", [], { ...meta, server: { match: null, diffs: [] } }).server, { match: null, diffs: [] });
 	assert.equal("server" in JSON.parse(JSON.stringify(runRecord("t", [], meta))), false);

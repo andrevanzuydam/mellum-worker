@@ -111,10 +111,12 @@ If pi-subagents says the child "produced no output", dispatch it once more
 | concurrent requests | 1 | server only |
 | hot cache | off | server only |
 
-Pi and OpenCode send the first three from your provider entry per
-request, and oMLX honours them over the server's own values. The
-server-only values bind every client, and other clients of the same oMLX
-model can change them.
+Pi sends the first three from its provider entry per request, and oMLX
+honours them over the server's own values; OpenCode's template sets only
+the output limit, so for OpenCode the server's thinking and sampling apply.
+With `force_sampling` on in oMLX, the server's sampling wins over any
+request. The server-only values bind every client, and other clients of the
+same oMLX model can change them.
 
 **Check your setup.** In Pi Mode, `/mellum check`. From the terminal,
 `--host pi` checks the setup Pi Mode and Pi Worker share, and
@@ -191,7 +193,7 @@ faster on multi-file tasks and keeps your session clean.
 Rungs 6–9 build a small FastAPI app (AgentClinic) from four loose phase
 specs. A run passes when the project's tests and hidden behaviour tests
 pass, no existing test was removed or edited, and nothing was written
-outside the file list. Mode, 12 runs per column
+outside the file list. Mode, 12 runs each
 ([note](docs/superpowers/research/2026-10-09-m7-project-facts.md)): facts
 off ([A18](docs/ladder/ablation-a18-agentclinic-facts-off/README.md)), a
 `## Mellum` section ([A19](docs/ladder/ablation-a19-facts-on/README.md)),

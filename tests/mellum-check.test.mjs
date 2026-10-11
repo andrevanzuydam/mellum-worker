@@ -86,6 +86,15 @@ test("server values the client's request overrides are info, never a fail or a w
 	for (const k of ["max_tokens 999", "enable_thinking false", "presence_penalty 0.5", "repetition_penalty 1.1", "chat_template_kwargs"]) assert.ok(info.message.includes(k), k);
 });
 
+test("for OpenCode the info says its template sends only max_tokens, so the server's other values apply", () => {
+	const f = checkSetup(inputs({ provider: { host: "opencode", entry: ocTemplate }, template: ocTemplate }), expected);
+	const info = settingsFindings(f).find((x) => x.level === "info");
+	assert.match(info.message, /OpenCode's template sends only max_tokens/);
+	assert.doesNotMatch(info.message, /overridden by the client's request values/);
+	const pi = settingsFindings(checkSetup(inputs(), expected)).find((x) => x.level === "info");
+	assert.doesNotMatch(pi.message, /OpenCode/);
+});
+
 test("a server at the advised values has no info settings finding", () => {
 	const admin = json("admin-models-match.json");
 	Object.assign(admin.models[0].settings, expected.model.overridden);
@@ -298,11 +307,11 @@ test("formatFindings: fails first, then warns, then info; oks collapse into a co
 		{ id: "server", level: "ok", message: "answers" },
 		{ id: "advice", level: "info", message: "guard 48" },
 		{ id: "global", level: "warn", message: "two at once" },
-		{ id: "settings", level: "fail", message: "max_tokens 16384 (expected 4096)", fix: "curl -s -X PUT x" },
+		{ id: "settings", level: "fail", message: "max_context_window 32768 (expected 56000)", fix: "curl -s -X PUT x" },
 		{ id: "model", level: "ok", message: "listed" },
 	]);
 	const at = (s) => out.indexOf(s);
-	assert.ok(at("max_tokens 16384") >= 0 && at("max_tokens 16384") < at("two at once"));
+	assert.ok(at("max_context_window 32768") >= 0 && at("max_context_window 32768") < at("two at once"));
 	assert.ok(at("two at once") < at("guard 48"));
 	assert.ok(out.includes("curl -s -X PUT x"));
 	assert.ok(out.includes("2 checks ok"));

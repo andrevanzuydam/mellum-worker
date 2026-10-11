@@ -26,15 +26,15 @@ curl -s http://127.0.0.1:8001/admin/api/models | python3 -c "import json,sys; [p
 ```
 
 Wanted. The context window and TurboQuant bind every client and no request
-changes them. Pi and OpenCode send their own `max_tokens` and thinking flag
-with every request, and oMLX gives the request precedence; the server
-values below cover a client that sends none.
+changes them. Pi and OpenCode send their own `max_tokens` with every
+request, and Pi its thinking flag, and oMLX gives the request precedence;
+the server's `max_tokens` covers a client that sends none.
 
 | key | value | why |
 | --- | --- | --- |
 | `max_context_window` | 56000 | 50k prompt plus generation fits the validated memory budget |
 | `max_tokens` | 16384 | Pi and OpenCode send 16,384 per request anyway; the measured Mode and Worker runs used it |
-| `forced_ct_kwargs` | `["enable_thinking"]` | Pi and OpenCode send `enable_thinking` per request anyway; forcing it keeps thinking on for any client (thinking off failed the ladder) |
+| `forced_ct_kwargs` | `["enable_thinking"]` | forces the server's thinking default (on) over any request, so every client thinks, OpenCode included; Pi sends it on anyway (thinking off failed the ladder) |
 | TurboQuant / cache quantization | off | the hybrid cache must stay native |
 
 Apply with the user's yes:

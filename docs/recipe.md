@@ -39,11 +39,13 @@ converted. Settings: 56,000-token context window, native hybrid cache,
 cache quantization off, one concurrent request.
 
 **Which settings actually apply.** oMLX gives a request's sampling and cap
-values precedence over the per-model profile. Pi sends `max_tokens`,
-`temperature`, `top_p`, `top_k`, `min_p`, `seed`, and `presence_penalty` on
-every request from its `models.json` entry, and with `thinkingFormat:
-qwen-chat-template` it sends `chat_template_kwargs` with `enable_thinking`
-and `preserve_thinking` true. The archived traces of the Mode and Worker
+values precedence over the per-model profile, except that `force_sampling`
+makes the server's temperature, top_p and top_k win and `forced_ct_kwargs`
+makes the server's listed chat-template keys win. Pi sends `max_tokens`,
+`temperature`, `top_p`, `top_k`, `min_p`, `presence_penalty` and
+`repetition_penalty` on every request from its `models.json` entry, and
+with `thinkingFormat: qwen-chat-template` it sends `chat_template_kwargs`
+with `enable_thinking` and `preserve_thinking` true. The archived traces of the Mode and Worker
 phases (A10, A17 and A19, so also A14 and A18–A20) show every Mellum request
 carrying `max_tokens` 16,384, thinking on and sampling 1 / 0.95 / 20, so the
 `baseline` server profile's `max_tokens` 4,096 was overridden; only the

@@ -48,10 +48,12 @@ test("03-server.md table rows carry the data file's model values", () => {
 	}
 });
 
-test("03-server.md says Pi and OpenCode send max_tokens and thinking per request anyway", () => {
-	const rows = server.split("\n").filter((l) => /^\| `(max_tokens|forced_ct_kwargs)` \|/.test(l));
-	assert.equal(rows.length, 2);
-	for (const row of rows) assert.match(row, /Pi and OpenCode send/, row);
+test("03-server.md says Pi and OpenCode send max_tokens per request, only Pi sends thinking, and forcing beats the request", () => {
+	const row = (k) => server.split("\n").find((l) => l.startsWith(`| \`${k}\` |`));
+	assert.match(row("max_tokens"), /Pi and OpenCode send/);
+	assert.match(row("forced_ct_kwargs"), /Pi sends/);
+	assert.doesNotMatch(row("forced_ct_kwargs"), /OpenCode send/);
+	assert.match(row("forced_ct_kwargs"), /over any request/);
 });
 
 test("03-server.md PUT body is a subset of the data file's model values", () => {

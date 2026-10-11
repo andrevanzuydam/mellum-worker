@@ -99,7 +99,7 @@ test("drift: server.match false fires; null, true and absent do not", () => {
 	assert.deepEqual(ids(r), ["drift"]);
 	const p = pat(r, "drift");
 	assert.equal(p.count, 2);
-	assert.equal(p.message, "Server settings differed in 2 runs: max_tokens, forced_ct_kwargs. Run /mellum check.");
+	assert.equal(p.message, "Server settings differed in 2 runs: turboquant_kv_enabled, max_context_window. Run /mellum check.");
 	assert.deepEqual(p.bullets, []);
 });
 
@@ -356,7 +356,7 @@ test("readRecords: valid JSON of the wrong shape never makes learn throw; malfor
 	assert.deepEqual(records[2].files, ["src/a.py"]);
 	assert.equal(records[3].endedAt, undefined);
 	assert.deepEqual(records[4].server, { match: false, diffs: [] });
-	assert.deepEqual(records[5].server.diffs.map((d) => d.key), ["max_tokens"]);
+	assert.deepEqual(records[5].server.diffs.map((d) => d.key), ["turboquant_kv_enabled"]);
 	// requests a number, finalReply a string, finalTurn an object, lastCommand a string, or dropped
 	for (const k of ["requests", "finalReply", "finalTurn", "lastCommand"]) assert.equal(records[6][k], undefined, k);
 	// non-array commands and files read as none; a non-object server is dropped
@@ -364,7 +364,7 @@ test("readRecords: valid JSON of the wrong shape never makes learn throw; malfor
 	const r = learn(records, { cwd: "/home/user/proj", n: 10 });
 	assert.deepEqual(ids(r), ["servers", "drift"]);
 	assert.equal(pat(r, "servers").count, 1);
-	assert.equal(pat(r, "drift").message, "Server settings differed in 2 runs: max_tokens. Run /mellum check.");
+	assert.equal(pat(r, "drift").message, "Server settings differed in 2 runs: turboquant_kv_enabled. Run /mellum check.");
 	assert.doesNotThrow(() => formatReport(r, "/home/user/proj"));
 });
 
