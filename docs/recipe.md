@@ -330,8 +330,19 @@ Every Mode span appends a record (§4b). `/mellum learn [n]` and
 the current directory, no model call, and count seven patterns from these
 fields: `cwd`, `endedAt`, `requests`, `commands[]` (`command`, `failed`,
 `mutates`), `files`, `lastCommand`, `finalReply`, `finalTurn` (`hadText`,
-`hadToolCall`) and `server`. A record without `kind` is a Mode record; the
-Pi Worker and OpenCode writers join in M.7B.
+`hadToolCall`) and `server`. A record without `kind` is a Mode record.
+
+Two files hold records. Mode appends `kind: "mode"` records to
+`~/.pi/agent/mellum-mode-runs.jsonl` (`MELLUM_MODE_RUNS`). The Pi Worker
+appends `kind: "worker"` records to `~/.pi/agent/mellum-worker-runs.jsonl`
+(`MELLUM_WORKER_RUNS`; `0` disables it). `learn` reads both. A Worker
+record is schema 2 with `activation: "worker"` and `facts: null` (the
+Worker gets no project facts); `host` comes from Pi's mode, `promptVersion`
+from the child's system prompt (the marker is found on any line, after
+pi-subagents' preamble), and `server` from the same 1,000 ms settings check
+as Mode. `extensions/mellum-guards.ts` writes it inside the pi-subagents
+child, one line per finished run; a child killed before it settles writes
+none. The OpenCode writer joins with M.3.
 
 | pattern | fires when | suggests |
 | --- | --- | --- |
