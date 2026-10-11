@@ -4,6 +4,13 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Added
+
+- Pi Worker runs now write run records to `~/.pi/agent/mellum-worker-runs.jsonl`
+  (`MELLUM_WORKER_RUNS` sets the path, `0` turns it off), which `/mellum learn`
+  reads. The guards extension records one line per finished run; no guard
+  decision changes.
+
 ### Changed
 
 - README and setup phase 8: keep each `## Mellum` bullet on one line (Mode
