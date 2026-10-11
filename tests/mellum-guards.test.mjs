@@ -211,6 +211,32 @@ test("a second agent_settled for the same state writes nothing; a settle after n
 	assert.equal(all[1].requests, 7);
 });
 
+test("a child that compacts mid-run keeps the brief and every turn: the first context with a user message is the baseline", async () => {
+	const { createRecorder } = await import("../extensions/mellum-guards.ts");
+	const file = tmpFile();
+	const recorder = createRecorder(recorderFor(file));
+	const [t1, t2, t3] = sequence();
+	const history = [{ role: "system", content: SYSTEM }, { role: "user", content: BRIEF }];
+	recorder.context({ type: "context", messages: [...history] });
+	recorder.turnEnd(t1);
+	history.push(t1.message, ...t1.toolResults);
+	recorder.context({ type: "context", messages: [...history] });
+	recorder.turnEnd(t2);
+	// Pi compacts: the brief is summarised away; the context holds the summary and the last turn only.
+	recorder.context({ type: "context", messages: [{ role: "compactionSummary", summary: "The worker ran the tests, then edited app.py." }, t2.message, ...t2.toolResults] });
+	recorder.turnEnd(t3);
+	recorder.context({ type: "context", messages: [{ role: "compactionSummary", summary: "later summary" }, t3.message, ...t3.toolResults] });
+	recorder.turnEnd({ message: assistant([textBlock("Done.")]), toolResults: [] });
+	await recorder.settled(ctx);
+	const all = lines(file);
+	assert.equal(all.length, 1);
+	assert.equal(all[0].task, BRIEF);
+	assert.equal(all[0].requests, 4, "the turns before and after the compaction are all counted");
+	assert.equal(all[0].promptVersion, "v7");
+	assert.deepEqual(all[0].files, ["app.py", "new.py"]);
+	assert.equal(all[0].commands.length, 1);
+});
+
 test("a run with no tool calls records commands [] and lastCommand none", async () => {
 	const { createRecorder } = await import("../extensions/mellum-guards.ts");
 	const file = tmpFile();

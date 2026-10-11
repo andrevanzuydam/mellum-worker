@@ -249,8 +249,12 @@ export interface Recorder {
 /** One Worker run's observer. Every method swallows its own errors: one `warn`, never a throw. */
 export function createRecorder(opts: RecorderOptions): Recorder {
 	const file = workerRunsFile(opts.env, opts.home);
+	// The baseline is what Pi sent in the first `context` that holds a user message (the brief); once
+	// set, later `context` lists are ignored, because a compacted child's lists lose the brief and
+	// the early turns. Every `turn_end` message and its tool results accumulate after the baseline.
 	let lastContext: Msg[] = [];
 	let sinceContext: Msg[] = [];
+	let baselineSet = false;
 	let nudges = 0;
 	let guardBlocks = 0;
 	let pendingServer: Promise<ServerCheck> | undefined;
@@ -284,8 +288,10 @@ export function createRecorder(opts: RecorderOptions): Recorder {
 	return {
 		context: guarded((event) => {
 			startCheck();
+			if (baselineSet) return;
 			lastContext = Array.isArray(event?.messages) ? [...(event.messages as Msg[])] : [];
 			sinceContext = [];
+			baselineSet = lastContext.some((m) => m?.role === "user");
 		}),
 		turnEnd: guarded((event) => {
 			startCheck();
