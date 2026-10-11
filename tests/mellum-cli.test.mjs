@@ -182,6 +182,15 @@ test("learn without --file reads MELLUM_MODE_RUNS and the Worker file in HOME, e
 	assert.equal(JSON.parse(none.stdout).runs, 0);
 });
 
+test("learn near the 600-character facts cap says so, in text and in JSON", () => {
+	const p = project("servers");
+	writeFileSync(join(p.dir, "AGENTS.md"), `## Mellum\n\n- Note: ${"x".repeat(584)}\n`);
+	const text = learnRun(["learn", "--file", p.runs], { cwd: p.dir });
+	assert.match(text.stdout, /\nAdding these would take the section past 600 characters; Mode would ignore it\.\n$/);
+	const json = JSON.parse(learnRun(["learn", "--json", "--file", p.runs], { cwd: p.dir }).stdout);
+	assert.equal(json.chars, 590 + "Do not: start servers".length);
+});
+
 test("learn usage errors exit 2: --n not a whole number above 0, a missing --file, an unknown flag", () => {
 	const dir = realpathSync(temp("mellum-cli-proj-"));
 	for (const args of [["learn", "--n", "0"], ["learn", "--n", "ten"], ["learn", "--n"], ["learn", "--file", join(dir, "nope.jsonl")], ["learn", "--host", "pi"]]) {

@@ -34,7 +34,7 @@ import { adminBaseOf, checkSetup, type Diff, fetchJson, formatFindings, gatherIn
 import { commandMutatesFiles } from "./mellum-commands.ts";
 import { createGuardSet, type GuardSet } from "./mellum-guards.ts";
 import { factsBlock, readProjectFacts, type ProjectFacts } from "./mellum-facts.ts";
-import { formatMerge, formatReport, learnFromTexts, mergeSuggestion, modeRunsFile, recordFiles } from "./mellum-learn.ts";
+import { formatMerge, formatReport, learnFromTexts, mergeSuggestion, modeRunsFile, overCap, recordFiles } from "./mellum-learn.ts";
 
 export const MARK_ON = "[mellum-mode on]";
 export const MARK_OFF = "[mellum-mode off]";
@@ -522,7 +522,8 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 	}
 
 	// /mellum learn [n]: the report for this directory, from Mode's and the Worker's records.
-	// AGENTS.md is written only when the user answers yes; without a UI nothing is asked or written.
+	// AGENTS.md is written only when the user answers yes; without a UI, or past the facts cap,
+	// nothing is asked or written.
 	async function runLearn(ctx: any, n: number | undefined) {
 		if (n === undefined || !Number.isInteger(n) || n < 1) return warn(ctx, "mellum learn: n must be a whole number above 0", "warning");
 		const cwd: string = typeof ctx?.cwd === "string" ? ctx.cwd : process.cwd();
@@ -535,7 +536,8 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 		} catch (error) {
 			return warn(ctx, `mellum learn: ${(error as Error)?.message ?? String(error)}`, "error");
 		}
-		if (ctx?.hasUI === false || merged.added.length === 0 || typeof ctx?.ui?.confirm !== "function") return;
+		// Past the facts cap Mode would ignore the whole section, so do not offer the write.
+		if (ctx?.hasUI === false || merged.added.length === 0 || overCap(merged) || typeof ctx?.ui?.confirm !== "function") return;
 		let yes = false;
 		try {
 			yes = (await ctx.ui.confirm("Add these lines to AGENTS.md?", merged.added.map((b) => `- ${b}`).join("\n"))) === true;

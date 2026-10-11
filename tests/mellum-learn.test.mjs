@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import test from "node:test";
+import { readProjectFacts } from "../extensions/mellum-facts.ts";
 import { formatMerge, formatReport, learn, learnFromTexts, mergeSuggestion, modeRunsFile, readRecords, recordFiles } from "../extensions/mellum-learn.ts";
 
 const FIX = join(resolve(import.meta.dirname, ".."), "tests/fixtures/learn");
@@ -286,7 +287,7 @@ test("mergeSuggestion: a different existing value is a conflict, never rewritten
 });
 
 test("mergeSuggestion: nothing to suggest leaves the text as it was", () => {
-	assert.deepEqual(mergeSuggestion("# P\n", []), { text: "# P\n", added: [], conflicts: [] });
+	assert.deepEqual(mergeSuggestion("# P\n", []), { text: "# P\n", added: [], conflicts: [], chars: 0 });
 });
 
 test("formatMerge: conflicts, what is missing, or nothing to add", () => {
@@ -311,4 +312,25 @@ test("learnFromTexts: sums the skipped counts over every file; a missing file is
 	assert.deepEqual(r.skipped, { old: 2, bad: 4 });
 	assert.equal(r.runs, 4);
 	assert.equal(learnFromTexts([undefined], { cwd: "/x", n: 10 }).runs, 0);
+});
+
+// A ## Mellum section whose bullets total 590 characters: 10 short of the facts cap.
+const NEAR_CAP = `## Mellum\n\n- Note: ${"x".repeat(584)}\n`;
+const factsOf = (md) => readProjectFacts("/p", { read: (f) => (f === "/p/AGENTS.md" ? md : undefined) }, {});
+
+test("mergeSuggestion: chars is the merged section's bullet total, counted as readProjectFacts counts it", () => {
+	const m = mergeSuggestion("# P\n\n## Mellum\n\n- Write only: src/\n", [TC, DN]);
+	assert.equal(m.chars, factsOf(m.text).chars);
+	assert.equal(m.chars, "Write only: src/".length + TC.length + DN.length);
+	assert.equal(mergeSuggestion(undefined, [DN]).chars, DN.length);
+});
+
+test("mergeSuggestion near the cap: chars goes past 600, which readProjectFacts would ignore; formatMerge says so", () => {
+	assert.equal(factsOf(NEAR_CAP).chars, 590);
+	const m = mergeSuggestion(NEAR_CAP, [DN]);
+	assert.equal(m.chars, 590 + DN.length);
+	assert.ok(factsOf(m.text).warning, "the merged section would be ignored by Mode");
+	assert.equal(formatMerge(m, [DN]), "\nAdding these would take the section past 600 characters; Mode would ignore it.");
+	// within the cap, no such line
+	assert.doesNotMatch(formatMerge(mergeSuggestion(undefined, [DN]), [DN]), /600/);
 });

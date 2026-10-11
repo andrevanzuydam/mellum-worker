@@ -53,7 +53,8 @@ function sectionBullets(md: string): string[] | undefined {
 		.filter((b): b is string => b !== undefined);
 }
 
-const total = (bullets: string[]) => bullets.reduce((n, b) => n + b.length, 0);
+/** The character count the cap applies to: the bullets' lengths, without the "- " prefix. */
+export const total = (bullets: string[]) => bullets.reduce((n, b) => n + b.length, 0);
 
 export function readProjectFacts(
 	dir: string,

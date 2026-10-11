@@ -925,6 +925,18 @@ test("/mellum learn with no suggestion (or nothing missing, or a conflict) never
 	});
 });
 
+test("/mellum learn near the 600-character facts cap says so and never asks", async () => {
+	await withLearn("servers", async (cwd) => {
+		const before = `## Mellum\n\n- Note: ${"x".repeat(584)}\n`;
+		writeFileSync(`${cwd}/AGENTS.md`, before);
+		const { calls, mellum } = learnPi(cwd, { answer: true });
+		await mellum("learn");
+		assert.match(calls.notify[0][0], /Adding these would take the section past 600 characters; Mode would ignore it\./);
+		assert.deepEqual(calls.confirm, []);
+		assert.equal(readFileSync(`${cwd}/AGENTS.md`, "utf8"), before);
+	});
+});
+
 test("/mellum learn reads the Worker records file in HOME too, and counts skipped lines over both files", async () => {
 	await withLearn(
 		"damaged",

@@ -45,5 +45,6 @@ test("README Use it says how to run learn in Pi Mode and from the terminal, afte
 	assert.ok(learn.includes("AGENTS.md"), "says where the suggestion goes");
 	assert.ok(learn.includes("MELLUM_MODE_RUNS"), "says where the records live");
 	assert.ok(learn.includes("M.7B"), "says Worker runs join in M.7B");
+	assert.match(learn, /from\s+the\s+project\s+directory/, "says to run the CLI from the project directory");
 	for (const fence of learn.matchAll(/```bash\n([\s\S]*?)```/g)) assert.doesNotMatch(fence[1], /\w\|\w/, "no a|b alternation in a bash fence");
 });

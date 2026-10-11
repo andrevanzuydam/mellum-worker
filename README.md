@@ -138,8 +138,9 @@ names what went wrong (a guessed test command, a bent project, success
 claimed after a failed command, long runs, servers, settings drift), and
 suggests `## Mellum` lines. It asks before adding the missing ones to
 `AGENTS.md` and never rewrites a line you have; a different value prints
-as a conflict. From the terminal, and for OpenCode or Pi Worker, it only
-prints:
+as a conflict, and it never takes the section past 600 characters. From
+the terminal, and for OpenCode or Pi Worker, run it from the project
+directory; it only prints:
 
 ```bash
 node <package dir>/scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]

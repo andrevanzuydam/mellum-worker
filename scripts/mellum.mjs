@@ -101,7 +101,7 @@ async function learn(opts) {
 	const files = opts.file !== undefined ? [opts.file] : m.recordFiles(process.env, process.env.HOME || homedir());
 	const report = m.learnFromTexts(files.map(read), { cwd, n: opts.n });
 	const merged = m.mergeSuggestion(read(join(cwd, "AGENTS.md")), report.suggestion);
-	console.log(opts.json ? JSON.stringify({ cwd, ...report, added: merged.added, conflicts: merged.conflicts }, null, 2) : m.formatReport(report, cwd) + m.formatMerge(merged, report.suggestion));
+	console.log(opts.json ? JSON.stringify({ cwd, ...report, added: merged.added, conflicts: merged.conflicts, chars: merged.chars }, null, 2) : m.formatReport(report, cwd) + m.formatMerge(merged, report.suggestion));
 }
 
 const opts = parseArgs(process.argv.slice(2));

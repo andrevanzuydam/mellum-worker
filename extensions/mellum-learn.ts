@@ -5,7 +5,7 @@
  * type-only, and mellum-facts.ts uses only node:path.
  */
 import { join } from "node:path";
-import { bulletOf, findMellumSection } from "./mellum-facts.ts";
+import { bulletOf, FACTS_CAP, findMellumSection, total } from "./mellum-facts.ts";
 import type { RunRecord } from "./mellum-mode.ts";
 
 /** One parsed schema-2 line. Every field but `schema` and `kind` may be missing in a hand-edited or partial record. */
@@ -304,16 +304,17 @@ const valueOf = (b: string) => (b.includes(":") ? b.slice(b.indexOf(":") + 1).tr
  * Merges the suggested bullets into AGENTS.md's text (undefined: no file). Only labels the
  * `## Mellum` section lacks are added, after its last bullet and before the next heading; a
  * label it has with another value is a conflict, never rewritten. Every other byte is kept;
- * a missing final newline is added where the new lines join.
+ * a missing final newline is added where the new lines join. `chars` is the merged section's
+ * bullet total as readProjectFacts counts it: past FACTS_CAP, Mode would ignore the section.
  */
 export function mergeSuggestion(
 	agentsMd: string | undefined,
 	bullets: string[],
-): { text: string; added: string[]; conflicts: string[] } {
+): { text: string; added: string[]; conflicts: string[]; chars: number } {
 	if (agentsMd === undefined) {
 		return bullets.length === 0
-			? { text: "", added: [], conflicts: [] }
-			: { text: `# Project\n\n## Mellum\n\n${bullets.map((b) => `- ${b}\n`).join("")}`, added: [...bullets], conflicts: [] };
+			? { text: "", added: [], conflicts: [], chars: 0 }
+			: { text: `# Project\n\n## Mellum\n\n${bullets.map((b) => `- ${b}\n`).join("")}`, added: [...bullets], conflicts: [], chars: total(bullets) };
 	}
 	const eol = agentsMd.includes("\r\n") ? "\r\n" : "\n";
 	// Lines with their offsets: `end` is past the line's newline, if it has one.
@@ -339,12 +340,13 @@ export function mergeSuggestion(
 		if (same === undefined) added.push(b);
 		else if (same !== b && valueOf(same) !== valueOf(b)) conflicts.push(`your ${same}; runs passed with: ${valueOf(b)}`);
 	}
-	if (added.length === 0) return { text: agentsMd, added, conflicts };
+	const chars = total([...existing, ...added]);
+	if (added.length === 0) return { text: agentsMd, added, conflicts, chars };
 	const block = added.map((b) => `- ${b}${eol}`).join("");
 	const insertAt = (at: number, before: string) => agentsMd.slice(0, at) + before + block + agentsMd.slice(at);
 	if (!section) {
 		const sep = agentsMd === "" ? "" : agentsMd.endsWith("\n") ? (/\n\s*\n$/.test(agentsMd) ? "" : eol) : eol + eol;
-		return { text: `${agentsMd}${sep}## Mellum${eol}${eol}${block}`, added, conflicts };
+		return { text: `${agentsMd}${sep}## Mellum${eol}${eol}${block}`, added, conflicts, chars };
 	}
 	// After the last bullet and its indented continuation lines; with no bullet, after the
 	// section's last non-blank line, one blank line first.
@@ -360,14 +362,18 @@ export function mergeSuggestion(
 		lead = eol;
 	}
 	const at = spans[last];
-	return { text: insertAt(at.end, (at.eol ? "" : eol) + lead), added, conflicts };
+	return { text: insertAt(at.end, (at.eol ? "" : eol) + lead), added, conflicts, chars };
 }
 
-/** The lines front ends print after the report: conflicts, then what is missing or that nothing is. */
-export function formatMerge(m: { added: string[]; conflicts: string[] }, suggestion: string[]): string {
+/** True when writing `m.added` would take the section past FACTS_CAP, so Mode would ignore it. */
+export const overCap = (m: { added: string[]; chars?: number }) => m.added.length > 0 && (m.chars ?? 0) > FACTS_CAP;
+
+/** The lines front ends print after the report: conflicts, then what is missing or that nothing is, then the cap. */
+export function formatMerge(m: { added: string[]; conflicts: string[]; chars?: number }, suggestion: string[]): string {
 	const lines: string[] = [];
 	if (m.conflicts.length > 0) lines.push("", "Kept as written in AGENTS.md:", ...m.conflicts.map((c) => `- ${c}`));
 	if (suggestion.length > 0 && m.added.length === 0 && m.conflicts.length === 0) lines.push("", "AGENTS.md already has these lines.");
 	else if (m.added.length > 0 && m.added.length < suggestion.length) lines.push("", "Missing from AGENTS.md:", ...m.added.map((b) => `- ${b}`));
+	if (overCap(m)) lines.push("", `Adding these would take the section past ${FACTS_CAP} characters; Mode would ignore it.`);
 	return lines.join("\n");
 }
