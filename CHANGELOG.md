@@ -4,6 +4,8 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-11
+
 ### Added
 
 - `/mellum check` in Pi Mode: checks that oMLX answers and lists the
