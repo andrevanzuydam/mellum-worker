@@ -38,4 +38,7 @@ Optional, global, and it affects every subagent the user has: setting
 `~/.pi/agent/extensions/subagent/config.json` halves the child's prompt.
 Mention it; do not apply it unasked.
 
+Worker runs are recorded to `~/.pi/agent/mellum-worker-runs.jsonl`
+(`MELLUM_WORKER_RUNS` moves it or turns it off) and `/mellum learn` reads them.
+
 Re-run the check.

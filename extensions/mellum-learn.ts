@@ -1,12 +1,12 @@
 /**
  * `learn`: reads Mellum Mode's JSONL run records and names what went wrong, with a
  * suggested `## Mellum` section for AGENTS.md. Pure: front ends read the records files
- * and write AGENTS.md (spec section 3). Loads without Pi: the import of mellum-mode.ts is
+ * and write AGENTS.md (spec section 3). Loads without Pi: the import of mellum-record.ts is
  * type-only, and mellum-facts.ts uses only node:path.
  */
 import { join } from "node:path";
 import { bulletOf, FACTS_CAP, findMellumSection, total } from "./mellum-facts.ts";
-import type { RunRecord } from "./mellum-mode.ts";
+import type { RunRecord } from "./mellum-record.ts";
 
 /** One parsed schema-2 line. Every field but `schema` and `kind` may be missing in a hand-edited or partial record. */
 export type RunLine = Partial<Omit<RunRecord, "schema">> & { schema: number; kind: "mode" | "worker" };
@@ -308,18 +308,28 @@ export function formatReport(r: Report, cwd: string, added: string[] = r.suggest
 	return lines.join("\n");
 }
 
-/** Mode's records file: `MELLUM_MODE_RUNS` (`0` or empty: none; a leading `~` is HOME), else the default. */
-export function modeRunsFile(env: Record<string, string | undefined>, home: string): string | undefined {
-	const v = env.MELLUM_MODE_RUNS;
+/** A records-file variable: `0` or empty is none; a leading `~` is HOME; unset is the default under home. */
+function runsFile(v: string | undefined, home: string, name: string): string | undefined {
 	if (v === "0" || v === "") return undefined;
 	if (v) return v.replace(/^~(?=$|\/)/, home);
-	return join(home, ".pi", "agent", "mellum-mode-runs.jsonl");
+	return join(home, ".pi", "agent", name);
+}
+
+/** Mode's records file: `MELLUM_MODE_RUNS` (`0` or empty: none; a leading `~` is HOME), else the default. */
+export function modeRunsFile(env: Record<string, string | undefined>, home: string): string | undefined {
+	return runsFile(env.MELLUM_MODE_RUNS, home, "mellum-mode-runs.jsonl");
+}
+
+/** The Worker's records file: `MELLUM_WORKER_RUNS`, read exactly like `MELLUM_MODE_RUNS`. */
+export function workerRunsFile(env: Record<string, string | undefined>, home: string): string | undefined {
+	return runsFile(env.MELLUM_WORKER_RUNS, home, "mellum-worker-runs.jsonl");
 }
 
 /** The files `learn` reads by default: Mode's records, then the Worker's (M.7B). */
 export function recordFiles(env: Record<string, string | undefined>, home: string): string[] {
 	const mode = modeRunsFile(env, home);
-	return [...(mode ? [mode] : []), join(home, ".pi", "agent", "mellum-worker-runs.jsonl")];
+	const worker = workerRunsFile(env, home);
+	return [...(mode ? [mode] : []), ...(worker ? [worker] : [])];
 }
 
 /** `learn` over several files' text (undefined: a missing file, no records), skipped lines summed. */

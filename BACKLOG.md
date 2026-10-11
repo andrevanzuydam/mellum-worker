@@ -134,3 +134,13 @@ bullets or continuation lines, a test label not exactly `Test command:`, a
 fallback adding a second test command; seen in ac-demo 2026-10-11). The
 bullets change what Mellum reads, so they are measured with A21.
 *Reopens when* A21 is scheduled.
+
+**Worker recorder never resets after a settle.** `createRecorder` in
+`extensions/mellum-guards.ts` keeps its baseline and turns for the whole
+process, so a session that sends several prompts (the guards loaded with
+`-e` in an interactive session, or a Worker child a host re-uses) writes a
+cumulative line per settle with the same task, and `/mellum learn` counts
+each as a run. pi-subagents children run one prompt per process, so it does
+not arise there. The fix is a new baseline at each new user prompt, with
+the dedupe key per prompt. *Reopens when* a host re-uses a Worker child
+across prompts, or `learn` reports from `-e` sessions start to matter.

@@ -4,6 +4,8 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFile
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
+import { readRecords } from "../extensions/mellum-learn.ts";
+import { RUNS, replay } from "./helpers/worker-replay.mjs";
 
 // The CLI never touches the network here: MELLUM_CHECK_FIXTURES makes it read the three
 // GET responses from a directory, and HOME is a temp dir holding the host's config.
@@ -211,4 +213,17 @@ test("learn --json: suggestion holds only the lines that would be added (a Do no
 	const none = learnRun(["learn", "--file", p.runs], { cwd: p.dir });
 	assert.doesNotMatch(none.stdout, /Suggested/);
 	assert.match(none.stdout, /AGENTS\.md already has these lines\.\n$/);
+});
+
+test("learn --json reads the three replayed Worker records as three runs", async () => {
+	// Records written by the guards extension from real A10 child sessions (no model, no server);
+	// each carries the test's cwd, so learn runs from there.
+	const runs = join(temp("mellum-cli-replay-"), "runs.jsonl");
+	for (const name of RUNS) await replay(name, runs);
+	assert.deepEqual(readRecords(readFileSync(runs, "utf8")).records.map((r) => r.kind), ["worker", "worker", "worker"], "kind survives learn's parser");
+	const r = learnRun(["learn", "--json", "--file", runs], { cwd: process.cwd() });
+	assert.equal(r.status, 0, r.stderr);
+	const out = JSON.parse(r.stdout);
+	assert.equal(out.runs, 3);
+	assert.deepEqual(out.skipped, { old: 0, bad: 0 });
 });

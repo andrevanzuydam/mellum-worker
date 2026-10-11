@@ -187,10 +187,11 @@ node <package dir>/scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]
 ```
 
 Records come from `MELLUM_MODE_RUNS` (default
-`~/.pi/agent/mellum-mode-runs.jsonl`) and
-`~/.pi/agent/mellum-worker-runs.jsonl`; `--file` reads one file instead.
-Only Pi Mode writes records today. Pi Worker and OpenCode records join in
-M.7B; until then `learn` in an OpenCode project finds 0 runs.
+`~/.pi/agent/mellum-mode-runs.jsonl`) and `MELLUM_WORKER_RUNS` (default
+`~/.pi/agent/mellum-worker-runs.jsonl`; `0` or empty turns it off); `--file` reads
+one file instead. Pi Mode and Pi Worker write records, and `learn` reports
+both. OpenCode runs join with M.3, so `learn` in an OpenCode project finds
+0 runs until then.
 
 ## What you get
 
@@ -297,12 +298,12 @@ after a prompt change. From `ladder/`: `uv run python -m pytest`, and
 
 In order; see [ROADMAP.md](ROADMAP.md) and [BACKLOG.md](BACKLOG.md).
 
-- **M.7B:** run records for the Pi Worker and OpenCode.
 - **M.8:** Worker one-liners (`async: false`, re-dispatch hint, intercom
   opt-out).
 - **M.9:** an in-process Worker through Pi's SDK.
 - **M.10:** a mediated brief, compared against project facts.
-- **M.3, M.4:** measure the OpenCode port; an Ollama backend.
+- **M.3, M.4:** measure the OpenCode port and record its Worker runs; an
+  Ollama backend.
 
 ## Releases
 

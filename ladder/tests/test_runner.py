@@ -466,6 +466,23 @@ def test_mode_env_turns_facts_off_only_when_asked(tmp_path):
     assert mode_env(*args, facts=False)["MELLUM_MODE_FACTS"] == "0"
 
 
+def test_worker_run_records_stay_under_each_runs_scratch(tmp_path):
+    from ladder.run_ladder import child_env, mode_env
+
+    # The operator's own record file must not leak into a ladder child.
+    parent = {"HOME": "/h", "MELLUM_WORKER_RUNS": "/operator/runs.jsonl"}
+    trace = tmp_path / "trace.jsonl"
+    agent = tmp_path / "agent"
+    envs = {
+        "direct": child_env(parent, str(trace), agent, offline=True),
+        "delegated": child_env(parent, str(trace), agent),
+        "mode": mode_env(parent, trace, agent, tmp_path),
+    }
+    for name, env in envs.items():
+        record = Path(env["MELLUM_WORKER_RUNS"])
+        assert record == tmp_path / "mellum-worker-runs.jsonl", name
+
+
 def test_strip_mellum_section_drops_the_section_and_keeps_the_rest_exactly():
     from ladder.run_ladder import strip_mellum_section
 

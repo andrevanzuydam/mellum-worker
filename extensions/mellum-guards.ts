@@ -17,14 +17,23 @@
  *   one custom message restating the completion fact and asks for one more
  *   model request, at most `max` times per run.
  *
+ * The recorder (`createRecorder`, wired next to the guard set in the default export) only
+ * observes: it keeps the run's messages and the nudge and block counts, and at
+ * `agent_settled` appends one `kind: "worker"` run record. It never changes a guard
+ * decision and never throws into Pi.
+ *
  * ENABLED is set from the ladder records: the empty-final nudge capped at 3
  * and the loop breaker live are phase 2b's 15/15 configuration
  * (docs/ladder/phase2b-guards-bounded). The other guards stay
  * dormant: their columns never went non-zero in direct mode.
  */
 
-import { existsSync } from "node:fs";
-import { isAbsolute, resolve } from "node:path";
+import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { dirname, isAbsolute, resolve } from "node:path";
+import { adminBaseOf, readProvider, serverCheck, type ServerCheck } from "./mellum-check.ts";
+import { workerRunsFile } from "./mellum-learn.ts";
+import { type Msg, promptVersionOf, runRecord, textOf } from "./mellum-record.ts";
 
 export interface ToolCall {
 	toolName: string;
@@ -219,12 +228,172 @@ export function createGuardSet(enabled: typeof ENABLED = resolveEnabled(ENABLED,
 	};
 }
 
-export default function (pi: { on: (event: string, handler: (event: any) => unknown) => void }) {
+export interface RecorderOptions {
+	env: Record<string, string | undefined>;
+	home: string;
+	cwd: () => string;
+	now: () => number;
+	append: (file: string, line: string) => void;
+	check: () => Promise<ServerCheck>;
+	warn: (msg: string) => void;
+}
+
+export interface Recorder {
+	context(event: { messages?: unknown }): void;
+	turnEnd(event: { message?: unknown; toolResults?: unknown }): void;
+	nudged(): void;
+	blocked(): void;
+	settled(ctx: { mode?: string; model?: { provider?: string; id?: string }; getSystemPrompt?: () => string } | undefined): Promise<void>;
+}
+
+/** One Worker run's observer. Every method swallows its own errors: one `warn`, never a throw. */
+export function createRecorder(opts: RecorderOptions): Recorder {
+	const file = workerRunsFile(opts.env, opts.home);
+	// The baseline is what Pi sent in the first `context` that holds a user message (the brief); once
+	// set, later `context` lists are ignored, because a compacted child's lists lose the brief and
+	// the early turns. Every `turn_end` message and its tool results accumulate after the baseline.
+	let lastContext: Msg[] = [];
+	let sinceContext: Msg[] = [];
+	let baselineSet = false;
+	let nudges = 0;
+	let guardBlocks = 0;
+	let pendingServer: Promise<ServerCheck> | undefined;
+	let lastKey: string | undefined;
+
+	const fail = (error: unknown) => {
+		try {
+			opts.warn(`mellum-guards: run record not written: ${(error as Error)?.message ?? String(error)}`);
+		} catch {}
+	};
+	// The settings check starts once, on the first event; it has its own time limit and never throws.
+	const startCheck = () => {
+		pendingServer ??= (async () => {
+			try {
+				return await opts.check();
+			} catch {
+				return { match: null, diffs: [] } as ServerCheck;
+			}
+		})();
+	};
+	const guarded =
+		<A extends unknown[]>(fn: (...args: A) => void) =>
+		(...args: A) => {
+			try {
+				if (file !== undefined) fn(...args);
+			} catch (error) {
+				fail(error);
+			}
+		};
+
+	return {
+		context: guarded((event) => {
+			startCheck();
+			if (baselineSet) return;
+			lastContext = Array.isArray(event?.messages) ? [...(event.messages as Msg[])] : [];
+			sinceContext = [];
+			baselineSet = lastContext.some((m) => m?.role === "user");
+		}),
+		turnEnd: guarded((event) => {
+			startCheck();
+			if (event?.message) sinceContext.push(event.message as Msg);
+			if (Array.isArray(event?.toolResults)) sinceContext.push(...(event.toolResults as Msg[]));
+		}),
+		nudged: guarded(() => {
+			nudges += 1;
+		}),
+		blocked: guarded(() => {
+			guardBlocks += 1;
+		}),
+		async settled(ctx) {
+			if (file === undefined) return;
+			try {
+				const all = [...lastContext, ...sinceContext];
+				const first = all.findIndex((m) => m?.role === "user");
+				if (first < 0) return;
+				const task = textOf(all[first]);
+				const span = all.slice(first + 1);
+				const key = `${task}\u0000${safeJson(all[all.length - 1])}`;
+				if (key === lastKey) return;
+				startCheck();
+				const server = await pendingServer!;
+				const systemText = all.find((m) => m?.role === "system");
+				let prompt = systemText ? textOf(systemText) : "";
+				if (!systemText) {
+					try {
+						prompt = ctx?.getSystemPrompt?.() ?? "";
+					} catch {}
+				}
+				const cwd = opts.cwd();
+				const record = runRecord(task, span, {
+					kind: "worker",
+					activation: "worker",
+					host: ctx?.mode ?? "unknown",
+					model: ctx?.model ? `${ctx.model.provider}/${ctx.model.id}` : "unknown",
+					cwd,
+					endedAt: opts.now(),
+					exists: (p) => existsSync(isAbsolute(p) ? p : resolve(cwd, p)),
+					promptVersion: promptVersionOf(prompt),
+					nudges,
+					guardBlocks,
+					facts: null,
+					server,
+				});
+				opts.append(file, JSON.stringify(record) + "\n");
+				lastKey = key;
+			} catch (error) {
+				fail(error);
+			}
+		},
+	};
+}
+
+function safeJson(value: unknown): string {
+	try {
+		return JSON.stringify(value) ?? "undefined";
+	} catch {
+		return String(value);
+	}
+}
+
+const readIfExists = (p: string) => (existsSync(p) ? readFileSync(p, "utf8") : undefined);
+
+export default function (pi: { on: (event: string, handler: (event: any, ctx?: any) => unknown) => void }, options: { fetch?: typeof fetch } = {}) {
 	const set = createGuardSet();
-	pi.on("tool_call", (event) => set.toolCall(event));
-	pi.on("turn_end", (event) => {
-		set.turnEnd(event);
+	const home = process.env.HOME || homedir();
+	const recorder = createRecorder({
+		env: process.env,
+		home,
+		cwd: () => process.cwd(),
+		now: () => Date.now(),
+		// One appendFileSync of one line ending in "\n": parallel children never interleave.
+		append: (file, line) => {
+			mkdirSync(dirname(file), { recursive: true });
+			appendFileSync(file, line);
+		},
+		check: () => serverCheck(adminBaseOf(readProvider("pi", home, readIfExists).baseUrl), { timeoutMs: 1000, fetch: options.fetch }),
+		warn: (msg) => console.error(msg),
+	});
+	pi.on("context", (event) => {
+		recorder.context(event);
 		return undefined;
 	});
-	pi.on("agent_before_settle", () => set.beforeSettle());
+	pi.on("tool_call", (event) => {
+		const decision = set.toolCall(event);
+		if (decision?.block) recorder.blocked();
+		return decision;
+	});
+	pi.on("turn_end", (event) => {
+		set.turnEnd(event);
+		recorder.turnEnd(event);
+		return undefined;
+	});
+	pi.on("agent_before_settle", () => {
+		const result = set.beforeSettle();
+		if (result !== undefined) recorder.nudged();
+		return result;
+	});
+	pi.on("agent_settled", async (_event, ctx) => {
+		await recorder.settled(ctx);
+		return undefined;
+	});
 }

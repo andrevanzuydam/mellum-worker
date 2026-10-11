@@ -47,7 +47,7 @@ test("README Use it says how to run learn in Pi Mode and from the terminal, afte
 	assert.ok(learn.includes("scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]"), "names the CLI and its flags");
 	assert.ok(learn.includes("AGENTS.md"), "says where the suggestion goes");
 	assert.ok(learn.includes("MELLUM_MODE_RUNS"), "says where the records live");
-	assert.ok(learn.includes("M.7B"), "says Worker runs join in M.7B");
+	assert.ok(learn.includes("MELLUM_WORKER_RUNS"), "says where Worker records live");
 	assert.match(learn, /from\s+the\s+project\s+directory/, "says to run the CLI from the project directory");
 	for (const fence of learn.matchAll(/```bash\n([\s\S]*?)```/g)) assert.doesNotMatch(fence[1], /\w\|\w/, "no a|b alternation in a bash fence");
 });
@@ -138,13 +138,15 @@ test("the oMLX backend guide lists step 3's server values; no doc calls 4,096 th
 	assert.doesNotMatch(read("docs/recipe.md"), /\| on — a client cannot switch thinking off/);
 });
 
-test("README Use it says which --host serves which host, and that Pi Worker and OpenCode records join in M.7B", () => {
+test("README Use it says which --host serves which host, and that Pi Worker runs are recorded while OpenCode runs join with M.3", () => {
 	const use = read("README.md").split("\n## Use it\n")[1].split("\n## What you get\n")[0];
 	const check = use.split("**Check your setup.**")[1].split("**Learn from your runs.**")[0];
 	assert.match(check, /`--host pi`[^.]*Pi Mode and Pi Worker/, "--host pi is for Pi Mode and Pi Worker");
 	assert.match(check, /`--host opencode`[^.]*OpenCode/, "--host opencode is for OpenCode");
 	const learn = use.slice(use.indexOf("**Learn from your runs.**"));
-	assert.match(learn, /Pi Worker and OpenCode\s+(runs|records)[^.]*M\.7B/, "Pi Worker and OpenCode records join in M.7B");
+	assert.match(learn, /Pi Worker[^.]*\bwrite/, "says Pi Worker writes records");
+	assert.match(learn, /OpenCode\s+runs\s+join[^.]*M\.3/, "OpenCode runs join with M.3");
+	assert.doesNotMatch(learn, /M\.7B/, "M.7B is done and is not named");
 	assert.match(learn, /OpenCode[^.]*0 runs/, "says an OpenCode project finds 0 runs today");
 });
 
