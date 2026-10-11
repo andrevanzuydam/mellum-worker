@@ -115,8 +115,9 @@ Other clients of the same oMLX model can change these. Pi and OpenCode
 send their own 16,384 output limit per request, which oMLX honours over this
 server value.
 
-**Check your setup.** In Pi Mode, `/mellum check`. From the terminal, and
-for OpenCode or Pi Worker (`--json` for JSON):
+**Check your setup.** In Pi Mode, `/mellum check`. From the terminal,
+`--host pi` checks the setup Pi Mode and Pi Worker share, and
+`--host opencode` checks OpenCode's (`--json` for JSON):
 
 ```bash
 node <package dir>/scripts/mellum.mjs check --host pi
@@ -139,24 +140,25 @@ Mellum server settings differ: max_tokens 16384 (expected 4096). Run /mellum che
 or `/mellum learn 25`. It reads the run records for the current directory,
 names what went wrong (a guessed test command, a bent project, success
 claimed after a failed command, long runs, servers, settings drift), and
-suggests `## Mellum` lines, for example:
+suggests the `## Mellum` lines your `AGENTS.md` lacks. Its output on the
+test fixture `tests/fixtures/learn/patterns/bent-project.jsonl`:
 
 ```
-mellum learn: 6 runs in ~/code/shop (2026-10-08 to 2026-10-11)
-- Test command guessed wrong in 3 of 6 runs (median 2 commands before one passed). The command that passed: uv run python -m pytest tests
-- Project bent to fit in 2 runs: __init__.py, pytest.ini
+mellum learn: 4 runs in /home/user/proj (2026-10-01 to 2026-10-04)
+
+- Project bent to fit in 3 runs: conftest.py, pyproject.toml, src/__init__.py; uv add httpx
 
 Suggested for AGENTS.md:
 
 ## Mellum
-- Test command: uv run python -m pytest tests
+- Write only: app.py, lib/, src/, tests/
 - Do not: install packages or add dependencies
 ```
 
-It asks before adding the missing lines to `AGENTS.md` and never rewrites
-a line you have; a different value prints as a conflict, and it never takes
-the section past 600 characters. From the terminal, and for OpenCode or Pi
-Worker, run it from the project directory; it only prints:
+It asks before adding those lines to `AGENTS.md` and never rewrites a line
+you have: a different value prints as a conflict, missing `Do not:` values
+go in a new bullet, and it never takes the section past 600 characters.
+From the terminal, run it from the project directory; it only prints:
 
 ```bash
 node <package dir>/scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]
@@ -165,7 +167,8 @@ node <package dir>/scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]
 Records come from `MELLUM_MODE_RUNS` (default
 `~/.pi/agent/mellum-mode-runs.jsonl`) and
 `~/.pi/agent/mellum-worker-runs.jsonl`; `--file` reads one file instead.
-Pi Worker records join in M.7B.
+Only Pi Mode writes records today. Pi Worker and OpenCode records join in
+M.7B; until then `learn` in an OpenCode project finds 0 runs.
 
 ## What you get
 

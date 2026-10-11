@@ -51,6 +51,12 @@ Versions match git tags; pin one in both install lines.
 - README: a Future work section lists what is on the roadmap, in order,
   with links to ROADMAP.md and BACKLOG.md.
 - README: about 40% shorter; same install lines, numbers and links.
+- README: says the 6-bit weights are MLX weights, for Apple Silicon and
+  served by oMLX, so nobody downloads them for another runtime.
+- README: says `check --host pi` covers Pi Mode and Pi Worker and
+  `--host opencode` covers OpenCode, and that Pi Worker and OpenCode runs
+  write no records until M.7B (`learn` finds 0 runs there today). Its
+  `learn` example is now real output on a test fixture.
 - `learn` treats `Do not:` as a list: values your `AGENTS.md` already has
   (split on `;`, any case) are left out and the rest go in one new bullet,
   instead of printing a conflict for a line that only needed adding to.

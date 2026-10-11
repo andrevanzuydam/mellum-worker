@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
+import { formatMerge, formatReport, learnFromTexts, mergeSuggestion } from "../extensions/mellum-learn.ts";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const read = (p) => readFileSync(resolve(ROOT, p), "utf8");
@@ -90,4 +91,26 @@ test("no setup or backend doc still calls 16,384 or forced thinking the server's
 	assert.doesNotMatch(read("skills/mellum-setup/reference/04-provider-pi.md"), /match the server/);
 	assert.doesNotMatch(read("skills/mellum-setup/reference/04-provider-opencode.md"), /matches the server/);
 	assert.doesNotMatch(read("docs/recipe.md"), /\| on — a client cannot switch thinking off/);
+});
+
+test("README Use it says which --host serves which host, and that Pi Worker and OpenCode records join in M.7B", () => {
+	const use = read("README.md").split("\n## Use it\n")[1].split("\n## What you get\n")[0];
+	const check = use.split("**Check your setup.**")[1].split("**Learn from your runs.**")[0];
+	assert.match(check, /`--host pi`[^.]*Pi Mode and Pi Worker/, "--host pi is for Pi Mode and Pi Worker");
+	assert.match(check, /`--host opencode`[^.]*OpenCode/, "--host opencode is for OpenCode");
+	const learn = use.slice(use.indexOf("**Learn from your runs.**"));
+	assert.match(learn, /Pi Worker and OpenCode\s+(runs|records)[^.]*M\.7B/, "Pi Worker and OpenCode records join in M.7B");
+	assert.match(learn, /OpenCode[^.]*0 runs/, "says an OpenCode project finds 0 runs today");
+});
+
+test("README learn example is the real output on the test fixture it names", () => {
+	const use = read("README.md").split("\n## Use it\n")[1].split("\n## What you get\n")[0];
+	const learn = use.slice(use.indexOf("**Learn from your runs.**"));
+	const fixture = /`(tests\/fixtures\/learn\/[\w./-]+\.jsonl)`/.exec(learn)?.[1];
+	assert.ok(fixture, "names the fixture it ran on");
+	const shown = /```\n(mellum learn: [\s\S]*?)\n```/.exec(learn)?.[1];
+	const cwd = "/home/user/proj";
+	const report = learnFromTexts([read(fixture)], { cwd, n: 10 });
+	const merged = mergeSuggestion(undefined, report.suggestion);
+	assert.equal(shown, formatReport(report, cwd, merged.added) + formatMerge(merged, report.suggestion));
 });
