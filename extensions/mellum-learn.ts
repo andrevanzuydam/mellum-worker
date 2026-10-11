@@ -308,20 +308,21 @@ export function formatReport(r: Report, cwd: string, added: string[] = r.suggest
 	return lines.join("\n");
 }
 
-/** Mode's records file: `MELLUM_MODE_RUNS` (`0` or empty: none; a leading `~` is HOME), else the default. */
-export function modeRunsFile(env: Record<string, string | undefined>, home: string): string | undefined {
-	const v = env.MELLUM_MODE_RUNS;
+/** A records-file variable: `0` or empty is none; a leading `~` is HOME; unset is the default under home. */
+function runsFile(v: string | undefined, home: string, name: string): string | undefined {
 	if (v === "0" || v === "") return undefined;
 	if (v) return v.replace(/^~(?=$|\/)/, home);
-	return join(home, ".pi", "agent", "mellum-mode-runs.jsonl");
+	return join(home, ".pi", "agent", name);
 }
 
-/** The Worker's records file: `MELLUM_WORKER_RUNS` (`0`: none), else the default. */
+/** Mode's records file: `MELLUM_MODE_RUNS` (`0` or empty: none; a leading `~` is HOME), else the default. */
+export function modeRunsFile(env: Record<string, string | undefined>, home: string): string | undefined {
+	return runsFile(env.MELLUM_MODE_RUNS, home, "mellum-mode-runs.jsonl");
+}
+
+/** The Worker's records file: `MELLUM_WORKER_RUNS`, read exactly like `MELLUM_MODE_RUNS`. */
 export function workerRunsFile(env: Record<string, string | undefined>, home: string): string | undefined {
-	const v = env.MELLUM_WORKER_RUNS;
-	if (v === "0") return undefined;
-	if (v) return v;
-	return join(home, ".pi", "agent", "mellum-worker-runs.jsonl");
+	return runsFile(env.MELLUM_WORKER_RUNS, home, "mellum-worker-runs.jsonl");
 }
 
 /** The files `learn` reads by default: Mode's records, then the Worker's (M.7B). */

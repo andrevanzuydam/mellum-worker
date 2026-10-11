@@ -335,7 +335,7 @@ fields: `cwd`, `endedAt`, `requests`, `commands[]` (`command`, `failed`,
 Two files hold records. Mode appends `kind: "mode"` records to
 `~/.pi/agent/mellum-mode-runs.jsonl` (`MELLUM_MODE_RUNS`). The Pi Worker
 appends `kind: "worker"` records to `~/.pi/agent/mellum-worker-runs.jsonl`
-(`MELLUM_WORKER_RUNS`; `0` disables it). `learn` reads both. A Worker
+(`MELLUM_WORKER_RUNS`; `0` or empty disables it). `learn` reads both. A Worker
 record is schema 2 with `activation: "worker"` and `facts: null` (the
 Worker gets no project facts); `host` comes from Pi's mode, `promptVersion`
 from the child's system prompt (the marker is found on any line, after

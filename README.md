@@ -188,7 +188,7 @@ node <package dir>/scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]
 
 Records come from `MELLUM_MODE_RUNS` (default
 `~/.pi/agent/mellum-mode-runs.jsonl`) and `MELLUM_WORKER_RUNS` (default
-`~/.pi/agent/mellum-worker-runs.jsonl`; `0` turns it off); `--file` reads
+`~/.pi/agent/mellum-worker-runs.jsonl`; `0` or empty turns it off); `--file` reads
 one file instead. Pi Mode and Pi Worker write records, and `learn` reports
 both. OpenCode runs join with M.3, so `learn` in an OpenCode project finds
 0 runs until then.

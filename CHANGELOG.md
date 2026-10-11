@@ -7,7 +7,8 @@ Versions match git tags; pin one in both install lines.
 ### Added
 
 - Pi Worker runs now write run records to `~/.pi/agent/mellum-worker-runs.jsonl`
-  (`MELLUM_WORKER_RUNS` sets the path, `0` turns it off), which `/mellum learn`
+  (`MELLUM_WORKER_RUNS` sets the path, `0` or empty turns it off, like
+  `MELLUM_MODE_RUNS`), which `/mellum learn`
   reads. The guards extension records one line per finished run; no guard
   decision changes. The README, recipe and setup skill describe both
   record files; OpenCode runs are recorded with M.3.
