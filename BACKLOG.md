@@ -125,7 +125,10 @@ of its time to `find .` walking `.venv`
 a suggested bullet `Run Python with uv: uv run python …`; `learn` patterns
 for "command not found" or exit 127 on `python`/`pytest` (remedy: the uv
 bullet) and for `find`/`grep -r` over `.` without excluding `.venv`
-(remedy: a "do not search .venv/" value); ac-demo's roadmap saying `uv run
+(remedy: a positive bullet, `List project files with: git ls-files`;
+in a bare-Pi run on 2026-10-11 "Do not: search .venv/" did not stop
+`find .` walking 52 KB of `.venv`, while the command-shaped uv bullet
+worked first time, so suggest commands, not prohibitions); ac-demo's roadmap saying `uv run
 python app.py`; `/mellum check` linting the `## Mellum` section (nested
 bullets or continuation lines, a test label not exactly `Test command:`, a
 fallback adding a second test command; seen in ac-demo 2026-10-11). The
