@@ -113,6 +113,25 @@ If pi-subagents says the child "produced no output", dispatch it once more
 
 Other clients of the same oMLX model can change these; `/mellum check` shows drift.
 
+**Check your setup.** In Pi Mode, `/mellum check`. From the terminal, and
+for OpenCode or Pi Worker:
+
+```bash
+node <package dir>/scripts/mellum.mjs check --host pi|opencode [--json]
+```
+
+`<package dir>` is `~/.pi/agent/git/github.com/pauleveritt/mellum-worker`
+(Pi) or `~/.cache/opencode/packages/*/node_modules/mellum-worker`
+(OpenCode). It checks that the server answers and lists the model, that the
+settings above match, and that your provider entry matches the template;
+fails print first, and the CLI exits 1 on any fail. It only reads: a
+settings fix prints as the `PUT` to run yourself. Each `/mellum` activation
+also reads the settings (one second at most) and warns in one line on drift:
+
+```
+Mellum server settings differ: max_tokens 16384 (expected 4096). Run /mellum check.
+```
+
 ## What you get
 
 Rungs 1–5, five coding tasks, three runs each, on an M5 Max through oMLX
@@ -185,7 +204,7 @@ extensions/                   Mellum Mode and the child guards (Pi)
 opencode/plugin.js            skills-path hook (OpenCode)
 skills/mellum-setup/          the guided installer
 templates/                    agent files and provider fragments, per host
-scripts/                      merge-json and render-agent, used by the skill
+scripts/                      merge-json, render-agent (the skill); mellum.mjs check
 docs/                         recipe, backend guides, docs/sdd.md
 ladder/, docs/ladder/         the measuring ladder and its phase records
 ROADMAP.md, BACKLOG.md        phases and deferred work

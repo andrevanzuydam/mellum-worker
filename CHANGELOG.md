@@ -4,6 +4,23 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Added
+
+- `/mellum check` in Pi Mode: checks that oMLX answers and lists the
+  model, that its settings match the measured profile, and that your
+  provider entry matches the template. It only reads; a settings fix is
+  printed as the `PUT` to run yourself.
+- `node <package dir>/scripts/mellum.mjs check --host pi|opencode [--json]`:
+  the same check from the terminal, for OpenCode and Pi Worker; exits 1 on
+  any fail.
+- Each `/mellum` activation reads the server's model settings (one second
+  at most) and warns in one line when they differ from the measured
+  profile, since other clients of the same model can change them. Silent
+  when the server cannot be read.
+- The run record gains `server` (`match`, and the differing settings), so
+  a run on drifted settings can be told apart later; `match` is null when
+  the settings could not be read.
+
 ### Changed
 
 - The setup skill now writes the measured server settings (`max_tokens`

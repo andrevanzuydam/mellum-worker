@@ -264,3 +264,57 @@ test("a full match run against the fixtures has no fail or warn", () => {
 	const f = checkSetup(inputs(), expected);
 	assert.deepEqual(f.filter((x) => x.level === "fail" || x.level === "warn"), []);
 });
+
+test("fetchJson: a JSON body, an HTTP error status, and a rejected fetch", async () => {
+	const { fetchJson } = await import("../extensions/mellum-check.ts");
+	const seen = [];
+	const fake = (status, body) => async (url, init) => {
+		seen.push({ url, method: init?.method ?? "GET", signal: init?.signal instanceof AbortSignal });
+		return { ok: status < 300, status, json: async () => body };
+	};
+	assert.deepEqual(await fetchJson(`${ADMIN}/admin/api/models`, { timeoutMs: 1000, fetch: fake(200, { models: [] }) }), { ok: true, value: { models: [] } });
+	assert.deepEqual(seen, [{ url: `${ADMIN}/admin/api/models`, method: "GET", signal: true }]);
+	assert.deepEqual(await fetchJson(ADMIN, { timeoutMs: 1000, fetch: fake(401, {}) }), { ok: false, status: 401, error: "HTTP 401" });
+	const refused = async () => {
+		throw Object.assign(new TypeError("fetch failed"), { cause: { code: "ECONNREFUSED" } });
+	};
+	assert.deepEqual(await fetchJson(ADMIN, { timeoutMs: 1000, fetch: refused }), { ok: false, error: "ECONNREFUSED" });
+});
+
+test("fetchJson gives up at the timeout even when the fetch ignores its abort signal", async () => {
+	const { fetchJson } = await import("../extensions/mellum-check.ts");
+	const t0 = Date.now();
+	const r = await fetchJson(ADMIN, { timeoutMs: 50, fetch: () => new Promise(() => {}) });
+	assert.deepEqual(r, { ok: false, error: "timeout" });
+	assert.ok(Date.now() - t0 < 1000, `took ${Date.now() - t0} ms`);
+});
+
+test("adminBaseOf strips a trailing slash and /v1", async () => {
+	const { adminBaseOf } = await import("../extensions/mellum-check.ts");
+	assert.equal(adminBaseOf("http://127.0.0.1:8001/v1"), ADMIN);
+	assert.equal(adminBaseOf("http://127.0.0.1:8001/v1/"), ADMIN);
+	assert.equal(adminBaseOf("http://h:9/"), "http://h:9");
+});
+
+test("gatherInputs reads the host config, GETs the three URLs from its baseUrl, and takes the host's template", async () => {
+	const { gatherInputs } = await import("../extensions/mellum-check.ts");
+	const urls = [];
+	const config = { providers: { omlx: { ...json("pi-models.json").providers.omlx, baseUrl: "http://h:9/v1" } } };
+	const files = { "/home/u/.pi/agent/models.json": JSON.stringify(config) };
+	const got = await gatherInputs("pi", {
+		home: "/home/u",
+		read: (p) => files[p],
+		get: async (url) => {
+			urls.push(url);
+			return { ok: false, error: "x" };
+		},
+	});
+	assert.deepEqual(urls.sort(), ["http://h:9/admin/api/global-settings", "http://h:9/admin/api/models", "http://h:9/v1/models"]);
+	assert.equal(got.baseUrl, "http://h:9/v1");
+	assert.deepEqual(got.provider, { host: "pi", entry: config.providers.omlx });
+	assert.deepEqual(got.template, piTemplate);
+	const oc = await gatherInputs("opencode", { home: "/nowhere", read: () => undefined, get: async () => ({ ok: false, error: "x" }) });
+	assert.match(oc.provider.error, /no opencode config/);
+	assert.deepEqual(oc.template, ocTemplate);
+	assert.equal(oc.baseUrl, BASE);
+});

@@ -1,9 +1,10 @@
 /**
- * The setup check, pure: compares what the oMLX server reports and what the host's
- * provider entry says with the measured settings in templates/omlx-model-settings.json.
- * Fetching and file reading live in the front ends (Mode's /mellum check, scripts/mellum.mjs);
- * this module never touches the network and never writes. The fix for a settings
- * mismatch is a `PUT` command to show, never to run.
+ * The setup check: compares what the oMLX server reports and what the host's provider
+ * entry says with the measured settings in templates/omlx-model-settings.json.
+ * checkSetup is pure. The front ends (Mode's /mellum check and activation check,
+ * scripts/mellum.mjs) pass gatherInputs their own reader and GET, usually fetchJson; this
+ * module only ever GETs and never writes. The fix for a settings mismatch is a `PUT`
+ * command to show, never to run.
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -100,7 +101,8 @@ export function putCommand(adminBase: string, expected: Expected): string {
 	);
 }
 
-const adminBaseOf = (baseUrl: string) => baseUrl.replace(/\/+$/, "").replace(/\/v1$/, "");
+/** The server root the admin API hangs off: `baseUrl` without a trailing `/` and `/v1`. */
+export const adminBaseOf = (baseUrl: string) => baseUrl.replace(/\/+$/, "").replace(/\/v1$/, "");
 const getPath = (root: unknown, path: string): unknown =>
 	path.split(".").reduce<unknown>((o, k) => (isObj(o) ? o[k] : undefined), root);
 
@@ -317,6 +319,60 @@ export function readProvider(
 	if (!entry) return { baseUrl: DEFAULT_BASE_URL, error: `no omlx provider in ${path}` };
 	const base = host === "pi" ? entry.baseUrl : isObj(entry.options) ? entry.options.baseURL : undefined;
 	return { baseUrl: typeof base === "string" && base ? base : DEFAULT_BASE_URL, entry };
+}
+
+// ---- fetching -------------------------------------------------------------------------
+
+/**
+ * GET `url` and parse JSON. Never throws. Races its own timer as well as passing an abort
+ * signal, so a fetch that ignores the signal still gives `{ ok: false, error: "timeout" }`.
+ */
+export async function fetchJson(url: string, opts: { timeoutMs: number; fetch?: typeof fetch }): Promise<Fetched<unknown>> {
+	const get = opts.fetch ?? globalThis.fetch;
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const timedOut = new Promise<Fetched<unknown>>((done) => {
+		timer = setTimeout(() => done({ ok: false, error: "timeout" }), opts.timeoutMs);
+	});
+	const attempt = (async (): Promise<Fetched<unknown>> => {
+		try {
+			const res = await get(url, { method: "GET", signal: AbortSignal.timeout(opts.timeoutMs) });
+			if (!res.ok) return { ok: false, status: res.status, error: `HTTP ${res.status}` };
+			return { ok: true, value: await res.json() };
+		} catch (e) {
+			const err = e as { name?: string; message?: string; cause?: { code?: string } };
+			if (err?.name === "TimeoutError" || err?.name === "AbortError") return { ok: false, error: "timeout" };
+			return { ok: false, error: err?.cause?.code ?? err?.message ?? String(e) };
+		}
+	})();
+	try {
+		return await Promise.race([attempt, timedOut]);
+	} finally {
+		clearTimeout(timer);
+	}
+}
+
+/** The host's `omlx` provider object from the shipped template. */
+export function loadTemplate(host: Host, read: (p: string) => string = (p) => readFileSync(p, "utf8")): Obj {
+	const file = host === "pi" ? "../templates/pi/models.omlx.json" : "../templates/opencode/provider.omlx.json";
+	return providerEntry(host, JSON.parse(read(fileURLToPath(new URL(file, import.meta.url))))) ?? {};
+}
+
+/** Everything checkSetup needs: the host config via `read`, the three GETs via `get`. */
+export async function gatherInputs(
+	host: Host,
+	io: { home: string; read: (p: string) => string | undefined; get: (url: string) => Promise<Fetched<unknown>> },
+): Promise<CheckInputs> {
+	const p = readProvider(host, io.home, io.read);
+	const admin = adminBaseOf(p.baseUrl);
+	const [models, adminModels, global] = await Promise.all([
+		io.get(`${p.baseUrl.replace(/\/+$/, "")}/models`),
+		io.get(`${admin}/admin/api/models`),
+		io.get(`${admin}/admin/api/global-settings`),
+	]);
+	const provider: CheckInputs["provider"] = { host };
+	if (p.entry) provider.entry = p.entry;
+	if (p.error) provider.error = p.error;
+	return { baseUrl: p.baseUrl, models, adminModels, global, provider, template: loadTemplate(host) };
 }
 
 // ---- output ----------------------------------------------------------------------------

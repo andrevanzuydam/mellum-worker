@@ -24,3 +24,12 @@ test("every relative markdown link in docs and README resolves", () => {
 		}
 	}
 });
+
+test("README Use it says how to run the setup check in Pi Mode and from the terminal", () => {
+	const use = read("README.md").split("\n## Use it\n")[1].split("\n## What you get\n")[0];
+	assert.match(use, /\*\*Check your setup\.\*\*/);
+	assert.ok(use.includes("/mellum check"), "names /mellum check");
+	assert.ok(use.includes("scripts/mellum.mjs check --host pi|opencode"), "names the CLI with both hosts");
+	assert.match(use, /exit/i, "says how it exits");
+	assert.ok(use.includes("Mellum server settings differ"), "shows the activation warning");
+});

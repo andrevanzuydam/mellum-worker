@@ -1,6 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import install from "../extensions/mellum-mode.ts";
+import { checkSetup, formatFindings, loadExpected, providerEntry } from "../extensions/mellum-check.ts";
+
+// No test reads or writes the real ~/.pi/agent: activation reads $HOME/.pi/agent/models.json
+// for the server URL, and the run record defaults to $HOME/.pi/agent.
+process.env.HOME = mkdtempSync(`${tmpdir()}/mellum-home-`);
+// No test touches the network: every install gets a fetch, by default one with no server.
+const noServer = async () => {
+	throw new TypeError("fetch failed: no server in tests");
+};
 
 const MODEL = { provider: "omlx", id: "Mellum2.1-12B-A2.5B-Thinking-6bit" };
 
@@ -21,7 +32,7 @@ function fakePi({ registryHasModel = true } = {}) {
 		modelRegistry: { find: (p, id) => (registryHasModel && p === MODEL.provider && id === MODEL.id ? MODEL : undefined) },
 		ui: { notify: () => {} },
 	};
-	install(pi);
+	install(pi, { fetch: noServer });
 	return { handlers, ctx, mellum: (args) => commands.mellum.handler(args, ctx) };
 }
 
@@ -89,7 +100,7 @@ test("/mellum off notifies a one-line summary of the span", async () => {
 		modelRegistry: { find: () => MODEL },
 		ui: { notify: (msg, level) => notes.push([msg, level]) },
 	};
-	install(pi);
+	install(pi, { fetch: noServer });
 	await commands.mellum.handler("on", ctx);
 	handlers.before_provider_request({ payload: { messages: [] } }, ctx);
 	handlers.before_provider_request({ payload: { messages: [] } }, ctx);
@@ -117,7 +128,7 @@ test("/mellum off appends one run record line to the file named by MELLUM_MODE_R
 			getActiveTools: () => ["read"], setActiveTools: () => {}, setModel: async () => true, sendMessage: () => {}, sendUserMessage: () => {},
 		};
 		const ctx = { model: { provider: "anthropic", id: "parent" }, modelRegistry: { find: () => MODEL }, ui: { notify: () => {} } };
-		install(pi);
+		install(pi, { fetch: noServer });
 		return { handlers, ctx, mellum: (a) => commands.mellum.handler(a, ctx) };
 	};
 	const span = [
@@ -151,7 +162,7 @@ test("/mellum off appends one run record line to the file named by MELLUM_MODE_R
 	}
 });
 
-function recordingPi({ mode, hasUI } = {}) {
+function recordingPi({ mode, hasUI, fetch = noServer } = {}) {
 	const handlers = {};
 	let commands = {};
 	const calls = { setModel: [], sendMessage: [], notify: [] };
@@ -165,7 +176,7 @@ function recordingPi({ mode, hasUI } = {}) {
 	const ctx = { model: { provider: "anthropic", id: "parent" }, modelRegistry: { find: () => MODEL }, ui: { notify: (m, l) => calls.notify.push([m, l]) } };
 	if (mode !== undefined) ctx.mode = mode;
 	if (hasUI !== undefined) ctx.hasUI = hasUI;
-	install(pi);
+	install(pi, { fetch });
 	return { handlers, ctx, calls, mellum: (a) => commands.mellum.handler(a, ctx) };
 }
 
@@ -361,8 +372,8 @@ function headlessPi({ hasUI = false, withWait = true, startsRun = true, settledF
 			});
 		},
 	};
-	if (startTimeoutMs === undefined) install(pi);
-	else install(pi, { startTimeoutMs });
+	if (startTimeoutMs === undefined) install(pi, { fetch: noServer });
+	else install(pi, { startTimeoutMs, fetch: noServer });
 	return { handlers, ctx, calls, mellum: (a) => commands.mellum.handler(a, ctx) };
 }
 
@@ -609,4 +620,204 @@ test("the parent's handoff summary line names the facts source from the span's o
 	const out = handlers.context({ messages: [userMsg("task"), { role: "custom", customType: "mellum-mode", content: "[mellum-mode on] facts: detected" }, { role: "assistant", content: [{ type: "text", text: "done" }] }, { role: "custom", customType: "mellum-mode", content: "[mellum-mode off]" }, userMsg("next")] });
 	const handoff = out.messages.find((m) => JSON.stringify(m).includes("handoff"));
 	assert.match(JSON.stringify(handoff), /, facts: detected/);
+});
+
+// ---- the server settings check: on activation, in the run record, and /mellum check ----
+
+const FIX = new URL("./fixtures/check/", import.meta.url);
+const fixtureJson = (name) => JSON.parse(readFileSync(new URL(name, FIX), "utf8"));
+const response = (body, status = 200) => ({ ok: status < 300, status, json: async () => body });
+const DRIFT_WARNING =
+	'Mellum server settings differ: max_tokens 16384 (expected 4096), forced_ct_kwargs ["enable_thinking"] (expected null), turboquant_kv_enabled true (expected false). Run /mellum check.';
+
+// A fake oMLX that answers the three GETs from the fixtures and records every call.
+function fakeServer(adminModels = "admin-models-drift.json") {
+	const calls = [];
+	const fetch = async (url, init) => {
+		const u = String(url);
+		calls.push({ url: u, method: init?.method ?? "GET" });
+		if (u.endsWith("/admin/api/models")) return response(fixtureJson(adminModels));
+		if (u.endsWith("/admin/api/global-settings")) return response(fixtureJson("global-settings.json"));
+		if (u.endsWith("/v1/models")) return response(fixtureJson("v1-models.json"));
+		return response({}, 404);
+	};
+	return { fetch, calls };
+}
+
+// Runs `body()` with HOME at a fresh temp dir holding `models` as ~/.pi/agent/models.json (none if undefined).
+async function withHome(models, body) {
+	const saved = process.env.HOME;
+	const home = mkdtempSync(`${tmpdir()}/mellum-home-`);
+	if (models !== undefined) {
+		mkdirSync(`${home}/.pi/agent`, { recursive: true });
+		writeFileSync(`${home}/.pi/agent/models.json`, JSON.stringify(models));
+	}
+	process.env.HOME = home;
+	try {
+		return await body(home);
+	} finally {
+		process.env.HOME = saved;
+	}
+}
+
+const warnings = (calls) => calls.notify.filter(([, l]) => l === "warning");
+
+test("activation with drifted server settings warns once with the exact message, and Mode still turns on", async () => {
+	const server = fakeServer("admin-models-drift.json");
+	const { handlers, calls, mellum } = recordingPi({ mode: "tui", fetch: server.fetch });
+	await mellum("on");
+	assert.deepEqual(calls.notify.filter(([m]) => m.startsWith("Mellum server settings differ")), [[DRIFT_WARNING, "warning"]]);
+	assert.deepEqual(server.calls, [{ url: "http://127.0.0.1:8001/admin/api/models", method: "GET" }], "one admin GET, nothing else");
+	for (let i = 0; i < 5; i++) assert.equal(handlers.tool_call(read), undefined);
+	assert.ok(handlers.tool_call(read)?.block, "mode is on: the sixth identical read is blocked");
+});
+
+test("activation with matching server settings warns nothing", async () => {
+	const server = fakeServer("admin-models-match.json");
+	const { calls, mellum } = recordingPi({ mode: "tui", fetch: server.fetch });
+	await mellum("on");
+	assert.deepEqual(warnings(calls), []);
+	assert.equal(server.calls.length, 1);
+});
+
+test("the activation check uses the baseUrl of the Pi omlx provider", async () => {
+	const models = fixtureJson("pi-models.json");
+	models.providers.omlx.baseUrl = "http://127.0.0.1:9999/v1";
+	await withHome(models, async () => {
+		const server = fakeServer();
+		const { mellum } = recordingPi({ mode: "tui", fetch: server.fetch });
+		await mellum("on");
+		assert.deepEqual(server.calls.map((c) => c.url), ["http://127.0.0.1:9999/admin/api/models"]);
+	});
+});
+
+test("an activation check whose fetch never resolves and ignores the signal returns within 1,500 ms and warns nothing", async () => {
+	const { handlers, calls, mellum } = recordingPi({ mode: "tui", fetch: () => new Promise(() => {}) });
+	const t0 = Date.now();
+	await mellum("on");
+	const elapsed = Date.now() - t0;
+	assert.ok(elapsed < 1500, `activation took ${elapsed} ms`);
+	assert.deepEqual(warnings(calls), []);
+	for (let i = 0; i < 5; i++) assert.equal(handlers.tool_call(read), undefined);
+	assert.ok(handlers.tool_call(read)?.block, "mode is on");
+});
+
+test("an unreachable server is silent on activation, with or without a UI", async () => {
+	const ui = recordingPi({ mode: "tui", hasUI: true });
+	await ui.mellum("on");
+	assert.deepEqual(warnings(ui.calls), []);
+	const headless = recordingPi({ mode: "print", hasUI: false });
+	const lines = await captureStderr(() => headless.mellum("on"));
+	assert.deepEqual(lines, []);
+});
+
+test("the one-shot and headless activations run the check too; without a UI the warning goes to stderr", async () => {
+	const oneShot = fakeServer();
+	const a = recordingPi({ mode: "tui", hasUI: true, fetch: oneShot.fetch });
+	await a.mellum("fix it");
+	assert.deepEqual(a.calls.notify.filter(([m]) => m === DRIFT_WARNING), [[DRIFT_WARNING, "warning"]]);
+	const headless = fakeServer();
+	const b = recordingPi({ mode: "json", hasUI: false, fetch: headless.fetch });
+	const saved = process.env.MELLUM_MODE;
+	process.env.MELLUM_MODE = "1";
+	let lines;
+	try {
+		lines = await captureStderr(() => b.handlers.session_start({}, b.ctx));
+	} finally {
+		if (saved === undefined) delete process.env.MELLUM_MODE;
+		else process.env.MELLUM_MODE = saved;
+	}
+	assert.deepEqual(lines, [DRIFT_WARNING]);
+	assert.equal(headless.calls.length, 1);
+});
+
+test("the run record carries server: match false with the diffs, true when they match, null when unreadable", async () => {
+	const span = async (fetch) =>
+		withRunsFile(async () => {
+			const { handlers, mellum } = recordingPi({ mode: "tui", fetch });
+			await mellum("on");
+			handlers.context({ messages: snapshot });
+			await mellum("off");
+		});
+	const drift = await span(fakeServer("admin-models-drift.json").fetch);
+	assert.deepEqual(drift.server, {
+		match: false,
+		diffs: [
+			{ key: "max_tokens", expected: 4096, actual: 16384 },
+			{ key: "forced_ct_kwargs", expected: null, actual: ["enable_thinking"] },
+			{ key: "turboquant_kv_enabled", expected: false, actual: true },
+		],
+	});
+	assert.deepEqual((await span(fakeServer("admin-models-match.json").fetch)).server, { match: true, diffs: [] });
+	assert.deepEqual((await span(noServer)).server, { match: null, diffs: [] });
+	assert.deepEqual((await span(async () => response({}, 401))).server, { match: null, diffs: [] });
+});
+
+// The text /mellum check should print for the drift fixture with HOME holding pi-models.json.
+function expectedCheckText(adminModels) {
+	const ok = (value) => ({ ok: true, value });
+	const template = providerEntry("pi", JSON.parse(readFileSync(new URL("../templates/pi/models.omlx.json", import.meta.url), "utf8")));
+	return formatFindings(
+		checkSetup(
+			{
+				baseUrl: "http://127.0.0.1:8001/v1",
+				models: ok(fixtureJson("v1-models.json")),
+				adminModels: ok(fixtureJson(adminModels)),
+				global: ok(fixtureJson("global-settings.json")),
+				provider: { host: "pi", entry: providerEntry("pi", fixtureJson("pi-models.json")) },
+				template,
+			},
+			loadExpected(),
+		),
+	);
+}
+
+test("/mellum check notifies the findings, GETs only, and never turns Mode on", async () => {
+	await withHome(fixtureJson("pi-models.json"), async () => {
+		const server = fakeServer("admin-models-drift.json");
+		const { handlers, calls, mellum } = recordingPi({ mode: "tui", hasUI: true, fetch: server.fetch });
+		await mellum("check");
+		const text = expectedCheckText("admin-models-drift.json");
+		assert.match(text, /^FAIL settings/);
+		assert.deepEqual(calls.notify, [[text, "error"]]);
+		assert.deepEqual(server.calls.map((c) => c.method), ["GET", "GET", "GET"]);
+		assert.deepEqual(calls.setModel, [], "no model switch");
+		assert.deepEqual(calls.sendMessage, [], "no marker");
+		modeIsOff(handlers);
+	});
+});
+
+test("/mellum check without a UI prints the findings to stdout", async () => {
+	await withHome(fixtureJson("pi-models.json"), async () => {
+		const server = fakeServer("admin-models-match.json");
+		const { handlers, calls, mellum } = recordingPi({ mode: "print", hasUI: false, fetch: server.fetch });
+		const out = [];
+		const original = console.log;
+		console.log = (...a) => out.push(a.join(" "));
+		try {
+			await mellum("check");
+		} finally {
+			console.log = original;
+		}
+		assert.deepEqual(out, [expectedCheckText("admin-models-match.json")]);
+		assert.deepEqual(calls.notify, []);
+		assert.deepEqual(calls.setModel, []);
+		modeIsOff(handlers);
+	});
+});
+
+test("/mellum learn is not available yet and does not turn Mode on", async () => {
+	const { handlers, calls, mellum } = recordingPi({ mode: "tui", hasUI: true });
+	await mellum("learn 5");
+	assert.deepEqual(calls.notify, [["mellum learn: not available yet", "info"]]);
+	assert.deepEqual(calls.setModel, []);
+	modeIsOff(handlers);
+});
+
+test("/mellum check <words> is a one-shot task, not the check", async () => {
+	const server = fakeServer("admin-models-match.json");
+	const { calls, mellum } = recordingPi({ mode: "tui", hasUI: true, fetch: server.fetch });
+	await mellum("check the export totals");
+	assert.equal(calls.setModel.length, 1, "Mode switched to Mellum");
+	assert.deepEqual(server.calls.map((c) => c.url), ["http://127.0.0.1:8001/admin/api/models"], "only the activation GET");
 });
