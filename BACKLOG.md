@@ -106,3 +106,14 @@ Remedy: at the deadline and at run end the runner kills the run's process
 group and any listener whose cwd is the workspace, and records it.
 *Reopens when* the next change to `ladder/`, or any record showing a
 leftover process.
+
+**A21: the lighter `## Mellum` section and a one-file roadmap.** README,
+setup skill and `/mellum learn` now suggest `Test command:` plus `Do not:`
+(install packages, add files at the project root, weaken tests) and no
+`Write only:` list; A19's 9/12 and 0/12 outside the layout were measured
+with `Write only:`. ac-demo has also moved its four phases into one
+`specs/roadmap.md`, asked for as "Implement Phase N of specs/roadmap.md".
+A21 is a fixture variant of rungs 6–9 with both changes, 12 runs against
+A19; the existing fixtures stay as A18–A20's record. If A21 falls short,
+the docs go back to recommending `Write only:`. *Reopens when* the GPU is
+free for an hour and Paul schedules it.

@@ -336,7 +336,7 @@ Pi Worker and OpenCode writers join in M.7B.
 | pattern | fires when | suggests |
 | --- | --- | --- |
 | `test-thrash` | two or more runs failed a test command first, then passed another | `Test command:` with the one that passed |
-| `bent-project` | a run wrote `__init__.py`, `pytest.ini`, `setup.cfg`, `pyproject.toml`, `uv.lock`, a root `conftest.py`, or ran `pip install`, `uv add`, `uv pip` | `Write only:` and `Do not: install packages or add dependencies` |
+| `bent-project` | a run wrote `__init__.py`, `pytest.ini`, `setup.cfg`, `pyproject.toml`, `uv.lock`, a root `conftest.py`, or ran `pip install`, `uv add`, `uv pip` | `Do not:` with one value per kind of bend seen: install packages or add dependencies; add files at the project root; add `__init__.py` files |
 | `false-success` | the reply claims success but the last command did not pass | nothing; run the tests yourself |
 | `long-run` | a run took more than 30 requests | nothing; split the task |
 | `servers` | a run started a server | `Do not: start servers` |

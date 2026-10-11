@@ -71,9 +71,12 @@ to fit ([What helped](#what-helped)). Add a `## Mellum` section to the
 ## Mellum
 
 - Test command: uv run python -m pytest tests
-- Write only: app.py, models.py, templates/, tests/
-- Do not: install packages or add dependencies; remove or rewrite routes that already work; weaken tests
+- Do not: install packages or add dependencies; add files at the project root; weaken tests
 ```
+
+The measured section (A19) also had `- Write only: app.py, models.py,
+templates/, tests/`; add a line like it if you want a strict boundary.
+The section above without it is not measured yet (backlog: A21).
 
 Mode appends these bullets to every task as `Project facts:`. Bullets only,
 600 characters at most; write the label exactly as `Test command:` in plain
@@ -160,8 +163,7 @@ mellum learn: 4 runs in /home/user/proj (2026-10-01 to 2026-10-04)
 Suggested for AGENTS.md:
 
 ## Mellum
-- Write only: app.py, lib/, src/, tests/
-- Do not: install packages or add dependencies
+- Do not: install packages or add dependencies; add files at the project root; add __init__.py files
 ```
 
 It asks before adding those lines to `AGENTS.md` and never rewrites a line

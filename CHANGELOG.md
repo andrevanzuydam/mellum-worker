@@ -45,6 +45,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The suggested `## Mellum` section no longer leads with a `Write only:` file
+  list, which few projects keep: the README and the setup skill show a
+  `Test command:` and a `Do not:` line (install packages, add files at the
+  project root, weaken tests), and `/mellum learn` turns the bends it sees
+  into `Do not:` values instead of a `Write only:` list. `Write only:` still
+  works for a strict boundary. The lighter section is not yet measured.
 - The expected oMLX values live in `templates/omlx-model-settings.json`,
   split into server-only values (context window, TurboQuant; a test ties
   the context window to the ladder's baseline profile) and the values each

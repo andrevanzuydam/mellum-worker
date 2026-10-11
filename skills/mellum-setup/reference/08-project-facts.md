@@ -37,17 +37,19 @@ If yes:
    formatting on the label or the command). `- **Test command:** make test`
    is not recognised, so in a pytest project Mode would add the fallback as
    a second test command, and a backticked command keeps its backticks.
-2. Offer two optional lines: `Write only:` (the files and directories
-   Mellum may create or change) and `Do not:` (for example, install
-   packages or add dependencies; weaken tests).
+2. Offer a `Do not:` line naming what Mellum should leave alone, for
+   example: install packages or add dependencies; add files at the project
+   root; weaken tests. Mention, without pushing it, that a `Write only:`
+   line (the files and directories Mellum may change) gives a strict
+   boundary; the measured section had one, but most projects do not need
+   it.
 3. Show the section, filled in, for example:
 
 ```markdown
 ## Mellum
 
 - Test command: uv run python -m pytest tests
-- Write only: app.py, models.py, templates/, tests/
-- Do not: install packages or add dependencies; remove or rewrite routes that already work; weaken tests
+- Do not: install packages or add dependencies; add files at the project root; weaken tests
 ```
 
 4. Ask before writing. On a yes, append it to the end of `AGENTS.md`

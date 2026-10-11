@@ -108,8 +108,6 @@ function relativeTo(path: string, cwd: string | undefined): string {
 	return p;
 }
 
-/** A relative path that stays inside the cwd: not absolute, no `..` segment. */
-const inside = (p: string) => !p.startsWith("/") && !p.split("/").includes("..");
 
 /** `__init__.py`, `pytest.ini`, `setup.cfg`, `pyproject.toml`, `uv.lock` anywhere; `conftest.py` at the root only. */
 function isBent(path: string): boolean {
@@ -165,7 +163,6 @@ function bentProject(runs: RunLine[]): Pattern | undefined {
 	let count = 0;
 	const bentFiles: string[] = [];
 	const bentCommands: string[] = [];
-	const written: string[] = [];
 	for (const r of runs) {
 		const recorded = filesOf(r).map((f) => relativeTo(f, r.cwd));
 		const bentRecorded = recorded.filter(isBent);
@@ -179,16 +176,21 @@ function bentProject(runs: RunLine[]): Pattern | undefined {
 		count++;
 		bentFiles.push(...bentRecorded, ...viaCommands);
 		bentCommands.push(...installs);
-		written.push(...recorded.filter((f) => !isBent(f) && inside(f)));
 	}
 	if (count === 0) return undefined;
 	const files = unique(bentFiles).sort();
 	const commands = unique(bentCommands);
-	const topLevel = unique(written.map((f) => (f.includes("/") ? `${f.slice(0, f.indexOf("/"))}/` : f))).sort();
 	const detail = [files.join(", "), commands.join(", ")].filter(Boolean).join("; ");
-	const bullets = [];
-	if (topLevel.length > 0) bullets.push(`Write only: ${topLevel.join(", ")}`);
-	bullets.push("Do not: install packages or add dependencies");
+	// One Do not value per kind of bend seen; no Write only list, which few projects keep.
+	const deps = commands.length > 0 || files.some((f) => f === "pyproject.toml" || f === "uv.lock" || f.endsWith("/pyproject.toml") || f.endsWith("/uv.lock"));
+	const root = files.some((f) => !f.includes("/") && f !== "pyproject.toml" && f !== "uv.lock");
+	const nested = files.some((f) => f.includes("/") && f.endsWith("__init__.py"));
+	const values = [
+		...(deps ? ["install packages or add dependencies"] : []),
+		...(root ? ["add files at the project root"] : []),
+		...(nested ? ["add __init__.py files"] : []),
+	];
+	const bullets = values.length > 0 ? [`Do not: ${values.join("; ")}`] : [];
 	return { id: "bent-project", count, message: `Project bent to fit in ${count} runs: ${detail}`, bullets };
 }
 
