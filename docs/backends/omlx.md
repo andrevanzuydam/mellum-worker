@@ -35,6 +35,9 @@ In the admin page at `http://127.0.0.1:8001/admin`, or via
 | `max_context_window` | 56000 |
 | `max_tokens` | 16384 |
 | `forced_ct_kwargs` | `["enable_thinking"]` |
+| `enable_thinking` | true |
+| `thinking_budget_enabled` | false |
+| `max_tool_result_tokens` | `null` (unset) |
 | TurboQuant / cache quantization | off |
 
 Clients send their own `max_tokens`, sampling, penalties and
@@ -44,7 +47,8 @@ request, and OpenCode sends `max_tokens` 16,384 only. Two exceptions run the
 other way: `forced_ct_kwargs` makes the server's `enable_thinking` win over
 the request, and `force_sampling` on makes the server's temperature, top_p
 and top_k win, so keep those at thinking on and 1 / 0.95 / 20. The context
-window and TurboQuant are server-only; no request changes them.
+window, TurboQuant, thinking budget and tool-result cap are server-only; no
+request changes them. `/mellum check` fails on any of these.
 
 ## Memory
 

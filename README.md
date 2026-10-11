@@ -115,7 +115,7 @@ Pi sends the first three from its provider entry per request, and oMLX
 honours them over the server's own values; OpenCode's template sets only
 the output limit, so for OpenCode the server's thinking and sampling apply.
 With `force_sampling` on in oMLX, the server's sampling wins over any
-request. The server-only values bind every client, and other clients of the
+request, so `/mellum check` fails unless it is 1 / 0.95 / 20. The server-only values bind every client, and other clients of the
 same oMLX model can change them.
 
 **Check your setup.** In Pi Mode, `/mellum check`. From the terminal,
@@ -130,8 +130,8 @@ node <package dir>/scripts/mellum.mjs check --host opencode
 `<package dir>` is `~/.pi/agent/git/github.com/pauleveritt/mellum-worker`
 (Pi) or `~/.cache/opencode/packages/*/node_modules/mellum-worker`
 (OpenCode). It checks that the server answers and lists the model, that the
-server-only settings above match, and that your provider entry matches the
-template, `maxTokens` and sampling included; a server value your requests
+server-only settings above match (and that thinking is not forced off),
+and that your provider entry matches the template, `maxTokens` and sampling included; a server value your requests
 override shows as info. Fails print first, and the CLI exits 1 on any fail.
 It only reads: a settings fix prints as the `PUT` to run yourself. Each
 `/mellum` activation also reads the server-only settings (one second at

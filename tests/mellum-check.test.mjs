@@ -37,7 +37,8 @@ const byId = (findings, id) => findings.find((f) => f.id === id);
 
 test("loadExpected reads the shipped data file", () => {
 	assert.equal(expected.modelId, "Mellum2.1-12B-A2.5B-Thinking-6bit");
-	assert.deepEqual(expected.model.serverOnly, { max_context_window: 56000, turboquant_kv_enabled: false });
+	assert.deepEqual(expected.model.serverOnly, { max_context_window: 56000, turboquant_kv_enabled: false, thinking_budget_enabled: false, max_tool_result_tokens: null });
+	assert.deepEqual(expected.model.forcedSampling, { temperature: 1, top_p: 0.95, top_k: 20 });
 	assert.equal(expected.model.overridden.max_tokens, 16384);
 	assert.deepEqual(expected.model.overridden.forced_ct_kwargs, ["enable_thinking"]);
 	assert.equal(expected.global["scheduler.max_concurrent_requests"], 1);
@@ -95,6 +96,61 @@ test("for OpenCode the info says its template sends only max_tokens, so the serv
 	assert.doesNotMatch(pi.message, /OpenCode/);
 });
 
+// The three rules: each is a settings fail and counts in settingsDiffs (activation, record).
+const withSettings = (over) => {
+	const admin = json("admin-models-match.json");
+	Object.assign(admin.models[0].settings, over);
+	return admin;
+};
+const settingsOf = (over) => settingsFindings(checkSetup(inputs({ adminModels: ok(withSettings(over)) }), expected));
+
+test("thinking forced off fails: forced_ct_kwargs has enable_thinking and the server's enable_thinking is false", () => {
+	const over = { forced_ct_kwargs: ["enable_thinking"], enable_thinking: false };
+	assert.deepEqual(settingsDiffs(withSettings(over), expected), [{ key: "enable_thinking", expected: true, actual: false }]);
+	const [f, info] = settingsOf(over);
+	assert.equal(f.level, "fail");
+	assert.match(f.message, /enable_thinking false \(expected true\): thinking is forced off for every client/);
+	assert.equal(f.fix, putCommand(ADMIN, expected));
+	assert.doesNotMatch(info?.message ?? "", /enable_thinking/, "not repeated as info");
+});
+
+test("near-miss: enable_thinking false while it is not forced passes, because the request wins", () => {
+	const over = { forced_ct_kwargs: null, enable_thinking: false };
+	assert.deepEqual(settingsDiffs(withSettings(over), expected), []);
+	const [f, info] = settingsOf(over);
+	assert.equal(f.level, "ok");
+	assert.match(info.message, /enable_thinking false \(advised true\)/);
+	assert.deepEqual(settingsDiffs(withSettings({ forced_ct_kwargs: ["enable_thinking"], enable_thinking: true }), expected), []);
+});
+
+test("forced sampling: with force_sampling true, a server temperature, top_p or top_k other than 1 / 0.95 / 20 fails", () => {
+	const over = { force_sampling: true, temperature: 0.6, top_p: 0.95, top_k: 40 };
+	assert.deepEqual(settingsDiffs(withSettings(over), expected), [
+		{ key: "temperature", expected: 1, actual: 0.6 },
+		{ key: "top_k", expected: 20, actual: 40 },
+	]);
+	const [f] = settingsOf(over);
+	assert.equal(f.level, "fail");
+	assert.match(f.message, /temperature 0\.6 \(expected 1\): force_sampling is on, so the server's sampling wins over the request/);
+	assert.match(f.message, /top_k 40 \(expected 20\)/);
+	assert.deepEqual(settingsDiffs(withSettings({ force_sampling: true, top_p: undefined }), expected), [{ key: "top_p", expected: 0.95, actual: undefined }]);
+});
+
+test("near-miss: with force_sampling false or absent, server sampling stays unchecked", () => {
+	assert.deepEqual(settingsDiffs(withSettings({ force_sampling: false, temperature: 0.6, top_k: 40 }), expected), []);
+	assert.equal(settingsOf({ force_sampling: false, temperature: 0.6 })[0].level, "ok");
+	assert.deepEqual(settingsDiffs(withSettings({ force_sampling: undefined, temperature: 0.6 }), expected), []);
+});
+
+test("thinking budget on or a tool-result cap is a server-only fail; the measured off and unset pass", () => {
+	assert.deepEqual(settingsDiffs(withSettings({ thinking_budget_enabled: true, max_tool_result_tokens: 4000 }), expected), [
+		{ key: "thinking_budget_enabled", expected: false, actual: true },
+		{ key: "max_tool_result_tokens", expected: null, actual: 4000 },
+	]);
+	assert.equal(settingsOf({ thinking_budget_enabled: true })[0].level, "fail");
+	assert.deepEqual(settingsDiffs(withSettings({ thinking_budget_tokens: 4096 }), expected), [], "near-miss: a budget size with the budget off");
+});
+
 test("a server at the advised values has no info settings finding", () => {
 	const admin = json("admin-models-match.json");
 	Object.assign(admin.models[0].settings, expected.model.overridden);
@@ -106,6 +162,7 @@ test("putCommand is a curl PUT of the server-only and advised model values, neve
 	assert.match(cmd, /^curl -s -X PUT http:\/\/127\.0\.0\.1:8001\/admin\/api\/models\/Mellum2\.1-12B-A2\.5B-Thinking-6bit\/settings /);
 	const body = JSON.parse(/-d '(\{.*\})'/.exec(cmd)[1]);
 	assert.deepEqual(body, { ...expected.model.serverOnly, ...expected.model.overridden });
+	for (const [k, v] of Object.entries({ enable_thinking: true, thinking_budget_enabled: false, max_tool_result_tokens: null })) assert.deepEqual(body[k], v, k);
 });
 
 test("settingsDiffs is null when the model or its settings are absent", () => {

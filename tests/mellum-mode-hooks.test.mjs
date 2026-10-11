@@ -682,7 +682,7 @@ test("activation with matching server settings warns nothing", async () => {
 
 test("activation ignores server values the client's request overrides (max_tokens, thinking, penalties)", async () => {
 	const admin = fixtureJson("admin-models-match.json");
-	Object.assign(admin.models[0].settings, { max_tokens: 16384, forced_ct_kwargs: ["enable_thinking"], enable_thinking: false, presence_penalty: 0.5 });
+	Object.assign(admin.models[0].settings, { max_tokens: 16384, forced_ct_kwargs: null, enable_thinking: false, presence_penalty: 0.5 });
 	const { calls, mellum } = recordingPi({ mode: "tui", fetch: async () => response(admin) });
 	await mellum("on");
 	assert.deepEqual(warnings(calls), []);
@@ -693,6 +693,33 @@ test("activation ignores server values the client's request overrides (max_token
 		await m("off");
 	});
 	assert.deepEqual(rec.server, { match: true, diffs: [] });
+});
+
+test("the three server rules warn on activation and mark the record; their near-misses do not", async () => {
+	const withSettings = (over) => {
+		const admin = fixtureJson("admin-models-match.json");
+		Object.assign(admin.models[0].settings, over);
+		return admin;
+	};
+	const activate = async (over) => {
+		const { calls, mellum } = recordingPi({ mode: "tui", fetch: async () => response(withSettings(over)) });
+		await mellum("on");
+		return warnings(calls).map(([m]) => m);
+	};
+	assert.deepEqual(await activate({ forced_ct_kwargs: ["enable_thinking"], enable_thinking: false }), [
+		"Mellum server settings differ: enable_thinking false (expected true). Run /mellum check.",
+	]);
+	assert.deepEqual(await activate({ force_sampling: true, temperature: 0.6 }), ["Mellum server settings differ: temperature 0.6 (expected 1). Run /mellum check."]);
+	assert.deepEqual(await activate({ thinking_budget_enabled: true }), ["Mellum server settings differ: thinking_budget_enabled true (expected false). Run /mellum check."]);
+	assert.deepEqual(await activate({ enable_thinking: false }), [], "not forced: the request wins");
+	assert.deepEqual(await activate({ force_sampling: false, temperature: 0.6 }), [], "sampling not forced");
+	const rec = await withRunsFile(async () => {
+		const { handlers, mellum } = recordingPi({ mode: "tui", fetch: async () => response(withSettings({ max_tool_result_tokens: 4000 })) });
+		await mellum("on");
+		handlers.context({ messages: snapshot });
+		await mellum("off");
+	});
+	assert.deepEqual(rec.server, { match: false, diffs: [{ key: "max_tool_result_tokens", expected: null, actual: 4000 }] });
 });
 
 test("the activation check uses the baseUrl of the Pi omlx provider", async () => {

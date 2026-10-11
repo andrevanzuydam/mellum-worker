@@ -73,6 +73,7 @@ test("README states the cap the Mode and Worker runs actually used, and no 4,096
 	assert.doesNotMatch(read("BACKLOG.md"), /Measure a 16,384 ceiling/);
 	assert.doesNotMatch(read("docs/recipe.md"), /4,096, the measured baseline/);
 	assert.match(read("docs/recipe.md"), /A10, A17 and A19/, "the recipe records the trace finding");
+	assert.match(read("docs/recipe.md"), /`reasoning_parser`[^|]*may\s+take\s+effect/, "the recipe says a server thinking budget may now bind");
 	assert.match(read("docs/recipe.md"), /`min_p`,\s+`presence_penalty`\s+and\s+`repetition_penalty`/, "Pi sends no seed");
 	assert.doesNotMatch(readme, /12 runs per column/);
 });

@@ -7,8 +7,10 @@ Versions match git tags; pin one in both install lines.
 ### Added
 
 - `/mellum check` in Pi Mode: checks that oMLX answers and lists the
-  model, that its server-only settings (context window, TurboQuant) match
-  the measured profile, and that your provider entry matches the template,
+  model, that the server settings no request can undo match the measured
+  profile (context window, TurboQuant, thinking budget off, no tool-result
+  cap, thinking not forced off, and sampling 1 / 0.95 / 20 when the server
+  forces its own), and that your provider entry matches the template,
   failing on a different `maxTokens` or sampling value since those are what
   each request sends. Server values a request overrides (`max_tokens`,
   thinking, penalties) show as info. It only reads; a settings fix is
@@ -17,8 +19,8 @@ Versions match git tags; pin one in both install lines.
   the same check from the terminal, for OpenCode and Pi Worker; exits 1 on
   any fail.
 - Each `/mellum` activation reads the server's model settings (one second
-  at most) and warns in one line when a server-only value (context window,
-  TurboQuant) differs from the measured profile, since other clients of the
+  at most) and warns in one line when one of those binding values differs
+  from the measured profile, since other clients of the
   same model can change them. Silent when the server cannot be read.
 - `/mellum learn [n]` in Pi Mode: reads the last n run records (default
   10) for the current directory, names what went wrong (guessed test
@@ -73,6 +75,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- `/mellum check`, the activation warning and the run record now catch the
+  server settings that beat a request: thinking forced off
+  (`forced_ct_kwargs` with `enable_thinking` false), sampling other than
+  1 / 0.95 / 20 while `force_sampling` is on, a server thinking budget
+  (which may take effect when oMLX has a reasoning parser set) and a
+  tool-result cap. Setup step 3 also sets `enable_thinking` true, thinking
+  budget off and no tool-result cap.
 - The README now states the cap the measured Mode and Worker runs used:
   `max_tokens` 16,384 with thinking on, verified in the A10, A17 and A19
   traces, which oMLX honours over the server profile's 4,096; only the

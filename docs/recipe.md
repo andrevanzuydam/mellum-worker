@@ -57,8 +57,8 @@ request values, ran at 4,096. So:
 | `max_tokens` | Pi `models.json` → `maxTokens`, which wins over the server profile | 16,384 (model-card per-turn budget) in every Mode and Worker request; in direct mode a 4,096 cap cut off one three-file run mid-thought ([phases 1c/1d](ladder/phase1d-tuned-effective/README.md)) |
 | temperature / top_p / top_k | Pi `models.json` → `samplingParams`, else Pi defaults | Pi default is 1 / 0.95 / 20 (the model card's agentic sampling) |
 | presence / repetition penalty | request | 0 / 1.0 — 0.5 showed nothing measurable (1c vs 1d: 13/15 vs 14/15, same request and error counts), though that comparison changed the cap at the same time |
-| thinking budget | server profile only | off — a 4,096-per-block budget was never triggered in 15 runs; the request cap is what binds |
-| `max_tool_result_tokens` | server profile only | off — the largest tool result in 30 runs was 2,639 characters |
+| thinking budget | server profile only | off — a 4,096-per-block budget was never triggered in 15 runs; the request cap is what binds. With `reasoning_parser` set (Paul's server has `qwen_3`) a server thinking budget may take effect, unlike in A13, so `/mellum check` fails when it is on |
+| `max_tool_result_tokens` | server profile only | off — the largest tool result in 30 runs was 2,639 characters; `/mellum check` fails when a cap is set |
 | thinking on/off | request: `chat_template_kwargs` from `thinkingFormat`; a server `forced_ct_kwargs` would override it | on in every Mode and Worker request; the ladder's server profile left `forced_ct_kwargs` unset, and setup step 3 forces it on for clients that send nothing |
 | thinking level (`thinking:` in the agent file, `--thinking`) | nowhere | inert: Pi's level does not reach an `openai-completions` provider; two runs at "high" and "medium" sent byte-identical requests ([ablation A5](ladder/ablation-a5-thinking-medium/README.md)) |
 | `thinking_budget` (request field) | a hook could send it (`ladder/ladder/thinking-budget.js`) | not enforced for this model: oMLX needs a reasoning parser configured to build its budget processor ([A13](ladder/ablation-a13-budget-medium/README.md)) |
@@ -353,15 +353,18 @@ The thresholds are judgement on little data; each message states its count.
 `/admin/api/models` and `/admin/api/global-settings` (GET only) and your
 provider entry, and report `server`, `model`, `settings`, `global`,
 `provider`, `advice` and `admin` findings, worst first. The expected values
-are in `templates/omlx-model-settings.json`, split in two: `serverOnly`
-(context window, TurboQuant), which no request changes, so a difference
-fails (a test ties the context window to the ladder's baseline profile), and
-`overridden` (`max_tokens`, thinking, penalties), which each request sends,
-so a difference is info. The provider entry is compared with the host's
-template; a different `maxTokens` or sampling value fails, since that is what
-binds. A settings fix prints as the `PUT` to run yourself. On each
-activation Mode reads the server-only settings (one second at most, silent
-when unreadable) and warns once: `Mellum server settings differ:
+are in `templates/omlx-model-settings.json`. A `settings` difference fails
+when no request can undo it: a `serverOnly` key (context window, TurboQuant,
+thinking budget, tool-result cap; a test ties them to the ladder's baseline
+profile), thinking forced off (`forced_ct_kwargs` lists `enable_thinking`
+and the server's `enable_thinking` is false), or, with `force_sampling` on,
+a temperature, top_p or top_k other than `forcedSampling` (1 / 0.95 / 20,
+what Pi sends). A difference in `overridden` (`max_tokens`, thinking,
+penalties), which each request sends, is info. The provider entry is
+compared with the host's template; a different `maxTokens` or sampling
+value fails, since that is what binds. A settings fix prints as the `PUT` to
+run yourself. On each activation Mode reads the same binding settings (one
+second at most, silent when unreadable) and warns once: `Mellum server settings differ:
 <key> <actual> (expected <expected>). Run /mellum check.` The record's
 `server` field (`match`, and the differing keys) lets `learn` tell a run on
 drifted settings apart later.

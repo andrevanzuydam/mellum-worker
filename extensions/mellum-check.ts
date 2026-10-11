@@ -1,9 +1,10 @@
 /**
  * The setup check: compares what the oMLX server reports and what the host's provider
  * entry says with the measured settings in templates/omlx-model-settings.json.
- * Only the server-only model values (context window, TurboQuant) can fail: oMLX gives a
- * request's cap, sampling and chat-template values precedence over the model profile, and
- * Pi and OpenCode send theirs with every request, so the server's are only advised (info).
+ * Only server values no request can change fail: the server-only group (context window,
+ * TurboQuant, thinking budget, tool-result cap), thinking forced off, and sampling other than
+ * the provider's while `force_sampling` is on. oMLX otherwise gives a request's cap, sampling
+ * and chat-template values precedence, so the server's own are only advised (info).
  * checkSetup is pure. The front ends (Mode's /mellum check and activation check,
  * scripts/mellum.mjs) pass gatherInputs their own reader and GET, usually fetchJson; this
  * module only ever GETs and never writes. The fix for a settings mismatch is a `PUT`
@@ -24,8 +25,11 @@ export interface Finding {
 
 export interface Expected {
 	modelId: string;
-	/** `serverOnly`: no request overrides these; `overridden`: each request sends its own. */
-	model: { serverOnly: Record<string, unknown>; overridden: Record<string, unknown> };
+	/**
+	 * `serverOnly`: no request overrides these; `overridden`: each request sends its own;
+	 * `forcedSampling`: what the server's sampling must be when its `force_sampling` is on.
+	 */
+	model: { serverOnly: Record<string, unknown>; overridden: Record<string, unknown>; forcedSampling: Record<string, unknown> };
 	global: Record<string, unknown>;
 	advice: Record<string, unknown>;
 }
@@ -83,22 +87,39 @@ function diffs(wanted: Obj, actualOf: (key: string) => unknown): Diff[] {
 	return out;
 }
 
-const lines = (d: Diff[], word = "expected") => d.map((x) => `  ${x.key} ${show(x.actual)} (${word} ${show(x.expected)})`);
+/** Why a rule's diff binds although the key is not server-only by itself. */
+const NOTES: Record<string, string> = {
+	enable_thinking: "thinking is forced off for every client",
+	temperature: "force_sampling is on, so the server's sampling wins over the request",
+	top_p: "force_sampling is on, so the server's sampling wins over the request",
+	top_k: "force_sampling is on, so the server's sampling wins over the request",
+};
+const lines = (d: Diff[], word = "expected", notes: Record<string, string> = {}) =>
+	d.map((x) => `  ${x.key} ${show(x.actual)} (${word} ${show(x.expected)})${notes[x.key] ? `: ${notes[x.key]}` : ""}`);
 
 // ---- model settings (/admin/api/models) -----------------------------------------------
 
 /**
- * The differing server-only `model` keys (or, with `group` "overridden", the advised ones),
- * or null when the model or its `settings` is absent. The activation warning and the run
- * record use the server-only diffs: those are the only server values a request cannot change.
+ * The binding server diffs, or with `group` "overridden" the advised ones; null when the model
+ * or its `settings` is absent. Binding: the server-only keys, plus two rules where the server
+ * beats the request: `enable_thinking` false while `forced_ct_kwargs` forces it, and
+ * temperature/top_p/top_k other than `forcedSampling` while `force_sampling` is true. The
+ * activation warning and the run record use the binding diffs.
  */
-export function settingsDiffs(adminModels: unknown, expected: Expected, group: keyof Expected["model"] = "serverOnly"): Diff[] | null {
+export function settingsDiffs(adminModels: unknown, expected: Expected, group: "serverOnly" | "overridden" = "serverOnly"): Diff[] | null {
 	const list = isObj(adminModels) ? adminModels.models : adminModels;
 	if (!Array.isArray(list)) return null;
 	const entry = list.find((m) => isObj(m) && m.id === expected.modelId);
 	if (!isObj(entry) || !isObj(entry.settings)) return null;
 	const settings = entry.settings;
-	return diffs(expected.model[group], (k) => settings[k]);
+	const out = diffs(expected.model[group], (k) => settings[k]);
+	if (group !== "serverOnly") return out;
+	const forced = settings.forced_ct_kwargs;
+	if (Array.isArray(forced) && forced.includes("enable_thinking") && settings.enable_thinking === false) {
+		out.push({ key: "enable_thinking", expected: true, actual: false });
+	}
+	if (settings.force_sampling === true) out.push(...diffs(expected.model.forcedSampling, (k) => settings[k]));
+	return out;
 }
 
 /** The exact PUT that applies the server-only and advised model settings. Shown to the user, never run. */
@@ -217,16 +238,17 @@ export function checkSetup(inputs: CheckInputs, expected: Expected): Finding[] {
 		if (d === null) {
 			out.push({ id: "settings", level: "warn", message: `the admin API has no settings for ${expected.modelId}`, fix: adminUrl });
 		} else if (d.length === 0) {
-			out.push({ id: "settings", level: "ok", message: "server-only model settings match the measured profile" });
+			out.push({ id: "settings", level: "ok", message: "binding model settings match the measured profile" });
 		} else {
 			out.push({
 				id: "settings",
 				level: "fail",
-				message: `model settings differ from the measured profile:\n${lines(d).join("\n")}`,
+				message: `model settings differ from the measured profile:\n${lines(d, "expected", NOTES).join("\n")}`,
 				fix: putCommand(adminBase, expected),
 			});
 		}
-		const o = settingsDiffs(inputs.adminModels.value, expected, "overridden") ?? [];
+		// A key already in the fail (enable_thinking forced off) is not repeated as info.
+		const o = (settingsDiffs(inputs.adminModels.value, expected, "overridden") ?? []).filter((x) => !(d ?? []).some((y) => y.key === x.key));
 		if (o.length > 0) {
 			// Pi's template sends the cap, sampling and thinking flag; OpenCode's only the cap.
 			const why =
