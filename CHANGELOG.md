@@ -23,10 +23,14 @@ Versions match git tags; pin one in both install lines.
   drift, announced-but-not-taken steps) and suggests `## Mellum` lines. It
   adds only the missing lines to `AGENTS.md`, and only after you answer
   yes; an existing line with another value is shown as a conflict, never
-  rewritten.
+  rewritten, and the section never goes past the 600-character facts cap.
 - `node <package dir>/scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]`:
-  the same report from the terminal, for OpenCode and Pi Worker; it only
-  prints.
+  the same report from the terminal (run it from the project), for OpenCode
+  and Pi Worker; it only prints.
+- The setup skill's last step runs `scripts/mellum.mjs check` for your host
+  and shows its output, so a wrong server setting shows up before the first
+  task. `docs/recipe.md` gains a section on the run record, the seven
+  `learn` patterns and the check.
 - The run record gains `server` (`match`, and the differing settings), so
   a run on drifted settings can be told apart later; `match` is null when
   the settings could not be read.
@@ -37,6 +41,13 @@ Versions match git tags; pin one in both install lines.
   4,096, thinking not forced) instead of 16,384 and a forced thinking flag,
   and the README lists them. They live in `templates/omlx-model-settings.json`,
   which a test ties to the ladder's baseline profile.
+- The oMLX backend guide, recipe table and provider notes no longer call
+  16,384 or forced thinking the server's values: the server profile is
+  4,096 with thinking not forced, and Pi and OpenCode send their own 16,384
+  output limit per request, which oMLX honours over the server value.
+- README: Use it explains Model settings, Check your setup, Learn from your
+  runs (with an example report) and Project facts as one flow, with the
+  commands for Pi Mode, the terminal, OpenCode and Pi Worker.
 - README: a Future work section lists what is on the roadmap, in order,
   with links to ROADMAP.md and BACKLOG.md.
 - README: about 40% shorter; same install lines, numbers and links.

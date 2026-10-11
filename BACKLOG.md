@@ -107,28 +107,10 @@ group and any listener whose cwd is the workspace, and records it.
 *Reopens when* the next change to `ladder/`, or any record showing a
 leftover process.
 
-**`/mellum learn`: show users what happened and how to tune.** Run records
-hold the evidence (a test command failing in 7 to 25 variants before one
-passes; files written outside the project's layout; a success reply after a
-failed last command; deadline hits, nudges), but most users never find or
-read `~/.pi/agent/mellum-mode-runs.jsonl`. A `/mellum learn` subcommand reads
-the recent records for the current project, deterministically, with no
-model call, names each pattern in plain words with counts, and proposes the
-remedy: for test-command thrash, the `## Mellum` section with the command
-that finally passed. It shows the section and asks before writing it to
-`AGENTS.md`. Worker needs the same: the Pi child and the OpenCode subagent
-write no record today, so this needs a record from the guards extension and
-the OpenCode plugin, and a host-neutral analyser (`scripts/mellum-learn.mjs`)
-that a skill can run in either host. *Reopens when* M.7 closes with the facts block
-shipped; met 2026-10-10, scheduled as M.7A on the roadmap.
-
-**Server and model setup check.** Getting oMLX to serve Mellum with the
-measured settings is finicky (the model id, a 56,000 context window, a
-4,096 generation budget, cache quantization off, one concurrent request,
-sampling 1 / 0.95 / 20), and a wrong value shows up only as worse runs.
-A read-only `/mellum check` (or a `check` mode of `/mellum learn`) asks the
-server for its models and the model's settings, compares them with the
-values `skills/mellum-setup` writes, and with the host's provider entry, and
-prints each mismatch with the fix; the same check runs as a script for
-OpenCode and the Pi Worker. *Reopens when* M.7A is scheduled; it ships with
-`/mellum learn`.
+**Measure a 16,384 ceiling.** The AgentClinic runs (A18 to A20)
+used a 4,096 generation ceiling; Pi and OpenCode send 16,384 per request,
+which oMLX honours over the server value, so on rungs 6–9 users run an
+unmeasured ceiling. A19's
+command at the `tuned` profile's 16,384 ceiling on rungs 4–9, counting
+mid-run `length` stops from the traces, would show whether it helps long
+runs or only lets a stuck run drift. *Reopens when* Paul schedules it.

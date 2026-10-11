@@ -23,6 +23,18 @@ Check: `cd "$SMOKE" && node --test calculator.test.js` exits 0 and
 `calculator.js` multiplies `priceCents` by `quantity`. Typical time on an
 M-series Mac is under a minute.
 
+Last, once the fixture passes, check the server and provider against the
+measured profile (it only reads):
+
+```bash
+node "$PKG"/scripts/mellum.mjs check --host pi
+node "$PKG"/scripts/mellum.mjs check --host opencode
+```
+
+Run the line for the user's host and show its output. In Pi Mode,
+`/mellum check` does the same. Any `FAIL` line is a setup problem to fix
+before reporting success; a `WARN` or `INFO` line is shown as is.
+
 If it fails: confirm phase 3's server answers, that the host picked
 `omlx/Mellum2.1-12B-A2.5B-Thinking-6bit` (Pi shows it in the status line;
 OpenCode in the session header), and that the brief named the test

@@ -33,13 +33,13 @@ In the admin page at `http://127.0.0.1:8001/admin`, or via
 | setting | value |
 | --- | --- |
 | `max_context_window` | 56000 |
-| `max_tokens` | 16384 |
-| `forced_ct_kwargs` | `["enable_thinking"]` |
+| `max_tokens` | 4096 |
+| `forced_ct_kwargs` | `null` (unset) |
 | TurboQuant / cache quantization | off |
 
 Clients send their own `max_tokens`, sampling, and penalties, and oMLX
-gives the request precedence over the profile. The profile values are
-ceilings and the thinking lock.
+gives the request precedence over the profile. The profile values are the
+measured baseline; thinking is on by default and is not forced.
 
 ## Memory
 

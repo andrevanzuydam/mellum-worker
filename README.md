@@ -58,8 +58,8 @@ headlessly.
 Each span appends a JSON line to `~/.pi/agent/mellum-mode-runs.jsonl`
 (task, times, requests, tokens, files, commands with pass or fail, final
 reply; schema 2 adds missing files, file-changing commands, final-turn
-shape, guard counts, host and versions). `MELLUM_MODE_RUNS` sets the path;
-`0` turns it off.
+shape, guard counts, host and versions; `server` records whether the oMLX
+settings matched). `MELLUM_MODE_RUNS` sets the path; `0` turns it off.
 
 **Project facts (Mode).** Mode sends Mellum only the worker prompt and
 your task, never your conversation, skills or `AGENTS.md`, except one
@@ -111,13 +111,16 @@ If pi-subagents says the child "produced no output", dispatch it once more
 | concurrent requests | 1 |
 | hot cache | off |
 
-Other clients of the same oMLX model can change these; `/mellum check` shows drift.
+Other clients of the same oMLX model can change these. Pi and OpenCode
+send their own 16,384 output limit per request, which oMLX honours over this
+server value.
 
 **Check your setup.** In Pi Mode, `/mellum check`. From the terminal, and
-for OpenCode or Pi Worker:
+for OpenCode or Pi Worker (`--json` for JSON):
 
 ```bash
-node <package dir>/scripts/mellum.mjs check --host pi|opencode [--json]
+node <package dir>/scripts/mellum.mjs check --host pi
+node <package dir>/scripts/mellum.mjs check --host opencode
 ```
 
 `<package dir>` is `~/.pi/agent/git/github.com/pauleveritt/mellum-worker`
@@ -136,11 +139,24 @@ Mellum server settings differ: max_tokens 16384 (expected 4096). Run /mellum che
 or `/mellum learn 25`. It reads the run records for the current directory,
 names what went wrong (a guessed test command, a bent project, success
 claimed after a failed command, long runs, servers, settings drift), and
-suggests `## Mellum` lines. It asks before adding the missing ones to
-`AGENTS.md` and never rewrites a line you have; a different value prints
-as a conflict, and it never takes the section past 600 characters. From
-the terminal, and for OpenCode or Pi Worker, run it from the project
-directory; it only prints:
+suggests `## Mellum` lines, for example:
+
+```
+mellum learn: 6 runs in ~/code/shop (2026-10-08 to 2026-10-11)
+- Test command guessed wrong in 3 of 6 runs (median 2 commands before one passed). The command that passed: uv run python -m pytest tests
+- Project bent to fit in 2 runs: __init__.py, pytest.ini
+
+Suggested for AGENTS.md:
+
+## Mellum
+- Test command: uv run python -m pytest tests
+- Do not: install packages or add dependencies
+```
+
+It asks before adding the missing lines to `AGENTS.md` and never rewrites
+a line you have; a different value prints as a conflict, and it never takes
+the section past 600 characters. From the terminal, and for OpenCode or Pi
+Worker, run it from the project directory; it only prints:
 
 ```bash
 node <package dir>/scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]
@@ -223,7 +239,7 @@ extensions/                   Mellum Mode and the child guards (Pi)
 opencode/plugin.js            skills-path hook (OpenCode)
 skills/mellum-setup/          the guided installer
 templates/                    agent files and provider fragments, per host
-scripts/                      merge-json, render-agent (the skill); mellum.mjs check
+scripts/                      merge-json, render-agent (the skill); mellum.mjs check, learn
 docs/                         recipe, backend guides, docs/sdd.md
 ladder/, docs/ladder/         the measuring ladder and its phase records
 ROADMAP.md, BACKLOG.md        phases and deferred work
@@ -237,8 +253,6 @@ after a prompt change. From `ladder/`: `uv run python -m pytest`, and
 
 In order; see [ROADMAP.md](ROADMAP.md) and [BACKLOG.md](BACKLOG.md).
 
-- **M.7A:** `/mellum learn` turns run records into fixes; a check catches
-  drifted oMLX model settings.
 - **M.7B:** run records for the Pi Worker and OpenCode.
 - **M.8:** Worker one-liners (`async: false`, re-dispatch hint, intercom
   opt-out).
