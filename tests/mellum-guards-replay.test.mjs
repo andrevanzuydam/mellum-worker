@@ -27,6 +27,6 @@ for (const name of RUNS) {
 		assert.equal(record.edits, run.calls.filter((c) => c.toolName === "write" || c.toolName === "edit").length);
 		assert.ok(record.finalReply.startsWith(run.final.split("\n")[0]), "finalReply starts with final.md");
 		assert.match(record.task, /^Task: /);
-		assert.equal(record.promptVersion, "unknown", "the archived prompt predates the version marker");
+		assert.equal(record.promptVersion, "v5", "the marker follows the pi-subagents preamble in the archived system prompt");
 	});
 }

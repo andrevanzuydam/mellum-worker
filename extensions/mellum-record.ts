@@ -118,10 +118,13 @@ export const PACKAGE_VERSION: string = (() => {
 	}
 })();
 
-/** `vN` from the prompt's first-line marker `<!-- mellum-worker prompt vN -->`, else "unknown". */
+/**
+ * `vN` from the prompt's marker `<!-- mellum-worker prompt vN -->`, else "unknown". The marker is
+ * the first match at the start of any line: the Mode prompt starts with it, a Worker child's system
+ * message carries it after the pi-subagents preamble.
+ */
 export function promptVersionOf(prompt: string): string {
-	const first = prompt.split("\n", 1)[0] ?? "";
-	return /^<!--\s*mellum-worker prompt (v\d+)\s*-->/.exec(first)?.[1] ?? "unknown";
+	return /^<!--\s*mellum-worker prompt (v\d+)\s*-->/m.exec(prompt)?.[1] ?? "unknown";
 }
 
 export type Activation = "one-shot" | "on" | "headless";

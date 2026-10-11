@@ -32,3 +32,10 @@ test("Mode re-exports the moved names, the same objects", () => {
 	assert.equal(mode.PACKAGE_VERSION, PACKAGE_VERSION);
 	assert.equal(promptVersionOf("<!-- mellum-worker prompt v7 -->\nx"), "v7");
 });
+
+test("promptVersionOf finds the marker at the start of any line, after a preamble", () => {
+	assert.equal(promptVersionOf("You are a child subagent.\nThe parent owns it.\n<!-- mellum-worker prompt v5 -->\nYou edit"), "v5");
+	assert.equal(promptVersionOf("first <!-- mellum-worker prompt v5 --> inline is not a marker"), "unknown");
+	assert.equal(promptVersionOf("a\n<!-- mellum-worker prompt v2 -->\n<!-- mellum-worker prompt v9 -->"), "v2");
+});
+

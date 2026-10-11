@@ -4,6 +4,7 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFile
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
+import { readRecords } from "../extensions/mellum-learn.ts";
 import { RUNS, replay } from "./helpers/worker-replay.mjs";
 
 // The CLI never touches the network here: MELLUM_CHECK_FIXTURES makes it read the three
@@ -219,8 +220,7 @@ test("learn --json reads the three replayed Worker records as three runs", async
 	// each carries the test's cwd, so learn runs from there.
 	const runs = join(temp("mellum-cli-replay-"), "runs.jsonl");
 	for (const name of RUNS) await replay(name, runs);
-	const lines = readFileSync(runs, "utf8").trimEnd().split("\n").map((l) => JSON.parse(l));
-	assert.deepEqual(lines.map((l) => l.kind), ["worker", "worker", "worker"]);
+	assert.deepEqual(readRecords(readFileSync(runs, "utf8")).records.map((r) => r.kind), ["worker", "worker", "worker"], "kind survives learn's parser");
 	const r = learnRun(["learn", "--json", "--file", runs], { cwd: process.cwd() });
 	assert.equal(r.status, 0, r.stderr);
 	const out = JSON.parse(r.stdout);

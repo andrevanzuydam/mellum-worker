@@ -17,4 +17,4 @@ and no server.
 
 The converter is `tests/helpers/worker-replay.mjs`. The records a replay writes carry the test's own
 `cwd`, `host: "json"` and `server: {match: null, diffs: []}` (the fake fetch rejects), and
-`promptVersion: "unknown"` (the archived prompt predates the version marker).
+`promptVersion: "v5"` (the marker sits after the pi-subagents preamble in the archived system message).
