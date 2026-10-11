@@ -4,6 +4,15 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Changed
+
+- README and setup phase 8: keep each `## Mellum` bullet on one line (Mode
+  drops continuation lines and flattens nested bullets); add `pythonpath =
+  ["."]` under `[tool.pytest.ini_options]` when tests import root modules,
+  which phase 8 now offers; and a note that Mellum as your main Pi model
+  gets none of the package's help, with how to start Pi so `python` and
+  `pytest` are on PATH if you do.
+
 ## [0.1.5] - 2026-10-11
 
 ### Fixed

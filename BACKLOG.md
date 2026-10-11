@@ -126,5 +126,8 @@ a suggested bullet `Run Python with uv: uv run python …`; `learn` patterns
 for "command not found" or exit 127 on `python`/`pytest` (remedy: the uv
 bullet) and for `find`/`grep -r` over `.` without excluding `.venv`
 (remedy: a "do not search .venv/" value); ac-demo's roadmap saying `uv run
-python app.py`. The bullets change what Mellum reads, so they are measured
-with A21. *Reopens when* A21 is scheduled.
+python app.py`; `/mellum check` linting the `## Mellum` section (nested
+bullets or continuation lines, a test label not exactly `Test command:`, a
+fallback adding a second test command; seen in ac-demo 2026-10-11). The
+bullets change what Mellum reads, so they are measured with A21.
+*Reopens when* A21 is scheduled.

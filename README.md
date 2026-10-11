@@ -83,7 +83,18 @@ Mode appends these bullets to every task as `Project facts:`. Bullets only,
 text. Without the section, a pytest project gets `Test command: uv run
 --offline python -m pytest -q`. `MELLUM_MODE_FACTS=0` turns both off; the
 handoff and run record say which applied. `/skill:mellum-setup` phase 8
-writes the section for you.
+writes the section for you. Keep each bullet on one line: Mode drops
+continuation lines and flattens nested bullets.
+
+If your tests import a module from the project root, add `pythonpath =
+["."]` under `[tool.pytest.ini_options]` in `pyproject.toml`; then bare
+`pytest`, `uv run pytest` and `python -m pytest` all find it.
+
+**Mellum as your main Pi model** gets none of this: no worker prompt, facts,
+guards or run record (8/15 on the ladder). Use `/mellum` or the Worker. If
+you do run it bare, start Pi from the project's environment (`uv run pi`, or
+`source .venv/bin/activate` first) so `python` and `pytest` are on PATH, and
+leave context files on so it sees `AGENTS.md`.
 
 **Mellum Worker (Pi).** "Use mellum-worker to do this: the cart total
 ignores quantity, fix it. Test command: node --test calculator.test.js."

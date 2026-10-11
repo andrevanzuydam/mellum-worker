@@ -54,9 +54,15 @@ If yes:
 ```
 
 4. Ask before writing. On a yes, append it to the end of `AGENTS.md`
-   (create the file if absent). Mode reads only bullets, and the section
-   ends at the next `#` or `##` heading. Keep the bullet text to at most
-   600 characters; over that, Mode warns and ignores the whole section.
+   (create the file if absent). Mode reads only bullets, one line each
+   (it drops continuation lines and flattens nested bullets), and the
+   section ends at the next `#` or `##` heading. Keep the bullet text to at
+   most 600 characters; over that, Mode warns and ignores the whole section.
+5. If `pyproject.toml` mentions pytest, has no `pythonpath` under
+   `[tool.pytest.ini_options]`, and the tests import modules from the
+   project root, offer to add `pythonpath = ["."]` there, so every way of
+   running the tests (bare `pytest`, `uv run pytest`, `python -m pytest`)
+   can import them. Show the lines and ask before writing.
 
 If no, record that the user declined and move on.
 
