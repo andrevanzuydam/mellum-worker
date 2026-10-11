@@ -12,8 +12,11 @@ and no server.
   requests. Absolute temp paths (`/private/var/folders/.../ladder-xxxx`) became `/home/user`; the
   messages and results are otherwise as recorded.
 - `a10-rung{1,3,5}-r1.final.md`: copied unchanged from `docs/ladder/ablation-a10-delegated-v5/<run>/final.md`
-  (no absolute home paths appear in them, so nothing was replaced). It is the run's final report,
-  which stands in for the child's last turn: the trace holds requests, not responses.
+  (no absolute home paths appear in them, so nothing was replaced). It is the ladder's `final_text`,
+  the PARENT's report on the run, not Mellum's last turn; the trace holds requests, not responses.
+  The replay uses it only to close the request count (one more assistant turn after the last traced
+  request), so a replayed record's `finalReply` is the parent's text, and the `startsWith(final.md)`
+  assertion only checks that this last turn is carried through to the record.
 
 The converter is `tests/helpers/worker-replay.mjs`. The records a replay writes carry the test's own
 `cwd`, `host: "json"` and `server: {match: null, diffs: []}` (the fake fetch rejects), and
