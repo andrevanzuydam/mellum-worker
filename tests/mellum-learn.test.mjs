@@ -58,7 +58,7 @@ test("bent-project: files and commands become Do not values, never a Write only 
 	const p = pat(r, "bent-project");
 	assert.equal(p.count, 3); // the sed on src/app.py, nested tests/conftest.py and uv sync run is a near-miss
 	assert.equal(p.message, "Project bent to fit in 3 runs: conftest.py, pyproject.toml, src/__init__.py; uv add httpx");
-	assert.deepEqual(p.bullets, ["Do not: install packages or add dependencies; add files at the project root; add __init__.py files"]);
+	assert.deepEqual(p.bullets, ["Do not: install packages or add dependencies; add __init__.py, conftest.py, pytest.ini or setup.cfg files"]);
 });
 
 test("false-success: a failed or missing last command with a success claim; 'failed' and a passing last command do not", () => {
@@ -117,7 +117,7 @@ test("patterns come in the table's order and the suggestion merges the bullets",
 	// the Do not bullets share one label
 	assert.deepEqual(r.suggestion, [
 		`Test command: ${T1}`,
-		"Do not: install packages or add dependencies; add files at the project root; add __init__.py files; start servers",
+		"Do not: install packages or add dependencies; add __init__.py, conftest.py, pytest.ini or setup.cfg files; start servers",
 	]);
 });
 
@@ -369,9 +369,10 @@ test("bent-project: each kind of bend becomes its own Do not value, and nothing 
 	const bullets = (files, commands) => pat(learn([mk(files, commands)], { cwd: "/home/user/proj", n: 10 }), "bent-project").bullets;
 	assert.deepEqual(bullets(["pyproject.toml", "src/a.py"]), ["Do not: install packages or add dependencies"]);
 	assert.deepEqual(bullets(["src/a.py"], [{ command: "uv add httpx", failed: false }]), ["Do not: install packages or add dependencies"]);
-	assert.deepEqual(bullets(["pytest.ini", "lib/b.py"]), ["Do not: add files at the project root"]);
-	assert.deepEqual(bullets(["src/__init__.py"]), ["Do not: add __init__.py files"]);
-	assert.deepEqual(bullets(["__init__.py"]), ["Do not: add files at the project root"]);
+	assert.deepEqual(bullets(["pytest.ini", "lib/b.py"]), ["Do not: add __init__.py, conftest.py, pytest.ini or setup.cfg files"]);
+	assert.deepEqual(bullets(["src/__init__.py"]), ["Do not: add __init__.py, conftest.py, pytest.ini or setup.cfg files"]);
+	assert.deepEqual(bullets(["__init__.py"]), ["Do not: add __init__.py, conftest.py, pytest.ini or setup.cfg files"]);
+	assert.ok(!bullets(["app.py", "pytest.ini"]).join().includes("project root"), "never forbids root files in general");
 	assert.deepEqual(bullets(["/tmp/out.txt", "uv.lock"]), ["Do not: install packages or add dependencies"]);
 });
 
@@ -412,9 +413,9 @@ test("formatReport: the Suggested block shows only the lines that would be added
 	);
 	const m = mergeSuggestion("## Mellum\n\n- Do not: start servers\n- Write only: app.py, lib/, src/, tests/\n", r.suggestion);
 	const out = formatReport(r, "/home/user/proj", m.added) + formatMerge(m, r.suggestion);
-	assert.match(out, /Suggested for AGENTS\.md:\n\n## Mellum\n- Do not: install packages or add dependencies; add files at the project root; add __init__\.py files$/);
+	assert.match(out, /Suggested for AGENTS\.md:\n\n## Mellum\n- Do not: install packages or add dependencies; add __init__\.py, conftest\.py, pytest\.ini or setup\.cfg files$/);
 	assert.doesNotMatch(out, /start servers/);
-	const none = mergeSuggestion("## Mellum\n\n- Do not: start servers; install packages or add dependencies; add files at the project root; add __init__.py files\n- Write only: app.py, lib/, src/, tests/\n", r.suggestion);
+	const none = mergeSuggestion("## Mellum\n\n- Do not: start servers; install packages or add dependencies; add __init__.py, conftest.py, pytest.ini or setup.cfg files\n- Write only: app.py, lib/, src/, tests/\n", r.suggestion);
 	const outNone = formatReport(r, "/home/user/proj", none.added) + formatMerge(none, r.suggestion);
 	assert.doesNotMatch(outNone, /Suggested/);
 	assert.doesNotMatch(outNone, /Kept as written/);

@@ -4,6 +4,14 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Fixed
+
+- The suggested `## Mellum` line no longer says "add files at the project
+  root", which contradicts projects that keep `app.py` at the root. The
+  README, the setup skill and `/mellum learn` now name the bends instead:
+  `Do not: install packages or add dependencies; add __init__.py,
+  conftest.py, pytest.ini or setup.cfg files`.
+
 ## [0.1.4] - 2026-10-11
 
 ### Added

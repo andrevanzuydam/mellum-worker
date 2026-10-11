@@ -109,11 +109,23 @@ leftover process.
 
 **A21: the lighter `## Mellum` section and a one-file roadmap.** README,
 setup skill and `/mellum learn` now suggest `Test command:` plus `Do not:`
-(install packages, add files at the project root, weaken tests) and no
-`Write only:` list; A19's 9/12 and 0/12 outside the layout were measured
-with `Write only:`. ac-demo has also moved its four phases into one
-`specs/roadmap.md`, asked for as "Implement Phase N of specs/roadmap.md".
-A21 is a fixture variant of rungs 6–9 with both changes, 12 runs against
-A19; the existing fixtures stay as A18–A20's record. If A21 falls short,
-the docs go back to recommending `Write only:`. *Reopens when* the GPU is
-free for an hour and Paul schedules it.
+naming the bends seen (dependencies; `__init__.py`, `conftest.py`,
+`pytest.ini`, `setup.cfg`; weakened tests) and no `Write only:` list; A19's
+9/12 and 0/12 outside the layout were measured with `Write only:`
+([note](docs/superpowers/research/2026-10-11-facts-wording.md)). ac-demo
+now keeps its phases in one `specs/roadmap.md`, asked for as "Implement
+Phase N of specs/roadmap.md". A21 is a rungs 6–9 fixture variant with both,
+12 runs against A19; if it falls short, the docs go back to `Write only:`.
+*Reopens when* the GPU is free for an hour and Paul schedules it.
+
+
+**Facts and learn v2: uv and `.venv`.** A session in ac-demo lost an
+exit-127 detour to bare `python` (not on PATH; only `uv run` works) and 39%
+of its time to `find .` walking `.venv`
+([note](docs/superpowers/research/2026-10-11-facts-wording.md)). Candidates:
+a suggested bullet `Run Python with uv: uv run python …`; `learn` patterns
+for "command not found" or exit 127 on `python`/`pytest` (remedy: the uv
+bullet) and for `find`/`grep -r` over `.` without excluding `.venv`
+(remedy: a "do not search .venv/" value); ac-demo's roadmap saying `uv run
+python app.py`. The bullets change what Mellum reads, so they are measured
+with A21. *Reopens when* A21 is scheduled.

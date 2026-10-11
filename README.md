@@ -71,7 +71,7 @@ to fit ([What helped](#what-helped)). Add a `## Mellum` section to the
 ## Mellum
 
 - Test command: uv run python -m pytest tests
-- Do not: install packages or add dependencies; add files at the project root; weaken tests
+- Do not: install packages or add dependencies; add __init__.py, conftest.py, pytest.ini or setup.cfg files; weaken tests
 ```
 
 The measured section (A19) also had `- Write only: app.py, models.py,
@@ -163,7 +163,7 @@ mellum learn: 4 runs in /home/user/proj (2026-10-01 to 2026-10-04)
 Suggested for AGENTS.md:
 
 ## Mellum
-- Do not: install packages or add dependencies; add files at the project root; add __init__.py files
+- Do not: install packages or add dependencies; add __init__.py, conftest.py, pytest.ini or setup.cfg files
 ```
 
 It asks before adding those lines to `AGENTS.md` and never rewrites a line

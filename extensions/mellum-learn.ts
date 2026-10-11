@@ -183,12 +183,11 @@ function bentProject(runs: RunLine[]): Pattern | undefined {
 	const detail = [files.join(", "), commands.join(", ")].filter(Boolean).join("; ");
 	// One Do not value per kind of bend seen; no Write only list, which few projects keep.
 	const deps = commands.length > 0 || files.some((f) => f === "pyproject.toml" || f === "uv.lock" || f.endsWith("/pyproject.toml") || f.endsWith("/uv.lock"));
-	const root = files.some((f) => !f.includes("/") && f !== "pyproject.toml" && f !== "uv.lock");
-	const nested = files.some((f) => f.includes("/") && f.endsWith("__init__.py"));
+	// Name the bends seen, never "the project root": real roadmaps put app.py there.
+	const config = files.some((f) => !/(^|\/)(pyproject\.toml|uv\.lock)$/.test(f));
 	const values = [
 		...(deps ? ["install packages or add dependencies"] : []),
-		...(root ? ["add files at the project root"] : []),
-		...(nested ? ["add __init__.py files"] : []),
+		...(config ? ["add __init__.py, conftest.py, pytest.ini or setup.cfg files"] : []),
 	];
 	const bullets = values.length > 0 ? [`Do not: ${values.join("; ")}`] : [];
 	return { id: "bent-project", count, message: `Project bent to fit in ${count} runs: ${detail}`, bullets };

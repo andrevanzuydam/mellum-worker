@@ -38,8 +38,9 @@ If yes:
    is not recognised, so in a pytest project Mode would add the fallback as
    a second test command, and a backticked command keeps its backticks.
 2. Offer a `Do not:` line naming what Mellum should leave alone, for
-   example: install packages or add dependencies; add files at the project
-   root; weaken tests. Mention, without pushing it, that a `Write only:`
+   example: install packages or add dependencies; add `__init__.py`,
+   `conftest.py`, `pytest.ini` or `setup.cfg` files; weaken tests. Name the
+   files, not "the project root": many projects keep code there. Mention, without pushing it, that a `Write only:`
    line (the files and directories Mellum may change) gives a strict
    boundary; the measured section had one, but most projects do not need
    it.
@@ -49,7 +50,7 @@ If yes:
 ## Mellum
 
 - Test command: uv run python -m pytest tests
-- Do not: install packages or add dependencies; add files at the project root; weaken tests
+- Do not: install packages or add dependencies; add __init__.py, conftest.py, pytest.ini or setup.cfg files; weaken tests
 ```
 
 4. Ask before writing. On a yes, append it to the end of `AGENTS.md`
