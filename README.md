@@ -15,8 +15,8 @@ Your main model stays in charge.
   child. Your model briefs it and runs the tests itself. 15/15.
 
 Every setting was measured by the ladder (`ladder/`; records in
-`docs/ladder/`). The 6-bit weights are on
-[Hugging Face](https://huggingface.co/pauleveritt/Mellum2.1-12B-A2.5B-Thinking-mlx-6bit).
+`docs/ladder/`). The 6-bit MLX weights (for Apple Silicon, served by oMLX)
+are on [Hugging Face](https://huggingface.co/pauleveritt/Mellum2.1-12B-A2.5B-Thinking-mlx-6bit).
 
 ## Install
 
