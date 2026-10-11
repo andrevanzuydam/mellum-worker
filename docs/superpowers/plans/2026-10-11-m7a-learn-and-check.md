@@ -140,3 +140,5 @@ lifecycle: active
 
 - **Task 1** (RED): wrote `tests/settings-source.test.mjs` and `ladder/tests/test_settings_source.py` first. `npm test` failed on the missing `templates/omlx-model-settings.json`; the pytest raised FileNotFoundError on it. With the data file added and docs untouched, the Node table rows failed with "max_tokens row reads 16384, expected 4096" and "README lacks | model id | ...".
 - **Task 1** (GREEN): data file verbatim from spec section 1; `03-server.md` table and `PUT` and the README Model settings table updated. `npm test`: 138 pass; ladder `pytest -m "not slow"`: 122 pass.
+- **Task 2** (RED): wrote `tests/mellum-check.test.mjs` and the fixtures first. `npm test` failed with ERR_MODULE_NOT_FOUND on `extensions/mellum-check.ts`.
+- **Task 2** (GREEN): fixtures from three read-only GETs (home paths anonymised, `auth`/aliases dropped); module implemented. `node --test tests/mellum-check.test.mjs`: 23 pass. `npm test`: 161 pass. During the run one test failed on `/maxTokens/` matching `maxTokensField`; fixed the test regex.
