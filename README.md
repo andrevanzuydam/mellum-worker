@@ -274,6 +274,28 @@ agent templates after a prompt change. `ladder/` measures this checkout. From `l
 `uv run python -m pytest` for its tests,
 `uv run python -m ladder.run_ladder --help` for runs; records in `docs/ladder/`.
 
+## Future work
+
+In order; [ROADMAP.md](ROADMAP.md) has the detail and
+[BACKLOG.md](BACKLOG.md) the deferred items.
+
+- **`/mellum learn` and a setup check (M.7A):** read your run records and
+  name what went wrong (test-command thrash, files outside the layout,
+  success claimed after a failure) with the fix to apply; check the oMLX
+  model settings against the measured ones, since other clients can change
+  them.
+- **Worker run records (M.7B):** the same analysis for the Pi Worker and
+  OpenCode.
+- **Worker one-liners (M.8):** `async: false`, a re-dispatch hint, and an
+  opt-in to drop pi-subagents' intercom block.
+- **An in-process Worker (M.9):** run the child through Pi's SDK instead of
+  pi-subagents, so it sees only the worker prompt.
+- **Mediated brief (M.10):** your main model writes a fixed-shape brief and
+  shows it before Mode runs it; to be compared against project facts.
+- **Measure the OpenCode port (M.3)** and an **Ollama backend (M.4)**.
+- **A 16,384 generation ceiling:** every number here was measured at 4,096;
+  a ladder phase will test the larger ceiling on the long rungs.
+
 ## Releases
 
 Pin a tag in both install lines. OpenCode treats an unpinned git spec as

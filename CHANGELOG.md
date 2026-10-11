@@ -4,6 +4,11 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Changed
+
+- README: a Future work section lists what is on the roadmap, in order,
+  with links to ROADMAP.md and BACKLOG.md.
+
 ## [0.1.3] - 2026-10-10
 
 ### Fixed
