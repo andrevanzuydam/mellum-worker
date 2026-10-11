@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import test from "node:test";
-import { formatReport, learn, readRecords } from "../extensions/mellum-learn.ts";
+import { formatMerge, formatReport, learn, learnFromTexts, mergeSuggestion, modeRunsFile, readRecords, recordFiles } from "../extensions/mellum-learn.ts";
 
 const FIX = join(resolve(import.meta.dirname, ".."), "tests/fixtures/learn");
 const text = (name) => readFileSync(join(FIX, name), "utf8");
@@ -221,4 +221,94 @@ test("paul-runs: the scratch runs (worktree cwd) fire false-success and announce
 	assert.equal(pat(r, "announce-stop").count, stopped.length);
 	// the home directory is anonymised in the fixture
 	assert.doesNotMatch(text("paul-runs.jsonl"), /pauleveritt/);
+});
+
+// ---- the suggestion merged into AGENTS.md (spec section 3, "The suggestion and the write") ----
+
+const TC = "Test command: uv run python -m pytest tests";
+const DN = "Do not: start servers";
+
+test("mergeSuggestion: no AGENTS.md gives a new file with the section", () => {
+	const m = mergeSuggestion(undefined, [TC, DN]);
+	assert.equal(m.text, `# Project\n\n## Mellum\n\n- ${TC}\n- ${DN}\n`);
+	assert.deepEqual(m.added, [TC, DN]);
+	assert.deepEqual(m.conflicts, []);
+});
+
+test("mergeSuggestion: a file without the section gets it after one blank line, earlier bytes unchanged", () => {
+	const before = "# Proj\n\nSome text.\n";
+	const m = mergeSuggestion(before, [DN]);
+	assert.equal(m.text, `${before}\n## Mellum\n\n- ${DN}\n`);
+	assert.deepEqual(m.added, [DN]);
+	// already ending in a blank line: no second one
+	assert.equal(mergeSuggestion("# Proj\n\n", [DN]).text, `# Proj\n\n## Mellum\n\n- ${DN}\n`);
+});
+
+test("mergeSuggestion: a file without a trailing newline gets one before the new section", () => {
+	assert.equal(mergeSuggestion("# Proj\n\nSome text.", [DN]).text, `# Proj\n\nSome text.\n\n## Mellum\n\n- ${DN}\n`);
+});
+
+test("mergeSuggestion: a ## Mellum between two sections takes the missing bullets after its last one; every other byte is identical", () => {
+	const prefix = "# Proj\n\n## Setup\n\nRun it.\n\n## Mellum\n\nSome words.\n\n- Test command: uv run python -m pytest tests\n- Write only: src/,\n  tests/\n";
+	const suffix = "\n## Notes\n\n- keep me\n";
+	const m = mergeSuggestion(prefix + suffix, [TC, DN]);
+	assert.deepEqual(m.added, [DN]);
+	assert.deepEqual(m.conflicts, []);
+	assert.ok(m.text.startsWith(prefix), "prefix identical");
+	assert.ok(m.text.endsWith(suffix), "suffix identical");
+	assert.equal(m.text.slice(prefix.length, m.text.length - suffix.length), `- ${DN}\n`);
+});
+
+test("mergeSuggestion: a ## Mellum ending the file without a trailing newline gets one, then the bullets", () => {
+	const before = "# Proj\n\n## Mellum\n\n- Write only: src/";
+	const m = mergeSuggestion(before, [DN]);
+	assert.ok(m.text.startsWith(before));
+	assert.equal(m.text, `${before}\n- ${DN}\n`);
+});
+
+test("mergeSuggestion: a ## Mellum with no bullets takes them after a blank line, before the next heading", () => {
+	const m = mergeSuggestion("## Mellum\n\n## Other\n", [DN]);
+	assert.equal(m.text, `## Mellum\n\n- ${DN}\n\n## Other\n`);
+});
+
+test("mergeSuggestion: CRLF files keep CRLF", () => {
+	const before = "# Proj\r\n\r\n## Mellum\r\n\r\n- Write only: src/\r\n\r\n## Notes\r\n";
+	const m = mergeSuggestion(before, [DN]);
+	assert.equal(m.text, `# Proj\r\n\r\n## Mellum\r\n\r\n- Write only: src/\r\n- ${DN}\r\n\r\n## Notes\r\n`);
+});
+
+test("mergeSuggestion: a different existing value is a conflict, never rewritten; an identical bullet is not added", () => {
+	const before = "## Mellum\n\n- test command: npm test\n- Do not: start servers\n";
+	const m = mergeSuggestion(before, [TC, DN]);
+	assert.equal(m.text, before, "file unchanged");
+	assert.deepEqual(m.added, []);
+	assert.deepEqual(m.conflicts, ["your test command: npm test; runs passed with: uv run python -m pytest tests"]);
+});
+
+test("mergeSuggestion: nothing to suggest leaves the text as it was", () => {
+	assert.deepEqual(mergeSuggestion("# P\n", []), { text: "# P\n", added: [], conflicts: [] });
+});
+
+test("formatMerge: conflicts, what is missing, or nothing to add", () => {
+	assert.equal(formatMerge({ added: [], conflicts: ["your Test command: a; runs passed with: b"] }, [TC]), "\nKept as written in AGENTS.md:\n- your Test command: a; runs passed with: b");
+	assert.equal(formatMerge({ added: [DN], conflicts: [] }, [TC, DN]), `\nMissing from AGENTS.md:\n- ${DN}`);
+	assert.equal(formatMerge({ added: [TC, DN], conflicts: [] }, [TC, DN]), "");
+	assert.equal(formatMerge({ added: [], conflicts: [] }, [TC]), "\nAGENTS.md already has these lines.");
+	assert.equal(formatMerge({ added: [], conflicts: [] }, []), "");
+});
+
+test("recordFiles: MELLUM_MODE_RUNS (0 or empty: none, ~ expanded) or the default, plus the Worker file", () => {
+	const w = "/h/.pi/agent/mellum-worker-runs.jsonl";
+	assert.deepEqual(recordFiles({}, "/h"), ["/h/.pi/agent/mellum-mode-runs.jsonl", w]);
+	assert.deepEqual(recordFiles({ MELLUM_MODE_RUNS: "0" }, "/h"), [w]);
+	assert.deepEqual(recordFiles({ MELLUM_MODE_RUNS: "" }, "/h"), [w]);
+	assert.deepEqual(recordFiles({ MELLUM_MODE_RUNS: "~/r.jsonl" }, "/h"), ["/h/r.jsonl", w]);
+	assert.equal(modeRunsFile({ MELLUM_MODE_RUNS: "/x/r.jsonl" }, "/h"), "/x/r.jsonl");
+});
+
+test("learnFromTexts: sums the skipped counts over every file; a missing file is no records", () => {
+	const r = learnFromTexts([text("patterns/damaged.jsonl"), undefined, text("patterns/damaged.jsonl")], { cwd: "/home/user/proj", n: 10 });
+	assert.deepEqual(r.skipped, { old: 2, bad: 4 });
+	assert.equal(r.runs, 4);
+	assert.equal(learnFromTexts([undefined], { cwd: "/x", n: 10 }).runs, 0);
 });

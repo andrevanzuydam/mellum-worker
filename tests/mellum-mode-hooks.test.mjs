@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import install from "../extensions/mellum-mode.ts";
 import { checkSetup, formatFindings, loadExpected, providerEntry } from "../extensions/mellum-check.ts";
@@ -806,12 +806,154 @@ test("/mellum check without a UI prints the findings to stdout", async () => {
 	});
 });
 
-test("/mellum learn is not available yet and does not turn Mode on", async () => {
-	const { handlers, calls, mellum } = recordingPi({ mode: "tui", hasUI: true });
-	await mellum("learn 5");
-	assert.deepEqual(calls.notify, [["mellum learn: not available yet", "info"]]);
-	assert.deepEqual(calls.setModel, []);
-	modeIsOff(handlers);
+// ---- /mellum learn: the report, the suggestion, and AGENTS.md written only on yes ----
+
+const LEARN_FIX = new URL("./fixtures/learn/patterns/", import.meta.url);
+
+// A temp project dir (real path, as process.cwd() would give) and a runs file whose records
+// are the given pattern fixture moved into that dir. HOME is a temp dir; MELLUM_MODE_RUNS names the file.
+async function withLearn(pattern, body, { workerPattern } = {}) {
+	const { realpathSync } = await import("node:fs");
+	const cwd = realpathSync(mkdtempSync(`${tmpdir()}/mellum-learn-cwd-`));
+	const runs = `${mkdtempSync(`${tmpdir()}/mellum-learn-runs-`)}/runs.jsonl`;
+	const moved = (name) => readFileSync(new URL(`${name}.jsonl`, LEARN_FIX), "utf8").replaceAll("/home/user/proj", cwd);
+	writeFileSync(runs, pattern ? moved(pattern) : "");
+	const saved = { HOME: process.env.HOME, RUNS: process.env.MELLUM_MODE_RUNS };
+	process.env.HOME = mkdtempSync(`${tmpdir()}/mellum-home-`);
+	process.env.MELLUM_MODE_RUNS = runs;
+	if (workerPattern) {
+		mkdirSync(`${process.env.HOME}/.pi/agent`, { recursive: true });
+		writeFileSync(`${process.env.HOME}/.pi/agent/mellum-worker-runs.jsonl`, moved(workerPattern));
+	}
+	try {
+		return await body(cwd);
+	} finally {
+		process.env.HOME = saved.HOME;
+		if (saved.RUNS === undefined) delete process.env.MELLUM_MODE_RUNS;
+		else process.env.MELLUM_MODE_RUNS = saved.RUNS;
+	}
+}
+
+// recordingPi with ctx.cwd set and a confirm that records its calls and answers `answer`.
+function learnPi(cwd, { hasUI = true, answer = true } = {}) {
+	const h = recordingPi({ mode: hasUI ? "tui" : "print", hasUI });
+	h.ctx.cwd = cwd;
+	h.calls.confirm = [];
+	h.ctx.ui.confirm = async (title, message) => {
+		h.calls.confirm.push([title, message]);
+		return answer;
+	};
+	return h;
+}
+
+test("/mellum learn with a UI: notifies the report, asks, and on yes writes AGENTS.md; Mode stays off", async () => {
+	await withLearn("servers", async (cwd) => {
+		const { handlers, calls, mellum } = learnPi(cwd, { answer: true });
+		await mellum("learn");
+		const report = calls.notify.find(([m]) => m.startsWith("mellum learn: "));
+		assert.ok(report, JSON.stringify(calls.notify));
+		assert.match(report[0], /Mellum started a server in \d+ runs\./);
+		assert.match(report[0], /Suggested for AGENTS\.md:/);
+		assert.deepEqual(calls.confirm, [["Add these lines to AGENTS.md?", "- Do not: start servers"]]);
+		assert.equal(readFileSync(`${cwd}/AGENTS.md`, "utf8"), "# Project\n\n## Mellum\n\n- Do not: start servers\n");
+		assert.deepEqual(calls.setModel, []);
+		modeIsOff(handlers);
+	});
+});
+
+test("/mellum learn: confirm false writes nothing", async () => {
+	await withLearn("servers", async (cwd) => {
+		const { calls, mellum } = learnPi(cwd, { answer: false });
+		await mellum("learn 5");
+		assert.equal(calls.confirm.length, 1);
+		assert.equal(existsSync(`${cwd}/AGENTS.md`), false);
+	});
+});
+
+test("/mellum learn on an existing AGENTS.md adds only the missing bullets inside its section", async () => {
+	await withLearn("servers", async (cwd) => {
+		const before = "# P\n\n## Mellum\n\n- Write only: src/\n\n## Notes\n\nx\n";
+		writeFileSync(`${cwd}/AGENTS.md`, before);
+		const { mellum } = learnPi(cwd, { answer: true });
+		await mellum("learn");
+		assert.equal(readFileSync(`${cwd}/AGENTS.md`, "utf8"), "# P\n\n## Mellum\n\n- Write only: src/\n- Do not: start servers\n\n## Notes\n\nx\n");
+	});
+});
+
+test("/mellum learn without a UI prints to stdout, never asks, and writes nothing", async () => {
+	await withLearn("servers", async (cwd) => {
+		const { calls, mellum } = learnPi(cwd, { hasUI: false, answer: true });
+		const out = [];
+		const original = console.log;
+		console.log = (...a) => out.push(a.join(" "));
+		try {
+			await mellum("learn");
+		} finally {
+			console.log = original;
+		}
+		assert.equal(out.length, 1);
+		assert.match(out[0], /^mellum learn: \d+ runs in /);
+		assert.match(out[0], /- Do not: start servers/);
+		assert.deepEqual(calls.confirm, []);
+		assert.deepEqual(calls.notify, []);
+		assert.equal(existsSync(`${cwd}/AGENTS.md`), false);
+	});
+});
+
+test("/mellum learn with no suggestion (or nothing missing, or a conflict) never asks", async () => {
+	await withLearn("long-run", async (cwd) => {
+		const { calls, mellum } = learnPi(cwd);
+		await mellum("learn");
+		assert.match(calls.notify[0][0], /took more than 30 requests/);
+		assert.deepEqual(calls.confirm, []);
+		assert.equal(existsSync(`${cwd}/AGENTS.md`), false);
+	});
+	await withLearn("test-thrash", async (cwd) => {
+		const before = "## Mellum\n\n- Test command: npm test\n";
+		writeFileSync(`${cwd}/AGENTS.md`, before);
+		const { calls, mellum } = learnPi(cwd);
+		await mellum("learn");
+		assert.match(calls.notify[0][0], /your Test command: npm test; runs passed with: uv run python -m pytest tests/);
+		assert.deepEqual(calls.confirm, []);
+		assert.equal(readFileSync(`${cwd}/AGENTS.md`, "utf8"), before);
+	});
+	await withLearn(undefined, async (cwd) => {
+		const { calls, mellum } = learnPi(cwd);
+		await mellum("learn");
+		assert.equal(calls.notify[0][0], `mellum learn: 0 runs in ${cwd}\nnothing to fix`);
+		assert.deepEqual(calls.confirm, []);
+	});
+});
+
+test("/mellum learn reads the Worker records file in HOME too, and counts skipped lines over both files", async () => {
+	await withLearn(
+		"damaged",
+		async (cwd) => {
+			const { calls, mellum } = learnPi(cwd);
+			await mellum("learn");
+			assert.match(calls.notify[0][0], /^mellum learn: 4 runs in /);
+			assert.match(calls.notify[0][0], /Skipped 2 old and 4 bad lines\./);
+		},
+		{ workerPattern: "damaged" },
+	);
+});
+
+test("/mellum learn 0 warns and reads nothing; a failed write warns and does not throw", async () => {
+	await withLearn("servers", async (cwd) => {
+		const { calls, mellum } = learnPi(cwd);
+		await mellum("learn 0");
+		assert.deepEqual(calls.notify, [["mellum learn: n must be a whole number above 0", "warning"]]);
+		assert.deepEqual(calls.confirm, []);
+	});
+	await withLearn("servers", async (cwd) => {
+		const records = readFileSync(process.env.MELLUM_MODE_RUNS, "utf8");
+		const gone = `${cwd}/missing-dir`;
+		writeFileSync(process.env.MELLUM_MODE_RUNS, records.replaceAll(cwd, gone));
+		const { calls, mellum } = learnPi(gone, { answer: true });
+		await mellum("learn");
+		assert.equal(calls.confirm.length, 1);
+		assert.ok(calls.notify.some(([m, l]) => l === "error" && m.startsWith("mellum learn: could not write AGENTS.md")), JSON.stringify(calls.notify));
+	});
 });
 
 test("/mellum check <words> is a one-shot task, not the check", async () => {

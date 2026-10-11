@@ -132,6 +132,24 @@ also reads the settings (one second at most) and warns in one line on drift:
 Mellum server settings differ: max_tokens 16384 (expected 4096). Run /mellum check.
 ```
 
+**Learn from your runs.** In Pi Mode, `/mellum learn` (the last 10 runs)
+or `/mellum learn 25`. It reads the run records for the current directory,
+names what went wrong (a guessed test command, a bent project, success
+claimed after a failed command, long runs, servers, settings drift), and
+suggests `## Mellum` lines. It asks before adding the missing ones to
+`AGENTS.md` and never rewrites a line you have; a different value prints
+as a conflict. From the terminal, and for OpenCode or Pi Worker, it only
+prints:
+
+```bash
+node <package dir>/scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]
+```
+
+Records come from `MELLUM_MODE_RUNS` (default
+`~/.pi/agent/mellum-mode-runs.jsonl`) and
+`~/.pi/agent/mellum-worker-runs.jsonl`; `--file` reads one file instead.
+Pi Worker records join in M.7B.
+
 ## What you get
 
 Rungs 1–5, five coding tasks, three runs each, on an M5 Max through oMLX

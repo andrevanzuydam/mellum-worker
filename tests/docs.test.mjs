@@ -33,3 +33,17 @@ test("README Use it says how to run the setup check in Pi Mode and from the term
 	assert.match(use, /exit/i, "says how it exits");
 	assert.ok(use.includes("Mellum server settings differ"), "shows the activation warning");
 });
+
+test("README Use it says how to run learn in Pi Mode and from the terminal, after the check", () => {
+	const use = read("README.md").split("\n## Use it\n")[1].split("\n## What you get\n")[0];
+	const at = use.indexOf("**Learn from your runs.**");
+	assert.ok(at > use.indexOf("**Check your setup.**"), "a Learn from your runs paragraph after Check your setup");
+	const learn = use.slice(at);
+	assert.ok(learn.includes("/mellum learn"), "names /mellum learn");
+	assert.ok(learn.includes("/mellum learn 25"), "shows the run count");
+	assert.ok(learn.includes("scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]"), "names the CLI and its flags");
+	assert.ok(learn.includes("AGENTS.md"), "says where the suggestion goes");
+	assert.ok(learn.includes("MELLUM_MODE_RUNS"), "says where the records live");
+	assert.ok(learn.includes("M.7B"), "says Worker runs join in M.7B");
+	for (const fence of learn.matchAll(/```bash\n([\s\S]*?)```/g)) assert.doesNotMatch(fence[1], /\w\|\w/, "no a|b alternation in a bash fence");
+});

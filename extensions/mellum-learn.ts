@@ -1,8 +1,11 @@
 /**
  * `learn`: reads Mellum Mode's JSONL run records and names what went wrong, with a
- * suggested `## Mellum` section for AGENTS.md. Pure: front ends read the records file
- * and write AGENTS.md (spec section 3). Type-only imports, so it loads without Pi.
+ * suggested `## Mellum` section for AGENTS.md. Pure: front ends read the records files
+ * and write AGENTS.md (spec section 3). Loads without Pi: the import of mellum-mode.ts is
+ * type-only, and mellum-facts.ts uses only node:path.
  */
+import { join } from "node:path";
+import { bulletOf, findMellumSection } from "./mellum-facts.ts";
 import type { RunRecord } from "./mellum-mode.ts";
 
 /** One parsed schema-2 line. Every field but `schema` and `kind` may be missing in a hand-edited or partial record. */
@@ -263,5 +266,108 @@ export function formatReport(r: Report, cwd: string): string {
 	if (r.suggestion.length > 0) {
 		lines.push("", "Suggested for AGENTS.md:", "", "## Mellum", ...r.suggestion.map((b) => `- ${b}`));
 	}
+	return lines.join("\n");
+}
+
+/** Mode's records file: `MELLUM_MODE_RUNS` (`0` or empty: none; a leading `~` is HOME), else the default. */
+export function modeRunsFile(env: Record<string, string | undefined>, home: string): string | undefined {
+	const v = env.MELLUM_MODE_RUNS;
+	if (v === "0" || v === "") return undefined;
+	if (v) return v.replace(/^~(?=$|\/)/, home);
+	return join(home, ".pi", "agent", "mellum-mode-runs.jsonl");
+}
+
+/** The files `learn` reads by default: Mode's records, then the Worker's (M.7B). */
+export function recordFiles(env: Record<string, string | undefined>, home: string): string[] {
+	const mode = modeRunsFile(env, home);
+	return [...(mode ? [mode] : []), join(home, ".pi", "agent", "mellum-worker-runs.jsonl")];
+}
+
+/** `learn` over several files' text (undefined: a missing file, no records), skipped lines summed. */
+export function learnFromTexts(texts: Array<string | undefined>, opts: { cwd: string; n: number }): Report {
+	const records: RunLine[] = [];
+	const skipped = { old: 0, bad: 0 };
+	for (const t of texts) {
+		if (t === undefined) continue;
+		const r = readRecords(t);
+		records.push(...r.records);
+		skipped.old += r.old;
+		skipped.bad += r.bad;
+	}
+	return learn(records, { ...opts, skipped });
+}
+
+const labelOf = (b: string) => (b.includes(":") ? b.slice(0, b.indexOf(":")).trim().toLowerCase() : b.trim().toLowerCase());
+const valueOf = (b: string) => (b.includes(":") ? b.slice(b.indexOf(":") + 1).trim() : "");
+
+/**
+ * Merges the suggested bullets into AGENTS.md's text (undefined: no file). Only labels the
+ * `## Mellum` section lacks are added, after its last bullet and before the next heading; a
+ * label it has with another value is a conflict, never rewritten. Every other byte is kept;
+ * a missing final newline is added where the new lines join.
+ */
+export function mergeSuggestion(
+	agentsMd: string | undefined,
+	bullets: string[],
+): { text: string; added: string[]; conflicts: string[] } {
+	if (agentsMd === undefined) {
+		return bullets.length === 0
+			? { text: "", added: [], conflicts: [] }
+			: { text: `# Project\n\n## Mellum\n\n${bullets.map((b) => `- ${b}\n`).join("")}`, added: [...bullets], conflicts: [] };
+	}
+	const eol = agentsMd.includes("\r\n") ? "\r\n" : "\n";
+	// Lines with their offsets: `end` is past the line's newline, if it has one.
+	const spans: { start: number; end: number; body: string; eol: boolean }[] = [];
+	for (let i = 0; i < agentsMd.length; ) {
+		const nl = agentsMd.indexOf("\n", i);
+		const end = nl < 0 ? agentsMd.length : nl + 1;
+		spans.push({ start: i, end, body: agentsMd.slice(i, nl < 0 ? end : nl).replace(/\r$/, ""), eol: nl >= 0 });
+		i = end;
+	}
+	const lines = spans.map((s) => s.body);
+	const section = findMellumSection(lines);
+	const existing = section
+		? lines
+				.slice(section.start + 1, section.end)
+				.map(bulletOf)
+				.filter((b): b is string => b !== undefined)
+		: [];
+	const added: string[] = [];
+	const conflicts: string[] = [];
+	for (const b of bullets) {
+		const same = existing.find((e) => labelOf(e) === labelOf(b));
+		if (same === undefined) added.push(b);
+		else if (same !== b && valueOf(same) !== valueOf(b)) conflicts.push(`your ${same}; runs passed with: ${valueOf(b)}`);
+	}
+	if (added.length === 0) return { text: agentsMd, added, conflicts };
+	const block = added.map((b) => `- ${b}${eol}`).join("");
+	const insertAt = (at: number, before: string) => agentsMd.slice(0, at) + before + block + agentsMd.slice(at);
+	if (!section) {
+		const sep = agentsMd === "" ? "" : agentsMd.endsWith("\n") ? (/\n\s*\n$/.test(agentsMd) ? "" : eol) : eol + eol;
+		return { text: `${agentsMd}${sep}## Mellum${eol}${eol}${block}`, added, conflicts };
+	}
+	// After the last bullet and its indented continuation lines; with no bullet, after the
+	// section's last non-blank line, one blank line first.
+	let last = -1;
+	for (let i = section.start + 1; i < section.end; i++) {
+		if (bulletOf(lines[i]) !== undefined) last = i;
+		else if (last >= 0 && i === last + 1 && /^\s+\S/.test(lines[i])) last = i;
+	}
+	let lead = "";
+	if (last < 0) {
+		last = section.start;
+		for (let i = section.start + 1; i < section.end; i++) if (lines[i].trim() !== "") last = i;
+		lead = eol;
+	}
+	const at = spans[last];
+	return { text: insertAt(at.end, (at.eol ? "" : eol) + lead), added, conflicts };
+}
+
+/** The lines front ends print after the report: conflicts, then what is missing or that nothing is. */
+export function formatMerge(m: { added: string[]; conflicts: string[] }, suggestion: string[]): string {
+	const lines: string[] = [];
+	if (m.conflicts.length > 0) lines.push("", "Kept as written in AGENTS.md:", ...m.conflicts.map((c) => `- ${c}`));
+	if (suggestion.length > 0 && m.added.length === 0 && m.conflicts.length === 0) lines.push("", "AGENTS.md already has these lines.");
+	else if (m.added.length > 0 && m.added.length < suggestion.length) lines.push("", "Missing from AGENTS.md:", ...m.added.map((b) => `- ${b}`));
 	return lines.join("\n");
 }

@@ -25,18 +25,32 @@ const SECTION_END = /^#{1,2}\s/;
 const BULLET = /^\s*[-*]\s+(.+)$/;
 const TEST_BULLET = /^test command:\s*(.+)$/i;
 
+/**
+ * The first `## Mellum` section of `lines`: its heading's index and the index of the next
+ * `#`/`##` heading (or `lines.length`). Undefined when there is none.
+ */
+export function findMellumSection(lines: string[]): { start: number; end: number } | undefined {
+	const start = lines.findIndex((l) => SECTION_START.test(l));
+	if (start < 0) return undefined;
+	const next = lines.findIndex((l, i) => i > start && SECTION_END.test(l));
+	return { start, end: next < 0 ? lines.length : next };
+}
+
+/** A Markdown bullet line's text, trimmed; undefined for any other line. */
+export function bulletOf(line: string): string | undefined {
+	const m = BULLET.exec(line);
+	return m ? m[1].trim() : undefined;
+}
+
 /** The bullets of the first `## Mellum` section, or undefined when there is none. */
 function sectionBullets(md: string): string[] | undefined {
 	const lines = md.split(/\r?\n/);
-	const start = lines.findIndex((l) => SECTION_START.test(l));
-	if (start < 0) return undefined;
-	const bullets: string[] = [];
-	for (const line of lines.slice(start + 1)) {
-		if (SECTION_END.test(line)) break;
-		const m = BULLET.exec(line);
-		if (m) bullets.push(m[1].trim());
-	}
-	return bullets;
+	const section = findMellumSection(lines);
+	if (!section) return undefined;
+	return lines
+		.slice(section.start + 1, section.end)
+		.map(bulletOf)
+		.filter((b): b is string => b !== undefined);
 }
 
 const total = (bullets: string[]) => bullets.reduce((n, b) => n + b.length, 0);

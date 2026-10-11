@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
@@ -108,4 +108,85 @@ test("installed under node_modules (as OpenCode installs it), the CLI runs from 
 	assert.equal(r.status, 0, r.stderr);
 	assert.equal(JSON.parse(r.stdout).host, "pi");
 	assert.ok(existsSync(join(tmp, `mellum-worker-${version}`, "extensions", "mellum-check.ts")), "mirror written under the temp dir");
+	const cwd = project("servers");
+	const l = learnRun(["learn", "--json", "--file", cwd.runs], { cwd: cwd.dir, script: join(pkg, "scripts/mellum.mjs"), env: { TMPDIR: tmp } });
+	assert.equal(l.status, 0, l.stderr);
+	assert.deepEqual(JSON.parse(l.stdout).suggestion, ["Do not: start servers"]);
+	assert.ok(existsSync(join(tmp, `mellum-worker-${version}`, "extensions", "mellum-learn.ts")), "learn ran from the mirror");
+});
+
+// ---- learn: prints only, never writes AGENTS.md ----
+
+const LEARN = join(ROOT, "tests/fixtures/learn");
+
+// A temp project dir (its real path, as process.cwd() reports it) and a runs file holding the
+// given pattern fixture's records moved into that dir.
+function project(pattern) {
+	const dir = realpathSync(temp("mellum-cli-proj-"));
+	const runs = join(temp("mellum-cli-runs-"), "runs.jsonl");
+	writeFileSync(runs, readFileSync(join(LEARN, "patterns", `${pattern}.jsonl`), "utf8").replaceAll("/home/user/proj", dir));
+	return { dir, runs };
+}
+
+function learnRun(args, { cwd, script = SCRIPT, env = {} } = {}) {
+	return spawnSync(process.execPath, [script, ...args], {
+		cwd,
+		encoding: "utf8",
+		env: { ...process.env, HOME: temp("mellum-cli-home-"), MELLUM_MODE_RUNS: "0", ...env },
+	});
+}
+
+test("learn --file paul-runs.jsonl --n 10 prints the report and never creates AGENTS.md", () => {
+	const dir = realpathSync(temp("mellum-cli-proj-"));
+	const r = learnRun(["learn", "--file", join(LEARN, "paul-runs.jsonl"), "--n", "10"], { cwd: dir });
+	assert.equal(r.status, 0, r.stderr);
+	assert.match(r.stdout, new RegExp(`^mellum learn: 0 runs in ${dir}\\nSkipped \\d+ old and 0 bad lines\\.\\nnothing to fix\\n$`));
+	assert.equal(existsSync(join(dir, "AGENTS.md")), false);
+});
+
+test("learn prints the patterns and the suggestion, and a conflict with AGENTS.md, which it leaves alone", () => {
+	const p = project("test-thrash");
+	const agents = "## Mellum\n\n- Test command: npm test\n";
+	writeFileSync(join(p.dir, "AGENTS.md"), agents);
+	const r = learnRun(["learn", "--file", p.runs], { cwd: p.dir });
+	assert.equal(r.status, 0, r.stderr);
+	assert.match(r.stdout, /Test command guessed wrong in 3 of 6 runs/);
+	assert.match(r.stdout, /Suggested for AGENTS\.md:\n\n## Mellum\n- Test command: uv run python -m pytest tests/);
+	assert.match(r.stdout, /- your Test command: npm test; runs passed with: uv run python -m pytest tests/);
+	assert.equal(readFileSync(join(p.dir, "AGENTS.md"), "utf8"), agents);
+});
+
+test("learn --json parses, with the report, the lines it would add and the conflicts; still writes nothing", () => {
+	const p = project("servers");
+	const r = learnRun(["learn", "--json", "--file", p.runs, "--n", "2"], { cwd: p.dir });
+	assert.equal(r.status, 0, r.stderr);
+	const out = JSON.parse(r.stdout);
+	assert.equal(out.cwd, p.dir);
+	assert.equal(out.runs, 2);
+	assert.deepEqual(out.patterns.map((x) => x.id), ["servers"]);
+	assert.deepEqual(out.added, ["Do not: start servers"]);
+	assert.deepEqual(out.conflicts, []);
+	assert.equal(existsSync(join(p.dir, "AGENTS.md")), false);
+});
+
+test("learn without --file reads MELLUM_MODE_RUNS and the Worker file in HOME, either may be missing", () => {
+	const p = project("servers");
+	const home = temp("mellum-cli-home-");
+	const both = learnRun(["learn", "--json"], { cwd: p.dir, env: { HOME: home, MELLUM_MODE_RUNS: p.runs } });
+	assert.equal(JSON.parse(both.stdout).runs, 4, both.stderr);
+	copy(p.runs, join(home, ".pi/agent/mellum-worker-runs.jsonl"));
+	const worker = learnRun(["learn", "--json", "--n", "100"], { cwd: p.dir, env: { HOME: home, MELLUM_MODE_RUNS: "0" } });
+	assert.equal(JSON.parse(worker.stdout).runs, 4, worker.stderr);
+	const none = learnRun(["learn", "--json"], { cwd: p.dir, env: { HOME: temp("mellum-cli-home-"), MELLUM_MODE_RUNS: join(p.dir, "nope.jsonl") } });
+	assert.equal(none.status, 0, none.stderr);
+	assert.equal(JSON.parse(none.stdout).runs, 0);
+});
+
+test("learn usage errors exit 2: --n not a whole number above 0, a missing --file, an unknown flag", () => {
+	const dir = realpathSync(temp("mellum-cli-proj-"));
+	for (const args of [["learn", "--n", "0"], ["learn", "--n", "ten"], ["learn", "--n"], ["learn", "--file", join(dir, "nope.jsonl")], ["learn", "--host", "pi"]]) {
+		const r = learnRun(args, { cwd: dir });
+		assert.equal(r.status, 2, `${args.join(" ")}: ${r.stdout}${r.stderr}`);
+		assert.match(r.stderr, /usage: node [\s\S]*mellum\.mjs learn \[--n 10\]/);
+	}
 });

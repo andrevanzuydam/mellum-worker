@@ -9,6 +9,8 @@
  *   /mellum off     – restore the previous model and tools
  *   /mellum check   – compare the oMLX server and the Pi provider entry with the measured
  *                     settings and print the findings; never switches, never writes
+ *   /mellum learn [n] – name what went wrong in the last n runs (default 10) in this directory
+ *                     and suggest a ## Mellum section; AGENTS.md is written only on a yes
  *
  * Each activation GETs the server's model settings (1 s at most) and warns once when they
  * differ from the measured profile; the run record keeps the result as `server`.
@@ -24,7 +26,7 @@
  * Headless: MELLUM_MODE=1 activates at session start (the ladder's "mode" runner).
  * Installed as a Pi package extension it loads in every parent session and stays dormant until /mellum. While on, it runs the child guards (createGuardSet) itself, so no second extension is needed.
  */
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -32,6 +34,7 @@ import { adminBaseOf, checkSetup, type Diff, fetchJson, formatFindings, gatherIn
 import { commandMutatesFiles } from "./mellum-commands.ts";
 import { createGuardSet, type GuardSet } from "./mellum-guards.ts";
 import { factsBlock, readProjectFacts, type ProjectFacts } from "./mellum-facts.ts";
+import { formatMerge, formatReport, learnFromTexts, mergeSuggestion, modeRunsFile, recordFiles } from "./mellum-learn.ts";
 
 export const MARK_ON = "[mellum-mode on]";
 export const MARK_OFF = "[mellum-mode off]";
@@ -430,10 +433,8 @@ export function openSpan(messages: Msg[]): { task: string; span: Msg[] } | undef
 }
 
 function runsFile(): string | undefined {
-	const env = process.env.MELLUM_MODE_RUNS;
-	if (env === "0" || env === "") return undefined;
-	if (env) return env.replace(/^~(?=$|\/)/, process.env.HOME ?? "~");
-	return resolve(process.env.HOME ?? ".", ".pi", "agent", "mellum-mode-runs.jsonl");
+	const file = modeRunsFile(process.env, process.env.HOME ?? ".");
+	return file === undefined ? undefined : resolve(file);
 }
 
 function toMillis(value: unknown): number | undefined {
@@ -517,6 +518,37 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 			say(ctx, formatFindings(findings), level);
 		} catch (error) {
 			warn(ctx, `mellum check: ${(error as Error)?.message ?? String(error)}`, "error");
+		}
+	}
+
+	// /mellum learn [n]: the report for this directory, from Mode's and the Worker's records.
+	// AGENTS.md is written only when the user answers yes; without a UI nothing is asked or written.
+	async function runLearn(ctx: any, n: number | undefined) {
+		if (n === undefined || !Number.isInteger(n) || n < 1) return warn(ctx, "mellum learn: n must be a whole number above 0", "warning");
+		const cwd: string = typeof ctx?.cwd === "string" ? ctx.cwd : process.cwd();
+		const agentsPath = resolve(cwd, "AGENTS.md");
+		let merged: ReturnType<typeof mergeSuggestion>;
+		try {
+			const report = learnFromTexts(recordFiles(process.env, home()).map(readIfExists), { cwd, n });
+			merged = mergeSuggestion(readIfExists(agentsPath), report.suggestion);
+			say(ctx, formatReport(report, cwd) + formatMerge(merged, report.suggestion));
+		} catch (error) {
+			return warn(ctx, `mellum learn: ${(error as Error)?.message ?? String(error)}`, "error");
+		}
+		if (ctx?.hasUI === false || merged.added.length === 0 || typeof ctx?.ui?.confirm !== "function") return;
+		let yes = false;
+		try {
+			yes = (await ctx.ui.confirm("Add these lines to AGENTS.md?", merged.added.map((b) => `- ${b}`).join("\n"))) === true;
+		} catch (error) {
+			return warn(ctx, `mellum learn: ${(error as Error)?.message ?? String(error)}`, "error");
+		}
+		if (!yes) return;
+		try {
+			writeFileSync(agentsPath, merged.text);
+			const k = merged.added.length;
+			say(ctx, `mellum learn: added ${k} line${k === 1 ? "" : "s"} to ${agentsPath}`);
+		} catch (error) {
+			warn(ctx, `mellum learn: could not write AGENTS.md: ${(error as Error)?.message ?? String(error)}`, "error");
 		}
 	}
 
@@ -624,13 +656,13 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 	}
 
 	pi.registerCommand("mellum", {
-		description: "mellum <task> | on | off | check — run Mellum with the worker prompt and tools inside this session",
+		description: "mellum <task> | on | off | check | learn [n] — run Mellum with the worker prompt and tools inside this session",
 		handler: async (args: string, ctx: any) => {
 			const sub = parseSubcommand(args);
 			if (sub.cmd === "off") return deactivate(ctx);
 			if (sub.cmd === "on") return activate(ctx, true, "on");
 			if (sub.cmd === "check") return runCheck(ctx);
-			if (sub.cmd === "learn") return say(ctx, "mellum learn: not available yet");
+			if (sub.cmd === "learn") return runLearn(ctx, sub.n);
 			const want = sub.task ?? "";
 			// One shot: the task runs under the mode and the mode ends when the agent settles.
 			if (active) {

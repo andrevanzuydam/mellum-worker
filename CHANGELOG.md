@@ -17,6 +17,16 @@ Versions match git tags; pin one in both install lines.
   at most) and warns in one line when they differ from the measured
   profile, since other clients of the same model can change them. Silent
   when the server cannot be read.
+- `/mellum learn [n]` in Pi Mode: reads the last n run records (default
+  10) for the current directory, names what went wrong (guessed test
+  command, bent project, false success, long runs, servers, settings
+  drift, announced-but-not-taken steps) and suggests `## Mellum` lines. It
+  adds only the missing lines to `AGENTS.md`, and only after you answer
+  yes; an existing line with another value is shown as a conflict, never
+  rewritten.
+- `node <package dir>/scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]`:
+  the same report from the terminal, for OpenCode and Pi Worker; it only
+  prints.
 - The run record gains `server` (`match`, and the differing settings), so
   a run on drifted settings can be told apart later; `match` is null when
   the settings could not be read.

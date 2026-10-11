@@ -2,10 +2,16 @@
  * Mellum from the terminal, for any host (Pi Mode, Pi Worker, OpenCode):
  *
  *   node scripts/mellum.mjs check [--host pi|opencode] [--json]
+ *   node scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]
  *
  * check compares the oMLX server (GETs only) and the host's provider entry with the measured
  * settings, prints the findings (fails first) or JSON, and exits 1 on any fail. It never
  * writes: a settings fix is printed as the PUT command for you to run.
+ *
+ * learn names what went wrong in the last n runs (default 10) under the current directory,
+ * from $MELLUM_MODE_RUNS (or ~/.pi/agent/mellum-mode-runs.jsonl) and
+ * ~/.pi/agent/mellum-worker-runs.jsonl, or only --file. It prints the suggested ## Mellum
+ * section and any conflict with ./AGENTS.md, and never writes: /mellum learn in Pi does that.
  *
  * MELLUM_CHECK_FIXTURES=<dir> (tests) reads <dir>/v1-models.json, admin-models.json and
  * global-settings.json in place of the three GETs.
@@ -16,7 +22,7 @@ import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const PKG = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const USAGE = "usage: node scripts/mellum.mjs check [--host pi|opencode] [--json]";
+const USAGE = "usage: node scripts/mellum.mjs check [--host pi|opencode] [--json]\n       node scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]";
 
 /**
  * Node refuses to strip types from .ts files under node_modules, where OpenCode installs this
@@ -53,13 +59,17 @@ function fail(msg) {
 
 function parseArgs(argv) {
 	const [cmd, ...rest] = argv;
-	const opts = { cmd, host: "pi", json: false };
+	const opts = { cmd, host: "pi", json: false, n: 10, file: undefined };
 	for (let i = 0; i < rest.length; i++) {
 		if (rest[i] === "--json") opts.json = true;
-		else if (rest[i] === "--host") opts.host = rest[++i];
+		else if (rest[i] === "--host" && cmd === "check") opts.host = rest[++i];
+		else if (rest[i] === "--n" && cmd === "learn") opts.n = /^\d+$/.test(rest[++i] ?? "") ? Number(rest[i]) : 0;
+		else if (rest[i] === "--file" && cmd === "learn") opts.file = rest[++i];
 		else fail(`unknown argument: ${rest[i]}`);
 	}
 	if (opts.host !== "pi" && opts.host !== "opencode") fail(`unknown host: ${opts.host}`);
+	if (!(opts.n >= 1)) fail("--n must be a whole number above 0");
+	if (cmd === "learn" && opts.file !== undefined && !existsSync(opts.file)) fail(`no such file: ${opts.file}`);
 	return opts;
 }
 
@@ -84,7 +94,17 @@ async function check(opts) {
 	if (findings.some((f) => f.level === "fail")) process.exitCode = 1;
 }
 
+async function learn(opts) {
+	const m = await import(pathToFileURL(join(codeRoot(), "extensions/mellum-learn.ts")).href);
+	const cwd = process.cwd();
+	const read = (p) => (existsSync(p) ? readFileSync(p, "utf8") : undefined);
+	const files = opts.file !== undefined ? [opts.file] : m.recordFiles(process.env, process.env.HOME || homedir());
+	const report = m.learnFromTexts(files.map(read), { cwd, n: opts.n });
+	const merged = m.mergeSuggestion(read(join(cwd, "AGENTS.md")), report.suggestion);
+	console.log(opts.json ? JSON.stringify({ cwd, ...report, added: merged.added, conflicts: merged.conflicts }, null, 2) : m.formatReport(report, cwd) + m.formatMerge(merged, report.suggestion));
+}
+
 const opts = parseArgs(process.argv.slice(2));
 if (opts.cmd === "check") await check(opts);
-else if (opts.cmd === "learn") fail("mellum learn: not available yet");
+else if (opts.cmd === "learn") await learn(opts);
 else fail(opts.cmd ? `unknown command: ${opts.cmd}` : "no command");
