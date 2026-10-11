@@ -6,14 +6,9 @@ One phase at a time; tangents go to the backlog, never into the current phase.
 
 ## Now
 
-**Measured:** Pi Mode 14/15 and Pi Worker 15/15 on rungs 1–5
-([records](docs/ladder/ablation-summary.md)); M.7 on AgentClinic rungs 6–9:
-facts off 1/12, the `## Mellum` section 9/12, fallback only 7/12
-([note](docs/superpowers/research/2026-10-09-m7-project-facts.md)).
-**Shipped:** M.5, M.6 and M.7 as v0.1.3; M.7A (`learn`, `check`) as v0.1.4; M.7B (Worker run records) as v0.1.6; see [`CHANGELOG.md`](CHANGELOG.md).
-**Active:** none. **Research captured:** [October 11 synthesis](docs/superpowers/research/2026-10-11-session-to-roadmap.md); bare hello-world tuning is closed.
-**Next:** M.7C (Pi 1.1 harness/telemetry), M.7D (completion/behavior evals),
-M.7E (measured execution bounds), then M.8, M.9, M.10, M.3 and M.4.
+**Active:** none; M.7B is closed ([phase records](#phases), [release](CHANGELOG.md#016---2026-10-11)).
+**Next:** M.7C, then M.7D and M.7E ([phases](#phases)); their evidence is the [October 11 synthesis](docs/superpowers/research/2026-10-11-session-to-roadmap.md).
+**Parked:** bare hello-world tuning is closed; broader instruction and discovery trials have [backlog reopen conditions](BACKLOG.md).
 
 ## Phases
 
@@ -37,6 +32,8 @@ M.7E (measured execution bounds), then M.8, M.9, M.10, M.3 and M.4.
 
 ## Gates
 
-A phase closes when its plan has `lifecycle: closed` with a `## Result`, the
-suite is green, the tag exists, and the README's numbers still match the
-ladder records they cite.
+A phase closes under [the SDD closing rules](docs/sdd.md#closing-a-phase):
+its plan records the result and is archived, roadmap/backlog state is current,
+the suite and document caps pass, and claims match the evidence they cite.
+Releases separately require matching tags, package and README versions, and
+a changelog section.

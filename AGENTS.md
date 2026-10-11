@@ -19,12 +19,23 @@ plan, or roadmap edit**; it carries the document caps and why each exists.
 within a phase; do not re-open settled, measured decisions without a ladder
 run in `ladder/`.
 
+**Evals are screens first, preregistered runs to decide** (`docs/sdd.md`):
+use a few targeted runs and a short research note while exploring; fix
+arms, n, scoring and the rule before runs that decide a change or claim.
+Specs describe product behavior changes; plans are for work large enough
+to need one.
+
 ## Document caps are not advisory
 
 `ROADMAP.md` caps at 400 lines; a Ships or Excludes cell at 900 characters, a
 Status cell at 1,000, a backlog entry at 1,200, a plan at 400 lines and 25%
 fenced, a spec at 400 lines. `tests/docs-caps.test.mjs` enforces them. Over
 cap means a research doc is owed, not that the wording gets trimmed.
+
+Caps apply at every update. `## Now` is a pointer, never a narrative;
+detail belongs in a phase row, backlog entry or linked research doc.
+Remove resolved, retired and superseded backlog entries. Preserve decisions
+and evidence with dated corrections; never edit archived plans.
 
 ## Working rules
 
@@ -64,4 +75,7 @@ not written at release time. This is a standing rule.
 
 Update the phase's Status cell and the `## Now` pointer in `ROADMAP.md`, close
 the plan with `## Result`, move it to `plans/archive/`, and remove any backlog
-entry the phase resolved. This is a standing rule.
+entry the phase resolved. Confirm claims against linked evidence, pass
+`node --test tests/docs-caps.test.mjs` and `npm test`, and reconcile the
+changelog before finishing the branch. A phase may close before a release
+tag. This is a standing rule.

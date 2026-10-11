@@ -4,6 +4,13 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Changed
+
+- Aligned the SDD and roadmap rules with ds4-engine: short current-work
+  pointers, dated corrections, explicit phase closure, and exploratory
+  screens followed by preregistered runs when deciding a change or claim.
+  Phase closure no longer requires a release tag.
+
 ## [0.1.6] - 2026-10-11
 
 ### Added
