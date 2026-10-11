@@ -10,6 +10,28 @@ line number.
 
 Reopen conditions, not promises.
 
+**Discovery/output policy beyond M.7E.** Seven tools do not prevent shell
+dependency scans. Throwaway discovery interception blocked scans, but its
+compact-output branch had no model-run evidence and its heuristics can block
+legitimate recursion. M.7C/M.7D own telemetry and regression cases; M.7E owns
+any narrowly justified Pi trial. Broader output preservation/compaction is
+still deferred ([synthesis](docs/superpowers/research/2026-10-11-session-to-roadmap.md)).
+*Reopens when* corrected host records show retrieval remains material after
+M.7E, with scoped legitimate recursion and recoverable full-output checks.
+
+**Natural project instructions and a short test-first policy.** Pi 1.0.2
+transfer spike: measured phase facts complete/correct 2/2; general replacement
+0/2 (one template leak missed by hidden tests, one blocking-server timeout).
+Mode parser general 1/2, TDD 0/2; the bullet reached Mellum but execution failed.
+Worker general and TDD both 2/2; TDD achieved behavioral red/green twice, once
+with parent resume/repair. Parents supplied enriched briefs, so this is not an
+isolated bullet effect. Keep ordinary command/environment and bounded facts;
+no video-continuity constraint, no further hello-world tuning, no universal
+TDD rule from n=2
+([results](docs/superpowers/research/2026-10-11-pi102-mode-worker-experiments.md)).
+*Reopens when* broader transfer/TDD ladder trials are scheduled; shared prompt
+or setup/learn promotion needs applicable ladder and host checks.
+
 **Prompt default `python -m pytest` (Worker).** Prompt v5 guesses `uv run
 --offline pytest -q`, which runs the `pytest` entry point without the
 project root on `sys.path`. Since M.7, Mellum Mode forwards the `## Mellum`
@@ -119,8 +141,8 @@ Phase N of specs/roadmap.md". A21 is a rungs 6–9 fixture variant with both,
 *Reopens when* the GPU is free for an hour and Paul schedules it.
 
 **Facts and learn v2: uv and `.venv`.** A session in ac-demo lost an
-exit-127 detour to bare `python` (not on PATH; only `uv run` works) and 39%
-of its time to `find .` walking `.venv`
+exit-127 detour to bare `python` (not on PATH; only `uv run` works) and a
+large result from `find .` walking `.venv`
 ([note](docs/superpowers/research/2026-10-11-facts-wording.md)). Candidates:
 a suggested bullet `Run Python with uv: uv run python …`; `learn` patterns
 for "command not found" or exit 127 on `python`/`pytest` (remedy: the uv

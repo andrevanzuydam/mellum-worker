@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-11",
+  "status": "local preservation only; not published",
+  "exclusions": {
+    "directories": [
+      ".git",
+      ".pytest_cache",
+      ".venv",
+      "__pycache__",
+      "node_modules",
+      "runtime"
+    ],
+    "files": [
+      ".env",
+      ".env.local",
+      "auth.json",
+      "models-original.json",
+      "models.json",
+      "models.json.bak",
+      "settings.json"
+    ],
+    "additional": "symlinks and filenames containing auth"
+  },
+  "publication_gate": "Review contents before attaching to a research release; local archives are not publication-cleared.",
+  "archives": [
+    {
+      "source": "/tmp/mellum-runs/bare-refinements-wv42y8s1",
+      "archive": "/Users/pauleveritt/.local/share/mellum-worker/research/2026-10-11/bare-refinements-wv42y8s1.tar.gz",
+      "sha256": "48c6fe8d86ebbd52365a71c858723502b656ae735a722ee9327f9235e5a90f97",
+      "files": 99,
+      "bytes": 719584
+    },
+    {
+      "source": "/tmp/mellum-runs/natural-agents-n2-asucpry9",
+      "archive": "/Users/pauleveritt/.local/share/mellum-worker/research/2026-10-11/natural-agents-n2-asucpry9.tar.gz",
+      "sha256": "cabb51734bf369ded32b6a47f3d3972ff76ed4106844b819810f9c8a7e60764f",
+      "files": 250,
+      "bytes": 1585469
+    },
+    {
+      "source": "/tmp/mellum-runs/pi102-transfer-1hfkued3",
+      "archive": "/Users/pauleveritt/.local/share/mellum-worker/research/2026-10-11/pi102-transfer-1hfkued3.tar.gz",
+      "sha256": "c8d11781436bbaf3b67094b5b8fa4212672761ed2e3583c2cac08faa3836a0b3",
+      "files": 915,
+      "bytes": 6205577
+    },
+    {
+      "source": "/tmp/mellum-runs/pi110-guards-o9x_4230",
+      "archive": "/Users/pauleveritt/.local/share/mellum-worker/research/2026-10-11/pi110-guards-o9x_4230.tar.gz",
+      "sha256": "2d58a108d8e117fd5b1e68ce55c4a38be7e113a31ebf19b4588a12ec708b2058",
+      "files": 424,
+      "bytes": 3512574
+    },
+    {
+      "source": "/tmp/mellum-runs/pi110-hello-ny6sfma5",
+      "archive": "/Users/pauleveritt/.local/share/mellum-worker/research/2026-10-11/pi110-hello-ny6sfma5.tar.gz",
+      "sha256": "b8e8b0acfd2447d0a4c452ea81f70596c6d21993a525612c9eb3208bcefe0f15",
+      "files": 346,
+      "bytes": 1823978
+    }
+  ]
+}
