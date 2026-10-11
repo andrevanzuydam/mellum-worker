@@ -1,7 +1,7 @@
 ---
 phase: M.7A
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # M.7A Learn and Check Implementation Plan
@@ -170,3 +170,17 @@ Paul agreed to the reviewer's three items: thinking forced off, forced sampling,
 - **GREEN:** data file `serverOnly` gains `thinking_budget_enabled` false and `max_tool_result_tokens` null, and a `forcedSampling` group; `settingsDiffs` adds the two rules to the binding diffs; the fail message notes why each rule binds; info skips a key already in the fail. One older hook test used forced thinking off as an "overridden" example; it now uses `forced_ct_kwargs` null. Step 3 (table, PUT with `enable_thinking` true, budget off, no cap), omlx.md, recipe, README and CHANGELOG updated. `npm test`: 266 pass; ladder `pytest -m "not slow"`: 122 pass (the baseline test now compares three server-only keys; TurboQuant stays excluded).
 - **Live (GET only):** `check --host pi` exit 0, "5 checks ok", INFO settings (`max_tokens` 4096 advised 16384; `forced_ct_kwargs` null advised `["enable_thinking"]`), INFO advice (memory guard 48, advised 14).
 - **Review** (one opus reviewer, `19d55e4..196a5df`): approve with fixes, no blockers; it confirmed the rules against oMLX's installed source and re-ran the 11 RED failures against the old code. Fixed: the printed `PUT` now includes `forcedSampling`, so it fixes a forced-sampling fail; thinking forced off through `chat_template_kwargs` (with `enable_thinking` unset) fails too; README table gains thinking budget and tool-result cap rows, and its check paragraph says "settings no request can undo"; recipe wording on the budget processor; the Fixed entry trimmed to the step-3 change. RED: 5 fail (forced-sampling fix, `putCommand` body, the `chat_template_kwargs` rule, two README tests). GREEN: `npm test` 267 pass; ladder 122 pass.
+
+## Result
+
+2026-10-11. Merged to `main`; ships in v0.1.4. `/mellum check`,
+`/mellum learn [n]`, the activation warning, the record's `server` field and
+`scripts/mellum.mjs check|learn` for the terminal, OpenCode and Pi Worker.
+Two rounds after the task reviews: Paul's fix wave (the traces show Mode and
+Worker requests sent `max_tokens` 16,384 with thinking on, so the check
+fails only on settings no request undoes, the setup skill keeps 16,384, and
+every wrong 4,096 claim is corrected) and the three-rule round (thinking
+forced off, sampling under `force_sampling`, thinking budget and tool-result
+cap). R8 (additive `Do not:`) kept by Paul. Live, read-only: `check --host
+pi` exit 0 with 5 ok; `learn` from ac-demo named one pattern. Suites at
+merge: `npm test` 267, ladder pytest (not slow) 122.
