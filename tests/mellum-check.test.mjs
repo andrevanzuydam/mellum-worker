@@ -114,6 +114,14 @@ test("thinking forced off fails: forced_ct_kwargs has enable_thinking and the se
 	assert.doesNotMatch(info?.message ?? "", /enable_thinking/, "not repeated as info");
 });
 
+test("thinking forced off through chat_template_kwargs fails too: oMLX applies it when enable_thinking is unset", () => {
+	const over = { forced_ct_kwargs: ["enable_thinking"], enable_thinking: null, chat_template_kwargs: { enable_thinking: false } };
+	assert.deepEqual(settingsDiffs(withSettings(over), expected), [{ key: "enable_thinking", expected: true, actual: false }]);
+	assert.equal(settingsOf(over)[0].level, "fail");
+	assert.deepEqual(settingsDiffs(withSettings({ ...over, forced_ct_kwargs: null }), expected), [], "near-miss: not forced");
+	assert.deepEqual(settingsDiffs(withSettings({ ...over, enable_thinking: true }), expected), [], "near-miss: the toggle wins over the kwargs");
+});
+
 test("near-miss: enable_thinking false while it is not forced passes, because the request wins", () => {
 	const over = { forced_ct_kwargs: null, enable_thinking: false };
 	assert.deepEqual(settingsDiffs(withSettings(over), expected), []);
@@ -133,6 +141,8 @@ test("forced sampling: with force_sampling true, a server temperature, top_p or 
 	assert.equal(f.level, "fail");
 	assert.match(f.message, /temperature 0\.6 \(expected 1\): force_sampling is on, so the server's sampling wins over the request/);
 	assert.match(f.message, /top_k 40 \(expected 20\)/);
+	const fixed = JSON.parse(/-d '(\{.*\})'/.exec(f.fix)[1]);
+	assert.deepEqual([fixed.temperature, fixed.top_p, fixed.top_k], [1, 0.95, 20], "the printed PUT fixes the forced sampling");
 	assert.deepEqual(settingsDiffs(withSettings({ force_sampling: true, top_p: undefined }), expected), [{ key: "top_p", expected: 0.95, actual: undefined }]);
 });
 
@@ -161,7 +171,7 @@ test("putCommand is a curl PUT of the server-only and advised model values, neve
 	const cmd = putCommand(ADMIN, expected);
 	assert.match(cmd, /^curl -s -X PUT http:\/\/127\.0\.0\.1:8001\/admin\/api\/models\/Mellum2\.1-12B-A2\.5B-Thinking-6bit\/settings /);
 	const body = JSON.parse(/-d '(\{.*\})'/.exec(cmd)[1]);
-	assert.deepEqual(body, { ...expected.model.serverOnly, ...expected.model.overridden });
+	assert.deepEqual(body, { ...expected.model.serverOnly, ...expected.model.overridden, ...expected.model.forcedSampling });
 	for (const [k, v] of Object.entries({ enable_thinking: true, thinking_budget_enabled: false, max_tool_result_tokens: null })) assert.deepEqual(body[k], v, k);
 });
 

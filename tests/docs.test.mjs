@@ -63,6 +63,7 @@ test("README Model settings says which values the provider entry sends per reque
 	const check = use.split("**Check your setup.**")[1].split("**Learn from your runs.**")[0];
 	assert.match(check, /Mellum server settings differ: (max_context_window|turboquant_kv_enabled) /, "the warning example names a server-only key");
 	assert.match(check, /info/, "says overridden server values are info");
+	assert.doesNotMatch(check, /reads the server-only\s+settings/, "activation reads every binding setting, not only the server-only ones");
 });
 
 test("README states the cap the Mode and Worker runs actually used, and no 4,096 ceiling for them", () => {

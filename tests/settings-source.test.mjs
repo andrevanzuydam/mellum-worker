@@ -84,6 +84,8 @@ test("README Model settings table is derived from the data file and the Pi templ
 		`| sampling | ${s.temperature} / ${s.top_p} / ${s.top_k} | provider entry, per request |`,
 		`| context window | ${fmt(data.model.serverOnly.max_context_window)} | server only |`,
 		`| TurboQuant | ${data.model.serverOnly.turboquant_kv_enabled ? "on" : "off"} | server only |`,
+		`| thinking budget | ${data.model.serverOnly.thinking_budget_enabled ? "on" : "off"} | server only |`,
+		`| tool-result cap | ${data.model.serverOnly.max_tool_result_tokens === null ? "none" : fmt(data.model.serverOnly.max_tool_result_tokens)} | server only |`,
 		`| concurrent requests | ${fmt(data.global["scheduler.max_concurrent_requests"])} | server only |`,
 		`| hot cache | ${data.global["cache.hot_cache_max_size"] === "0" ? "off" : "on"} | server only |`,
 	];

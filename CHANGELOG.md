@@ -75,13 +75,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
-- `/mellum check`, the activation warning and the run record now catch the
-  server settings that beat a request: thinking forced off
-  (`forced_ct_kwargs` with `enable_thinking` false), sampling other than
-  1 / 0.95 / 20 while `force_sampling` is on, a server thinking budget
-  (which may take effect when oMLX has a reasoning parser set) and a
-  tool-result cap. Setup step 3 also sets `enable_thinking` true, thinking
-  budget off and no tool-result cap.
+- Setup step 3 now also sets `enable_thinking` true, the thinking budget
+  off and no tool-result cap. With `forced_ct_kwargs` forcing
+  `enable_thinking`, a false value would turn thinking off for every client,
+  and a server thinking budget or tool-result cap binds every client too.
 - The README now states the cap the measured Mode and Worker runs used:
   `max_tokens` 16,384 with thinking on, verified in the A10, A17 and A19
   traces, which oMLX honours over the server profile's 4,096; only the

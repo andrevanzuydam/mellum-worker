@@ -114,17 +114,23 @@ export function settingsDiffs(adminModels: unknown, expected: Expected, group: "
 	const settings = entry.settings;
 	const out = diffs(expected.model[group], (k) => settings[k]);
 	if (group !== "serverOnly") return out;
+	// oMLX applies the server's chat_template_kwargs, then its enable_thinking toggle when set.
 	const forced = settings.forced_ct_kwargs;
-	if (Array.isArray(forced) && forced.includes("enable_thinking") && settings.enable_thinking === false) {
+	const kwargs = isObj(settings.chat_template_kwargs) ? settings.chat_template_kwargs : {};
+	const thinking = settings.enable_thinking ?? kwargs.enable_thinking;
+	if (Array.isArray(forced) && forced.includes("enable_thinking") && thinking === false) {
 		out.push({ key: "enable_thinking", expected: true, actual: false });
 	}
 	if (settings.force_sampling === true) out.push(...diffs(expected.model.forcedSampling, (k) => settings[k]));
 	return out;
 }
 
-/** The exact PUT that applies the server-only and advised model settings. Shown to the user, never run. */
+/**
+ * The exact PUT that applies the measured model settings, sampling included (it binds only
+ * under `force_sampling`, and a request's own sampling wins otherwise). Shown, never run.
+ */
 export function putCommand(adminBase: string, expected: Expected): string {
-	const body = { ...expected.model.serverOnly, ...expected.model.overridden };
+	const body = { ...expected.model.serverOnly, ...expected.model.overridden, ...expected.model.forcedSampling };
 	return (
 		`curl -s -X PUT ${adminBase}/admin/api/models/${expected.modelId}/settings ` +
 		`-H 'content-type: application/json' -d '${JSON.stringify(body)}'`
