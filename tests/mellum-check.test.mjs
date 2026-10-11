@@ -10,6 +10,7 @@ import {
 	providerEntry,
 	putCommand,
 	readProvider,
+	serverCheck,
 	settingsDiffs,
 } from "../extensions/mellum-check.ts";
 
@@ -443,4 +444,25 @@ test("gatherInputs reads the host config, GETs the three URLs from its baseUrl, 
 	assert.match(oc.provider.error, /no opencode config/);
 	assert.deepEqual(oc.template, ocTemplate);
 	assert.equal(oc.baseUrl, BASE);
+});
+
+const reply = (body) => async () => ({ ok: true, status: 200, json: async () => body });
+
+test("serverCheck: the match fixture matches, the drift fixture does not, an unreachable server is null", async () => {
+	const seen = [];
+	const get = (body) => async (url, init) => {
+		seen.push({ url: String(url), method: init?.method });
+		return reply(body)();
+	};
+	assert.deepEqual(await serverCheck(ADMIN, { timeoutMs: 1000, fetch: get(json("admin-models-match.json")) }), { match: true, diffs: [] });
+	assert.deepEqual(seen, [{ url: `${ADMIN}/admin/api/models`, method: "GET" }]);
+	const drift = await serverCheck(ADMIN, { timeoutMs: 1000, fetch: reply(json("admin-models-drift.json")) });
+	assert.equal(drift.match, false);
+	assert.deepEqual(drift.diffs.map((d) => d.key), ["max_context_window", "turboquant_kv_enabled"]);
+	const refused = async () => {
+		throw new TypeError("fetch failed");
+	};
+	assert.deepEqual(await serverCheck(ADMIN, { timeoutMs: 1000, fetch: refused }), { match: null, diffs: [] });
+	const notOk = async () => ({ ok: false, status: 500, json: async () => ({}) });
+	assert.deepEqual(await serverCheck(ADMIN, { timeoutMs: 1000, fetch: notOk }), { match: null, diffs: [] });
 });

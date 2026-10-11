@@ -30,25 +30,21 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { homedir } from "node:os";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { adminBaseOf, checkSetup, type Diff, fetchJson, formatFindings, gatherInputs, loadExpected, readProvider, settingsDiffs } from "./mellum-check.ts";
-import { commandMutatesFiles } from "./mellum-commands.ts";
+import { adminBaseOf, checkSetup, type Diff, fetchJson, formatFindings, gatherInputs, loadExpected, readProvider, serverCheck, type ServerCheck } from "./mellum-check.ts";
 import { createGuardSet, type GuardSet } from "./mellum-guards.ts";
 import { factsBlock, readProjectFacts, type ProjectFacts } from "./mellum-facts.ts";
+import { type Activation, type Msg, promptVersionOf, runRecord, textOf, spanStats, type SpanStats } from "./mellum-record.ts";
 import { formatMerge, formatReport, learnFromTexts, mergeSuggestion, modeRunsFile, overCap, recordFiles } from "./mellum-learn.ts";
 
 export const MARK_ON = "[mellum-mode on]";
 export const MARK_OFF = "[mellum-mode off]";
 export const BOOTSTRAP_MARKER = "superpowers:using-superpowers bootstrap for pi";
 export const WORKER_TOOLS = ["read", "grep", "find", "ls", "bash", "edit", "write"];
+// The record code lives in mellum-record.ts; these keep the existing imports from here working.
+export { PACKAGE_VERSION, promptVersionOf, runRecord, spanStats } from "./mellum-record.ts";
+export type { Activation, Msg, RecordMeta, RunRecord, SpanCommand, SpanStats } from "./mellum-record.ts";
+export type { ServerCheck } from "./mellum-check.ts";
 const DEFAULT_MODEL = { provider: "omlx", id: "Mellum2.1-12B-A2.5B-Thinking-6bit" };
-
-type Msg = { role?: string; content?: unknown; [k: string]: unknown };
-
-function textOf(m: Msg): string {
-	if (typeof m.content === "string") return m.content;
-	if (!Array.isArray(m.content)) return "";
-	return m.content.map((p: any) => (p && p.type === "text" && typeof p.text === "string" ? p.text : "")).join("\n");
-}
 
 const INSTRUCTION_ROLES = new Set(["system", "developer"]);
 
@@ -175,96 +171,6 @@ export function collapseHandoffs(messages: Msg[], opts: HandoffOptions = {}): Ms
 	return out;
 }
 
-export interface SpanCommand {
-	command: string;
-	failed: boolean;
-	finished: boolean;
-}
-
-export interface SpanStats {
-	requests: number;
-	usage: { input: number; cacheRead: number; output: number };
-	startedAt?: number;
-	lastTurnAt?: number;
-	wallSeconds?: number;
-	files: string[];
-	/** Count of edit and write tool calls (not unique paths). */
-	edits: number;
-	commands: SpanCommand[];
-	lastCommand: "ok" | "failed" | "unfinished" | "none";
-	lastCommandOutput: string;
-	finalReply: string;
-	/** Shape of the span's last assistant message. */
-	finalTurn: { stopReason?: string; hadText: boolean; hadToolCall: boolean };
-}
-
-/** Everything the handoff and the run record report, computed once from a span's messages. */
-export function spanStats(span: Msg[]): SpanStats {
-	const files = new Set<string>();
-	const results = new Map<string, { error: boolean; text: string }>();
-	for (const m of span) {
-		if (m.role === "toolResult") {
-			const id = (m as any).toolCallId;
-			if (typeof id === "string") results.set(id, { error: Boolean((m as any).isError), text: textOf(m).trim() });
-		}
-	}
-	const stats: SpanStats = {
-		requests: 0,
-		usage: { input: 0, cacheRead: 0, output: 0 },
-		files: [],
-		edits: 0,
-		commands: [],
-		lastCommand: "none",
-		lastCommandOutput: "",
-		finalReply: "",
-		finalTurn: { hadText: false, hadToolCall: false },
-	};
-	for (const m of span) {
-		if (m.role !== "assistant") continue;
-		stats.requests += 1;
-		const sr = (m as any).stopReason;
-		const blocks: any[] = Array.isArray(m.content) ? (m.content as any[]) : [];
-		stats.finalTurn = {
-			...(typeof sr === "string" ? { stopReason: sr } : {}),
-			hadText: blocks.some((b) => b.type === "text" && typeof b.text === "string" && b.text.trim() !== ""),
-			hadToolCall: blocks.some((b) => b.type === "toolCall"),
-		};
-		const usage = (m as any).usage;
-		if (usage) {
-			for (const k of ["input", "cacheRead", "output"] as const) {
-				if (typeof usage[k] === "number") stats.usage[k] += usage[k];
-			}
-		}
-		const t = toMillis((m as any).timestamp);
-		if (t !== undefined) {
-			stats.startedAt ??= t;
-			stats.lastTurnAt = t;
-		}
-		if (!Array.isArray(m.content)) continue;
-		for (const b of m.content as any[]) {
-			if (b.type === "toolCall" && (b.name === "edit" || b.name === "write")) {
-				stats.edits += 1;
-				const p = b.arguments?.path;
-				if (typeof p === "string") files.add(p);
-			}
-			if (b.type === "toolCall" && b.name === "bash" && typeof b.arguments?.command === "string") {
-				const r = results.get(b.id);
-				stats.commands.push({ command: b.arguments.command, failed: Boolean(r?.error), finished: Boolean(r) });
-				if (r) {
-					if (r.text) stats.lastCommandOutput = r.text;
-					stats.lastCommand = r.error ? "failed" : "ok";
-				} else {
-					stats.lastCommand = "unfinished";
-				}
-			}
-			if (b.type === "text" && typeof b.text === "string" && b.text.trim()) stats.finalReply = b.text.trim();
-		}
-	}
-	stats.files = [...files];
-	if (stats.startedAt !== undefined && stats.lastTurnAt !== undefined) stats.wallSeconds = Math.round((stats.lastTurnAt - stats.startedAt) / 1000);
-	return stats;
-}
-
 const MAX_HANDOFF_COMMANDS = 15;
 
 function summaryLine(stats: SpanStats, factsSource?: string): string {
@@ -296,31 +202,6 @@ function handoffMessage(task: string, span: Msg[], opts: HandoffOptions = {}, fa
 	return { role: "user", content: [{ type: "text", text: body }], timestamp: Date.now() };
 }
 
-/** The package version, read once at load; "unknown" if package.json cannot be read. */
-export const PACKAGE_VERSION: string = (() => {
-	try {
-		const here = dirname(fileURLToPath(import.meta.url));
-		const v = JSON.parse(readFileSync(resolve(here, "..", "package.json"), "utf8")).version;
-		return typeof v === "string" ? v : "unknown";
-	} catch {
-		return "unknown";
-	}
-})();
-
-/** `vN` from the prompt's first-line marker `<!-- mellum-worker prompt vN -->`, else "unknown". */
-export function promptVersionOf(prompt: string): string {
-	const first = prompt.split("\n", 1)[0] ?? "";
-	return /^<!--\s*mellum-worker prompt (v\d+)\s*-->/.exec(first)?.[1] ?? "unknown";
-}
-
-export type Activation = "one-shot" | "on" | "headless";
-
-/** The activation check of the server's model settings: null when they could not be read. */
-export interface ServerCheck {
-	match: boolean | null;
-	diffs: Diff[];
-}
-
 export type Subcommand = { cmd: "on" | "off" | "check" | "learn" | "task"; n?: number; task?: string };
 
 /** `/mellum` arguments: on (or nothing), off, check, learn [n]; anything else is a task. */
@@ -337,81 +218,6 @@ export function parseSubcommand(args: string): Subcommand {
 export function serverWarning(diffs: Diff[]): string {
 	const show = (v: unknown) => JSON.stringify(v) ?? "missing";
 	return `Mellum server settings differ: ${diffs.map((d) => `${d.key} ${show(d.actual)} (expected ${show(d.expected)})`).join(", ")}. Run /mellum check.`;
-}
-
-export interface RecordMeta {
-	endedAt: number;
-	cwd: string;
-	model: string;
-	exists?: (path: string) => boolean;
-	host?: string;
-	activation?: Activation;
-	promptVersion?: string;
-	nudges?: number;
-	guardBlocks?: number;
-	facts?: { source: string; testCommand: string | null; chars: number };
-	server?: ServerCheck;
-}
-
-export interface RunRecord {
-	schema: 2;
-	version: string;
-	promptVersion: string;
-	host: string;
-	activation: Activation | "unknown";
-	startedAt?: string;
-	endedAt: string;
-	wallSeconds?: number;
-	cwd: string;
-	model: string;
-	task: string;
-	taskNamesTestCommand: boolean;
-	requests: number;
-	usage: { input: number; cacheRead: number; output: number };
-	files: string[];
-	edits: number;
-	filesMissingAtEnd: string[];
-	commands: { command: string; failed: boolean; mutates: boolean }[];
-	lastCommand: SpanStats["lastCommand"];
-	finalReply: string;
-	finalTurn: SpanStats["finalTurn"];
-	nudges: number;
-	guardBlocks: number;
-	facts?: { source: string; testCommand: string | null; chars: number };
-	server?: ServerCheck;
-}
-
-/** One JSONL line per span, for analysis outside the session. Same fields as the handoff, plus schema 2 additions. */
-export function runRecord(task: string, span: Msg[], meta: RecordMeta): RunRecord {
-	const stats = spanStats(span);
-	const exists = meta.exists;
-	return {
-		schema: 2,
-		version: PACKAGE_VERSION,
-		promptVersion: meta.promptVersion ?? "unknown",
-		host: meta.host ?? "unknown",
-		activation: meta.activation ?? "unknown",
-		startedAt: stats.startedAt === undefined ? undefined : new Date(stats.startedAt).toISOString(),
-		endedAt: new Date(meta.endedAt).toISOString(),
-		wallSeconds: stats.wallSeconds,
-		cwd: meta.cwd,
-		model: meta.model,
-		task: task.trim().slice(0, 2000),
-		taskNamesTestCommand: /test command/i.test(task),
-		requests: stats.requests,
-		usage: stats.usage,
-		files: stats.files,
-		edits: stats.edits,
-		filesMissingAtEnd: exists ? stats.files.filter((f) => !exists(f)) : [],
-		commands: stats.commands.map((c) => ({ command: c.command.slice(0, 2000), failed: c.failed, mutates: commandMutatesFiles(c.command) })),
-		lastCommand: stats.lastCommand,
-		finalReply: stats.finalReply.slice(0, 4000),
-		finalTurn: stats.finalTurn,
-		nudges: meta.nudges ?? 0,
-		guardBlocks: meta.guardBlocks ?? 0,
-		...(meta.facts ? { facts: meta.facts } : {}),
-		...(meta.server ? { server: meta.server } : {}),
-	};
 }
 
 /** The trailing span still open at the end of `messages`: its task text and messages, or undefined. */
@@ -435,15 +241,6 @@ export function openSpan(messages: Msg[]): { task: string; span: Msg[] } | undef
 function runsFile(): string | undefined {
 	const file = modeRunsFile(process.env, process.env.HOME ?? ".");
 	return file === undefined ? undefined : resolve(file);
-}
-
-function toMillis(value: unknown): number | undefined {
-	if (typeof value === "number" && Number.isFinite(value)) return value;
-	if (typeof value === "string") {
-		const t = Date.parse(value);
-		return Number.isNaN(t) ? undefined : t;
-	}
-	return undefined;
 }
 
 function loadPrompt(): string {
@@ -501,9 +298,7 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 	async function checkServer(): Promise<ServerCheck> {
 		try {
 			const { baseUrl } = readProvider("pi", home(), readIfExists);
-			const got = await fetchJson(`${adminBaseOf(baseUrl)}/admin/api/models`, { timeoutMs: 1000, fetch: options.fetch });
-			const diffs = got.ok ? settingsDiffs(got.value, loadExpected()) : null;
-			return diffs === null ? { match: null, diffs: [] } : { match: diffs.length === 0, diffs };
+			return await serverCheck(adminBaseOf(baseUrl), { timeoutMs: 1000, fetch: options.fetch });
 		} catch {
 			return { match: null, diffs: [] };
 		}
@@ -579,7 +374,7 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 		const previous = { model: ctx.model, tools: pi.getActiveTools() };
 		prompt = loadPrompt();
 		// Runs while the model switches; awaited below, so it adds at most its own timeout.
-		const serverCheck = checkServer();
+		const pendingServer = checkServer();
 		const switched = await pi.setModel(model);
 		if (!switched) {
 			warn(ctx, `mellum-mode: could not select ${provider}/${id} (auth or provider error); mode stays off`, "error");
@@ -603,7 +398,7 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 		// Read once per span, headless or not: the request hook forwards the same block every time.
 		spanFacts = readProjectFacts(process.cwd(), { read: (p) => (existsSync(p) ? readFileSync(p, "utf8") : undefined) });
 		if (spanFacts.warning) warn(ctx, spanFacts.warning, "warning");
-		server = await serverCheck;
+		server = await pendingServer;
 		if (server.match === false) warn(ctx, serverWarning(server.diffs), "warning");
 		if (notify) pi.sendMessage({ customType: "mellum-mode", content: `${MARK_ON} facts: ${spanFacts.source}`, display: true }, { deliverAs: "nextTurn" });
 		if (notify) ctx.ui?.notify?.(`mellum-mode on: ${provider}/${id}, tools ${WORKER_TOOLS.join(",")}`, "info");

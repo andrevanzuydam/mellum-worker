@@ -399,6 +399,23 @@ export async function fetchJson(url: string, opts: { timeoutMs: number; fetch?: 
 	}
 }
 
+/** The activation check of the server's model settings: null when they could not be read. */
+export interface ServerCheck {
+	match: boolean | null;
+	diffs: Diff[];
+}
+
+/** One admin GET and the server-only comparison; never throws, unreadable gives match null. */
+export async function serverCheck(adminBase: string, opts: { timeoutMs: number; fetch?: typeof fetch }): Promise<ServerCheck> {
+	try {
+		const got = await fetchJson(`${adminBase}/admin/api/models`, opts);
+		const diffs = got.ok ? settingsDiffs(got.value, loadExpected()) : null;
+		return diffs === null ? { match: null, diffs: [] } : { match: diffs.length === 0, diffs };
+	} catch {
+		return { match: null, diffs: [] };
+	}
+}
+
 /** The host's `omlx` provider object from the shipped template. */
 export function loadTemplate(host: Host, read: (p: string) => string = (p) => readFileSync(p, "utf8")): Obj {
 	const file = host === "pi" ? "../templates/pi/models.omlx.json" : "../templates/opencode/provider.omlx.json";

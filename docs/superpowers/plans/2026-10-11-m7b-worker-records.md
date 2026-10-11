@@ -108,3 +108,5 @@ lifecycle: active
 ## Progress
 
 (Executors append here: task, failing-first evidence, commands and results.)
+
+**Task 1** (record code moved to `extensions/mellum-record.ts`). Failing first: `npm test` with the new tests in `tests/mellum-record.test.mjs`, `tests/mellum-learn.test.mjs` (`workerRunsFile`) and `tests/mellum-check.test.mjs` (`serverCheck`) failed on missing exports (`mellum-record.ts` not found; no `serverCheck`, no `workerRunsFile`): 190 pass, 3 files fail. After the move: `npm test` 273 pass, 0 fail (268 before plus 5 new tests); every Mode, learn and check test unchanged. `runRecord` writes `kind` (default `"mode"`), and `facts: null` when given null (omitted when undefined, so Mode's records are unchanged).

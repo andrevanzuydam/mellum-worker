@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import test from "node:test";
 import { readProjectFacts } from "../extensions/mellum-facts.ts";
-import { formatMerge, formatReport, learn, learnFromTexts, mergeSuggestion, modeRunsFile, readRecords, recordFiles } from "../extensions/mellum-learn.ts";
+import { formatMerge, formatReport, learn, learnFromTexts, mergeSuggestion, modeRunsFile, readRecords, recordFiles, workerRunsFile } from "../extensions/mellum-learn.ts";
 
 const FIX = join(resolve(import.meta.dirname, ".."), "tests/fixtures/learn");
 const text = (name) => readFileSync(join(FIX, name), "utf8");
@@ -428,4 +428,12 @@ test("the README's learn example is the real output on its fixture", () => {
 	const r = learnFromTexts([text("patterns/bent-project.jsonl")], { cwd: "/home/user/proj", n: 10 });
 	const m = mergeSuggestion(undefined, r.suggestion);
 	assert.equal(shown, formatReport(r, "/home/user/proj", m.added) + formatMerge(m, r.suggestion) + "\n");
+});
+
+test("workerRunsFile: MELLUM_WORKER_RUNS (0 disables) or the default under home; recordFiles follows it", () => {
+	assert.equal(workerRunsFile({ MELLUM_WORKER_RUNS: "0" }, "/h"), undefined);
+	assert.equal(workerRunsFile({ MELLUM_WORKER_RUNS: "/x/w.jsonl" }, "/h"), "/x/w.jsonl");
+	assert.equal(workerRunsFile({}, "/h"), "/h/.pi/agent/mellum-worker-runs.jsonl");
+	assert.deepEqual(recordFiles({ MELLUM_WORKER_RUNS: "0" }, "/h"), ["/h/.pi/agent/mellum-mode-runs.jsonl"]);
+	assert.deepEqual(recordFiles({ MELLUM_WORKER_RUNS: "/x/w.jsonl", MELLUM_MODE_RUNS: "0" }, "/h"), ["/x/w.jsonl"]);
 });
