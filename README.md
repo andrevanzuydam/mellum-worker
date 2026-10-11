@@ -99,6 +99,20 @@ If pi-subagents says the child "produced no output", dispatch it once more
 - Do the exploration with your main model first, then hand over the result.
 - Expect 11 to 14 requests and 25 to 120 seconds per task.
 
+**Model settings.** The measured recipe expects these oMLX settings:
+
+| setting | value |
+| --- | --- |
+| model id | Mellum2.1-12B-A2.5B-Thinking-6bit |
+| context window | 56,000 |
+| generation ceiling (max_tokens) | 4,096 |
+| thinking | on |
+| sampling | 1 / 0.95 / 20 |
+| concurrent requests | 1 |
+| hot cache | off |
+
+Other clients of the same oMLX model can change these; `/mellum check` shows drift.
+
 ## What you get
 
 Rungs 1–5, five coding tasks, three runs each, on an M5 Max through oMLX

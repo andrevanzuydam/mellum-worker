@@ -137,3 +137,6 @@ lifecycle: active
 ## Progress
 
 (Executors append here: task, failing-first evidence, commands and results.)
+
+- **Task 1** (RED): wrote `tests/settings-source.test.mjs` and `ladder/tests/test_settings_source.py` first. `npm test` failed on the missing `templates/omlx-model-settings.json`; the pytest raised FileNotFoundError on it. With the data file added and docs untouched, the Node table rows failed with "max_tokens row reads 16384, expected 4096" and "README lacks | model id | ...".
+- **Task 1** (GREEN): data file verbatim from spec section 1; `03-server.md` table and `PUT` and the README Model settings table updated. `npm test`: 138 pass; ladder `pytest -m "not slow"`: 122 pass.

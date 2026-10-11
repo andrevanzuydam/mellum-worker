@@ -30,8 +30,8 @@ Wanted (measured in the Pi ladder):
 | key | value | why |
 | --- | --- | --- |
 | `max_context_window` | 56000 | 50k prompt plus generation fits the validated memory budget |
-| `max_tokens` | 16384 | a 4,096 cap cut a three-file task off mid-thought; clients send their own cap, this is the ceiling |
-| `forced_ct_kwargs` | `["enable_thinking"]` | thinking off failed the ladder; this stops a client switching it off |
+| `max_tokens` | 4096 | every published number used 4,096; 16,384 is untested on the current recipe (backlog) |
+| `forced_ct_kwargs` | `null` (unset) | the ladder never forced it; the server's thinking default is on |
 | TurboQuant / cache quantization | off | the hybrid cache must stay native |
 
 Apply with the user's yes:
@@ -39,7 +39,7 @@ Apply with the user's yes:
 ```bash
 curl -s -X PUT http://127.0.0.1:8001/admin/api/models/Mellum2.1-12B-A2.5B-Thinking-6bit/settings \
   -H 'content-type: application/json' \
-  -d '{"max_context_window":56000,"max_tokens":16384,"forced_ct_kwargs":["enable_thinking"]}'
+  -d '{"max_context_window":56000,"max_tokens":4096,"forced_ct_kwargs":null}'
 ```
 
 Then read the values back and confirm they took. If the admin API needs

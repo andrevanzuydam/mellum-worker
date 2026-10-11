@@ -6,6 +6,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The setup skill now writes the measured server settings (`max_tokens`
+  4,096, thinking not forced) instead of 16,384 and a forced thinking flag,
+  and the README lists them. They live in `templates/omlx-model-settings.json`,
+  which a test ties to the ladder's baseline profile.
 - README: a Future work section lists what is on the roadmap, in order,
   with links to ROADMAP.md and BACKLOG.md.
 - README: about 40% shorter; same install lines, numbers and links.

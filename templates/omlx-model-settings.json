@@ -1,0 +1,13 @@
+{
+  "modelId": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+  "model": {
+    "max_context_window": 56000, "max_tokens": 4096,
+    "thinking_budget_enabled": false, "thinking_budget_tokens": null,
+    "presence_penalty": 0.0, "repetition_penalty": 1.0,
+    "max_tool_result_tokens": null, "chat_template_kwargs": null,
+    "forced_ct_kwargs": null, "turboquant_kv_enabled": false,
+    "enable_thinking": true
+  },
+  "global": { "scheduler.max_concurrent_requests": 1, "cache.hot_cache_max_size": "0" },
+  "advice": { "memory.memory_guard_custom_ceiling_gb": 14 }
+}
