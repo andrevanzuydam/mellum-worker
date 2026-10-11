@@ -4,6 +4,8 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-10-11
+
 ### Fixed
 
 - The suggested `## Mellum` line no longer says "add files at the project

@@ -118,7 +118,6 @@ Phase N of specs/roadmap.md". A21 is a rungs 6–9 fixture variant with both,
 12 runs against A19; if it falls short, the docs go back to `Write only:`.
 *Reopens when* the GPU is free for an hour and Paul schedules it.
 
-
 **Facts and learn v2: uv and `.venv`.** A session in ac-demo lost an
 exit-127 detour to bare `python` (not on PATH; only `uv run` works) and 39%
 of its time to `find .` walking `.venv`
