@@ -118,10 +118,12 @@ def child_env(
 
     Direct mode runs offline against the ladder's own agent directory.
     Delegated mode points Pi at the mirrored operator profile and keeps the
-    network, which the hosted parent model needs.
+    network, which the hosted parent model needs. MELLUM_WORKER_RUNS sends the
+    guards' Worker run record beside the trace, so the operator's own log stays clean.
     """
     env = {k: v for k, v in parent.items() if k != "VIRTUAL_ENV"}
     env["MELLUM_TRACE_FILE"] = str(trace)
+    env["MELLUM_WORKER_RUNS"] = str(Path(trace).parent / "mellum-worker-runs.jsonl")
     if mode:
         env["MELLUM_MODE"] = "1"
     if agent_dir is not None:
