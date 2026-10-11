@@ -33,13 +33,15 @@ In the admin page at `http://127.0.0.1:8001/admin`, or via
 | setting | value |
 | --- | --- |
 | `max_context_window` | 56000 |
-| `max_tokens` | 4096 |
-| `forced_ct_kwargs` | `null` (unset) |
+| `max_tokens` | 16384 |
+| `forced_ct_kwargs` | `["enable_thinking"]` |
 | TurboQuant / cache quantization | off |
 
-Clients send their own `max_tokens`, sampling, and penalties, and oMLX
-gives the request precedence over the profile. The profile values are the
-measured baseline; thinking is on by default and is not forced.
+Clients send their own `max_tokens`, sampling, penalties and
+`chat_template_kwargs`, and oMLX gives the request precedence over the
+profile: Pi and OpenCode send `max_tokens` 16,384 and thinking on with every
+request, so the two middle rows only cover a client that sends none. The
+context window and TurboQuant are server-only; no request changes them.
 
 ## Memory
 

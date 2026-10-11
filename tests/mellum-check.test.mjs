@@ -37,38 +37,66 @@ const byId = (findings, id) => findings.find((f) => f.id === id);
 
 test("loadExpected reads the shipped data file", () => {
 	assert.equal(expected.modelId, "Mellum2.1-12B-A2.5B-Thinking-6bit");
-	assert.equal(expected.model.max_tokens, 4096);
+	assert.deepEqual(expected.model.serverOnly, { max_context_window: 56000, turboquant_kv_enabled: false });
+	assert.equal(expected.model.overridden.max_tokens, 16384);
+	assert.deepEqual(expected.model.overridden.forced_ct_kwargs, ["enable_thinking"]);
 	assert.equal(expected.global["scheduler.max_concurrent_requests"], 1);
 	assert.equal(expected.advice["memory.memory_guard_custom_ceiling_gb"], 14);
 });
 
-test("the match fixture: settings ok, no fix", () => {
+const settingsFindings = (findings) => findings.filter((f) => f.id === "settings");
+
+test("the match fixture: server-only settings ok, no fix; its 4096 and unforced thinking are info", () => {
 	assert.deepEqual(settingsDiffs(json("admin-models-match.json"), expected), []);
-	const f = byId(checkSetup(inputs(), expected), "settings");
+	const [f, info] = settingsFindings(checkSetup(inputs(), expected));
 	assert.equal(f.level, "ok");
 	assert.equal(f.fix, undefined);
+	assert.equal(info.level, "info");
+	assert.match(info.message, /overridden by the client's request values/);
+	assert.match(info.message, /max_tokens 4096 \(advised 16384\)/);
+	assert.match(info.message, /forced_ct_kwargs null \(advised \["enable_thinking"\]\)/);
+	assert.equal(info.fix, undefined);
 });
 
-test("the drift fixture: settings fail, one line per differing key, fix is the PUT", () => {
+test("the drift fixture: settings fail on the server-only keys, one line each, fix is the PUT; max_tokens is info", () => {
 	const drift = json("admin-models-drift.json");
 	const diffs = settingsDiffs(drift, expected);
-	assert.deepEqual(diffs.map((d) => d.key).sort(), ["forced_ct_kwargs", "max_tokens", "turboquant_kv_enabled"]);
-	assert.deepEqual(diffs.find((d) => d.key === "max_tokens"), { key: "max_tokens", expected: 4096, actual: 16384 });
-	const f = byId(checkSetup(inputs({ adminModels: ok(drift) }), expected), "settings");
+	assert.deepEqual(diffs, [
+		{ key: "max_context_window", expected: 56000, actual: 32768 },
+		{ key: "turboquant_kv_enabled", expected: false, actual: true },
+	]);
+	const [f, info] = settingsFindings(checkSetup(inputs({ adminModels: ok(drift) }), expected));
 	assert.equal(f.level, "fail");
 	const lines = f.message.split("\n").filter((l) => /\(expected /.test(l));
-	assert.equal(lines.length, 3);
-	assert.ok(lines.some((l) => l.includes("max_tokens 16384 (expected 4096)")));
-	assert.ok(lines.some((l) => l.includes('forced_ct_kwargs ["enable_thinking"] (expected null)')));
-	assert.ok(lines.some((l) => l.includes("turboquant_kv_enabled true (expected false)")));
+	assert.deepEqual(lines, ["  max_context_window 32768 (expected 56000)", "  turboquant_kv_enabled true (expected false)"]);
 	assert.equal(f.fix, putCommand(ADMIN, expected));
+	assert.equal(info.level, "info");
+	assert.match(info.message, /max_tokens 4096 \(advised 16384\)/);
 });
 
-test("putCommand is a curl PUT of the measured model values, never run", () => {
+test("server values the client's request overrides are info, never a fail or a warning", () => {
+	const admin = json("admin-models-match.json");
+	Object.assign(admin.models[0].settings, { max_tokens: 999, forced_ct_kwargs: null, enable_thinking: false, presence_penalty: 0.5, repetition_penalty: 1.1, chat_template_kwargs: { enable_thinking: false } });
+	assert.deepEqual(settingsDiffs(admin, expected), []);
+	const f = checkSetup(inputs({ adminModels: ok(admin) }), expected);
+	assert.deepEqual(f.filter((x) => x.level === "fail" || x.level === "warn"), []);
+	const [ok_, info] = settingsFindings(f);
+	assert.equal(ok_.level, "ok");
+	assert.equal(info.level, "info");
+	for (const k of ["max_tokens 999", "enable_thinking false", "presence_penalty 0.5", "repetition_penalty 1.1", "chat_template_kwargs"]) assert.ok(info.message.includes(k), k);
+});
+
+test("a server at the advised values has no info settings finding", () => {
+	const admin = json("admin-models-match.json");
+	Object.assign(admin.models[0].settings, expected.model.overridden);
+	assert.deepEqual(settingsFindings(checkSetup(inputs({ adminModels: ok(admin) }), expected)).map((x) => x.level), ["ok"]);
+});
+
+test("putCommand is a curl PUT of the server-only and advised model values, never run", () => {
 	const cmd = putCommand(ADMIN, expected);
 	assert.match(cmd, /^curl -s -X PUT http:\/\/127\.0\.0\.1:8001\/admin\/api\/models\/Mellum2\.1-12B-A2\.5B-Thinking-6bit\/settings /);
 	const body = JSON.parse(/-d '(\{.*\})'/.exec(cmd)[1]);
-	assert.deepEqual(body, expected.model);
+	assert.deepEqual(body, { ...expected.model.serverOnly, ...expected.model.overridden });
 });
 
 test("settingsDiffs is null when the model or its settings are absent", () => {
@@ -169,18 +197,36 @@ test("provider template equals itself: ok; Pi maxTokens 16384 is compared with t
 	assert.equal(f.level, "ok");
 });
 
-test("provider differences warn, one line per field", () => {
+test("provider differences outside maxTokens and sampling warn, one line per field", () => {
 	const entry = structuredClone(piTemplate);
 	entry.models[0].contextWindow = 32768;
-	entry.models[0].samplingParams.top_k = 40;
 	entry.models[0].compat.thinkingFormat = "openai";
 	const f = byId(checkSetup(inputs({ provider: { host: "pi", entry } }), expected), "provider");
 	assert.equal(f.level, "warn");
 	assert.match(f.message, /contextWindow 32768 \(expected 56000\)/);
-	assert.match(f.message, /samplingParams\.top_k 40 \(expected 20\)/);
 	assert.match(f.message, /compat\.thinkingFormat "openai" \(expected "qwen-chat-template"\)/);
 	assert.doesNotMatch(f.message, /\bmaxTokens /);
-	assert.equal(f.message.split("\n").filter((l) => /\(expected /.test(l)).length, 3);
+	assert.equal(f.message.split("\n").filter((l) => /\(expected /.test(l)).length, 2);
+});
+
+test("a provider maxTokens or sampling value that differs fails: those are what each request sends", () => {
+	const mk = (change) => {
+		const entry = structuredClone(piTemplate);
+		change(entry.models[0]);
+		return byId(checkSetup(inputs({ provider: { host: "pi", entry } }), expected), "provider");
+	};
+	const cap = mk((m) => (m.maxTokens = 4096));
+	assert.equal(cap.level, "fail");
+	assert.match(cap.message, /maxTokens 4096 \(expected 16384\)/);
+	assert.match(cap.fix, /04-provider-pi|step 4/);
+	const top = mk((m) => {
+		m.samplingParams.top_k = 40;
+		m.contextWindow = 32768;
+	});
+	assert.equal(top.level, "fail");
+	assert.match(top.message, /samplingParams\.top_k 40 \(expected 20\)/);
+	assert.match(top.message, /contextWindow 32768 \(expected 56000\)/);
+	assert.equal(mk((m) => delete m.samplingParams).level, "fail");
 });
 
 test("a provider without the Mellum model entry fails", () => {
@@ -204,6 +250,10 @@ test("opencode: limit.context/output map to contextWindow/maxTokens; no sampling
 	assert.match(f.fix, /04-provider-opencode|step 4/);
 	const g = byId(mk((e) => (e.options.baseURL = "http://127.0.0.1:9999/v1")), "provider");
 	assert.match(g.message, /baseUrl "http:\/\/127\.0\.0\.1:9999\/v1"/);
+	assert.equal(g.level, "warn");
+	const out = byId(mk((e) => (e.models[expected.modelId].limit.output = 4096)), "provider");
+	assert.equal(out.level, "fail");
+	assert.match(out.message, /maxTokens 4096 \(expected 16384\)/);
 });
 
 test("parseJsonc parses a file with // and /* */ comments, a trailing comma, and // inside a string", () => {

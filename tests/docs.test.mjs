@@ -52,11 +52,46 @@ test("README Use it says how to run learn in Pi Mode and from the terminal, afte
 	for (const fence of learn.matchAll(/```bash\n([\s\S]*?)```/g)) assert.doesNotMatch(fence[1], /\w\|\w/, "no a|b alternation in a bash fence");
 });
 
-test("README Model settings says Pi and OpenCode send their own 16,384 output limit", () => {
+test("README Model settings says which values the provider entry sends per request and which only the server sets", () => {
 	const use = read("README.md").split("\n## Use it\n")[1].split("\n## What you get\n")[0];
 	const settings = use.split("**Model settings.**")[1].split("**Check your setup.**")[0];
-	assert.match(settings, /Pi and OpenCode\s+send their own 16,384/);
+	assert.match(settings, /Pi and OpenCode\s+send[^.]*per\s+request/);
 	assert.match(settings, /honours/);
+	assert.match(settings, /server-only/);
+	const check = use.split("**Check your setup.**")[1].split("**Learn from your runs.**")[0];
+	assert.match(check, /Mellum server settings differ: (max_context_window|turboquant_kv_enabled) /, "the warning example names a server-only key");
+	assert.match(check, /info/, "says overridden server values are info");
+});
+
+test("README states the cap the Mode and Worker runs actually used, and no 4,096 ceiling for them", () => {
+	const readme = read("README.md");
+	assert.doesNotMatch(readme, /All runs used a 4,096/);
+	assert.match(readme, /Mode\s+and\s+Worker\s+requests\s+sent\s+max_tokens\s+16,384\s+\(verified\s+in\s+the\s+A10,\s+A17\s+and\s+A19\s+traces\);\s+direct-mode\s+research\s+phases\s+used\s+4,096\./);
+	assert.doesNotMatch(readme, /\*\*Ceiling:\*\*/, "the 16,384 ceiling item is withdrawn from Future work");
+	assert.doesNotMatch(read("BACKLOG.md"), /Measure a 16,384 ceiling/);
+	assert.doesNotMatch(read("docs/recipe.md"), /4,096, the measured baseline/);
+	assert.match(read("docs/recipe.md"), /A10, A17 and A19/, "the recipe records the trace finding");
+});
+
+test("README What helped follows the rungs 6-9 results, and the results table no longer repeats it", () => {
+	const readme = read("README.md");
+	const get = readme.split("\n## What you get\n")[1].split("\n## ")[0];
+	const helped = readme.split("\n## What helped\n")[1]?.split("\n## ")[0];
+	assert.ok(helped, "a What helped section");
+	assert.ok(readme.indexOf("\n## What helped\n") > readme.indexOf("\n## What you get\n"));
+	assert.ok(readme.indexOf("\n## What helped\n") < readme.indexOf("\n## Findings\n"));
+	for (const row of [
+		"| AgentClinic, 12 runs each | no facts | fallback only | `## Mellum` section |",
+		"| passed | 1 | 7 | 9 |",
+		"| requests, median | 50 | 28 | 26 |",
+		"| seconds, median | 261 | 143 | 106 |",
+		"| wrote outside the layout | 8 | 5 | 0 |",
+	]) {
+		assert.ok(helped.includes(row), `What helped lacks ${row}`);
+	}
+	assert.match(helped, /Rungs 1–5 did not regress \(15\/15\)/);
+	assert.doesNotMatch(get, /\| passes \| 1\/12 \|/, "What you get no longer repeats the passes row");
+	assert.match(get, /A18/, "What you get still links the A18-A20 records");
 });
 
 test("README learn paragraph shows a trimmed report and the suggestion", () => {
@@ -84,10 +119,12 @@ test("recipe has a Records, learn and check section with the seven patterns", ()
 	assert.match(section, /Mellum server settings differ/);
 });
 
-test("no setup or backend doc still calls 16,384 or forced thinking the server's values", () => {
+test("the oMLX backend guide lists step 3's server values; no doc calls 4,096 the server's value", () => {
 	const omlx = read("docs/backends/omlx.md");
-	assert.doesNotMatch(omlx, /\| `max_tokens` \| 16384/);
-	assert.doesNotMatch(omlx, /forced_ct_kwargs` \| `\["enable_thinking"\]`/);
+	assert.match(omlx, /\| `max_tokens` \| 16384 \|/);
+	assert.match(omlx, /\| `forced_ct_kwargs` \| `\["enable_thinking"\]` \|/);
+	assert.doesNotMatch(read("skills/mellum-setup/reference/04-provider-pi.md"), /server's 4,096/);
+	assert.doesNotMatch(read("skills/mellum-setup/reference/04-provider-opencode.md"), /4,096/);
 	assert.doesNotMatch(read("skills/mellum-setup/reference/04-provider-pi.md"), /match the server/);
 	assert.doesNotMatch(read("skills/mellum-setup/reference/04-provider-opencode.md"), /matches the server/);
 	assert.doesNotMatch(read("docs/recipe.md"), /\| on — a client cannot switch thinking off/);

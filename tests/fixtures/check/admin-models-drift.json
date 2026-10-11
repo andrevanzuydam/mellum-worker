@@ -36,8 +36,8 @@
       "is_paroquant": false,
       "paroquant_reason": "",
       "settings": {
-        "max_context_window": 56000,
-        "max_tokens": 16384,
+        "max_context_window": 32768,
+        "max_tokens": 4096,
         "temperature": 1,
         "top_p": 0.95,
         "top_k": 20,
@@ -47,9 +47,7 @@
         "force_sampling": true,
         "max_tool_result_tokens": null,
         "chat_template_kwargs": null,
-        "forced_ct_kwargs": [
-          "enable_thinking"
-        ],
+        "forced_ct_kwargs": null,
         "ttl_seconds": null,
         "model_type_override": null,
         "model_alias": null,

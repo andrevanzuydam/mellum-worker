@@ -106,11 +106,3 @@ Remedy: at the deadline and at run end the runner kills the run's process
 group and any listener whose cwd is the workspace, and records it.
 *Reopens when* the next change to `ladder/`, or any record showing a
 leftover process.
-
-**Measure a 16,384 ceiling.** The AgentClinic runs (A18 to A20)
-used a 4,096 generation ceiling; Pi and OpenCode send 16,384 per request,
-which oMLX honours over the server value, so on rungs 6–9 users run an
-unmeasured ceiling. A19's
-command at the `tuned` profile's 16,384 ceiling on rungs 4–9, counting
-mid-run `length` stops from the traces, would show whether it helps long
-runs or only lets a stuck run drift. *Reopens when* Paul schedules it.

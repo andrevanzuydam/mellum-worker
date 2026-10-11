@@ -7,16 +7,19 @@ Versions match git tags; pin one in both install lines.
 ### Added
 
 - `/mellum check` in Pi Mode: checks that oMLX answers and lists the
-  model, that its settings match the measured profile, and that your
-  provider entry matches the template. It only reads; a settings fix is
+  model, that its server-only settings (context window, TurboQuant) match
+  the measured profile, and that your provider entry matches the template,
+  failing on a different `maxTokens` or sampling value since those are what
+  each request sends. Server values a request overrides (`max_tokens`,
+  thinking, penalties) show as info. It only reads; a settings fix is
   printed as the `PUT` to run yourself.
 - `node <package dir>/scripts/mellum.mjs check --host pi|opencode [--json]`:
   the same check from the terminal, for OpenCode and Pi Worker; exits 1 on
   any fail.
 - Each `/mellum` activation reads the server's model settings (one second
-  at most) and warns in one line when they differ from the measured
-  profile, since other clients of the same model can change them. Silent
-  when the server cannot be read.
+  at most) and warns in one line when a server-only value (context window,
+  TurboQuant) differs from the measured profile, since other clients of the
+  same model can change them. Silent when the server cannot be read.
 - `/mellum learn [n]` in Pi Mode: reads the last n run records (default
   10) for the current directory, names what went wrong (guessed test
   command, bent project, false success, long runs, servers, settings
@@ -31,20 +34,22 @@ Versions match git tags; pin one in both install lines.
   and shows its output, so a wrong server setting shows up before the first
   task. `docs/recipe.md` gains a section on the run record, the seven
   `learn` patterns and the check.
+- README: a What helped section after the results: telling Mellum the
+  test command made most of the difference on the AgentClinic rungs, with
+  the A18–A20 numbers in one table and their caveats.
 - The run record gains `server` (`match`, and the differing settings), so
   a run on drifted settings can be told apart later; `match` is null when
   the settings could not be read.
 
 ### Changed
 
-- The setup skill now writes the measured server settings (`max_tokens`
-  4,096, thinking not forced) instead of 16,384 and a forced thinking flag,
-  and the README lists them. They live in `templates/omlx-model-settings.json`,
-  which a test ties to the ladder's baseline profile.
-- The oMLX backend guide, recipe table and provider notes no longer call
-  16,384 or forced thinking the server's values: the server profile is
-  4,096 with thinking not forced, and Pi and OpenCode send their own 16,384
-  output limit per request, which oMLX honours over the server value.
+- The expected oMLX values live in `templates/omlx-model-settings.json`,
+  split into server-only values (context window, TurboQuant; a test ties
+  the context window to the ladder's baseline profile) and the values each
+  request overrides (`max_tokens` 16,384, forced thinking, penalties), which
+  the setup skill's step 3 still writes for clients that send none. The
+  README's Model settings table says which values your provider entry sends
+  per request and which only the server sets.
 - README: Use it explains Model settings, Check your setup, Learn from your
   runs (with an example report) and Project facts as one flow, with the
   commands for Pi Mode, the terminal, OpenCode and Pi Worker.
@@ -68,6 +73,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- The README said every rungs 6–9 run used a 4,096 generation ceiling. The
+  archived A10, A17 and A19 traces show every Mode and Worker request sent
+  `max_tokens` 16,384 with thinking on, which oMLX honours over the server
+  profile's 4,096; only the direct-mode research phases ran at 4,096. The
+  README, recipe, oMLX guide and provider notes now say so, and the planned
+  "measure a 16,384 ceiling" run is withdrawn: it is what was measured.
 - `learn` no longer stops on a hand-edited run record of the wrong shape
   (a `null` command, a numeric `endedAt`, `server.diffs` not a list): the
   bad entries or fields are dropped and the rest of the record still counts.

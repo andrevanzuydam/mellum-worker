@@ -23,6 +23,22 @@ Decided with Paul in brainstorming, 2026-10-10 and 2026-10-11:
 Not a measured change: nothing alters Mellum's request path. The setup
 skill's new values align what ships with what was measured.
 
+**Correction, 2026-10-11 (fix wave).** The Evidence below is wrong about
+the cap. The archived A10, A17 and A19 traces show every Mode and Worker
+request (so A14 and A18–A20 too) sent `max_tokens` 16,384,
+`chat_template_kwargs` with thinking on, and sampling 1 / 0.95 / 20; oMLX
+gives request values precedence, so the `baseline` profile's 4,096 and
+unforced thinking never applied. Only direct-mode phases (A3 and earlier)
+ran at 4,096. What changed: `model` in the data file splits into
+`serverOnly` (`max_context_window`, `turboquant_kv_enabled`: the `settings`
+fail, the activation warning and the record's `server`) and `overridden`
+(`max_tokens` 16384, `forced_ct_kwargs` `["enable_thinking"]`, thinking,
+penalties: info, "overridden by the client's request values"); the ladder
+test ties only the server-only keys to `baseline`. The `provider` finding
+fails on a different `maxTokens` or sampling value. Step 3 keeps 16,384 and
+forced thinking. The backlog entry "Measure a 16,384 ceiling" is withdrawn.
+The sections below are left as written.
+
 ## Evidence
 
 - Paul's server on 2026-10-10 had `max_tokens` 4096 and

@@ -25,13 +25,16 @@ them and ask before changing. Read the current values:
 curl -s http://127.0.0.1:8001/admin/api/models | python3 -c "import json,sys; [print(json.dumps(m['settings'],indent=1)) for m in json.load(sys.stdin)['models'] if m.get('id')=='Mellum2.1-12B-A2.5B-Thinking-6bit']"
 ```
 
-Wanted (measured in the Pi ladder):
+Wanted. The context window and TurboQuant bind every client and no request
+changes them. Pi and OpenCode send their own `max_tokens` and thinking flag
+with every request, and oMLX gives the request precedence; the server
+values below cover a client that sends none.
 
 | key | value | why |
 | --- | --- | --- |
 | `max_context_window` | 56000 | 50k prompt plus generation fits the validated memory budget |
-| `max_tokens` | 4096 | every published number used 4,096; 16,384 is untested on the current recipe (backlog) |
-| `forced_ct_kwargs` | `null` (unset) | the ladder never forced it; the server's thinking default is on |
+| `max_tokens` | 16384 | Pi and OpenCode send 16,384 per request anyway; the measured Mode and Worker runs used it |
+| `forced_ct_kwargs` | `["enable_thinking"]` | Pi and OpenCode send `enable_thinking` per request anyway; forcing it keeps thinking on for any client (thinking off failed the ladder) |
 | TurboQuant / cache quantization | off | the hybrid cache must stay native |
 
 Apply with the user's yes:
@@ -39,7 +42,7 @@ Apply with the user's yes:
 ```bash
 curl -s -X PUT http://127.0.0.1:8001/admin/api/models/Mellum2.1-12B-A2.5B-Thinking-6bit/settings \
   -H 'content-type: application/json' \
-  -d '{"max_context_window":56000,"max_tokens":4096,"forced_ct_kwargs":null}'
+  -d '{"max_context_window":56000,"max_tokens":16384,"forced_ct_kwargs":["enable_thinking"]}'
 ```
 
 Then read the values back and confirm they took. If the admin API needs

@@ -628,7 +628,7 @@ const FIX = new URL("./fixtures/check/", import.meta.url);
 const fixtureJson = (name) => JSON.parse(readFileSync(new URL(name, FIX), "utf8"));
 const response = (body, status = 200) => ({ ok: status < 300, status, json: async () => body });
 const DRIFT_WARNING =
-	'Mellum server settings differ: max_tokens 16384 (expected 4096), forced_ct_kwargs ["enable_thinking"] (expected null), turboquant_kv_enabled true (expected false). Run /mellum check.';
+	"Mellum server settings differ: max_context_window 32768 (expected 56000), turboquant_kv_enabled true (expected false). Run /mellum check.";
 
 // A fake oMLX that answers the three GETs from the fixtures and records every call.
 function fakeServer(adminModels = "admin-models-drift.json") {
@@ -678,6 +678,21 @@ test("activation with matching server settings warns nothing", async () => {
 	await mellum("on");
 	assert.deepEqual(warnings(calls), []);
 	assert.equal(server.calls.length, 1);
+});
+
+test("activation ignores server values the client's request overrides (max_tokens, thinking, penalties)", async () => {
+	const admin = fixtureJson("admin-models-match.json");
+	Object.assign(admin.models[0].settings, { max_tokens: 16384, forced_ct_kwargs: ["enable_thinking"], enable_thinking: false, presence_penalty: 0.5 });
+	const { calls, mellum } = recordingPi({ mode: "tui", fetch: async () => response(admin) });
+	await mellum("on");
+	assert.deepEqual(warnings(calls), []);
+	const rec = await withRunsFile(async () => {
+		const { handlers, mellum: m } = recordingPi({ mode: "tui", fetch: async () => response(admin) });
+		await m("on");
+		handlers.context({ messages: snapshot });
+		await m("off");
+	});
+	assert.deepEqual(rec.server, { match: true, diffs: [] });
 });
 
 test("the activation check uses the baseUrl of the Pi omlx provider", async () => {
@@ -743,8 +758,7 @@ test("the run record carries server: match false with the diffs, true when they 
 	assert.deepEqual(drift.server, {
 		match: false,
 		diffs: [
-			{ key: "max_tokens", expected: 4096, actual: 16384 },
-			{ key: "forced_ct_kwargs", expected: null, actual: ["enable_thinking"] },
+			{ key: "max_context_window", expected: 56000, actual: 32768 },
 			{ key: "turboquant_kv_enabled", expected: false, actual: true },
 		],
 	});

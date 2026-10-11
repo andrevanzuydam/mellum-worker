@@ -1,6 +1,9 @@
 /**
  * The setup check: compares what the oMLX server reports and what the host's provider
  * entry says with the measured settings in templates/omlx-model-settings.json.
+ * Only the server-only model values (context window, TurboQuant) can fail: oMLX gives a
+ * request's cap, sampling and chat-template values precedence over the model profile, and
+ * Pi and OpenCode send theirs with every request, so the server's are only advised (info).
  * checkSetup is pure. The front ends (Mode's /mellum check and activation check,
  * scripts/mellum.mjs) pass gatherInputs their own reader and GET, usually fetchJson; this
  * module only ever GETs and never writes. The fix for a settings mismatch is a `PUT`
@@ -21,7 +24,8 @@ export interface Finding {
 
 export interface Expected {
 	modelId: string;
-	model: Record<string, unknown>;
+	/** `serverOnly`: no request overrides these; `overridden`: each request sends its own. */
+	model: { serverOnly: Record<string, unknown>; overridden: Record<string, unknown> };
 	global: Record<string, unknown>;
 	advice: Record<string, unknown>;
 }
@@ -83,21 +87,26 @@ const lines = (d: Diff[], word = "expected") => d.map((x) => `  ${x.key} ${show(
 
 // ---- model settings (/admin/api/models) -----------------------------------------------
 
-/** The differing `model` keys, or null when the model or its `settings` is absent. */
-export function settingsDiffs(adminModels: unknown, expected: Expected): Diff[] | null {
+/**
+ * The differing server-only `model` keys (or, with `group` "overridden", the advised ones),
+ * or null when the model or its `settings` is absent. The activation warning and the run
+ * record use the server-only diffs: those are the only server values a request cannot change.
+ */
+export function settingsDiffs(adminModels: unknown, expected: Expected, group: keyof Expected["model"] = "serverOnly"): Diff[] | null {
 	const list = isObj(adminModels) ? adminModels.models : adminModels;
 	if (!Array.isArray(list)) return null;
 	const entry = list.find((m) => isObj(m) && m.id === expected.modelId);
 	if (!isObj(entry) || !isObj(entry.settings)) return null;
 	const settings = entry.settings;
-	return diffs(expected.model, (k) => settings[k]);
+	return diffs(expected.model[group], (k) => settings[k]);
 }
 
-/** The exact PUT that applies the measured model settings. Shown to the user, never run. */
+/** The exact PUT that applies the server-only and advised model settings. Shown to the user, never run. */
 export function putCommand(adminBase: string, expected: Expected): string {
+	const body = { ...expected.model.serverOnly, ...expected.model.overridden };
 	return (
 		`curl -s -X PUT ${adminBase}/admin/api/models/${expected.modelId}/settings ` +
-		`-H 'content-type: application/json' -d '${JSON.stringify(expected.model)}'`
+		`-H 'content-type: application/json' -d '${JSON.stringify(body)}'`
 	);
 }
 
@@ -124,7 +133,8 @@ export function providerEntry(host: Host, config: unknown): Obj | undefined {
  * `models[]` with `contextWindow`, `maxTokens`, `samplingParams`, `compat`. OpenCode: provider
  * `options.baseURL`; the model in `models{}` with `limit.context` and `limit.output` (it has no
  * sampling block, so none is compared). A host entry is always compared with its own host's
- * template, so Pi's `maxTokens` 16384 is never compared with the server's 4096.
+ * template. `maxTokens` and sampling are what each request sends, so they bind (fail); the
+ * other fields warn.
  * Returns null when the provider has no entry for the model.
  */
 function providerFields(host: Host, entry: Obj, modelId: string): Obj | null {
@@ -159,7 +169,8 @@ function providerFinding(p: CheckInputs["provider"], template: Obj, expected: Ex
 			: [x],
 	);
 	if (d.length === 0) return { id: "provider", level: "ok", message: `${p.host} provider entry matches the template` };
-	return { id: "provider", level: "warn", message: `${p.host} provider entry differs from the template:\n${lines(d).join("\n")}`, fix };
+	const binds = d.some((x) => x.key === "maxTokens" || x.key.startsWith("samplingParams"));
+	return { id: "provider", level: binds ? "fail" : "warn", message: `${p.host} provider entry differs from the template:\n${lines(d).join("\n")}`, fix };
 }
 
 // ---- the check -----------------------------------------------------------------------
@@ -206,13 +217,21 @@ export function checkSetup(inputs: CheckInputs, expected: Expected): Finding[] {
 		if (d === null) {
 			out.push({ id: "settings", level: "warn", message: `the admin API has no settings for ${expected.modelId}`, fix: adminUrl });
 		} else if (d.length === 0) {
-			out.push({ id: "settings", level: "ok", message: "model settings match the measured profile" });
+			out.push({ id: "settings", level: "ok", message: "server-only model settings match the measured profile" });
 		} else {
 			out.push({
 				id: "settings",
 				level: "fail",
 				message: `model settings differ from the measured profile:\n${lines(d).join("\n")}`,
 				fix: putCommand(adminBase, expected),
+			});
+		}
+		const o = settingsDiffs(inputs.adminModels.value, expected, "overridden") ?? [];
+		if (o.length > 0) {
+			out.push({
+				id: "settings",
+				level: "info",
+				message: `server values differ from the advised ones, overridden by the client's request values:\n${lines(o, "advised").join("\n")}`,
 			});
 		}
 	}

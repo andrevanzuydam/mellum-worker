@@ -63,10 +63,9 @@ settings matched). `MELLUM_MODE_RUNS` sets the path; `0` turns it off.
 
 **Project facts (Mode).** Mode sends Mellum only the worker prompt and
 your task, never your conversation, skills or `AGENTS.md`, except one
-section. Without the test command Mellum guesses `uv run --offline pytest
--q`, which cannot import a root `app.py` from `tests/`, and then bends the
-project to fit (`__init__.py`, `pytest.ini`, `pip install .`). Add a
-`## Mellum` section to the `AGENTS.md` where you start Pi:
+section. Without the test command Mellum guesses one and bends the project
+to fit ([What helped](#what-helped)). Add a `## Mellum` section to the
+`AGENTS.md` where you start Pi:
 
 ```markdown
 ## Mellum
@@ -99,21 +98,23 @@ If pi-subagents says the child "produced no output", dispatch it once more
 - Do the exploration with your main model first, then hand over the result.
 - Expect 11 to 14 requests and 25 to 120 seconds per task.
 
-**Model settings.** The measured recipe expects these oMLX settings:
+**Model settings.** The measured runs used these values:
 
-| setting | value |
-| --- | --- |
-| model id | Mellum2.1-12B-A2.5B-Thinking-6bit |
-| context window | 56,000 |
-| generation ceiling (max_tokens) | 4,096 |
-| thinking | on |
-| sampling | 1 / 0.95 / 20 |
-| concurrent requests | 1 |
-| hot cache | off |
+| setting | value | set by |
+| --- | --- | --- |
+| model id | Mellum2.1-12B-A2.5B-Thinking-6bit | server |
+| max_tokens | 16,384 | provider entry, per request |
+| thinking | on | provider entry, per request |
+| sampling | 1 / 0.95 / 20 | provider entry, per request |
+| context window | 56,000 | server only |
+| TurboQuant | off | server only |
+| concurrent requests | 1 | server only |
+| hot cache | off | server only |
 
-Other clients of the same oMLX model can change these. Pi and OpenCode
-send their own 16,384 output limit per request, which oMLX honours over this
-server value.
+Pi and OpenCode send the first three from your provider entry per
+request, and oMLX honours them over the server's own values. The
+server-only values bind every client, and other clients of the same oMLX
+model can change them.
 
 **Check your setup.** In Pi Mode, `/mellum check`. From the terminal,
 `--host pi` checks the setup Pi Mode and Pi Worker share, and
@@ -127,13 +128,15 @@ node <package dir>/scripts/mellum.mjs check --host opencode
 `<package dir>` is `~/.pi/agent/git/github.com/pauleveritt/mellum-worker`
 (Pi) or `~/.cache/opencode/packages/*/node_modules/mellum-worker`
 (OpenCode). It checks that the server answers and lists the model, that the
-settings above match, and that your provider entry matches the template;
-fails print first, and the CLI exits 1 on any fail. It only reads: a
-settings fix prints as the `PUT` to run yourself. Each `/mellum` activation
-also reads the settings (one second at most) and warns in one line on drift:
+server-only settings above match, and that your provider entry matches the
+template, `maxTokens` and sampling included; a server value your requests
+override shows as info. Fails print first, and the CLI exits 1 on any fail.
+It only reads: a settings fix prints as the `PUT` to run yourself. Each
+`/mellum` activation also reads the server-only settings (one second at
+most) and warns in one line on drift:
 
 ```
-Mellum server settings differ: max_tokens 16384 (expected 4096). Run /mellum check.
+Mellum server settings differ: max_context_window 32768 (expected 56000). Run /mellum check.
 ```
 
 **Learn from your runs.** In Pi Mode, `/mellum learn` (the last 10 runs)
@@ -189,19 +192,38 @@ Rungs 6–9 build a small FastAPI app (AgentClinic) from four loose phase
 specs. A run passes when the project's tests and hidden behaviour tests
 pass, no existing test was removed or edited, and nothing was written
 outside the file list. Mode, 12 runs per column
-([note](docs/superpowers/research/2026-10-09-m7-project-facts.md)):
+([note](docs/superpowers/research/2026-10-09-m7-project-facts.md)): facts
+off ([A18](docs/ladder/ablation-a18-agentclinic-facts-off/README.md)), a
+`## Mellum` section ([A19](docs/ladder/ablation-a19-facts-on/README.md)),
+and the fallback only
+([A20](docs/ladder/ablation-a20-facts-fallback-only/README.md)). Passes,
+requests, time and stray writes are in What helped, below; runs cut at the
+600 s deadline were 3, 1 and 1 of 12.
 
-| Rungs 6–9 | facts off ([A18](docs/ladder/ablation-a18-agentclinic-facts-off/README.md)) | `## Mellum` ([A19](docs/ladder/ablation-a19-facts-on/README.md)) | fallback only ([A20](docs/ladder/ablation-a20-facts-fallback-only/README.md)) |
+A18 is rescored under the added-tests rule (0/12 strict). Time is the
+runner's clock; output tokens are not in `run.json`. Mode and Worker
+requests sent max_tokens 16,384 (verified in the A10, A17 and A19 traces);
+direct-mode research phases used 4,096.
+
+## What helped
+
+One change made most of the difference: telling Mellum the project's test
+command. On less-specified tasks Mellum guesses `pytest -q`, which cannot
+import a root module from `tests/`, and then bends the project to fit
+(`__init__.py`, `pytest.ini`, `uv add`) until it times out or leaves stray
+files. The `## Mellum` section fixes that; without it, Mode's `python -m
+pytest` fallback gets about three-quarters of the gain.
+
+| AgentClinic, 12 runs each | no facts | fallback only | `## Mellum` section |
 | --- | --- | --- | --- |
-| passes | 1/12 | 9/12 | 7/12 |
-| requests, median | 50 | 26 | 28 |
-| wall s, median | 261 | 106 | 143 |
-| wrote outside the file list | 8/12 | 0/12 | 5/12 |
-| cut at the 600 s deadline | 3/12 | 1/12 | 1/12 |
+| passed | 1 | 7 | 9 |
+| requests, median | 50 | 28 | 26 |
+| seconds, median | 261 | 143 | 106 |
+| wrote outside the layout | 8 | 5 | 0 |
 
-A18 is rescored under the added-tests rule (0/12 strict). Wall is the
-runner's clock; output tokens are not in `run.json`. All runs used a 4,096
-generation ceiling.
+Rungs 1–5 did not regress (15/15). Caveats: three runs per task, one
+machine, one kind of project; the baseline is Mode without facts, since bare
+Pi was not run on these rungs.
 
 ## Findings
 
@@ -262,7 +284,6 @@ In order; see [ROADMAP.md](ROADMAP.md) and [BACKLOG.md](BACKLOG.md).
 - **M.9:** an in-process Worker through Pi's SDK.
 - **M.10:** a mediated brief, compared against project facts.
 - **M.3, M.4:** measure the OpenCode port; an Ollama backend.
-- **Ceiling:** test 16,384 against the measured 4,096 on the long rungs.
 
 ## Releases
 

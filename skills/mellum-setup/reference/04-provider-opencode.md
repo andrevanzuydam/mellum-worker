@@ -16,6 +16,6 @@ comments, so do not run it through the merge script. Read
 Show the user the exact insertion before making it. The `limit` block
 (context 56,000, output 16,384) sets the limits; the output limit is what
 OpenCode sends with each request, and oMLX honours it over the server's
-4,096. A smaller output limit cuts long tasks off.
+value. A smaller output limit cuts long tasks off.
 
 Re-run the check.
