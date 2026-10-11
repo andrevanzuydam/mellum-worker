@@ -4,6 +4,8 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-10-11
+
 ### Added
 
 - Pi Worker runs now write run records to `~/.pi/agent/mellum-worker-runs.jsonl`

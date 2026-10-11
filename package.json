@@ -1,6 +1,6 @@
 {
   "name": "mellum-worker",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Mellum 2.1 as a bounded coding worker for OpenCode and Pi, with a guided setup skill",
   "type": "module",
   "main": "./opencode/plugin.js",

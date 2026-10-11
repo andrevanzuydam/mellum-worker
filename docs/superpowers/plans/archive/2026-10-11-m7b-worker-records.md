@@ -1,7 +1,7 @@
 ---
 phase: M.7B
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # M.7B Worker Records Implementation Plan
@@ -120,3 +120,17 @@ lifecycle: active
 **Task 5** (docs, roadmap, changelog). Failing first: `node --test tests/docs.test.mjs` with the two README Learn assertions changed (require `MELLUM_WORKER_RUNS`; Pi Worker writes records, OpenCode runs join with M.3, no "M.7B"): 2 fail (`says where Worker records live`, `says Pi Worker writes records`). After the README, recipe §4c, setup phase 5, ROADMAP (M.7B Status 586 characters, Ships 169, Excludes 56; M.3 Ships 117) and CHANGELOG edits: `npm test` and `cd ladder && uv run python -m pytest -q -m "not slow"` green (288 pass, 0 fail; 123 passed, 25 deselected). The plan stays `lifecycle: active` for the merge; the M.7B ROADMAP row, the README's Future work bullet and `## Now` are updated.
 
 **Final review fixes.** (1) Recorder: the first `context` holding a user message is the baseline and later `context` lists are ignored (a compacted child loses the brief); failing first: a compaction test wrote no file; after, green (`252436b`). (2) `workerRunsFile` shares `modeRunsFile`'s rule (empty is off, leading `~` is HOME); failing first: the new asserts got the default path; CHANGELOG, README and recipe say "`0` or empty" (`c40dd96`). (3) Fixture README says `final.md` is the parent's report. (4) ROADMAP M.7B Status opens "built ... awaits merge". (5) BACKLOG entry: the recorder never resets after a settle. Final: `npm test` and the ladder pytest, counts in the sdd report.
+
+## Result
+
+2026-10-11. Merged to `main`; shipped in v0.1.6. The guards extension writes
+one schema-2 `kind: "worker"` record per finished Pi Worker run to
+`MELLUM_WORKER_RUNS` (default `~/.pi/agent/mellum-worker-runs.jsonl`), read
+by `/mellum learn`; the record code is shared with Mode in
+`extensions/mellum-record.ts`; the ladder keeps Worker records under
+scratch. Three A10 Worker runs replayed with no model call matched their
+traces (requests 9/14/16, commands 2/1/2, files 1/2/3) and exposed a
+prompt-version defect, fixed. R9 (brief fixed at the first context, turns
+accumulated, so compaction keeps the brief) kept by Paul. The live
+delegated run (Task 6) was not run. Suites at merge: `npm test` 289, ladder
+pytest (not slow) 123.
