@@ -1,0 +1,643 @@
+[
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:03.027Z",
+    "monotonicMs": 15369.746375,
+    "type": "provider_request",
+    "payload": {
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "max_tokens": 16384,
+      "chat_template_kwargs": {
+        "enable_thinking": true,
+        "preserve_thinking": true
+      },
+      "temperature": 1,
+      "top_p": 0.95,
+      "top_k": 20,
+      "messages": [
+        {
+          "role": "user",
+          "content": "Original request context omitted for this event replay."
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:03.056Z",
+    "monotonicMs": 15398.403792,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 0,
+      "model": "keepalive",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "role": "assistant",
+            "content": ""
+          },
+          "finish_reason": null
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:03.066Z",
+    "monotonicMs": 15409.252083,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761583,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "role": "assistant"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:03.404Z",
+    "monotonicMs": 15746.530125,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761583,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "reasoning_content": "\nGreat! The test passed. We have added a hello world module ("
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:03.515Z",
+    "monotonicMs": 15857.916292,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761583,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "reasoning_content": "hello.py) and a Python test (tests/test_hello.py"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:03.627Z",
+    "monotonicMs": 15969.468667,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761583,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "reasoning_content": "). The user asked \"Add a hello world module with a Python test.\""
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:03.737Z",
+    "monotonicMs": 16080.346917,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761583,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "reasoning_content": " We have done that.\n\nWe should report the result. According to instructions,"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:03.849Z",
+    "monotonicMs": 16191.493792,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761583,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "reasoning_content": " before reporting completion, run the test command and report its result. We ran it and"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:03.960Z",
+    "monotonicMs": 16303.042333,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761583,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "reasoning_content": " it passed.\n\nNow we can respond with a brief message indicating success."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:04.071Z",
+    "monotonicMs": 16414.246875,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761584,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "reasoning_content": " We should show file paths clearly. Let's mention we created hello.py and tests"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:04.183Z",
+    "monotonicMs": 16525.378375,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761584,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "reasoning_content": "/test_hello.py and the test passed.\n\nWe should also consider"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:04.290Z",
+    "monotonicMs": 16633.211083,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761584,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "reasoning_content": " if any further steps needed. The project might expect the hello module to be"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:04.401Z",
+    "monotonicMs": 16744.356,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761584,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "reasoning_content": " part of the application, but the request was just to add a hello world module"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:04.513Z",
+    "monotonicMs": 16855.895375,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761584,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "reasoning_content": " with a Python test. We've done that.\n\nWe can optionally inspect"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:04.625Z",
+    "monotonicMs": 16967.752875,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761584,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "reasoning_content": " the files to confirm content, but not necessary.\n\nLet's respond.\n"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:04.736Z",
+    "monotonicMs": 17078.8915,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761584,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "content": "\n\nAdded a hello world module `hello.py` with a"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:04.848Z",
+    "monotonicMs": 17190.43325,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761584,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "content": " `hello()` function returning \"Hello, World!\", and a Python test `tests"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:04.960Z",
+    "monotonicMs": 17302.704042,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761584,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "content": "/test_hello.py` that verifies the function. Ran the test command `"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:05.067Z",
+    "monotonicMs": 17409.63075,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761585,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "content": "uv run --frozen python -m pytest tests` and all tests pass.\n"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:05.179Z",
+    "monotonicMs": 17521.460417,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761585,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "content": "\nFiles created:\n- hello.py\n- tests/test_hello."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:05.290Z",
+    "monotonicMs": 17632.76775,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761585,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {
+            "content": "py\n\nTest result: 1 passed in 0.01s."
+          }
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:05.302Z",
+    "monotonicMs": 17644.802625,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761585,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [
+        {
+          "index": 0,
+          "delta": {},
+          "finish_reason": "stop"
+        }
+      ]
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:05.302Z",
+    "monotonicMs": 17645.214917,
+    "type": "provider_stream_event",
+    "provider": "omlx",
+    "api": "openai-completions",
+    "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+    "data": {
+      "id": "chatcmpl-2e0b449e",
+      "object": "chat.completion.chunk",
+      "created": 1791761585,
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "choices": [],
+      "usage": {
+        "prompt_tokens": 4980,
+        "completion_tokens": 303,
+        "total_tokens": 5283,
+        "input_tokens": 4980,
+        "output_tokens": 303,
+        "prompt_tokens_details": {
+          "cached_tokens": 4096
+        },
+        "time_to_first_token": 0.35,
+        "total_time": 2.25,
+        "prompt_eval_duration": 0.35,
+        "generation_duration": 1.9,
+        "prompt_tokens_per_second": 14343.35,
+        "generation_tokens_per_second": 159.53
+      }
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:05.303Z",
+    "monotonicMs": 17645.704417,
+    "type": "message_end",
+    "message": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "thinking",
+          "thinking": "\nGreat! The test passed. We have added a hello world module (hello.py) and a Python test (tests/test_hello.py). The user asked \"Add a hello world module with a Python test.\" We have done that.\n\nWe should report the result. According to instructions, before reporting completion, run the test command and report its result. We ran it and it passed.\n\nNow we can respond with a brief message indicating success. We should show file paths clearly. Let's mention we created hello.py and tests/test_hello.py and the test passed.\n\nWe should also consider if any further steps needed. The project might expect the hello module to be part of the application, but the request was just to add a hello world module with a Python test. We've done that.\n\nWe can optionally inspect the files to confirm content, but not necessary.\n\nLet's respond.\n",
+          "thinkingSignature": "reasoning_content"
+        },
+        {
+          "type": "text",
+          "text": "\n\nAdded a hello world module `hello.py` with a `hello()` function returning \"Hello, World!\", and a Python test `tests/test_hello.py` that verifies the function. Ran the test command `uv run --frozen python -m pytest tests` and all tests pass.\n\nFiles created:\n- hello.py\n- tests/test_hello.py\n\nTest result: 1 passed in 0.01s."
+        }
+      ],
+      "api": "openai-completions",
+      "provider": "omlx",
+      "model": "Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "usage": {
+        "input": 884,
+        "output": 303,
+        "cacheRead": 4096,
+        "cacheWrite": 0,
+        "reasoning": 0,
+        "totalTokens": 5283,
+        "cost": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        }
+      },
+      "stopReason": "stop",
+      "timestamp": 1791761583027,
+      "responseId": "chatcmpl-2e0b449e",
+      "responseModel": "keepalive",
+      "rawStopReason": "stop",
+      "durationMs": 2276,
+      "thinkingLevel": "high"
+    }
+  },
+  {
+    "recorderId": "source-instance",
+    "pid": 1,
+    "request": 13,
+    "timestamp": "2026-10-11T23:33:05.304Z",
+    "monotonicMs": 17647.173333,
+    "type": "agent_settled",
+    "aborted": false
+  }
+]

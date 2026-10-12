@@ -87,3 +87,48 @@ test('observer leaves frozen inputs unchanged and does not invent guard decision
   assert.equal(h.tool_result(Object.freeze({toolCallId:'x',toolName:'read',isError:false,content:Object.freeze([])})),undefined);
   assert.equal(h.agent_start({}),undefined); assert.equal(h.agent_end({}),undefined);
 });
+
+test('recorded Pi 1.1 final response replays chunks and actual normalized reply', async () => {
+  const {readFileSync}=await import('node:fs');
+  const source=JSON.parse(readFileSync(new URL('../../tests/fixtures/telemetry/pi110.events.json',import.meta.url),'utf8'));
+  const {handlers:h,rows}=capture();
+  for(const event of source) {
+    const hook=event.type==='provider_request' ? 'before_provider_request' : event.type;
+    h[hook](structuredClone(event));
+  }
+  const chunks=rows.filter(row=>row.type==='provider_stream_event');
+  assert.equal(chunks.length,22);
+  const final=rows.find(row=>row.type==='message_end').message;
+  assert.equal(final.durationMs,2276);
+  assert.equal(final.stopReason,'stop');
+  const visible=chunks.flatMap(row=>row.data.choices??[]).map(c=>c.delta?.content??'').join('');
+  assert.equal(visible,final.content.find(b=>b.type==='text').text);
+  assert.equal(rows[0].runtime.piVersion,'1.1.0');
+  assert.equal(rows.at(-1).aborted,false);
+  assert.ok(chunks.every(c=>c.requestId===rows[1].requestId));
+});
+
+test('shipped guard hook decisions and payloads are identical with telemetry', async () => {
+  const {default:installGuards}=await import('../../extensions/mellum-guards.ts');
+  async function run(withTelemetry) {
+    const listeners={}, rows=[], saved=process.env.MELLUM_WORKER_RUNS;
+    process.env.MELLUM_WORKER_RUNS='0';
+    const pi={on:(name,fn)=>{(listeners[name]??=[]).push(fn);}};
+    try { installGuards(pi,{fetch:()=>Promise.reject(Error('no server'))}); }
+    finally { if(saved===undefined) delete process.env.MELLUM_WORKER_RUNS; else process.env.MELLUM_WORKER_RUNS=saved; }
+    if(withTelemetry) recorder.installRecorder(pi,{write:r=>rows.push(r),runtime:{piVersion:'1.1.0'},runId:'run'});
+    const decisions=[], payload=structuredClone(request);
+    const events=[['before_provider_request',payload],...Array.from({length:8},()=>['tool_call',{toolCallId:'read',toolName:'read',input:{path:'x'}}]),
+      ['turn_end',{message:{role:'assistant',content:[],stopReason:'stop'},toolResults:[]}],['agent_before_settle',{}]];
+    for(const [name,event] of events) {
+      const results=[];
+      for(const handler of listeners[name]??[]) { const result=await handler(event); if(result!==undefined) results.push(result); }
+      decisions.push(results);
+    }
+    return {decisions,payload};
+  }
+  const plain=await run(false), observed=await run(true);
+  assert.ok(plain.decisions.flat().some(d=>d.block));
+  assert.ok(plain.decisions.flat().some(d=>d.continue));
+  assert.deepEqual(observed,plain);
+});

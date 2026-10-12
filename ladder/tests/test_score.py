@@ -218,3 +218,22 @@ def test_effective_params_record_a_request_level_thinking_budget():
         "payload": {"temperature": 0, "thinking_budget": 2048, "messages": []},
     }
     assert score([req], set(), {}).effective_params["thinking_budget"] == 2048
+
+
+def test_additive_telemetry_preserves_legacy_score():
+    fixture = (
+        Path(__file__).resolve().parents[2]
+        / "tests/fixtures/worker/a10-rung1-r1.trace.jsonl"
+    )
+    legacy = [json.loads(line) for line in fixture.read_text().splitlines() if line]
+    augmented = [
+        {**event, "traceSchema": 1, "instanceId": "a", "seq": i + 1}
+        for i, event in enumerate(legacy)
+    ]
+    augmented.insert(1, {"type": "provider_stream_event", "data": {"choices": []}})
+    augmented.append({"type": "agent_settled", "aborted": False})
+    paths, lines = {"calculator.js"}, {"calculator.js": 3}
+    assert score(legacy, paths, lines).requests == 9
+    assert (
+        score(augmented, paths, lines).as_row() == score(legacy, paths, lines).as_row()
+    )
