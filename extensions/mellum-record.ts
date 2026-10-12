@@ -38,14 +38,22 @@ export interface SpanStats {
 	finalReply: string;
 	/** Shape of the span's last assistant message. */
 	finalTurn: { stopReason?: string; hadText: boolean; hadToolCall: boolean };
+	/** Tool calls per tool name, over every assistant turn. */
+	toolCalls: Record<string, number>;
+	/** Tool results marked as errors, from any tool. */
+	toolErrors: number;
+	/** Seconds from the first assistant turn to the first that calls edit or write; absent without one, or without timestamps. */
+	firstWriteSeconds?: number;
 }
 
 /** Everything the handoff and the run record report, computed once from a span's messages. */
 export function spanStats(span: Msg[]): SpanStats {
 	const files = new Set<string>();
 	const results = new Map<string, { error: boolean; text: string }>();
+	let toolErrors = 0;
 	for (const m of span) {
 		if (m.role === "toolResult") {
+			if ((m as any).isError) toolErrors += 1;
 			const id = (m as any).toolCallId;
 			if (typeof id === "string") results.set(id, { error: Boolean((m as any).isError), text: textOf(m).trim() });
 		}
@@ -60,7 +68,11 @@ export function spanStats(span: Msg[]): SpanStats {
 		lastCommandOutput: "",
 		finalReply: "",
 		finalTurn: { hadText: false, hadToolCall: false },
+		toolCalls: {},
+		toolErrors,
 	};
+	let firstWriteAt: number | undefined;
+	let wrote = false;
 	for (const m of span) {
 		if (m.role !== "assistant") continue;
 		stats.requests += 1;
@@ -83,7 +95,12 @@ export function spanStats(span: Msg[]): SpanStats {
 			stats.lastTurnAt = t;
 		}
 		if (!Array.isArray(m.content)) continue;
+		if (!wrote && (m.content as any[]).some((b) => b.type === "toolCall" && (b.name === "edit" || b.name === "write"))) {
+			wrote = true;
+			firstWriteAt = t;
+		}
 		for (const b of m.content as any[]) {
+			if (b.type === "toolCall" && typeof b.name === "string") stats.toolCalls[b.name] = (stats.toolCalls[b.name] ?? 0) + 1;
 			if (b.type === "toolCall" && (b.name === "edit" || b.name === "write")) {
 				stats.edits += 1;
 				const p = b.arguments?.path;
@@ -104,6 +121,7 @@ export function spanStats(span: Msg[]): SpanStats {
 	}
 	stats.files = [...files];
 	if (stats.startedAt !== undefined && stats.lastTurnAt !== undefined) stats.wallSeconds = Math.round((stats.lastTurnAt - stats.startedAt) / 1000);
+	if (stats.startedAt !== undefined && firstWriteAt !== undefined) stats.firstWriteSeconds = Math.round((firstWriteAt - stats.startedAt) / 1000);
 	return stats;
 }
 
@@ -168,6 +186,9 @@ export interface RunRecord {
 	lastCommand: SpanStats["lastCommand"];
 	finalReply: string;
 	finalTurn: SpanStats["finalTurn"];
+	toolCalls: Record<string, number>;
+	toolErrors: number;
+	firstWriteSeconds?: number;
 	nudges: number;
 	guardBlocks: number;
 	facts?: { source: string; testCommand: string | null; chars: number } | null;
@@ -201,6 +222,9 @@ export function runRecord(task: string, span: Msg[], meta: RecordMeta): RunRecor
 		lastCommand: stats.lastCommand,
 		finalReply: stats.finalReply.slice(0, 4000),
 		finalTurn: stats.finalTurn,
+		toolCalls: stats.toolCalls,
+		toolErrors: stats.toolErrors,
+		...(stats.firstWriteSeconds !== undefined ? { firstWriteSeconds: stats.firstWriteSeconds } : {}),
 		nudges: meta.nudges ?? 0,
 		guardBlocks: meta.guardBlocks ?? 0,
 		...(meta.facts !== undefined ? { facts: meta.facts } : {}),

@@ -4,6 +4,13 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Added
+
+- Mode and Worker run records now count tool calls by tool name
+  (`toolCalls`), tool results that errored from any tool (`toolErrors`), and
+  the seconds before the first edit or write (`firstWriteSeconds`), so a run
+  shows how long Mellum explored before writing. Older records lack them.
+
 ### Changed
 
 - Published two Pi 1.1.0 ladder telemetry smoke records with reconstruction
