@@ -146,7 +146,7 @@ three tightly related tasks, no shipped behavior change, one final review.
   `issues`, and per-instance runtime/settlement/open-call evidence.
   This checks instrumentation integrity, not task success.
 
-- [ ] Add fake-hook tests for `metadata and request association`,
+- [x] Add fake-hook tests for `metadata and request association`,
   `two instances sharing a PID`, `unassociated chunks after settlement`,
   `blocked and unfinished tools`, `optional native duration and abort`,
   `sink failure is diagnostic only`, and `observer leaves inputs and returns unchanged`.
@@ -162,42 +162,42 @@ three tightly related tasks, no shipped behavior change, one final review.
   assert.equal(Object.hasOwn(blockedEnd, "durationMs"), false);
   assert.deepEqual(guardReturnsWithRecorder, guardReturnsWithoutRecorder);
   ```
-- [ ] Add Python tests for truncated/malformed lines, missing instance metadata,
+- [x] Add Python tests for truncated/malformed lines, missing instance metadata,
   runtime mismatch, stderr sink diagnostics, and same tool ID in two instances.
   Assert earlier valid events survive; no false complete proof; unfinished calls
   remain visible; native zero duration is preserved when actually present.
-- [ ] Add runner tests for normal exit, signal exit and deadline, including
+- [x] Add runner tests for normal exit, signal exit and deadline, including
   timeout stderr preservation. Assert process exit never implies settlement
   or correctness, and absent settlement is recorded rather than synthesized.
-- [ ] Run `node --test ladder/ladder/record-pi.test.mjs`; from `ladder/` run
+- [x] Run `node --test ladder/ladder/record-pi.test.mjs`; from `ladder/` run
   `uv run python -m pytest tests/test_pi_trace.py tests/test_runner.py -q`.
   Confirm the new cases fail before implementation.
-- [ ] Extend recorder in place. Emit `instance_start` with observed Pi package
+- [x] Extend recorder in place. Emit `instance_start` with observed Pi package
   version/entry path, process execPath and cwd. Allocate UUID per installation,
   never by PID; read runner UUID from `MELLUM_TRACE_RUN_ID`.
   Keep exactly one legacy request/call/result event per original hook firing.
-- [ ] Add `provider_stream_event`, assistant-only `message_end`,
+- [x] Add `provider_stream_event`, assistant-only `message_end`,
   `tool_execution_start`, `tool_execution_end`, `agent_start`, `agent_end`,
   `agent_settled`. Preserve optional native durations and full parsed chunks;
   do not add headers/credentials or network export. Keep request counters
   compatible; add instance-local request IDs. Clear active request at message
   completion/settlement, never attach orphan chunks to the previous request.
-- [ ] Tool association comes from the observed assistant message's native
+- [x] Tool association comes from the observed assistant message's native
   call IDs; request/tool links not supported by evidence remain null with
   an explicit ambiguity diagnostic. Never infer cross-instance parentage.
   Sink failure prints a stable `mellum-trace:` diagnostic and never propagates
   a new guard decision or payload modification.
-- [ ] Implement `load_trace` and `summarize_trace`; `legacy` preserves missing
+- [x] Implement `load_trace` and `summarize_trace`; `legacy` preserves missing
   evidence as unknown. Integrity checks require instance identity and consistent
   sequence/run IDs; deadline or explicit abort alone does not mean corruption.
   A runtime mismatch or missing expected instance metadata is incomplete evidence.
-- [ ] Runner supplies one run UUID to the recorder and adds `run.json.telemetry`
+- [x] Runner supplies one run UUID to the recorder and adds `run.json.telemetry`
   and `run.json.process`: exit code/signal, deadline flag, monotonic elapsed
   time and settlement observation. Keep existing stdout, legacy wall field,
   table and scoring. Read delegated parent lifecycle from existing JSON stdout;
   child lifecycle from the trace. Do not add parent provider requests to the
   Worker's legacy stream. Retain timeout stdout and stderr for diagnostics.
-- [ ] Verify Node targeted tests, all ladder pytest tests and `npm test`.
+- [x] Verify Node targeted tests, all ladder pytest tests and `npm test`.
   Add the Unreleased description of observational records; review and commit
   as `feat(ladder): correlate Pi telemetry without changing scores`.
 

@@ -17,8 +17,17 @@ from ladder.run_ladder import (
 @pytest.fixture(autouse=True)
 def controlled_launch_boundary(monkeypatch):
     from ladder import run_ladder
-    monkeypatch.setattr(run_ladder, "resolve_pi", lambda executable: {"executable": executable, "version": "test"})
-    monkeypatch.setattr(run_ladder, "workspace_preflight", lambda ws, fixture, env: (env, {"node": None, "python": None}))
+
+    monkeypatch.setattr(
+        run_ladder,
+        "resolve_pi",
+        lambda executable: {"executable": executable, "version": "test"},
+    )
+    monkeypatch.setattr(
+        run_ladder,
+        "workspace_preflight",
+        lambda ws, fixture, env: (env, {"node": None, "python": None}),
+    )
 
 
 def test_direct_args_are_the_clean_profile():
@@ -685,3 +694,54 @@ def test_run_once_wires_the_switches_into_the_child_env_and_the_workspace(
     assert len(child_envs) == 1
     assert child_envs[0].get("MELLUM_MODE_FACTS") == expect_env
     assert prepared == [{"strip_facts_section": strip}]
+
+
+@pytest.mark.parametrize("outcome", ["normal", "signal", "deadline"])
+def test_runner_process_outcomes_do_not_invent_settlement(
+    monkeypatch, tmp_path, outcome
+):
+    import subprocess
+    from ladder import run_ladder
+    from ladder.rungs import Rung, CheckResult
+
+    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda *a, **kw: tmp_path)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda *a: (set(), {}))
+    monkeypatch.setattr(run_ladder, "git", lambda *a: "")
+
+    def execute(argv, **kw):
+        if argv[0] == "git":
+            return subprocess.CompletedProcess(
+                argv, 0, stdout="test-revision", stderr=""
+            )
+        if outcome == "deadline":
+            raise subprocess.TimeoutExpired(
+                argv,
+                1,
+                output=b'{"type":"agent_end"}\n',
+                stderr=b"mellum-trace: disk full",
+            )
+        return subprocess.CompletedProcess(
+            argv,
+            0 if outcome == "normal" else -15,
+            stdout='{"type":"agent_end"}\n',
+            stderr="",
+        )
+
+    monkeypatch.setattr(run_ladder.subprocess, "run", execute)
+    rung = Rung(
+        1, "calculator", "fix it", ["true"], lambda *a: CheckResult(False, True)
+    )
+    record = run_ladder.run_once(
+        rung, "direct", "baseline", 1, tmp_path / "out", 1, {}, False
+    )
+    assert record["process"]["deadlineHit"] == (outcome == "deadline")
+    assert record["process"]["exitCode"] == (0 if outcome == "normal" else None)
+    assert record["process"]["signal"] == (15 if outcome == "signal" else None)
+    assert record["process"]["settled"] is False
+    assert record["process"]["elapsedMs"] >= 0
+    if outcome == "deadline":
+        assert (
+            "mellum-trace: disk full"
+            in next((tmp_path / "out").glob("*/stdout.txt")).read_text()
+        )
+        assert record["telemetry"]["status"] == "incomplete"

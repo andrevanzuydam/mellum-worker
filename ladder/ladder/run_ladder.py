@@ -21,8 +21,10 @@ import tempfile
 import time
 from dataclasses import asdict
 from pathlib import Path
+from uuid import uuid4
 
 from .omlx_profiles import PROFILES, AdminClient, check_effective_params, profile
+from .pi_launch import resolve_pi, subagents_revision, workspace_preflight
 from .pi_profile import (
     LADDER_ROOT,
     REPO_ROOT,
@@ -30,7 +32,7 @@ from .pi_profile import (
     mirror_agent_dir,
     prepare_pi_workspace,
 )
-from .pi_launch import resolve_pi, workspace_preflight, subagents_revision
+from .pi_trace import load_trace, stdout_settlement, summarize_trace
 from .rungs import FIXTURES, RUNGS, Rung, copy_fixture
 from .score import score
 
@@ -503,7 +505,11 @@ def run_once(
     launch = {"cwd": str(ws), "pi": selected_pi, **environment}
     if mode == "delegated":
         launch["pi_subagents_revision"] = subagents_revision(agent_dir)
+    env["MELLUM_TRACE_RUN_ID"] = str(uuid4())
     started = time.time()
+    monotonic_started = time.monotonic()
+    returncode = None
+    stderr = ""
     deadline_hit = False
     stdout = ""
     prompts = 1
@@ -518,7 +524,7 @@ def run_once(
     for i, step_argv in enumerate(step_args):
         step_argv = [selected_pi["executable"], *step_argv[1:]]
         launch["argv"] = step_argv
-        remaining = deadline - (time.time() - started)
+        remaining = deadline - (time.monotonic() - monotonic_started)
         if remaining <= 0:
             deadline_hit = True
             break
@@ -536,6 +542,8 @@ def run_once(
                 timeout=remaining,
                 check=False,
             )
+            returncode = proc.returncode
+            stderr += proc.stderr
             stdout += proc.stdout + (
                 "\n[stderr]\n" + proc.stderr if proc.stderr else ""
             )
@@ -547,12 +555,22 @@ def run_once(
                 if isinstance(captured, bytes)
                 else str(captured)
             )
+            captured_stderr = error.stderr or b""
+            stderr += (
+                captured_stderr.decode(errors="replace")
+                if isinstance(captured_stderr, bytes)
+                else str(captured_stderr)
+            )
+            if captured_stderr:
+                stdout += "\n[stderr]\n" + stderr
             break
     wall = time.time() - started
     stop_reason, final_text, thinking_reentries = parse_pi_json(
         stdout, with_reentries=True
     )
-    events = read_events(trace)
+    elapsed_ms = (time.monotonic() - monotonic_started) * 1000
+    events, trace_issues = load_trace(trace)
+    telemetry = summarize_trace(events, trace_issues, stderr, selected_pi)
     git(ws, "add", "-A")
     record = {
         "rung": rung.number,
@@ -587,6 +605,18 @@ def run_once(
         "thinking": thinking if mode == "direct" else None,
         "versions": versions,
         "launch": launch,
+        "telemetry": telemetry,
+        "process": {
+            "exitCode": returncode
+            if returncode is not None and returncode >= 0
+            else None,
+            "signal": -returncode
+            if returncode is not None and returncode < 0
+            else None,
+            "deadlineHit": deadline_hit,
+            "elapsedMs": elapsed_ms,
+            **stdout_settlement(stdout),
+        },
         "sentence": rung.sentence,
         "started": started,
         "wall_seconds_untrusted": round(wall, 1),

@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- Ladder traces now correlate agent instances, requests and tool executions,
+  retaining provider chunks and settlement/abort evidence. Runner records
+  distinguish exit, signal and deadline; partial traces are flagged without
+  changing task scores or everyday Mode/Worker run records.
+
 - The ladder accepts `--pi-executable` for isolated Pi research and records
   the selected runtime and fixture environment. Failed fixture preparation
   now stops before a model request; delegated children use that runtime too.
