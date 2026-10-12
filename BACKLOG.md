@@ -103,19 +103,6 @@ decision, so it is measured before it ships.
 *Reopens when* a facts-on ladder phase or a run record shows a non-empty
 `outside_write_list` with the list forwarded.
 
-**Ladder PATH leaks its venv into Mellum's shell.** `uv run` in `ladder/`
-puts `ladder/.venv/bin` first on `PATH`, and Mellum's bash inherits it, so
-bare `python` is the ladder's own interpreter. A20 9 r1 ran `python -m
-ensurepip` and `python -m pip install` (`starlette`, `httpx2`, the last
-downloaded) there; the controller restored it with `uv sync --exact
---offline`. Scores were unaffected: each workspace
-used its own `.venv` ([A20](docs/ladder/ablation-a20-facts-fallback-only/README.md)).
-Remedy: `child_env` (and `mode_env` through it) drops `ladder/.venv/bin`
-from `PATH` as it already drops `VIRTUAL_ENV`; optionally the scorer flags
-a run whose commands touched the ladder's venv. *Reopens when* the next
-change to `ladder/`, or any record showing a mutation outside the
-workspace.
-
 **Deadline leaves workspace servers running.** Every run cut at the 600 s
 deadline in M.7 (A18 6 r2, 8 r1, 9 r1; A19 8 r2; A20 6 r2) ended on a
 foreground `uvicorn`/app server, and the runner left it listening on ports

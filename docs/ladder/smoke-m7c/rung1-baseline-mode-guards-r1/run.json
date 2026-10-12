@@ -1,0 +1,140 @@
+{
+  "rung": 1,
+  "repeat": 1,
+  "profile": "baseline",
+  "mode": "mode",
+  "harness": "pi",
+  "plain": false,
+  "guards": true,
+  "subagents_config": null,
+  "strip_thinking": null,
+  "prompts": 1,
+  "prompts_planned": 1,
+  "brief_file": null,
+  "budget_hook": null,
+  "mode_facts": "on",
+  "strip_facts_section": false,
+  "guards_env": null,
+  "prompt_version": null,
+  "prompt_file": null,
+  "prompt_mode": null,
+  "thinking": null,
+  "versions": {
+    "pi": "1.1.0",
+    "pi_launch": {
+      "executable": "/tmp/mellum-runs/pi110-hello-ny6sfma5/runtime/node_modules/.bin/pi",
+      "version": "1.1.0"
+    },
+    "omlx": "",
+    "model_settings": {
+      "max_tokens": 4096,
+      "thinking_budget_tokens": null,
+      "presence_penalty": 0.0,
+      "max_tool_result_tokens": null
+    }
+  },
+  "launch": {
+    "cwd": "/var/folders/m4/jc_jynrj6z10mk0t80pkj8l80000gn/T/ladder-a4y0rq_8/rung1",
+    "pi": {
+      "executable": "/tmp/mellum-runs/pi110-hello-ny6sfma5/runtime/node_modules/.bin/pi",
+      "version": "1.1.0"
+    },
+    "node": {
+      "executable": "/opt/homebrew/Cellar/node/24.3.0/bin/node",
+      "version": "v24.3.0"
+    },
+    "python": null,
+    "argv": [
+      "/tmp/mellum-runs/pi110-hello-ny6sfma5/runtime/node_modules/.bin/pi",
+      "-p",
+      "--mode",
+      "json",
+      "--no-session",
+      "--model",
+      "omlx/Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "-e",
+      "/Users/pauleveritt/projects/pauleveritt/mellum-worker/.worktrees/m7c-pi-harness-telemetry/extensions/mellum-mode.ts",
+      "-e",
+      "/Users/pauleveritt/projects/pauleveritt/mellum-worker/.worktrees/m7c-pi-harness-telemetry/ladder/ladder/record-pi.js",
+      "the cart total ignores quantity, fix it"
+    ]
+  },
+  "telemetry": {
+    "status": "ok",
+    "issues": [],
+    "instances": {
+      "29455e5f-8fef-4a43-ad80-1cc44144d632": {
+        "runtime": {
+          "piVersion": "1.1.0",
+          "entryPath": "/private/tmp/mellum-runs/pi110-guards-o9x_4230/runtime/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+          "execPath": "/opt/homebrew/Cellar/node/24.3.0/bin/node",
+          "cwd": "/private/var/folders/m4/jc_jynrj6z10mk0t80pkj8l80000gn/T/ladder-a4y0rq_8/rung1"
+        },
+        "settled": true,
+        "aborted": false,
+        "openCalls": []
+      }
+    }
+  },
+  "process": {
+    "exitCode": 0,
+    "signal": null,
+    "deadlineHit": false,
+    "elapsedMs": 10259.653916000389,
+    "settled": true,
+    "aborted": false
+  },
+  "sentence": "the cart total ignores quantity, fix it",
+  "started": 1791763976.848741,
+  "wall_seconds_untrusted": 10.3,
+  "deadline_hit": false,
+  "stop_reason": "stop",
+  "final_text_chars": 51,
+  "thinking_reentries": 0,
+  "final_text_is": "worker",
+  "parent": null,
+  "baseline_lines": {
+    "package.json": 1,
+    "calculator.test.js": 10,
+    ".gitignore": 4,
+    "calculator.js": 3
+  },
+  "check": {
+    "passed": true,
+    "tests_unchanged": true,
+    "details": {}
+  },
+  "score": {
+    "requests": 8,
+    "largest_prompt_chars": 12661,
+    "tool_calls_by_name": {
+      "ls": 1,
+      "read": 4,
+      "edit": 1,
+      "bash": 1
+    },
+    "tool_errors": 0,
+    "edit_anchor_failures": 0,
+    "noop_edits": 0,
+    "write_existing": 0,
+    "bash_file_mutations": 0,
+    "max_identical_streak": 1,
+    "write_shrink": 0,
+    "nudges": 0,
+    "max_identical_in_window": 1,
+    "loop_breaker_would_block": 0,
+    "effective_params": {
+      "temperature": 1,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0,
+      "max_tokens": 16384,
+      "presence_penalty": 0
+    }
+  },
+  "diff_stat": " calculator.js | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n",
+  "files_created": [],
+  "workspace": "/var/folders/m4/jc_jynrj6z10mk0t80pkj8l80000gn/T/ladder-a4y0rq_8/rung1",
+  "worker_version": "0.1.6",
+  "worker_git": "v0.1.6-8-gb108aac"
+}

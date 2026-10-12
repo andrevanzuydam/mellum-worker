@@ -107,3 +107,21 @@ The command prints `<phase> <sha256>` per tarball; compare with the table.
 | ablation-a18-agentclinic-facts-off | `ablation-a18-agentclinic-facts-off.tar.gz` | `de705fd02d80afd57e0ab9ddf154e35886cd8d8e05180e5401bb59e9ccdf83fe` |
 | ablation-a19-facts-on | `ablation-a19-facts-on.tar.gz` | `aca9d936997ef15ffb33e4eea5b71af60d64a5956326b7cedff6121ac5aab895` |
 | ablation-a20-facts-fallback-only | `ablation-a20-facts-fallback-only.tar.gz` | `b549e06a201fbffdd0badb268cb52ee6eaec4ab9ce90ffa74796962fdc3e84d0` |
+
+## M.7C telemetry smokes
+
+Two existing rung-1 attempts (Mode and delegated Worker), launched on
+2026-10-11 America/New_York, trace UTC date 2026-10-12. Source checkout
+commit `b108aac`; details and content review in [smoke-m7c](smoke-m7c/README.md).
+Pi 1.1.0, Node v24.3.0; actual canonical Pi package identity matched launch
+intent, including the child. Installed pi-subagents revision:
+`8983754bb3ef6603cbbe46dcc2314ec8563ffc23`.
+
+The deterministic six-member archive contains only `trace.jsonl`, `stdout.txt`
+and `diff.patch` from the two attempts. Members match their retained sources
+byte-for-byte. Downloaded published bytes were checked against SHA-256:
+
+- Asset: [`smoke-m7c.tar.gz`](https://github.com/pauleveritt/mellum-worker/releases/download/research-2026-10-11/smoke-m7c.tar.gz).
+- SHA-256: `a62352518e2497950e28e5edb7037033781d8208b0115461aca07cef6df32fae`.
+- Release tag is an evidence container, not the implementation/source version.
+- Earlier October 11 preservation manifests remain unchanged.

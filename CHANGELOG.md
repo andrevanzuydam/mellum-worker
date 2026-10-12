@@ -6,6 +6,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- Published two Pi 1.1.0 ladder telemetry smoke records with reconstruction
+  notes and hashed raw evidence: Mode and Worker passed the existing rung-1
+  checks. These validate instrumentation, without changing measured defaults.
+
 - Ladder traces now correlate agent instances, requests and tool executions,
   retaining provider chunks and settlement/abort evidence. Runner records
   distinguish exit, signal and deadline; partial traces are flagged without

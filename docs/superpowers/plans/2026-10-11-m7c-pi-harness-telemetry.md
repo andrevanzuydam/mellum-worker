@@ -210,45 +210,45 @@ three tightly related tasks, no shipped behavior change, one final review.
 **Interfaces:** Consume Tasks 1–2 launch/trace functions and metadata.
 Use existing `score(...).as_row()`, rung checks and `archive_raw`; add no new CLI.
 
-- [ ] Reuse existing A10 rung-1 replay fixture as legacy evidence. Extract one
+- [x] Reuse existing A10 rung-1 replay fixture as legacy evidence. Extract one
   short Pi 1.1 event sequence from retained October 11 evidence; preserve its
   identities/ordering and include observed final/settlement data, not the
   parent's final text substituted for a child's response. Record source archive
   hash and exact sanitization in fixture README. No raw experiment dump in Git.
   Store that small sanitized sequence as `pi110.events.json`, not a raw
   `trace.jsonl`; include its source/transformation record in the README.
-- [ ] Add `test_additive_telemetry_preserves_legacy_score` with exact assertion
+- [x] Add `test_additive_telemetry_preserves_legacy_score` with exact assertion
   `score(augmented, paths, lines).as_row() == score(legacy, paths, lines).as_row()`.
   Add recorded-sequence replay through recorder hooks, checking normalized
   final versus chunks and instance runtime identity. Do not mutate source records.
-- [ ] Add deterministic comparison using shipped guard hooks with/without
+- [x] Add deterministic comparison using shipped guard hooks with/without
   recorder installed: same request objects and every guard return value.
   No payload replacement, blocking or continuation added by observers.
-- [ ] Demonstrate each new regression assertion fails when its pinned behavior
+- [x] Demonstrate each new regression assertion fails when its pinned behavior
   is broken, restore it, then run `npm test` and from `ladder/`
   `uv run python -m pytest`. Expected: all tests pass with no model calls.
-- [ ] Obtain an isolated Pi 1.1.0 executable using the existing temporary
+- [x] Obtain an isolated Pi 1.1.0 executable using the existing temporary
   research installation or a pinned temporary install. Verify its package
   identity plus the loaded pi-subagents revision; leave global packages intact.
   Run the existing read-only setup check and inspect measured server/provider
   values. Do not change prompt/sampling/guards to make a smoke succeed.
-- [ ] Run from `ladder/` with the selected absolute executable substituted for
+- [x] Run from `ladder/` with the selected absolute executable substituted for
   `<pi-1.1.0>`: `uv run python -m ladder.run_ladder --pi-executable <pi-1.1.0> --profile baseline --mode mode --rung 1 --repeat 1 --out ../docs/ladder/smoke-m7c`.
   Then run the same command with `--mode delegated --guards`. These are the
   two initial counted attempts; retain the existing 600-second runner deadline.
   Check observed Mellum requests use max_tokens 16,384, thinking on and sampling
   1/0.95/20, plus measured server-only settings. The `baseline` server profile's
   4,096 cap is request-overridden for these hosts, not a new worker setting.
-- [ ] Inspect launch identities, child identity, complete telemetry, request/
+- [x] Inspect launch identities, child identity, complete telemetry, request/
   chunk/call relationships, normalized reply, settlements and runner outcomes.
   Record existing rung checks separately. Inspect any failed attempt before
   rerunning; repeat only after fixing a concrete defect. Stop if a host issue
   requires a new subsystem; document the limitation rather than widening scope.
-- [ ] Write the short finding with measured/conjecture headers, falsifiers
+- [x] Write the short finding with measured/conjecture headers, falsifiers
   and risks. Report the two attempts individually, not a reliability rate or
   Pi-version comparison. `smoke-m7c/README.md` links records and explains how
   each was reconstructed; raw traces remain untracked.
-- [ ] Review raw contents, archive with existing `ladder.archive_raw`, publish
+- [x] Review raw contents, archive with existing `ladder.archive_raw`, publish
   reviewed assets to the appropriate `research-YYYY-MM-DD` release, and record
   hashes/URLs in PROVENANCE and smoke README. Verify published bytes against
   hashes. Never upload mirrored auth/config files or silently edit the earlier
