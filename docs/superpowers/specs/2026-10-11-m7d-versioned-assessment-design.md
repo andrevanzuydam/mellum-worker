@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-11  
 **Phase:** M.7D  
-**Status:** Written spec for review; approach approved, implementation not approved.
+**Status:** Approved by Paul on 2026-10-11; implementation plan review owed.
 
 ## Intent and boundary
 
