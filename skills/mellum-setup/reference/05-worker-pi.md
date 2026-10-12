@@ -39,6 +39,7 @@ Optional, global, and it affects every subagent the user has: setting
 Mention it; do not apply it unasked.
 
 Worker runs are recorded to `~/.pi/agent/mellum-worker-runs.jsonl`
-(`MELLUM_WORKER_RUNS` moves it or turns it off) and `/mellum learn` reads them.
+(`MELLUM_WORKER_RUNS` moves it or turns it off); `/mellum learn` reads them,
+and `/mellum last` shows the newest one as a table.
 
 Re-run the check.

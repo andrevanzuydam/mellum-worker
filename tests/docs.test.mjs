@@ -52,6 +52,17 @@ test("README Use it says how to run learn in Pi Mode and from the terminal, afte
 	for (const fence of learn.matchAll(/```bash\n([\s\S]*?)```/g)) assert.doesNotMatch(fence[1], /\w\|\w/, "no a|b alternation in a bash fence");
 });
 
+test("README Use it says how to see the last run in Pi and from the terminal, after learn", () => {
+	const use = read("README.md").split("\n## Use it\n")[1].split("\n## What you get\n")[0];
+	const at = use.indexOf("**See the last run.**");
+	assert.ok(at > use.indexOf("**Learn from your runs.**"), "a See the last run paragraph after Learn from your runs");
+	const last = use.slice(at);
+	assert.ok(last.includes("/mellum last"), "names /mellum last");
+	assert.ok(last.includes("scripts/mellum.mjs last [--file <jsonl>] [--json]"), "names the CLI and its flags");
+	assert.ok(last.includes("| Metric | Value |"), "shows the table");
+	assert.match(last, /no record/, "says bare-Pi runs write no record");
+});
+
 test("README Model settings says which values the provider entry sends per request and which only the server sets", () => {
 	const use = read("README.md").split("\n## Use it\n")[1].split("\n## What you get\n")[0];
 	const settings = use.split("**Model settings.**")[1].split("**Check your setup.**")[0];

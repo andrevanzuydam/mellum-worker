@@ -344,6 +344,13 @@ as Mode. `extensions/mellum-guards.ts` writes it inside the pi-subagents
 child, one line per finished run; a child killed before it settles writes
 none. The OpenCode writer joins with M.3.
 
+Records written after 0.1.6 also have `toolCalls` (count per tool name),
+`toolErrors` (tool results marked as errors, any tool) and
+`firstWriteSeconds` (first assistant turn to the first `edit` or `write`;
+absent without one). `/mellum last` and `node <package dir>/scripts/mellum.mjs
+last` show the newest record for the current directory as a Markdown table;
+older records show dashes for these three.
+
 | pattern | fires when | suggests |
 | --- | --- | --- |
 | `test-thrash` | two or more runs failed a test command first, then passed another | `Test command:` with the one that passed |
