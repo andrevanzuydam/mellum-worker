@@ -4,6 +4,8 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-10-12
+
 ### Added
 
 - `/mellum last` shows the newest Mellum run at or under the current

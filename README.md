@@ -23,7 +23,7 @@ are on [Hugging Face](https://huggingface.co/pauleveritt/Mellum2.1-12B-A2.5B-Thi
 Pi:
 
 ```bash
-pi install git:github.com/pauleveritt/mellum-worker@v0.1.6
+pi install git:github.com/pauleveritt/mellum-worker@v0.1.7
 ```
 
 Then `/skill:mellum-setup`: weights, oMLX server, provider entry, agent
@@ -34,7 +34,7 @@ needs pi-subagents.
 OpenCode, in the `plugin` array of `~/.config/opencode/opencode.json(c)`:
 
 ```json
-{ "plugin": ["mellum-worker@git+https://github.com/pauleveritt/mellum-worker.git#v0.1.6"] }
+{ "plugin": ["mellum-worker@git+https://github.com/pauleveritt/mellum-worker.git#v0.1.7"] }
 ```
 
 Then ask "run the mellum-setup skill".
