@@ -96,7 +96,7 @@ const commandsOf = (r: RunLine): Cmd[] => (Array.isArray(r.commands) ? r.command
 const filesOf = (r: RunLine): string[] => (Array.isArray(r.files) ? r.files : []);
 const trimSlashes = (p: string) => p.replace(/\/+$/, "");
 
-function isUnder(cwd: string, dir: string): boolean {
+export function isUnder(cwd: string, dir: string): boolean {
 	const base = trimSlashes(dir);
 	return cwd === base || cwd.startsWith(`${base}/`);
 }
