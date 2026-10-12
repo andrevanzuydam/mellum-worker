@@ -7,3 +7,5 @@ __pycache__/
 docs/ladder/**/trace.jsonl
 docs/ladder/**/stdout.txt
 docs/ladder/**/diff.patch
+
+.worktrees/
