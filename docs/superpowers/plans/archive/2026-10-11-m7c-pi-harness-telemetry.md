@@ -1,7 +1,7 @@
 ---
 phase: M.7C
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # M.7C Pi harness telemetry implementation plan
@@ -18,7 +18,7 @@ without moving unrelated runner code. Shipped extensions remain unchanged.
 **Tech stack:** Python 3.14, uv/pytest, Node 24 built-ins and node:test,
 Pi 1.1.0 extension hooks, existing pi-subagents and oMLX.
 
-**Spec:** [M.7C design](../specs/2026-10-11-m7c-pi-harness-telemetry-design.md),
+**Spec:** [M.7C design](../../specs/2026-10-11-m7c-pi-harness-telemetry-design.md),
 approved by Paul on 2026-10-11. Read `docs/sdd.md` before editing records.
 
 ## Global constraints
@@ -253,7 +253,7 @@ Use existing `score(...).as_row()`, rung checks and `archive_raw`; add no new CL
   hashes/URLs in PROVENANCE and smoke README. Verify published bytes against
   hashes. Never upload mirrored auth/config files or silently edit the earlier
   October 11 preservation manifest.
-- [ ] Run final `npm test`, ladder pytest, docs cap tests and `git diff --check`.
+- [x] Run final `npm test`, ladder pytest, docs cap tests and `git diff --check`.
   Reconcile Unreleased with `git log v0.1.6..HEAD --oneline`; update M.7C Status
   and Now, prune only resolved backlog entries. Add dated `## Result`, change
   lifecycle to closed, replace any fence over 15 lines with a shipped reference,
@@ -266,3 +266,24 @@ Stop once deterministic compatibility checks pass and both smoke attempts
 can be reconstructed with reviewed provenance. Honest failed task checks do
 not authorize a benchmark campaign. A host blocker is recorded as an incomplete
 phase outcome, not marked complete. M.7D/M.7E retain the subsequent work.
+
+## Result
+
+2026-10-11: M.7C implemented verified Pi selection/fixture preflight and
+additive research-only instance/request/tool, parsed-stream and lifecycle
+telemetry. Shipped prompt, tools, sampling, guards, everyday schema-2 records
+and scoring remain unchanged. The inherited ladder virtualenv/PATH leak is
+resolved; deadline cleanup and broader scorer work remain later phases.
+
+Deterministic legacy/Pi-1.1 replay and shipped-hook comparison pass; all new
+regressions were shown failing before restoration/implementation. Exactly two
+initial rung-1 smokes (Mode and Worker) passed task and unchanged-tests checks,
+with identified Pi 1.1.0 runtimes, measured request settings and telemetry ok.
+No reruns. Reviewed raw evidence was published with a downloaded hash check.
+See [finding](../../research/2026-10-11-m7c-pi-harness-telemetry.md) and
+[attempts](../../../ladder/smoke-m7c/README.md).
+
+Final verification: 298 Node tests, 178 ladder pytest tests, document caps
+and diff checks passed. Final independent branch review: one Important multi-step process/launch finding fixed with four RED→GREEN
+regressions; one Minor duplicated-stderr finding deferred. No second review..
+M.7D is next to brainstorm; no eval framework or comparative claim ships.

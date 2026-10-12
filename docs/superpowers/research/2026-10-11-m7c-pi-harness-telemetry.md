@@ -32,6 +32,13 @@ Fixture preflight now removes the inherited ladder virtualenv and its PATH
 entry, resolving the backlog environment leak; Python fixtures activate their
 own verified environment. Deadline cleanup remains deferred to M.7E.
 
+Final independent review found a multi-step metadata defect: a later timeout
+could inherit an earlier process's exit/settlement and name an unlaunched step.
+Four deterministic outcome cases failed first, then passed with process fields
+scoped to the last launched invocation; aggregate stdout and attempt elapsed
+remain intact. No live rerun was needed. A minor repeated-stderr issue on
+multi-step timeout is deferred; it retains evidence but duplicates diagnostics.
+
 Two implementation choices preserve existing behavior: invoke the selected
 symlink by its absolute name because multicall shims use that name; compare
 canonical targets only for runtime provenance. Keep Worker's provider trace
