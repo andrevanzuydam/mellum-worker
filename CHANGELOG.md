@@ -11,6 +11,8 @@ Versions match git tags; pin one in both install lines.
   calls and errors, commands, files, tokens, facts, server match, guards and
   the final reply. It reads the run records with no model call, so a short
   follow-up question to your main model replaces a long telemetry prompt.
+  `node scripts/mellum.mjs last [--file <jsonl>] [--json]` prints the same
+  from a terminal.
 
 - Mode and Worker run records now count tool calls by tool name
   (`toolCalls`), tool results that errored from any tool (`toolErrors`), and
