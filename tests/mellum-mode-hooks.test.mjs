@@ -171,7 +171,7 @@ function recordingPi({ mode, hasUI, fetch = noServer } = {}) {
 		registerCommand: (name, def) => { commands[name] = def; },
 		getActiveTools: () => ["read"], setActiveTools: () => {},
 		setModel: async (m) => { calls.setModel.push(m); return true; },
-		sendMessage: (m) => calls.sendMessage.push(m), sendUserMessage: () => {},
+		sendMessage: (m, o) => { calls.sendMessage.push(m); if (m.customType === "mellum-last") (calls.lastOptions ??= []).push(o); }, sendUserMessage: () => {},
 	};
 	const ctx = { model: { provider: "anthropic", id: "parent" }, modelRegistry: { find: () => MODEL }, ui: { notify: (m, l) => calls.notify.push([m, l]) } };
 	if (mode !== undefined) ctx.mode = mode;
@@ -1072,4 +1072,85 @@ test("/mellum check <words> is a one-shot task, not the check", async () => {
 	await mellum("check the export totals");
 	assert.equal(calls.setModel.length, 1, "Mode switched to Mellum");
 	assert.deepEqual(server.calls.map((c) => c.url), ["http://127.0.0.1:8001/admin/api/models"], "only the activation GET");
+});
+
+// ---- /mellum last: the newest run as a Markdown table ----
+
+test("parseSubcommand: last is a command; a longer prompt starting with last is a task", async () => {
+	const { parseSubcommand } = await import("../extensions/mellum-mode.ts");
+	assert.deepEqual(parseSubcommand("last"), { cmd: "last" });
+	assert.deepEqual(parseSubcommand(" last "), { cmd: "last" });
+	assert.deepEqual(parseSubcommand("last week's bug"), { cmd: "task", task: "last week's bug" });
+});
+
+test("/mellum last with a UI and Mode off: one mellum-last message, displayed, that never starts a turn", async () => {
+	await withLearn("servers", async (cwd) => {
+		const { handlers, calls, mellum } = learnPi(cwd);
+		await mellum("last");
+		const sent = calls.sendMessage.filter((m) => m.customType === "mellum-last");
+		assert.equal(sent.length, 1, JSON.stringify(calls.sendMessage));
+		assert.equal(sent[0].display, true);
+		assert.match(sent[0].content, /^\*\*mellum last\*\*: Mode/);
+		assert.match(sent[0].content, /\| Metric \| Value \|/);
+		assert.deepEqual(calls.lastOptions, [{ triggerTurn: false }]);
+		assert.deepEqual(calls.notify, []);
+		assert.deepEqual(calls.setModel, []);
+		modeIsOff(handlers);
+	});
+});
+
+test("/mellum last while Mode is on notifies instead, so the table stays out of Mellum's context", async () => {
+	await withLearn("servers", async (cwd) => {
+		const { calls, mellum } = learnPi(cwd);
+		await mellum("on");
+		const before = calls.sendMessage.length;
+		await mellum("last");
+		assert.equal(calls.sendMessage.length, before);
+		assert.ok(calls.notify.some(([m, l]) => m.startsWith("**mellum last**: Mode") && l === "info"), JSON.stringify(calls.notify));
+	});
+});
+
+test("/mellum last without a UI prints the table to stdout", async () => {
+	await withLearn("servers", async (cwd) => {
+		const { calls, mellum } = learnPi(cwd, { hasUI: false });
+		const out = [];
+		const original = console.log;
+		console.log = (...a) => out.push(a.join(" "));
+		try {
+			await mellum("last");
+		} finally {
+			console.log = original;
+		}
+		assert.equal(out.length, 1);
+		assert.match(out[0], /^\*\*mellum last\*\*/);
+		assert.equal(calls.sendMessage.filter((m) => m.customType === "mellum-last").length, 0);
+	});
+});
+
+test("/mellum last with no runs under the directory says so and names the files it read", async () => {
+	await withLearn(undefined, async (cwd) => {
+		const { calls, mellum } = learnPi(cwd);
+		await mellum("last");
+		const note = calls.notify.find(([m]) => m.startsWith("mellum last: "));
+		assert.ok(note, JSON.stringify(calls.notify));
+		assert.ok(note[0].includes(`no Mellum runs recorded under ${cwd}`), note[0]);
+		assert.ok(note[0].includes(process.env.MELLUM_MODE_RUNS), note[0]);
+		assert.ok(note[0].includes("mellum-worker-runs.jsonl"), note[0]);
+	});
+});
+
+test("/mellum last with both records files off says recording is off", async () => {
+	await withLearn(undefined, async (cwd) => {
+		process.env.MELLUM_MODE_RUNS = "0";
+		const saved = process.env.MELLUM_WORKER_RUNS;
+		process.env.MELLUM_WORKER_RUNS = "0";
+		try {
+			const { calls, mellum } = learnPi(cwd);
+			await mellum("last");
+			assert.ok(calls.notify.some(([m]) => m.includes("run records are off (MELLUM_MODE_RUNS=0, MELLUM_WORKER_RUNS=0)")), JSON.stringify(calls.notify));
+		} finally {
+			if (saved === undefined) delete process.env.MELLUM_WORKER_RUNS;
+			else process.env.MELLUM_WORKER_RUNS = saved;
+		}
+	});
 });

@@ -227,3 +227,51 @@ test("learn --json reads the three replayed Worker records as three runs", async
 	assert.equal(out.runs, 3);
 	assert.deepEqual(out.skipped, { old: 0, bad: 0 });
 });
+
+// ---- last: the newest run under the directory, as Markdown or JSON ----
+
+test("last --file prints the newest run under the directory as a Markdown table", () => {
+	const p = project("servers");
+	const r = learnRun(["last", "--file", p.runs], { cwd: p.dir });
+	assert.equal(r.status, 0, r.stderr);
+	assert.match(r.stdout, /^\*\*mellum last\*\*: Mode/);
+	assert.match(r.stdout, /\| Metric \| Value \|\n\|---\|---\|/);
+	const newest = readRecords(readFileSync(p.runs, "utf8")).records.sort((a, b) => b.endedAt.localeCompare(a.endedAt))[0];
+	assert.ok(r.stdout.includes(`| Task | ${newest.task.replace(/\|/g, "\\|")} |`), r.stdout);
+});
+
+test("last --json prints the record itself", () => {
+	const p = project("servers");
+	const r = learnRun(["last", "--json", "--file", p.runs], { cwd: p.dir });
+	assert.equal(r.status, 0, r.stderr);
+	const rec = JSON.parse(r.stdout);
+	assert.equal(rec.schema, 2);
+	assert.equal(rec.cwd.startsWith(p.dir), true);
+});
+
+test("last without --file reads MELLUM_MODE_RUNS and the Worker file in HOME", () => {
+	const p = project("servers");
+	const r = learnRun(["last"], { cwd: p.dir, env: { MELLUM_MODE_RUNS: p.runs } });
+	assert.equal(r.status, 0, r.stderr);
+	assert.match(r.stdout, /^\*\*mellum last\*\*/);
+});
+
+test("last with no runs under the directory, or with recording off, exits 1 and says why", () => {
+	const p = project("servers");
+	const elsewhere = realpathSync(temp("mellum-cli-elsewhere-"));
+	const none = learnRun(["last", "--file", p.runs], { cwd: elsewhere });
+	assert.equal(none.status, 1);
+	assert.match(none.stderr, new RegExp(`no Mellum runs recorded under ${elsewhere}`));
+	const off = learnRun(["last"], { cwd: p.dir, env: { MELLUM_MODE_RUNS: "0", MELLUM_WORKER_RUNS: "0" } });
+	assert.equal(off.status, 1);
+	assert.match(off.stderr, /run records are off/);
+});
+
+test("last usage errors exit 2: --n is learn's, and --file needs an existing path", () => {
+	const p = project("servers");
+	for (const args of [["last", "--n", "3"], ["last", "--file", join(p.dir, "nope.jsonl")], ["last", "--file"]]) {
+		const r = learnRun(args, { cwd: p.dir });
+		assert.equal(r.status, 2, `${args.join(" ")}: ${r.stderr}`);
+		assert.match(r.stderr, /mellum\.mjs last \[--file <jsonl>\] \[--json\]/);
+	}
+});

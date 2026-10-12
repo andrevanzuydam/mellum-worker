@@ -3,6 +3,7 @@
  *
  *   node scripts/mellum.mjs check [--host pi|opencode] [--json]
  *   node scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]
+ *   node scripts/mellum.mjs last [--file <jsonl>] [--json]
  *
  * check compares the oMLX server (GETs only) and the host's provider entry with the measured
  * settings, prints the findings (fails first) or JSON, and exits 1 on any fail. It never
@@ -14,6 +15,9 @@
  * lines that ./AGENTS.md lacks and any conflict with it, and never writes: /mellum learn in
  * Pi does that.
  *
+ * last prints the newest run under the current directory (Mode or Worker, same files as learn,
+ * or only --file) as a Markdown table, or the record as JSON; exit 1 when there is none.
+ *
  * MELLUM_CHECK_FIXTURES=<dir> (tests) reads <dir>/v1-models.json, admin-models.json and
  * global-settings.json in place of the three GETs.
  */
@@ -23,7 +27,7 @@ import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const PKG = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const USAGE = "usage: node scripts/mellum.mjs check [--host pi|opencode] [--json]\n       node scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]";
+const USAGE = "usage: node scripts/mellum.mjs check [--host pi|opencode] [--json]\n       node scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]\n       node scripts/mellum.mjs last [--file <jsonl>] [--json]";
 
 /**
  * Node refuses to strip types from .ts files under node_modules, where OpenCode installs this
@@ -65,7 +69,7 @@ function parseArgs(argv) {
 		if (rest[i] === "--json") opts.json = true;
 		else if (rest[i] === "--host" && cmd === "check") opts.host = rest[++i];
 		else if (rest[i] === "--n" && cmd === "learn") opts.n = /^\d+$/.test(rest[++i] ?? "") ? Number(rest[i]) : 0;
-		else if (rest[i] === "--file" && cmd === "learn") {
+		else if (rest[i] === "--file" && (cmd === "learn" || cmd === "last")) {
 			opts.file = rest[++i];
 			if (opts.file === undefined || opts.file.startsWith("--")) fail("--file needs a path");
 		}
@@ -73,7 +77,7 @@ function parseArgs(argv) {
 	}
 	if (opts.host !== "pi" && opts.host !== "opencode") fail(`unknown host: ${opts.host}`);
 	if (!(opts.n >= 1)) fail("--n must be a whole number above 0");
-	if (cmd === "learn" && opts.file !== undefined && !existsSync(opts.file)) fail(`no such file: ${opts.file}`);
+	if ((cmd === "learn" || cmd === "last") && opts.file !== undefined && !existsSync(opts.file)) fail(`no such file: ${opts.file}`);
 	return opts;
 }
 
@@ -110,7 +114,23 @@ async function learn(opts) {
 	console.log(opts.json ? JSON.stringify(out, null, 2) : m.formatReport(report, cwd, merged.added) + m.formatMerge(merged, report.suggestion));
 }
 
+async function last(opts) {
+	const learnMod = await import(pathToFileURL(join(codeRoot(), "extensions/mellum-learn.ts")).href);
+	const m = await import(pathToFileURL(join(codeRoot(), "extensions/mellum-last.ts")).href);
+	const cwd = process.cwd();
+	const files = opts.file !== undefined ? [opts.file] : learnMod.recordFiles(process.env, process.env.HOME || homedir());
+	const none = (why) => {
+		console.error(`mellum last: ${why}`);
+		process.exitCode = 1;
+	};
+	if (files.length === 0) return none("run records are off (MELLUM_MODE_RUNS=0, MELLUM_WORKER_RUNS=0)");
+	const { record } = m.pickLast(files.map((p) => (existsSync(p) ? readFileSync(p, "utf8") : undefined)), cwd);
+	if (!record) return none(`no Mellum runs recorded under ${cwd} (read ${files.join(", ")})`);
+	console.log(opts.json ? JSON.stringify(record, null, 2) : m.formatLast(record));
+}
+
 const opts = parseArgs(process.argv.slice(2));
 if (opts.cmd === "check") await check(opts);
 else if (opts.cmd === "learn") await learn(opts);
+else if (opts.cmd === "last") await last(opts);
 else fail(opts.cmd ? `unknown command: ${opts.cmd}` : "no command");

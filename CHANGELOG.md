@@ -4,6 +4,21 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Added
+
+- `/mellum last` shows the newest Mellum run at or under the current
+  directory, Mode or Worker, as a Markdown table: time and time to first write, turns, tool
+  calls and errors, commands, files, tokens, facts, server match, guards and
+  the final reply. It reads the run records with no model call, so a short
+  follow-up question to your main model replaces a long telemetry prompt.
+  `node scripts/mellum.mjs last [--file <jsonl>] [--json]` prints the same
+  from a terminal.
+
+- Mode and Worker run records now count tool calls by tool name
+  (`toolCalls`), tool results that errored from any tool (`toolErrors`), and
+  the seconds before the first edit or write (`firstWriteSeconds`), so a run
+  shows how long Mellum explored before writing. Older records lack them.
+
 ### Changed
 
 - Published two Pi 1.1.0 ladder telemetry smoke records with reconstruction
