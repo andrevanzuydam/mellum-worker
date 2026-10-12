@@ -24,6 +24,12 @@ Versions match git tags; pin one in both install lines.
   screens followed by preregistered runs when deciding a change or claim.
   Phase closure no longer requires a release tag.
 
+### Fixed
+
+- Chunked ladder runs now report exit and settlement for the last launched
+  process, so a later timeout cannot inherit an earlier step's success.
+  Launch argv also describes a process that actually started.
+
 ## [0.1.6] - 2026-10-11
 
 ### Added

@@ -509,6 +509,7 @@ def run_once(
     started = time.time()
     monotonic_started = time.monotonic()
     returncode = None
+    process_stdout = ""
     stderr = ""
     deadline_hit = False
     stdout = ""
@@ -523,11 +524,13 @@ def run_once(
     prompts_run = 0
     for i, step_argv in enumerate(step_args):
         step_argv = [selected_pi["executable"], *step_argv[1:]]
-        launch["argv"] = step_argv
         remaining = deadline - (time.monotonic() - monotonic_started)
         if remaining <= 0:
             deadline_hit = True
             break
+        launch["argv"] = step_argv
+        returncode = None
+        process_stdout = ""
         prompts_run += 1
         if i:
             stdout += f"\n[step {i + 1}]\n"
@@ -543,6 +546,7 @@ def run_once(
                 check=False,
             )
             returncode = proc.returncode
+            process_stdout = proc.stdout
             stderr += proc.stderr
             stdout += proc.stdout + (
                 "\n[stderr]\n" + proc.stderr if proc.stderr else ""
@@ -550,11 +554,12 @@ def run_once(
         except subprocess.TimeoutExpired as error:
             deadline_hit = True
             captured = error.stdout or b""
-            stdout += (
+            process_stdout = (
                 captured.decode(errors="replace")
                 if isinstance(captured, bytes)
                 else str(captured)
             )
+            stdout += process_stdout
             captured_stderr = error.stderr or b""
             stderr += (
                 captured_stderr.decode(errors="replace")
@@ -615,7 +620,7 @@ def run_once(
             else None,
             "deadlineHit": deadline_hit,
             "elapsedMs": elapsed_ms,
-            **stdout_settlement(stdout),
+            **stdout_settlement(process_stdout),
         },
         "sentence": rung.sentence,
         "started": started,

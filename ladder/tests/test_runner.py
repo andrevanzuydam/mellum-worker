@@ -745,3 +745,60 @@ def test_runner_process_outcomes_do_not_invent_settlement(
             in next((tmp_path / "out").glob("*/stdout.txt")).read_text()
         )
         assert record["telemetry"]["status"] == "incomplete"
+
+
+@pytest.mark.parametrize("outcome", ["normal", "signal", "deadline", "budget"])
+def test_chunked_process_metadata_describes_last_launched_invocation(
+    monkeypatch, tmp_path, outcome
+):
+    """An earlier settled step must not supply a later process's outcome."""
+    import subprocess
+
+    from ladder.rungs import CheckResult, Rung
+
+    from ladder import run_ladder
+
+    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda *a, **kw: tmp_path)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda *a: (set(), {}))
+    monkeypatch.setattr(run_ladder, "git", lambda *a: "")
+    monkeypatch.setattr(run_ladder, "direct_agent_dir", lambda *a: tmp_path / "agent")
+    monkeypatch.setattr(run_ladder, "split_brief", lambda text: ["first", "second"])
+    launches = []
+    first_stdout = '{"type":"agent_settled","aborted":false}\n'
+    final_stdout = '{"type":"agent_start"}\n'
+    if outcome == "budget":
+        clocks = iter([0, 0, 2, 2])
+        monkeypatch.setattr(run_ladder.time, "monotonic", lambda: next(clocks))
+
+    def execute(argv, **kw):
+        if argv[0] == "git":
+            return subprocess.CompletedProcess(argv, 0, stdout="test-revision", stderr="")
+        launches.append(argv)
+        if len(launches) == 1:
+            return subprocess.CompletedProcess(argv, 0, stdout=first_stdout, stderr="")
+        if outcome == "deadline":
+            raise subprocess.TimeoutExpired(argv, 1, output=final_stdout.encode())
+        return subprocess.CompletedProcess(
+            argv, -15 if outcome == "signal" else 0, stdout=final_stdout, stderr=""
+        )
+
+    monkeypatch.setattr(run_ladder.subprocess, "run", execute)
+    rung = Rung(
+        1, "calculator", "fix it", ["true"], lambda *a: CheckResult(False, True)
+    )
+    record = run_ladder.run_once(
+        rung, "chunked", "baseline", 1, tmp_path / "out", 1, {}, False
+    )
+    expected_exit = 0 if outcome in {"normal", "budget"} else None
+    assert record["process"]["exitCode"] == expected_exit
+    assert record["process"]["signal"] == (15 if outcome == "signal" else None)
+    assert record["process"]["settled"] is (outcome == "budget")
+    assert record["process"]["aborted"] is (False if outcome == "budget" else None)
+    assert record["process"]["deadlineHit"] is (outcome in {"deadline", "budget"})
+    assert record["launch"]["argv"] == launches[-1]
+    assert record["prompts"] == (1 if outcome == "budget" else 2)
+    assert record["prompts_planned"] == 2
+    retained = next((tmp_path / "out").glob("*/stdout.txt")).read_text()
+    assert first_stdout in retained
+    if outcome != "budget":
+        assert final_stdout in retained
