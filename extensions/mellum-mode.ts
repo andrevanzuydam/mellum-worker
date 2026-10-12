@@ -11,6 +11,8 @@
  *                     settings and print the findings; never switches, never writes
  *   /mellum learn [n] – name what went wrong in the last n runs (default 10) in this directory
  *                     and suggest a ## Mellum section; AGENTS.md is written only on a yes
+ *   /mellum last    – the newest run in this directory (Mode or Worker) as a Markdown table;
+ *                     a notification while Mode is on, so the table stays out of Mellum's context
  *
  * Each activation GETs the server's model settings (1 s at most) and warns once when they
  * differ from the measured profile; the run record keeps the result as `server`.
@@ -35,6 +37,7 @@ import { createGuardSet, type GuardSet } from "./mellum-guards.ts";
 import { factsBlock, readProjectFacts, type ProjectFacts } from "./mellum-facts.ts";
 import { type Activation, type Msg, promptVersionOf, runRecord, textOf, spanStats, type SpanStats } from "./mellum-record.ts";
 import { formatMerge, formatReport, learnFromTexts, mergeSuggestion, modeRunsFile, overCap, recordFiles } from "./mellum-learn.ts";
+import { formatLast, pickLast } from "./mellum-last.ts";
 
 export const MARK_ON = "[mellum-mode on]";
 export const MARK_OFF = "[mellum-mode off]";
@@ -202,13 +205,13 @@ function handoffMessage(task: string, span: Msg[], opts: HandoffOptions = {}, fa
 	return { role: "user", content: [{ type: "text", text: body }], timestamp: Date.now() };
 }
 
-export type Subcommand = { cmd: "on" | "off" | "check" | "learn" | "task"; n?: number; task?: string };
+export type Subcommand = { cmd: "on" | "off" | "check" | "learn" | "last" | "task"; n?: number; task?: string };
 
-/** `/mellum` arguments: on (or nothing), off, check, learn [n]; anything else is a task. */
+/** `/mellum` arguments: on (or nothing), off, check, learn [n], last; anything else is a task. */
 export function parseSubcommand(args: string): Subcommand {
 	const want = (args || "").trim();
 	if (want === "" || want === "on") return { cmd: "on" };
-	if (want === "off" || want === "check") return { cmd: want };
+	if (want === "off" || want === "check" || want === "last") return { cmd: want };
 	const learn = /^learn(?:\s+(\d+))?$/.exec(want);
 	if (learn) return { cmd: "learn", n: learn[1] === undefined ? 10 : Number(learn[1]) };
 	return { cmd: "task", task: want };
@@ -356,6 +359,24 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 		}
 	}
 
+	// /mellum last: the newest record at or under this directory, as Markdown. A custom message
+	// renders it and lets the main model answer questions about it; while Mode is on it is a
+	// notification instead, since a message would join Mellum's span. Never starts a turn.
+	function runLast(ctx: any) {
+		const cwd: string = typeof ctx?.cwd === "string" ? ctx.cwd : process.cwd();
+		try {
+			const files = recordFiles(process.env, home());
+			if (files.length === 0) return say(ctx, "mellum last: run records are off (MELLUM_MODE_RUNS=0, MELLUM_WORKER_RUNS=0)", "warning");
+			const { record } = pickLast(files.map(readIfExists), cwd);
+			if (!record) return say(ctx, `mellum last: no Mellum runs recorded under ${cwd} (read ${files.join(", ")})`, "warning");
+			const text = formatLast(record);
+			if (ctx?.hasUI === false || active) return say(ctx, text);
+			pi.sendMessage({ customType: "mellum-last", content: text, display: true }, { triggerTurn: false });
+		} catch (error) {
+			warn(ctx, `mellum last: ${(error as Error)?.message ?? String(error)}`, "error");
+		}
+	}
+
 	// Same resolver for the handoff collapse and the run record: absolute, else relative to the cwd.
 	const existsInCwd = (p: string) => existsSync(isAbsolute(p) ? p : resolve(process.cwd(), p));
 
@@ -460,13 +481,14 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 	}
 
 	pi.registerCommand("mellum", {
-		description: "mellum <task> | on | off | check | learn [n] — run Mellum with the worker prompt and tools inside this session",
+		description: "mellum <task> | on | off | check | learn [n] | last — run Mellum with the worker prompt and tools inside this session",
 		handler: async (args: string, ctx: any) => {
 			const sub = parseSubcommand(args);
 			if (sub.cmd === "off") return deactivate(ctx);
 			if (sub.cmd === "on") return activate(ctx, true, "on");
 			if (sub.cmd === "check") return runCheck(ctx);
 			if (sub.cmd === "learn") return runLearn(ctx, sub.n);
+			if (sub.cmd === "last") return runLast(ctx);
 			const want = sub.task ?? "";
 			// One shot: the task runs under the mode and the mode ends when the agent settles.
 			if (active) {
