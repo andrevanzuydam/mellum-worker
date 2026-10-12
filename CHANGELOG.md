@@ -6,8 +6,8 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
-- `/mellum last` shows the newest Mellum run in the current directory, Mode
-  or Worker, as a Markdown table: time and time to first write, turns, tool
+- `/mellum last` shows the newest Mellum run at or under the current
+  directory, Mode or Worker, as a Markdown table: time and time to first write, turns, tool
   calls and errors, commands, files, tokens, facts, server match, guards and
   the final reply. It reads the run records with no model call, so a short
   follow-up question to your main model replaces a long telemetry prompt.

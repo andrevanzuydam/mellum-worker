@@ -38,7 +38,7 @@ const row = (md, name) => md.split("\n").find((l) => l.startsWith(`| ${name} |`)
 
 test("formatLast renders the header, the metric table, the command table and the reply", () => {
 	const md = formatLast(NEW);
-	assert.match(md.split("\n")[0], /^\*\*mellum last\*\*: Mode \(one-shot\), 2026-10-12 \d\d:\d\d, ac-demo$/);
+	assert.match(md.split("\n")[0], /^\*\*mellum last\*\*: Mode \(one-shot\), 2026-10-12 \d\d:\d\d, \/Users\/p\/ac-demo$/);
 	assert.ok(md.includes("| Metric | Value |\n|---|---|"));
 	assert.equal(row(md, "Task"), "| Task | Implement Phase 1 of specs/roadmap.md |");
 	assert.equal(row(md, "Time"), "| Time | 62 s; first write at 31 s (50%) |");
@@ -86,7 +86,7 @@ test("formatLast for a Worker run with no write, no commands, a failed server ch
 		nudges: 1,
 		guardBlocks: 2,
 	});
-	assert.match(md.split("\n")[0], /^\*\*mellum last\*\*: Worker, 2026-10-12 \d\d:\d\d, ac-demo$/);
+	assert.match(md.split("\n")[0], /^\*\*mellum last\*\*: Worker, 2026-10-12 \d\d:\d\d, \/Users\/p\/ac-demo$/);
 	assert.equal(row(md, "Time"), "| Time | 62 s; no edit or write |");
 	assert.equal(row(md, "Turns"), "| Turns | 14; ended with no text (stop) |");
 	assert.equal(row(md, "Commands"), "| Commands | none |");
@@ -151,4 +151,30 @@ test("pickLast with nothing under the directory returns no record", () => {
 test("formatLast drops code fences and long rules from the quoted reply", () => {
 	const md = formatLast({ ...NEW, finalReply: "Done.\nTest output:\n```\n======= test session starts =======\n1 passed\n```" });
 	assert.ok(md.trimEnd().endsWith("> Done. Test output: === test session starts === 1 passed"), md.split("\n").pop());
+});
+
+test("formatLast keeps a cell whole when a value has a backslash before a pipe (grep alternation)", () => {
+	const md = formatLast({ ...NEW, task: "find a\\|b", commands: [{ command: "grep 'a\\|b' x | wc -l", failed: false, mutates: false }] });
+	for (const l of md.split("\n").filter((l) => l.startsWith("| "))) {
+		// A pipe is a column break unless an odd number of backslashes precede it.
+		const breaks = [...l.matchAll(/(\\*)\|/g)].filter((m) => m[1].length % 2 === 0).length;
+		assert.equal(breaks, 3, `three column pipes in: ${l}`);
+	}
+	assert.ok(md.includes("| ok |"));
+});
+
+test("formatLast shows the run's full directory, skips an empty Missing row and a percentage without positive wall time", () => {
+	const md = formatLast({ ...NEW, filesMissingAtEnd: [1, 2], wallSeconds: -5 });
+	assert.match(md.split("\n")[0], /, \/Users\/p\/ac-demo$/);
+	assert.equal(row(md, "Missing"), undefined);
+	assert.equal(row(md, "Time"), "| Time | -5 s; first write at 31 s |");
+});
+
+test("pickLast compares endedAt as times, and on a tie the later line or file wins", () => {
+	const a = line({ ...NEW, endedAt: "2026-10-12T15:00:00.500Z", task: "later by half a second" });
+	const b = line({ ...NEW, endedAt: "2026-10-12T15:00:00Z", task: "earlier" });
+	assert.equal(pickLast([`${b}\n${a}`], "/Users/p/ac-demo").record.task, "later by half a second");
+	const m = line({ ...NEW, task: "mode" });
+	const w = line({ ...NEW, kind: "worker", task: "worker" });
+	assert.equal(pickLast([m, w], "/Users/p/ac-demo").record.task, "worker");
 });

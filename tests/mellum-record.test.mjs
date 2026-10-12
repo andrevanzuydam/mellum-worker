@@ -78,3 +78,17 @@ test("spanStats with no write, or no timestamps, leaves firstWriteSeconds out; r
 	assert.equal(withWrite.firstWriteSeconds, 0);
 	assert.deepEqual(withWrite.toolCalls, { write: 1 });
 });
+
+test("firstWriteSeconds is absent when the writing turn has no timestamp, and the clock starts at the first timed turn", () => {
+	const write = { type: "toolCall", id: "w", name: "write", arguments: { path: "p" } };
+	assert.equal(spanStats([
+		{ role: "assistant", content: [{ type: "toolCall", id: "r", name: "read", arguments: {} }], timestamp: 1_000 },
+		{ role: "assistant", content: [write] },
+		{ role: "assistant", content: [{ ...write, id: "w2" }], timestamp: 9_000 },
+	]).firstWriteSeconds, undefined);
+	assert.equal(spanStats([
+		{ role: "assistant", content: [{ type: "toolCall", id: "r", name: "read", arguments: {} }] },
+		{ role: "assistant", content: [{ type: "toolCall", id: "r2", name: "read", arguments: {} }], timestamp: 2_000 },
+		{ role: "assistant", content: [write], timestamp: 6_000 },
+	]).firstWriteSeconds, 4);
+});

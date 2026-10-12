@@ -59,7 +59,8 @@ Each span appends a JSON line to `~/.pi/agent/mellum-mode-runs.jsonl`
 (task, times, requests, tokens, files, commands with pass or fail, final
 reply; schema 2 adds missing files, file-changing commands, final-turn
 shape, guard counts, host and versions, tool calls and errors, time to
-first write; `server` records whether the oMLX settings matched). `MELLUM_MODE_RUNS` sets the path; `0` turns it off.
+first write; `server` records whether the oMLX settings matched).
+`MELLUM_MODE_RUNS` sets the path; `0` turns it off.
 
 **Project facts (Mode).** Mode sends Mellum only the worker prompt and
 your task, never your conversation, skills or `AGENTS.md`, except one
@@ -193,14 +194,14 @@ one file instead. Pi Mode and Pi Worker write records, and `learn` reports
 both. OpenCode runs join with M.3, so `learn` in an OpenCode project finds
 0 runs until then.
 
-**See the last run.** `/mellum last` shows the newest run in the current
-directory, Mode or Worker, as a table, with no model call. It goes into the
+**See the last run.** `/mellum last` shows the newest run at or under the
+current directory, Mode or Worker, as a table, with no model call. It goes into the
 session, so you can follow up with a short question ("why the slow start?").
 While Mode is on it is a notification instead, kept out of Mellum's context.
 Abridged:
 
 ```
-**mellum last**: Mode (one-shot), 2026-10-12 11:21, ac-demo
+**mellum last**: Mode (one-shot), 2026-10-12 11:21, /home/user/ac-demo
 
 | Metric | Value |
 |---|---|

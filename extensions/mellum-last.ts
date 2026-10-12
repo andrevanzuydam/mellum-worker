@@ -18,12 +18,24 @@ function clip(text: string, max: number): string {
 	return text.length <= max ? text : `${text.slice(0, max - 1)}…`;
 }
 
-/** One table cell: newlines become spaces and `|` is escaped, so a value never breaks the row. */
+/**
+ * One table cell: newlines become spaces and every `|` is escaped, so a value never breaks the
+ * row. Backslashes before a pipe are doubled first: in `a\\|b` (grep alternation) the pipe would
+ * otherwise follow an escaped backslash and still split the cell.
+ */
 function cell(text: string, max = 200): string {
-	return clip(text.replace(/\s*\r?\n\s*/g, " ").trim(), max).replace(/\|/g, "\\|");
+	return clip(text.replace(/\s*\r?\n\s*/g, " ").trim(), max).replace(/(\\*)\|/g, (_, bs: string) => `${bs}${bs}\\|`);
 }
 
-/** The newest record at or under `cwd` (newest `endedAt`) across the files' texts, and the lines skipped. */
+const timeOfEnd = (r: RunLine) => {
+	const t = Date.parse(r.endedAt ?? "");
+	return Number.isNaN(t) ? -Infinity : t;
+};
+
+/**
+ * The newest record at or under `cwd` (as `learn` matches it) across the files' texts, by
+ * `endedAt` as a time; on a tie the later line or file wins. Also the lines skipped.
+ */
 export function pickLast(texts: Array<string | undefined>, cwd: string): { record?: RunLine; skipped: { bad: number; old: number } } {
 	const skipped = { bad: 0, old: 0 };
 	let record: RunLine | undefined;
@@ -34,7 +46,7 @@ export function pickLast(texts: Array<string | undefined>, cwd: string): { recor
 		skipped.old += r.old;
 		for (const rec of r.records) {
 			if (typeof rec.cwd !== "string" || !isUnder(rec.cwd, cwd)) continue;
-			if (record === undefined || (rec.endedAt ?? "") > (record.endedAt ?? "")) record = rec;
+			if (record === undefined || timeOfEnd(rec) >= timeOfEnd(record)) record = rec;
 		}
 	}
 	return { record, skipped };
@@ -52,7 +64,7 @@ function timeOf(r: Record<string, unknown>): string {
 	const wall = num(r.wallSeconds);
 	const first = num(r.firstWriteSeconds);
 	const parts = [wall === undefined ? DASH : `${wall} s`];
-	if (first !== undefined) parts.push(`first write at ${first} s${wall ? ` (${Math.round((first / wall) * 100)}%)` : ""}`);
+	if (first !== undefined) parts.push(`first write at ${first} s${wall !== undefined && wall > 0 ? ` (${Math.round((first / wall) * 100)}%)` : ""}`);
 	else if (isObject(r.toolCalls) && !("edit" in r.toolCalls) && !("write" in r.toolCalls)) parts.push("no edit or write");
 	return parts.join("; ");
 }
@@ -83,8 +95,9 @@ function commandsOf(r: RunLine): string {
 	return `${cmds.length} run, ${failed} failed, last ${str(r.lastCommand) ?? DASH}`;
 }
 
-function listOf(paths: unknown): string {
-	const xs = Array.isArray(paths) ? paths.filter((p): p is string => typeof p === "string") : [];
+const pathsOf = (v: unknown): string[] => (Array.isArray(v) ? v.filter((p): p is string => typeof p === "string") : []);
+
+function listOf(xs: string[]): string {
 	return xs.length === 0 ? "none" : `${xs.length}: ${xs.join(", ")}`;
 }
 
@@ -114,7 +127,8 @@ function serverOf(r: Record<string, unknown>): string {
 export function formatLast(record: RunLine): string {
 	const r = record as unknown as Record<string, unknown>;
 	const who = record.kind === "worker" ? "Worker" : `Mode (${str(r.activation) ?? "unknown"})`;
-	const dir = (str(r.cwd) ?? "").replace(/\/+$/, "").split("/").pop() || DASH;
+	// The full directory: the run may be in a subdirectory of the one asked about.
+	const dir = (str(r.cwd) ?? "").replace(/(.)\/+$/, "$1") || DASH;
 	const rows: Array<[string, string]> = [
 		["Task", str(r.task) ?? DASH],
 		["Time", timeOf(r)],
@@ -122,9 +136,10 @@ export function formatLast(record: RunLine): string {
 		["Tool calls", toolCallsOf(r)],
 		["Tool errors", num(r.toolErrors) === undefined ? DASH : String(r.toolErrors)],
 		["Commands", commandsOf(record)],
-		["Files", listOf(r.files)],
+		["Files", listOf(pathsOf(r.files))],
 	];
-	if (Array.isArray(r.filesMissingAtEnd) && r.filesMissingAtEnd.length > 0) rows.push(["Missing", listOf(r.filesMissingAtEnd)]);
+	const missing = pathsOf(r.filesMissingAtEnd);
+	if (missing.length > 0) rows.push(["Missing", listOf(missing)]);
 	const mutating = (record.commands ?? []).filter((c) => c.mutates).length;
 	if (mutating > 0) rows.push(["Changed files via bash", plural(mutating, "command")]);
 	rows.push(
@@ -147,7 +162,7 @@ export function formatLast(record: RunLine): string {
 	}
 	// One quoted line: fences would open a code span mid-line, and long rules are noise.
 	const flat = (str(r.finalReply) ?? "").replace(/`{3,}\w*/g, " ").replace(/([=\-*_])\1{3,}/g, "$1$1$1");
-	const reply = cell(flat, 300).replace(/\\\|/g, "|").replace(/ {2,}/g, " ");
+	const reply = clip(flat.replace(/\s+/g, " ").trim(), 300);
 	lines.push("", `> ${reply || "(no final reply)"}`);
 	return lines.join("\n");
 }

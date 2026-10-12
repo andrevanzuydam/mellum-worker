@@ -27,15 +27,16 @@ recorder calls the same `runRecord`, so Worker records gain them too.
 
 `/mellum last` in Pi; `node scripts/mellum.mjs last [--file <jsonl>]
 [--json]` in a terminal. Both read the files `learn` reads (`recordFiles`,
-or only `--file`), keep the records whose `cwd` is the current directory,
-and take the newest by `endedAt`. No model call, no write. `--json` prints
+or only `--file`), keep the records whose `cwd` is at or under the current
+directory (as `learn` matches), and take the newest by `endedAt` as a time;
+on a tie the later line or file wins. No model call, no write. `--json` prints
 that record as stored.
 
 `extensions/mellum-last.ts`: `pickLast(texts, cwd)` and
 `formatLast(record)`, the Markdown below.
 
 ```markdown
-**mellum last**: Mode (one-shot), 2026-10-12 11:21, ac-demo
+**mellum last**: Mode (one-shot), 2026-10-12 11:21, /Users/p/ac-demo
 
 | Metric | Value |
 |---|---|
@@ -61,7 +62,9 @@ that record as stored.
 
 `Missing` (files written then gone) and `Changed files via bash` rows appear
 only when non-empty. Values are escaped for a table cell: `|` becomes `\|`,
-newlines become spaces, long values are clipped.
+backslashes before a pipe are doubled first (`grep 'a\|b'`), newlines become
+spaces, long values are clipped. The header names the run's full directory,
+since the run may be in a subdirectory. Review fixes, 2026-10-12.
 
 ## 3. Showing it in Pi
 
