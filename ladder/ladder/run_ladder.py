@@ -30,6 +30,7 @@ from .pi_profile import (
     mirror_agent_dir,
     prepare_pi_workspace,
 )
+from .pi_launch import resolve_pi, workspace_preflight, subagents_revision
 from .rungs import FIXTURES, RUNGS, Rung, copy_fixture
 from .score import score
 
@@ -122,6 +123,11 @@ def child_env(
     guards' Worker run record beside the trace, so the operator's own log stays clean.
     """
     env = {k: v for k, v in parent.items() if k != "VIRTUAL_ENV"}
+    if parent.get("VIRTUAL_ENV") and "PATH" in env:
+        inherited_bin = str(Path(parent["VIRTUAL_ENV"]) / "bin")
+        env["PATH"] = os.pathsep.join(
+            p for p in env["PATH"].split(os.pathsep) if p != inherited_bin
+        )
     env["MELLUM_TRACE_FILE"] = str(trace)
     env["MELLUM_WORKER_RUNS"] = str(Path(trace).parent / "mellum-worker-runs.jsonl")
     if mode:
@@ -387,13 +393,17 @@ def prepare_workspace(
         "baseline",
     )
     if (ws / "pyproject.toml").exists():
-        subprocess.run(
+        sync = subprocess.run(
             ["uv", "sync", "--offline"],
             cwd=ws,
             capture_output=True,
             timeout=300,
             check=False,
         )
+        if sync.returncode:
+            raise RuntimeError(
+                f"workspace preflight: uv sync failed: {sync.stderr.decode(errors='replace')}"
+            )
     return ws
 
 
@@ -427,6 +437,7 @@ def run_once(
     budget_hook: bool = False,
     mode_facts: str = "on",
     strip_facts_section: bool = False,
+    pi_executable: str = "pi",
 ) -> dict:
     scratch = Path(tempfile.mkdtemp(prefix="ladder-"))
     ws = prepare_workspace(rung, scratch, strip_facts_section=strip_facts_section)
@@ -485,6 +496,13 @@ def run_once(
             strip_thinking,
             budget_hook,
         )
+    selected_pi = versions.get("pi_launch") or resolve_pi(pi_executable)
+    env, environment = workspace_preflight(ws, rung.fixture, env)
+    if mode == "delegated":
+        env["PI_SUBAGENT_PI_BINARY"] = selected_pi["executable"]
+    launch = {"cwd": str(ws), "pi": selected_pi, **environment}
+    if mode == "delegated":
+        launch["pi_subagents_revision"] = subagents_revision(agent_dir)
     started = time.time()
     deadline_hit = False
     stdout = ""
@@ -498,6 +516,8 @@ def run_once(
         ]
     prompts_run = 0
     for i, step_argv in enumerate(step_args):
+        step_argv = [selected_pi["executable"], *step_argv[1:]]
+        launch["argv"] = step_argv
         remaining = deadline - (time.time() - started)
         if remaining <= 0:
             deadline_hit = True
@@ -566,6 +586,7 @@ def run_once(
         "prompt_mode": prompt_mode if mode == "direct" else None,
         "thinking": thinking if mode == "direct" else None,
         "versions": versions,
+        "launch": launch,
         "sentence": rung.sentence,
         "started": started,
         "wall_seconds_untrusted": round(wall, 1),
@@ -639,6 +660,11 @@ def tool_version(cmd: list[str]) -> str:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--pi-executable",
+        default="pi",
+        help="Pi executable for version checks and all parent/child launches",
+    )
     parser.add_argument("--harness", choices=["pi"], default="pi")
     parser.add_argument(
         "--mode",
@@ -710,8 +736,10 @@ def main(argv: list[str] | None = None) -> None:
     install_signal_handlers()
 
     client = AdminClient(args.omlx)
+    selected_pi = resolve_pi(args.pi_executable)
     versions = {
-        "pi": tool_version(["pi", "--version"]),
+        "pi": selected_pi["version"],
+        "pi_launch": selected_pi,
         "omlx": tool_version(["omlx", "--version"]),
     }
     args.out.mkdir(parents=True, exist_ok=True)
@@ -749,6 +777,7 @@ def main(argv: list[str] | None = None) -> None:
                     args.budget_hook,
                     args.mode_facts,
                     args.strip_facts_section,
+                    pi_executable=selected_pi["executable"],
                 )
                 row = table_row(record)
                 with table.open("a") as stream:

@@ -14,6 +14,13 @@ from ladder.run_ladder import (
 )
 
 
+@pytest.fixture(autouse=True)
+def controlled_launch_boundary(monkeypatch):
+    from ladder import run_ladder
+    monkeypatch.setattr(run_ladder, "resolve_pi", lambda executable: {"executable": executable, "version": "test"})
+    monkeypatch.setattr(run_ladder, "workspace_preflight", lambda ws, fixture, env: (env, {"node": None, "python": None}))
+
+
 def test_direct_args_are_the_clean_profile():
     args = build_pi_direct_args(Path("/tmp/trace.jsonl"), "fix it")
     for flag in (

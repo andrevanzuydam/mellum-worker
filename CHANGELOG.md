@@ -6,6 +6,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The ladder accepts `--pi-executable` for isolated Pi research and records
+  the selected runtime and fixture environment. Failed fixture preparation
+  now stops before a model request; delegated children use that runtime too.
+
 - Aligned the SDD and roadmap rules with ds4-engine: short current-work
   pointers, dated corrections, explicit phase closure, and exploratory
   screens followed by preregistered runs when deciding a change or claim.

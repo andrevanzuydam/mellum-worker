@@ -383,6 +383,9 @@ drifted settings apart later.
 ## 5. Measuring
 
 Measurement lives in `ladder/` in this repo: `cd ladder && uv run python -m ladder.run_ladder --help`. The installed package is the result; `ladder/` is the ruler.
+Use `--pi-executable /absolute/path/to/pi` to select an isolated runtime
+for research; the ladder records its version and verifies each fixture
+environment before launching. Delegated children use the same selection.
 
 ## 6. What is settled and what is not
 

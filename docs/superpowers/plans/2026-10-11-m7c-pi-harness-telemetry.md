@@ -76,7 +76,7 @@ three tightly related tasks, no shipped behavior change, one final review.
   its existing interface. Existing argument builders remain unchanged;
   replace their leading executable at the launch boundary for every mode/step.
 
-- [ ] Write tests named `test_resolve_pi_path_and_symlink`,
+- [x] Write tests named `test_resolve_pi_path_and_symlink`,
   `test_selected_pi_used_for_version_and_launch`,
   `test_python_preflight_uses_fixture_environment`,
   `test_preflight_failure_never_launches_pi`, and
@@ -97,31 +97,31 @@ three tightly related tasks, no shipped behavior change, one final review.
 
   Add `test_non_python_preflight_records_node`: Node identity present,
   fixture Python absent, and no unrelated Python environment is inherited.
-- [ ] Run from `ladder/`: `uv run python -m pytest tests/test_pi_launch.py tests/test_runner.py -q`.
+- [x] Run from `ladder/`: `uv run python -m pytest tests/test_pi_launch.py tests/test_runner.py -q`.
   Confirm each new assertion fails for the missing behavior before implementing it.
-- [ ] Implement the two helpers and `--pi-executable` CLI option, default `pi`.
+- [x] Implement the two helpers and `--pi-executable` CLI option, default `pi`.
   Resolve/probe once per ladder invocation and record provenance per run.
   Missing executable, unsuccessful version probe and failed fixture sync/import
   are actionable preflight failures, not `unknown` for counted new launches.
-- [ ] Keep existing offline fixture sync; check its return status. For Python
+- [x] Keep existing offline fixture sync; check its return status. For Python
   fixtures, put verified `.venv/bin` first in PATH and set VIRTUAL_ENV to that
   fixture only, after `child_env` removes the inherited ladder environment.
   Probe `sys.executable` and `pytest`; AgentClinic also probes `fastapi`,
   `turbohtml`, `httpx`. For rung 1's JavaScript fixture, record Node identity
   and mark Python preflight not applicable. Use argument lists, never shell text.
-- [ ] Set `PI_SUBAGENT_PI_BINARY` to the selected resolved executable for
+- [x] Set `PI_SUBAGENT_PI_BINARY` to the selected resolved executable for
   delegated runs, using the installed host's existing supported override.
   Capture the installed pi-subagents Git revision (or explicitly unknown);
   final counted compatibility proof requires an identified revision.
   Do not patch pi-subagents or invent another launcher.
-- [ ] Add `run.json.launch` containing command argv, cwd, Pi path/version,
+- [x] Add `run.json.launch` containing command argv, cwd, Pi path/version,
   Node identity, optional fixture Python path and checked imports, and
   pi-subagents revision when delegated. Do not serialize auth/settings or
   the whole environment. New metadata is additive; preserve old fields.
-- [ ] Run the targeted tests, then from `ladder/` run
+- [x] Run the targeted tests, then from `ladder/` run
   `uv run python -m pytest`, and from repo root run `npm test`.
   Expected: zero failures. Adapt existing mocks only for the new launch boundary.
-- [ ] Document the new option beside the ladder command in `docs/recipe.md`;
+- [x] Document the new option beside the ladder command in `docs/recipe.md`;
   add its user-facing Unreleased entry. Review diff and changelog since v0.1.6;
   commit as `feat(ladder): verify selected Pi and fixture environment`.
 
