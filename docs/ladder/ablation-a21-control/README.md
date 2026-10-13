@@ -29,4 +29,5 @@ Launch, from `ladder/`:
 | 9 | 3 | pass | 19 | 105 | False | yes | 0 | 0 |
 
 `table.md` holds the runner's full row per run. Raw traces, stdout and diffs:
-`ablation-a21-control.tar.gz`, archived locally for a `research-2026-10-13` release (SHA-256 in the result).
+[`ablation-a21-control.tar.gz`](https://github.com/pauleveritt/mellum-worker/releases/download/research-2026-10-13/ablation-a21-control.tar.gz)
+(SHA-256 `a73cd5f77905af04b68d8016fc5986f7fefcdbbbf3e2485632c7b3e709c97e41`).

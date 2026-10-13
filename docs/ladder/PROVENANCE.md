@@ -125,3 +125,22 @@ byte-for-byte. Downloaded published bytes were checked against SHA-256:
 - SHA-256: `a62352518e2497950e28e5edb7037033781d8208b0115461aca07cef6df32fae`.
 - Release tag is an evidence container, not the implementation/source version.
 - Earlier October 11 preservation manifests remain unchanged.
+
+## A21 and A21 control
+
+Twelve Mellum Mode runs each on AgentClinic rungs 6–9, 2026-10-13 08:04–09:09
+America/New_York, preregistered in
+[2026-10-13-a21-preregistration.md](../superpowers/research/2026-10-13-a21-preregistration.md).
+Source checkout commit `30d441b` (worker `v0.1.7-5-g30d441b`); Pi 1.1.0,
+oMLX 0.7.0. Records: [A21](ablation-a21-light-section-roadmap/README.md),
+[A21 control](ablation-a21-control/README.md).
+
+Each deterministic archive (`ladder.archive_raw`) holds only `trace.jsonl`,
+`stdout.txt` and `diff.patch`, 12 of each. Downloaded published bytes were
+checked against SHA-256:
+
+- Asset: [`ablation-a21-light-section-roadmap.tar.gz`](https://github.com/pauleveritt/mellum-worker/releases/download/research-2026-10-13/ablation-a21-light-section-roadmap.tar.gz).
+- SHA-256: `dfec3ab7b89e8ead690a5799593a81eaa2a3f00f16beb192efb75f823d628890`.
+- Asset: [`ablation-a21-control.tar.gz`](https://github.com/pauleveritt/mellum-worker/releases/download/research-2026-10-13/ablation-a21-control.tar.gz).
+- SHA-256: `a73cd5f77905af04b68d8016fc5986f7fefcdbbbf3e2485632c7b3e709c97e41`.
+- Release tag is an evidence container, not the implementation/source version.

@@ -29,4 +29,5 @@ Launch, from `ladder/`:
 | 9 | 3 | FAIL | 16 | 100 | False | no | 0 | 0 |
 
 `table.md` holds the runner's full row per run. Raw traces, stdout and diffs:
-`ablation-a21-light-section-roadmap.tar.gz`, archived locally for a `research-2026-10-13` release (SHA-256 in the result).
+[`ablation-a21-light-section-roadmap.tar.gz`](https://github.com/pauleveritt/mellum-worker/releases/download/research-2026-10-13/ablation-a21-light-section-roadmap.tar.gz)
+(SHA-256 `dfec3ab7b89e8ead690a5799593a81eaa2a3f00f16beb192efb75f823d628890`).
