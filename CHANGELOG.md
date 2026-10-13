@@ -4,6 +4,13 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Fixed
+
+- Back-to-back `/mellum` one-shots recorded an empty task from the second
+  run on: the previous run's off-marker lands after the next prompt, and
+  the record looked only just before the on-marker. Mellum always got the
+  task; only the run record (and `/mellum last`'s Task row) lost it.
+
 ## [0.1.7] - 2026-10-12
 
 ### Added

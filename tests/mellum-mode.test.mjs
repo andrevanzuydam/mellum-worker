@@ -493,3 +493,22 @@ test("runRecord carries the server settings check from the meta, and omits the f
 	assert.deepEqual(runRecord("t", [], { ...meta, server: { match: null, diffs: [] } }).server, { match: null, diffs: [] });
 	assert.equal("server" in JSON.parse(JSON.stringify(runRecord("t", [], meta))), false);
 });
+
+test("openSpan takes the task from the prompt before an off-marker, as back-to-back one-shots deliver it", async () => {
+	const { openSpan, MARK_ON, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const user = (text) => ({ role: "user", content: [{ type: "text", text }] });
+	const marker = (text) => ({ role: "custom", customType: "mellum-mode", content: text });
+	const reply = { role: "assistant", content: [{ type: "text", text: "done" }] };
+	// Seen in ac-demo, 2026-10-12: the first one-shot's off-marker is queued for the next turn,
+	// so it lands after the second prompt, between that prompt and the second on-marker.
+	const messages = [
+		user("Implement Phase 1 of specs/roadmap.md"), marker(`${MARK_ON} facts: agents-md`), reply,
+		user("Implement Phase 2 of specs/roadmap.md"), marker(MARK_OFF), marker(`${MARK_ON} facts: agents-md`), reply,
+	];
+	assert.equal(openSpan(messages).task, "Implement Phase 2 of specs/roadmap.md");
+	assert.deepEqual(openSpan(messages).span, [reply]);
+	// Still the plain case: prompt, then on-marker.
+	assert.equal(openSpan(messages.slice(0, 3)).task, "Implement Phase 1 of specs/roadmap.md");
+	// An off-marker with no prompt before it gives no task from before the span.
+	assert.equal(openSpan([marker(MARK_OFF), marker(MARK_ON), user("from inside"), reply]).task, "from inside");
+});

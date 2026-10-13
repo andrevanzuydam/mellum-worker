@@ -236,8 +236,12 @@ export function openSpan(messages: Msg[]): { task: string; span: Msg[] } | undef
 	}
 	if (on === -1) return undefined;
 	const span = messages.slice(on + 1);
-	const prev = messages[on - 1];
-	const task = prev && prev.role === "user" && !hasMark(prev, MARK_OFF) ? textOf(prev) : textOf(span.find((m) => m.role === "user") ?? {});
+	// The prompt sits just before the on-marker, or behind the previous one-shot's off-marker,
+	// which Pi delivers after the next prompt (as filterForMellum allows for).
+	let p = on - 1;
+	while (p >= 0 && hasMark(messages[p], MARK_OFF)) p--;
+	const prev = messages[p];
+	const task = prev && prev.role === "user" && !hasMark(prev, MARK_ON) ? textOf(prev) : textOf(span.find((m) => m.role === "user") ?? {});
 	return { task, span };
 }
 
