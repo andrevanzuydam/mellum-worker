@@ -4,6 +4,13 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Changed
+
+- The README's lighter `## Mellum` section (`Test command:` plus `Do not:`
+  naming the bends, no `Write only:`) is now measured: ladder phase A21
+  passed 9/12 AgentClinic runs with no writes outside the layout, the same
+  as A19's section rerun the same day. Ladder records A21 and A21 control.
+
 ### Added
 
 - The ladder's AgentClinic rungs take `--facts-section light` (the README's

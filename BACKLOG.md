@@ -103,17 +103,6 @@ decision, so it is measured before it ships.
 *Reopens when* a facts-on ladder phase or a run record shows a non-empty
 `outside_write_list` with the list forwarded.
 
-**A21: the lighter `## Mellum` section and a one-file roadmap.** README,
-setup skill and `/mellum learn` now suggest `Test command:` plus `Do not:`
-naming the bends seen (dependencies; `__init__.py`, `conftest.py`,
-`pytest.ini`, `setup.cfg`; weakened tests) and no `Write only:` list; A19's
-9/12 and 0/12 outside the layout were measured with `Write only:`
-([note](docs/superpowers/research/2026-10-11-facts-wording.md)). ac-demo
-now keeps its phases in one `specs/roadmap.md`, asked for as "Implement
-Phase N of specs/roadmap.md". A21 is a rungs 6–9 fixture variant with both,
-12 runs against A19; if it falls short, the docs go back to `Write only:`.
-*Reopens when* the GPU is free for an hour and Paul schedules it.
-
 **Facts and learn v2: uv and `.venv`.** A session in ac-demo lost an
 exit-127 detour to bare `python` (not on PATH; only `uv run` works) and a
 large result from `find .` walking `.venv`
@@ -128,8 +117,9 @@ worked first time, so suggest commands, not prohibitions); ac-demo's roadmap say
 python app.py`; `/mellum check` linting the `## Mellum` section (nested
 bullets or continuation lines, a test label not exactly `Test command:`, a
 fallback adding a second test command; seen in ac-demo 2026-10-11). The
-bullets change what Mellum reads, so they are measured with A21.
-*Reopens when* A21 is scheduled.
+bullets change what Mellum reads, so they need their own ladder arm; A21
+(2026-10-13) measured the section without them. *Reopens when* a ladder
+arm for these bullets is scheduled.
 
 **Worker recorder never resets after a settle.** `createRecorder` in
 `extensions/mellum-guards.ts` keeps its baseline and turns for the whole

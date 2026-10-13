@@ -1,0 +1,167 @@
+{
+  "rung": 6,
+  "repeat": 3,
+  "profile": "baseline",
+  "mode": "mode",
+  "harness": "pi",
+  "plain": false,
+  "guards": true,
+  "subagents_config": null,
+  "strip_thinking": null,
+  "prompts": 1,
+  "prompts_planned": 1,
+  "brief_file": null,
+  "budget_hook": null,
+  "mode_facts": "on",
+  "strip_facts_section": false,
+  "facts_section": "light",
+  "roadmap": "one-file",
+  "leftover_processes": [],
+  "guards_env": null,
+  "prompt_version": null,
+  "prompt_file": null,
+  "prompt_mode": null,
+  "thinking": null,
+  "versions": {
+    "pi": "1.1.0",
+    "pi_launch": {
+      "executable": "/Users/pauleveritt/.volta/bin/pi",
+      "version": "1.1.0"
+    },
+    "omlx": "0.7.0",
+    "model_settings": {
+      "max_tokens": 4096,
+      "thinking_budget_tokens": null,
+      "presence_penalty": 0.0,
+      "max_tool_result_tokens": null
+    }
+  },
+  "launch": {
+    "cwd": "/var/folders/m4/jc_jynrj6z10mk0t80pkj8l80000gn/T/ladder-m93v94oc/rung6",
+    "pi": {
+      "executable": "/Users/pauleveritt/.volta/bin/pi",
+      "version": "1.1.0"
+    },
+    "node": {
+      "executable": "/Users/pauleveritt/.volta/bin/volta-shim",
+      "version": "v25.8.1"
+    },
+    "python": {
+      "executable": "/var/folders/m4/jc_jynrj6z10mk0t80pkj8l80000gn/T/ladder-m93v94oc/rung6/.venv/bin/python",
+      "imports": [
+        "pytest",
+        "fastapi",
+        "turbohtml",
+        "httpx"
+      ]
+    },
+    "argv": [
+      "/Users/pauleveritt/.volta/bin/pi",
+      "-p",
+      "--mode",
+      "json",
+      "--no-session",
+      "--model",
+      "omlx/Mellum2.1-12B-A2.5B-Thinking-6bit",
+      "-e",
+      "/Users/pauleveritt/projects/pauleveritt/mellum-worker/extensions/mellum-mode.ts",
+      "-e",
+      "/Users/pauleveritt/projects/pauleveritt/mellum-worker/ladder/ladder/record-pi.js",
+      "Implement Phase 1 of specs/roadmap.md"
+    ]
+  },
+  "telemetry": {
+    "status": "incomplete",
+    "issues": [
+      "32d52bb1-93d1-4d01-a246-266e3534d9ba: Pi executable mismatch or unknown"
+    ],
+    "instances": {
+      "32d52bb1-93d1-4d01-a246-266e3534d9ba": {
+        "runtime": {
+          "piVersion": "1.1.0",
+          "entryPath": "/Users/pauleveritt/.volta/tools/image/packages/@earendil-works/pi-coding-agent/lib/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js",
+          "execPath": "/Users/pauleveritt/.volta/tools/image/node/25.8.1/bin/node",
+          "cwd": "/private/var/folders/m4/jc_jynrj6z10mk0t80pkj8l80000gn/T/ladder-m93v94oc/rung6"
+        },
+        "settled": true,
+        "aborted": false,
+        "openCalls": []
+      }
+    }
+  },
+  "process": {
+    "exitCode": 0,
+    "signal": null,
+    "deadlineHit": false,
+    "elapsedMs": 67075.8806669619,
+    "settled": true,
+    "aborted": false
+  },
+  "sentence": "Implement Phase 1 of specs/roadmap.md",
+  "started": 1791893216.891485,
+  "wall_seconds_untrusted": 66.7,
+  "deadline_hit": false,
+  "stop_reason": "stop",
+  "final_text_chars": 58,
+  "thinking_reentries": 0,
+  "final_text_is": "worker",
+  "parent": null,
+  "baseline_lines": {
+    "pyproject.toml": 13,
+    "specs/roadmap.md": 35,
+    "uv.lock": 1212,
+    ".gitignore": 3,
+    "AGENTS.md": 6,
+    "tests/.gitkeep": 0
+  },
+  "check": {
+    "passed": true,
+    "tests_unchanged": true,
+    "details": {
+      "facts_cmd_pass": true,
+      "hidden_pass": true,
+      "outside_write_list": [],
+      "hidden_collision": []
+    }
+  },
+  "score": {
+    "requests": 17,
+    "largest_prompt_chars": 44573,
+    "tool_calls_by_name": {
+      "find": 2,
+      "read": 3,
+      "ls": 4,
+      "write": 4,
+      "bash": 2,
+      "edit": 1
+    },
+    "tool_errors": 2,
+    "edit_anchor_failures": 0,
+    "noop_edits": 0,
+    "write_existing": 0,
+    "bash_file_mutations": 0,
+    "max_identical_streak": 1,
+    "write_shrink": 0,
+    "nudges": 0,
+    "max_identical_in_window": 2,
+    "loop_breaker_would_block": 0,
+    "effective_params": {
+      "temperature": 1,
+      "top_p": 0.95,
+      "top_k": 20,
+      "min_p": 0,
+      "max_tokens": 16384,
+      "presence_penalty": 0
+    }
+  },
+  "diff_stat": " app.py               | 14 ++++++++++++++\n templates/base.html  | 36 ++++++++++++++++++++++++++++++++++++\n templates/index.html |  7 +++++++\n tests/test_home.py   |  9 +++++++++\n 4 files changed, 66 insertions(+)\n",
+  "files_created": [
+    "app.py",
+    "templates/base.html",
+    "templates/index.html",
+    "tests/test_home.py"
+  ],
+  "workspace": "/var/folders/m4/jc_jynrj6z10mk0t80pkj8l80000gn/T/ladder-m93v94oc/rung6",
+  "worker_version": "0.1.7",
+  "worker_git": "v0.1.7-5-g30d441b"
+}

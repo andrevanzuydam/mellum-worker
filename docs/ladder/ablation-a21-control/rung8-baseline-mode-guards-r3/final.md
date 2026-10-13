@@ -1,0 +1,1 @@
+Everything is good. The issue was resolved by adjusting the TestClient to not follow redirects in the test, which properly exposed the 303 status code from the POST request. The application code already supported the complaint functionality correctly.

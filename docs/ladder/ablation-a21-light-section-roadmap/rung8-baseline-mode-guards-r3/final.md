@@ -1,0 +1,1 @@
+Phase 3 has been implemented successfully. The tests pass, confirming that the complaint form is added to the complaints board, submissions are handled via `POST /complaints`, and the user is redirected with status 303.

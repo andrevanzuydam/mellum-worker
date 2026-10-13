@@ -59,3 +59,8 @@ those bullets unnecessary.
 - The session's numbers are one run, read from its own log.
 - Naming four files may miss other bends (`setup.py`, `tox.ini`); `learn`
   only suggests what the records show.
+
+**2026-10-13:** A21 measured the named-bends `Do not:` without `Write only:`
+(with a one-file roadmap): 9/12, 0/12 outside the layout, against 9/12 for
+A19's section the same day ([result](2026-10-13-a21-result.md)). The uv and
+`.venv` bullets were not part of it.

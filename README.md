@@ -75,9 +75,11 @@ to fit ([What helped](#what-helped)). Add a `## Mellum` section to the
 - Do not: install packages or add dependencies; add __init__.py, conftest.py, pytest.ini or setup.cfg files; weaken tests
 ```
 
-The measured section (A19) also had `- Write only: app.py, models.py,
-templates/, tests/`; add a line like it if you want a strict boundary.
-The section above without it is not measured yet (backlog: A21).
+Both sections are measured. The one above passed 9/12 AgentClinic runs with
+none writing outside the layout (A21), the same as A19's section, which
+adds `- Write only: app.py, models.py, templates/, tests/`, rerun the same
+day ([result](docs/superpowers/research/2026-10-13-a21-result.md)). Add a
+`Write only:` line if you want a strict boundary.
 
 Mode appends these bullets to every task as `Project facts:`. Bullets only,
 600 characters at most; write the label exactly as `Test command:` in plain
