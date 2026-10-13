@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- Ladder runs now stop any process still running in the run's workspace
+  (a server Mellum started with `&` outlives Pi at the deadline) before the
+  workspace is staged, and record them as `leftover_processes` in `run.json`.
+  In M.7 such servers held ports 8000–8003 for later runs.
+
 - Back-to-back `/mellum` one-shots recorded an empty task from the second
   run on: the previous run's off-marker lands after the next prompt, and
   the record looked only just before the on-marker. Mellum always got the

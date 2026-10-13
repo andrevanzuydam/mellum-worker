@@ -103,19 +103,6 @@ decision, so it is measured before it ships.
 *Reopens when* a facts-on ladder phase or a run record shows a non-empty
 `outside_write_list` with the list forwarded.
 
-**Deadline leaves workspace servers running.** Every run cut at the 600 s
-deadline in M.7 (A18 6 r2, 8 r1, 9 r1; A19 8 r2; A20 6 r2) ended on a
-foreground `uvicorn`/app server, and the runner left it listening on ports
-8000–8003. A19 8 r2 and A20 6 r2 hit those ports (`Address already in
-use`); scores were unaffected, and the controller stopped the servers on
-2026-10-10 about 09:50 EDT
-([A19](docs/ladder/ablation-a19-facts-on/README.md),
-[A20](docs/ladder/ablation-a20-facts-fallback-only/README.md) Risks).
-Remedy: at the deadline and at run end the runner kills the run's process
-group and any listener whose cwd is the workspace, and records it.
-*Reopens when* the next change to `ladder/`, or any record showing a
-leftover process.
-
 **A21: the lighter `## Mellum` section and a one-file roadmap.** README,
 setup skill and `/mellum learn` now suggest `Test command:` plus `Do not:`
 naming the bends seen (dependencies; `__init__.py`, `conftest.py`,

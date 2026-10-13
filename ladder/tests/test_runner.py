@@ -802,3 +802,35 @@ def test_chunked_process_metadata_describes_last_launched_invocation(
     assert first_stdout in retained
     if outcome != "budget":
         assert final_stdout in retained
+
+
+def test_run_once_stops_leftover_processes_in_the_workspace_and_records_them(
+    monkeypatch, tmp_path
+):
+    """A server left running at the deadline is stopped before the workspace is staged."""
+    import json
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    calls = []
+    _real_run_for_git(monkeypatch, run_ladder)
+    monkeypatch.setattr(
+        run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch
+    )
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    monkeypatch.setattr(
+        run_ladder, "mirror_agent_dir", lambda *a, **k: tmp_path / "agent"
+    )
+    left = [{"pid": 4242, "command": "uvicorn app:app --port 8000", "killed": True}]
+
+    def fake_stop(ws, **kw):
+        calls.append(ws)
+        return left
+
+    monkeypatch.setattr(run_ladder, "stop_leftovers", fake_stop)
+    rung = Rung(6, "x", "s", ["true"], lambda ws, base: CheckResult(True, True))
+    run_ladder.run_once(rung, "mode", "baseline", 1, tmp_path / "out", 5, {}, False)
+    record = json.loads(next((tmp_path / "out").glob("*/run.json")).read_text())
+    assert len(calls) == 1
+    assert record["leftover_processes"] == left

@@ -33,6 +33,7 @@ from .pi_profile import (
     prepare_pi_workspace,
 )
 from .pi_trace import load_trace, stdout_settlement, summarize_trace
+from .leftovers import stop_leftovers
 from .rungs import FIXTURES, RUNGS, Rung, copy_fixture
 from .score import score
 
@@ -570,6 +571,9 @@ def run_once(
                 stdout += "\n[stderr]\n" + stderr
             break
     wall = time.time() - started
+    # Servers Mellum started with `&` outlive Pi; stop them before staging the
+    # workspace so they neither hold ports for later runs nor write after it.
+    leftovers = stop_leftovers(ws)
     stop_reason, final_text, thinking_reentries = parse_pi_json(
         stdout, with_reentries=True
     )
@@ -595,6 +599,7 @@ def run_once(
         "budget_hook": budget_hook if mode == "direct" else None,
         "mode_facts": mode_facts if mode == "mode" else None,
         "strip_facts_section": strip_facts_section,
+        "leftover_processes": leftovers,
         "guards_env": json.loads(os.environ["MELLUM_GUARDS"])
         if os.environ.get("MELLUM_GUARDS")
         else None,
