@@ -14,3 +14,6 @@ Launch, from `ladder/`:
 | 1 | FAIL | 27 | 164 | no | 0 |
 | 2 | pass | 26 | 164 | yes | 0 |
 | 3 | FAIL | 21 | 124 | no | 0 |
+
+Raw traces, stdout and diffs: [`screen-rung9-one-file-roadmap.tar.gz`](https://github.com/pauleveritt/mellum-worker/releases/download/research-2026-10-13/screen-rung9-one-file-roadmap.tar.gz)
+(SHA-256 `a7b51399a57c37f45afd5cb7c2b96a96e137b32d9a418eeb3e997e56c1ad44f0`).

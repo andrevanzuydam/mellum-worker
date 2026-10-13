@@ -46,9 +46,9 @@ same section, six or more each, with the id miss at a similar rate in both.
   the pass rate cannot separate the arms, only the failure kind can.
 - ac-demo keeps its phases in one `specs/roadmap.md`; if the lead holds,
   phase 4 there is likely to hit the id miss.
-- Raw evidence is archived locally with the A21 archives
-  (`screen-rung9-light-section.tar.gz`
+- Raw evidence is in release
+  [`research-2026-10-13`](https://github.com/pauleveritt/mellum-worker/releases/tag/research-2026-10-13),
+  downloaded and checked against SHA-256 (`screen-rung9-light-section.tar.gz`
   `501b59825e7b482aceaae8765c0ebddd2310698c557c17513b311768049bf2ff`,
   `screen-rung9-one-file-roadmap.tar.gz`
-  `a7b51399a57c37f45afd5cb7c2b96a96e137b32d9a418eeb3e997e56c1ad44f0`), not
-  yet attached to `research-2026-10-13`.
+  `a7b51399a57c37f45afd5cb7c2b96a96e137b32d9a418eeb3e997e56c1ad44f0`).

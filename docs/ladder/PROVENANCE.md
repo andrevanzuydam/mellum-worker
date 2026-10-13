@@ -144,3 +144,18 @@ checked against SHA-256:
 - Asset: [`ablation-a21-control.tar.gz`](https://github.com/pauleveritt/mellum-worker/releases/download/research-2026-10-13/ablation-a21-control.tar.gz).
 - SHA-256: `a73cd5f77905af04b68d8016fc5986f7fefcdbbbf3e2485632c7b3e709c97e41`.
 - Release tag is an evidence container, not the implementation/source version.
+
+## Rung 9 screen
+
+Three Mellum Mode runs per arm on rung 9, 2026-10-13 09:17–09:32
+America/New_York, an exploratory screen
+([note](../superpowers/research/2026-10-13-rung9-screen.md)). Source checkout
+commit `b31372b` (worker `v0.1.8-1-gb31372b`); Pi 1.1.0, oMLX 0.7.0. Each
+archive holds only `trace.jsonl`, `stdout.txt` and `diff.patch`, 3 of each,
+attached to the same evidence release as A21. Downloaded published bytes
+were checked against SHA-256:
+
+- Asset: [`screen-rung9-light-section.tar.gz`](https://github.com/pauleveritt/mellum-worker/releases/download/research-2026-10-13/screen-rung9-light-section.tar.gz).
+- SHA-256: `501b59825e7b482aceaae8765c0ebddd2310698c557c17513b311768049bf2ff`.
+- Asset: [`screen-rung9-one-file-roadmap.tar.gz`](https://github.com/pauleveritt/mellum-worker/releases/download/research-2026-10-13/screen-rung9-one-file-roadmap.tar.gz).
+- SHA-256: `a7b51399a57c37f45afd5cb7c2b96a96e137b32d9a418eeb3e997e56c1ad44f0`.
