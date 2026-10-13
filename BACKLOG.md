@@ -82,17 +82,6 @@ decision, so it is measured before it ships.
 *Reopens when* a facts-on ladder phase or a run record shows a non-empty
 `outside_write_list` with the list forwarded.
 
-**Phase 4 ids: `Complaint(agent_name, text)` loses its automatic id.**
-AgentClinic phase 4 (rung 9) passes 1/3 to 2/3 in every arm on 2026-10-13.
-The common failure: ids assigned in the route, left `None`, or the
-constructor changed, though the spec says ids are "assigned automatically"
-and `Complaint(agent_name, text)` "still works"; only the hidden tests
-check it, and each failing run passed its own test command. A screen ran
-A21's two changes alone: the id miss follows the one-file roadmap, 5 of 6
-runs against 1 of 6 with phase files
-([screen](docs/superpowers/research/2026-10-13-rung9-screen.md)).
-*Reopens when* the one-file roadmap is recommended to users, or phase 4 fails this way in ac-demo.
-
 **Facts and learn v2: uv and `.venv`.** A session in ac-demo lost an
 exit-127 detour to bare `python` (not on PATH; only `uv run` works) and a
 large result from `find .` walking `.venv`
