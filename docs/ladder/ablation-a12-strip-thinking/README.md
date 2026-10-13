@@ -53,3 +53,5 @@ sends ([A5](../ablation-a5-thinking-medium/README.md)) and which, measured
 next, oMLX did not enforce for this model ([A13](../ablation-a13-budget-medium/README.md)).
 
 Raw traces, stdout and diffs: [`ablation-a12-strip-thinking.tar.gz`](https://github.com/pauleveritt/mellum-worker/releases/download/research-2026-10-09/ablation-a12-strip-thinking.tar.gz).
+
+*2026-10-13: the ladder code this phase used (`strip-thinking.js`, `--strip-thinking`) was removed as rejected; it last exists at commit `44e1b0b`. The launch line above is history.*

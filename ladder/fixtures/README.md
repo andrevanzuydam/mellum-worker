@@ -21,3 +21,8 @@ there. The ladder runner (`ladder/run_ladder.py`) always works on copies.
 | 3 | `rename/` | rename fetch_rows to load_rows everywhere |
 | 4 | `feature/` | make the failing test pass |
 | 5 | `edge/` | the export is missing the totals row |
+
+Rungs 6-9 build the AgentClinic app from four phase specs; their fixtures and
+hidden tests are described in [`agentclinic/README.md`](agentclinic/README.md),
+including the `--facts-section light` and `--roadmap one-file` variants the
+runner applies to a copy.

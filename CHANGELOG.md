@@ -20,6 +20,20 @@ Versions match git tags; pin one in both install lines.
   M.12 (one worker, Mellum Mode renamed mellum-worker) in place of M.8–M.10,
   M.3 and M.4.
 
+- A bare `--mode direct` ladder run now sends the worker prompt in place of
+  Pi's (`--prompt-mode replace`), which is what the shipped agent file does;
+  `--prompt-mode append` is still there for comparing with phases 0–2.
+
+### Removed
+
+- The ladder's rejected research modes and hooks: `--mode chunked` and
+  `--mode brief` with `ladder/ladder/briefs/` (A15/A16, not adopted),
+  `--strip-thinking` (A12, reverted) and `--budget-hook` (A13, inert), and
+  the `--harness` flag, which had one value and was never read. The records
+  that used them keep their launch lines with a dated note; the code last
+  exists at `44e1b0b`. `rescore` no longer backfills `baseline_lines` or
+  `thinking_reentries`, which no record lacks.
+
 ## [0.1.8] - 2026-10-13
 
 ### Added

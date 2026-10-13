@@ -1,7 +1,6 @@
 """Recompute the ``score`` block of every run.json in a directory from its trace.
 
-The baseline line counts come from ``baseline_lines`` in run.json; runs
-recorded before that field existed fall back to the still-present workspace.
+The baseline line counts come from ``baseline_lines`` in run.json.
 
     uv run python -m ladder.rescore ../docs/ladder/phase0-baseline
 
@@ -17,24 +16,12 @@ the recorded ``check`` as ``check_rescored``. Nothing is re-run and
 from __future__ import annotations
 
 import json
-import subprocess
 import sys
 from pathlib import Path
 
-from .run_ladder import HEADER, parse_pi_json, read_events, table_row
+from .run_ladder import HEADER, read_events, table_row
 from .rungs import FIXTURES, RUNGS, existing_tests_kept
 from .score import score
-
-
-def baseline_from_workspace(ws: Path) -> dict[str, int]:
-    out = subprocess.run(
-        ["git", "ls-files"], cwd=ws, capture_output=True, text=True, check=False
-    ).stdout
-    return {
-        p: len((ws / p).read_text(errors="replace").splitlines())
-        for p in out.split()
-        if p
-    }
 
 
 def rescore_dir(directory: Path) -> int:
@@ -42,19 +29,7 @@ def rescore_dir(directory: Path) -> int:
     rows = []
     for run_json in sorted(Path(directory).glob("*/run.json")):
         record = json.loads(run_json.read_text())
-        lines = record.get("baseline_lines")
-        if lines is None:
-            ws = Path(record.get("workspace", ""))
-            if not ws.exists():
-                continue
-            lines = baseline_from_workspace(ws)
-            record["baseline_lines"] = lines
-        stdout = run_json.with_name("stdout.txt")
-        if "thinking_reentries" not in record and stdout.exists():
-            record["thinking_reentries"] = parse_pi_json(
-                stdout.read_text(), with_reentries=True
-            )[2]
-            changed += 1
+        lines = record["baseline_lines"]
         new = score(
             read_events(run_json.with_name("trace.jsonl")), set(lines), lines
         ).as_row()

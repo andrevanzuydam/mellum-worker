@@ -1,7 +1,7 @@
 """Run ladder rungs against the Mellum worker and score the evidence.
 
 Direct mode launches ``pi -p`` in the recovery report's clean profile: no
-extensions, skills, or context files; the worker prompt appended; the
+extensions, skills, or context files; the worker prompt in place of Pi's; the
 bundle's record extension capturing every provider request and tool event.
 
     uv run python -m ladder.run_ladder --profile baseline --rung 1 --repeat 3 --out ../docs/ladder/phase0-baseline
@@ -40,10 +40,7 @@ from .score import score
 log = logging.getLogger(__name__)
 PROMPT_FILE = REPO_ROOT / "prompts" / "mellum-worker.md"
 RECORD_EXT = LADDER_ROOT / "ladder" / "record-pi.js"
-STRIP_EXT = LADDER_ROOT / "ladder" / "strip-thinking.js"
-BUDGET_EXT = LADDER_ROOT / "ladder" / "thinking-budget.js"
 MODE_EXT = REPO_ROOT / "extensions" / "mellum-mode.ts"
-BRIEFS = LADDER_ROOT / "ladder" / "briefs"
 GUARDS_EXT = REPO_ROOT / "extensions" / "mellum-guards.ts"
 MODEL = "omlx/Mellum2.1-12B-A2.5B-Thinking-6bit"
 MODEL_ID = MODEL.split("/", 1)[1]
@@ -67,17 +64,14 @@ HEADER = (
 
 
 def build_pi_direct_args(
-    trace: Path,
     sentence: str,
     guards: bool = False,
     prompt: Path = PROMPT_FILE,
-    prompt_mode: str = "append",
+    prompt_mode: str = "replace",
     thinking: str = "high",
-    strip_thinking: bool = False,
-    budget_hook: bool = False,
 ) -> list[str]:
-    """The worker alone. `append` keeps Pi's base prompt under the worker prompt (phases 0-2);
-    `replace` sends the worker prompt only, which is what the shipped agent file does."""
+    """The worker alone. `replace` (the default) sends the worker prompt only, which is what
+    the shipped agent file does; `append` keeps Pi's base prompt under it (phases 0-2)."""
     prompt_args = (
         ["--system-prompt", prompt.read_text()]
         if prompt_mode == "replace"
@@ -101,8 +95,6 @@ def build_pi_direct_args(
         "--tools",
         TOOLS,
         *prompt_args,
-        *(["-e", str(STRIP_EXT)] if strip_thinking else []),
-        *(["-e", str(BUDGET_EXT)] if budget_hook else []),
         "-e",
         str(RECORD_EXT),
     ]
@@ -245,55 +237,6 @@ def build_pi_mode_args(sentence: str) -> list[str]:
         str(RECORD_EXT),
         sentence,
     ]
-
-
-def split_brief(text: str) -> list[str]:
-    """One prompt per `## Step` section; the header (task, test command, constraints) rides with step 1."""
-    head, *parts = re.split(r"^## Step \d+\s*$", text, flags=re.MULTILINE)
-    steps = [part.strip() for part in parts if part.strip()]
-    if not steps:
-        log.warning(
-            "split_brief: no `## Step N` headings found; sending the brief as one prompt"
-        )
-        return [text.strip()]
-    steps[0] = head.strip() + "\n\n" + steps[0]
-    return steps
-
-
-def build_pi_chunk_args(
-    session_dir: Path,
-    session_id: str,
-    step: str,
-    guards: bool,
-    prompt: Path = PROMPT_FILE,
-) -> list[str]:
-    """One step of a chunked brief, continuing the same session; the worker prompt replaces Pi's."""
-    args = [
-        "pi",
-        "-p",
-        "--mode",
-        "json",
-        "--no-extensions",
-        "--no-skills",
-        "--no-prompt-templates",
-        "--no-themes",
-        "--no-context-files",
-        "--session-dir",
-        str(session_dir),
-        "--session-id",
-        session_id,
-        "--model",
-        MODEL,
-        "--tools",
-        TOOLS,
-        "--system-prompt",
-        prompt.read_text(),
-        "-e",
-        str(RECORD_EXT),
-    ]
-    if guards:
-        args += ["-e", str(GUARDS_EXT)]
-    return [*args, step]
 
 
 def parse_parent_json(stdout: str) -> dict:
@@ -487,11 +430,9 @@ def run_once(
     guards: bool,
     plain: bool = False,
     prompt: Path = PROMPT_FILE,
-    prompt_mode: str = "append",
+    prompt_mode: str = "replace",
     thinking: str = "high",
     subagents_config: dict | None = None,
-    strip_thinking: bool = False,
-    budget_hook: bool = False,
     mode_facts: str = "on",
     strip_facts_section: bool = False,
     pi_executable: str = "pi",
@@ -525,18 +466,6 @@ def run_once(
         )
         env = child_env(dict(os.environ), str(trace), agent_dir, offline=False)
         args = build_pi_primary_args(rung.sentence, plain)
-    elif mode in ("chunked", "brief"):
-        agent_dir = direct_agent_dir(scratch / "pi-agent", prof)
-        env = child_env(dict(os.environ), str(trace), agent_dir, offline=True)
-        brief_text = (BRIEFS / f"rung{rung.number}.md").read_text()
-        if mode == "chunked":
-            steps = split_brief(brief_text)
-            args = []  # built per step below
-        else:
-            steps = [brief_text]
-            args = build_pi_direct_args(
-                trace, brief_text, guards, prompt, "replace", thinking
-            )
     elif mode == "mode":
         agent_dir = mirror_agent_dir(
             Path.home() / ".pi" / "agent",
@@ -552,16 +481,7 @@ def run_once(
     else:
         agent_dir = direct_agent_dir(scratch / "pi-agent", prof)
         env = child_env(dict(os.environ), str(trace), agent_dir, offline=True)
-        args = build_pi_direct_args(
-            trace,
-            rung.sentence,
-            guards,
-            prompt,
-            prompt_mode,
-            thinking,
-            strip_thinking,
-            budget_hook,
-        )
+        args = build_pi_direct_args(rung.sentence, guards, prompt, prompt_mode, thinking)
     selected_pi = versions.get("pi_launch") or resolve_pi(pi_executable)
     env, environment = workspace_preflight(ws, rung.fixture, env)
     if mode == "delegated":
@@ -570,6 +490,8 @@ def run_once(
     if mode == "delegated":
         launch["pi_subagents_revision"] = subagents_revision(agent_dir)
     env["MELLUM_TRACE_RUN_ID"] = str(uuid4())
+    argv = [selected_pi["executable"], *args[1:]]
+    launch["argv"] = argv
     started = time.time()
     monotonic_started = time.monotonic()
     returncode = None
@@ -577,62 +499,38 @@ def run_once(
     stderr = ""
     deadline_hit = False
     stdout = ""
-    prompts = 1
-    step_args = [args]
-    if mode == "chunked":
-        prompts = len(steps)
-        step_args = [
-            build_pi_chunk_args(scratch / "sessions", "run", step, guards, prompt)
-            for step in steps
-        ]
-    prompts_run = 0
-    for i, step_argv in enumerate(step_args):
-        step_argv = [selected_pi["executable"], *step_argv[1:]]
-        remaining = deadline - (time.monotonic() - monotonic_started)
-        if remaining <= 0:
-            deadline_hit = True
-            break
-        launch["argv"] = step_argv
-        returncode = None
-        process_stdout = ""
-        prompts_run += 1
-        if i:
-            stdout += f"\n[step {i + 1}]\n"
-        try:
-            proc = subprocess.run(
-                step_argv,
-                cwd=ws,
-                env=env,
-                stdin=subprocess.DEVNULL,
-                capture_output=True,
-                text=True,
-                timeout=remaining,
-                check=False,
-            )
-            returncode = proc.returncode
-            process_stdout = proc.stdout
-            stderr += proc.stderr
-            stdout += proc.stdout + (
-                "\n[stderr]\n" + proc.stderr if proc.stderr else ""
-            )
-        except subprocess.TimeoutExpired as error:
-            deadline_hit = True
-            captured = error.stdout or b""
-            process_stdout = (
-                captured.decode(errors="replace")
-                if isinstance(captured, bytes)
-                else str(captured)
-            )
-            stdout += process_stdout
-            captured_stderr = error.stderr or b""
-            stderr += (
-                captured_stderr.decode(errors="replace")
-                if isinstance(captured_stderr, bytes)
-                else str(captured_stderr)
-            )
-            if captured_stderr:
-                stdout += "\n[stderr]\n" + stderr
-            break
+    try:
+        proc = subprocess.run(
+            argv,
+            cwd=ws,
+            env=env,
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            timeout=deadline,
+            check=False,
+        )
+        returncode = proc.returncode
+        process_stdout = proc.stdout
+        stderr = proc.stderr
+        stdout = proc.stdout + ("\n[stderr]\n" + proc.stderr if proc.stderr else "")
+    except subprocess.TimeoutExpired as error:
+        deadline_hit = True
+        captured = error.stdout or b""
+        process_stdout = (
+            captured.decode(errors="replace")
+            if isinstance(captured, bytes)
+            else str(captured)
+        )
+        stdout = process_stdout
+        captured_stderr = error.stderr or b""
+        stderr = (
+            captured_stderr.decode(errors="replace")
+            if isinstance(captured_stderr, bytes)
+            else str(captured_stderr)
+        )
+        if captured_stderr:
+            stdout += "\n[stderr]\n" + stderr
     wall = time.time() - started
     # Servers Mellum started with `&` outlive Pi; stop them before staging the
     # workspace so they neither hold ports for later runs nor write after it.
@@ -653,13 +551,6 @@ def run_once(
         "plain": plain,
         "guards": guards,
         "subagents_config": subagents_config if mode == "delegated" else None,
-        "strip_thinking": strip_thinking if mode == "direct" else None,
-        "prompts": prompts_run,
-        "prompts_planned": prompts,
-        "brief_file": str((BRIEFS / f"rung{rung.number}.md").relative_to(REPO_ROOT))
-        if mode in ("chunked", "brief")
-        else None,
-        "budget_hook": budget_hook if mode == "direct" else None,
         "mode_facts": mode_facts if mode == "mode" else None,
         "strip_facts_section": strip_facts_section,
         "facts_section": facts_section,
@@ -770,10 +661,9 @@ def build_parser() -> argparse.ArgumentParser:
         default="pi",
         help="Pi executable for version checks and all parent/child launches",
     )
-    parser.add_argument("--harness", choices=["pi"], default="pi")
     parser.add_argument(
         "--mode",
-        choices=["direct", "delegated", "primary", "mode", "chunked", "brief"],
+        choices=["direct", "delegated", "primary", "mode"],
         default="direct",
     )
     parser.add_argument("--profile", choices=sorted(PROFILES), required=True)
@@ -784,7 +674,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--plain",
         action="store_true",
-        help="direct and brief modes: Pi thinking level (ignored by chunked, mode, delegated, primary)",
+        help="primary mode: Pi's own prompt and tools with no extensions, skills or context files (the plain baseline)",
     )
     parser.add_argument(
         "--prompt",
@@ -795,8 +685,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--prompt-mode",
         choices=["append", "replace"],
-        default="append",
-        help="direct mode: append to Pi's base prompt (phases 0-2) or replace it (the shipped agent file)",
+        default="replace",
+        help="direct mode: replace Pi's base prompt (the shipped agent file; default) or append to it (phases 0-2)",
     )
     parser.add_argument(
         "--thinking", default="high", help="direct mode: Pi thinking level"
@@ -806,16 +696,6 @@ def build_parser() -> argparse.ArgumentParser:
         type=json.loads,
         default=None,
         help="delegated mode: JSON that replaces pi-subagents' config.json in the mirrored agent dir",
-    )
-    parser.add_argument(
-        "--strip-thinking",
-        action="store_true",
-        help="direct mode: drop earlier turns' reasoning_content from each request",
-    )
-    parser.add_argument(
-        "--budget-hook",
-        action="store_true",
-        help="direct mode: map --thinking to oMLX's request-level thinking_budget",
     )
     parser.add_argument(
         "--mode-facts",
@@ -895,8 +775,6 @@ def main(argv: list[str] | None = None) -> None:
                     args.prompt_mode,
                     args.thinking,
                     args.subagents_config,
-                    args.strip_thinking,
-                    args.budget_hook,
                     args.mode_facts,
                     args.strip_facts_section,
                     pi_executable=selected_pi["executable"],

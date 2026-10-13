@@ -54,23 +54,6 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def add_readme_link(readme: Path, phase: str, tag: str) -> bool:
-    """Append the raw-archive line once; True when it was added."""
-    line = (
-        f"Raw traces, stdout and diffs: [`{phase}.tar.gz`]"
-        f"({RELEASE_URL}/{tag}/{phase}.tar.gz)."
-    )
-    readme = Path(readme)
-    text = readme.read_text() if readme.exists() else ""
-    if line in text.splitlines():
-        return False
-    if text and not text.endswith("\n"):
-        text += "\n"
-    separator = "\n" if text else ""
-    readme.write_text(f"{text}{separator}{line}\n")
-    return True
-
-
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", required=True, type=Path)

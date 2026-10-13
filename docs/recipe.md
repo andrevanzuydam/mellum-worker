@@ -61,7 +61,7 @@ request values, ran at 4,096. So:
 | `max_tool_result_tokens` | server profile only | off — the largest tool result in 30 runs was 2,639 characters; `/mellum check` fails when a cap is set |
 | thinking on/off | request: `chat_template_kwargs` from `thinkingFormat`; a server `forced_ct_kwargs` would override it | on in every Mode and Worker request; the ladder's server profile left `forced_ct_kwargs` unset, and setup step 3 forces it on for clients that send nothing |
 | thinking level (`thinking:` in the agent file, `--thinking`) | nowhere | inert: Pi's level does not reach an `openai-completions` provider; two runs at "high" and "medium" sent byte-identical requests ([ablation A5](ladder/ablation-a5-thinking-medium/README.md)) |
-| `thinking_budget` (request field) | a hook could send it (`ladder/ladder/thinking-budget.js`) | not enforced for this model: oMLX needs a reasoning parser configured to build its budget processor ([A13](ladder/ablation-a13-budget-medium/README.md)) |
+| `thinking_budget` (request field) | a hook can send it (A13's hook, removed from the ladder on 2026-10-13 as inert) | not enforced for this model: oMLX needs a reasoning parser configured to build its budget processor ([A13](ladder/ablation-a13-budget-medium/README.md)) |
 
 Verify with one request through the proxy or Pi's `before_provider_request`
 hook (`ladder/ladder/record-pi.js`) that the values you expect are the values sent;

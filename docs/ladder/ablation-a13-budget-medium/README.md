@@ -55,3 +55,5 @@ the earlier finding stands: thinking is best left alone, since removing
 it from context (A12) made runs slower.
 
 Raw traces, stdout and diffs: [`ablation-a13-budget-medium.tar.gz`](https://github.com/pauleveritt/mellum-worker/releases/download/research-2026-10-09/ablation-a13-budget-medium.tar.gz).
+
+*2026-10-13: the ladder code this phase used (`thinking-budget.js`, `--budget-hook`) was removed as rejected; it last exists at commit `44e1b0b`. The launch line above is history.*

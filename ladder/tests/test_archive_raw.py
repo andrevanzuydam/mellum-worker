@@ -3,13 +3,7 @@
 import tarfile
 from pathlib import Path
 
-from ladder.archive_raw import add_readme_link, archive_phase, sha256
-
-LINK = (
-    "Raw traces, stdout and diffs: [`p1.tar.gz`]"
-    "(https://github.com/pauleveritt/mellum-worker/releases/download/"
-    "research-2026-10-09/p1.tar.gz)."
-)
+from ladder.archive_raw import archive_phase, sha256
 
 
 def make_phase(root: Path, name: str = "p1", raw: bool = True) -> Path:
@@ -52,11 +46,3 @@ def test_phase_without_raw_files_writes_nothing(tmp_path):
     assert not out.exists() or list(out.iterdir()) == []
 
 
-def test_add_readme_link_appends_once(tmp_path):
-    readme = tmp_path / "README.md"
-    readme.write_text("# Phase\n")
-    assert add_readme_link(readme, "p1", "research-2026-10-09") is True
-    text = readme.read_text()
-    assert text == f"# Phase\n\n{LINK}\n"
-    assert add_readme_link(readme, "p1", "research-2026-10-09") is False
-    assert readme.read_text() == text

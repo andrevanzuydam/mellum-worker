@@ -1,7 +1,7 @@
 [project]
 name = "mellum-ladder"
 version = "0.1.0"
-description = "The five-rung ladder that measures mellum-worker"
+description = "The ladder that measures mellum-worker: rungs 1-5 and the AgentClinic rungs 6-9"
 requires-python = ">=3.14"
 dependencies = []
 

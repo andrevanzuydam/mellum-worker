@@ -65,3 +65,5 @@ experiment and for verification-between-steps, which this phase did not
 measure.
 
 Raw traces, stdout and diffs: [`ablation-a15-chunked-brief.tar.gz`](https://github.com/pauleveritt/mellum-worker/releases/download/research-2026-10-09/ablation-a15-chunked-brief.tar.gz).
+
+*2026-10-13: the ladder code this phase used (`--mode chunked`, `--mode brief`, `ladder/briefs/`) was removed as rejected; it last exists at commit `44e1b0b`. The launch line above is history.*

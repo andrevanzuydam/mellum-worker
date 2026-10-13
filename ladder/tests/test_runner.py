@@ -31,7 +31,7 @@ def controlled_launch_boundary(monkeypatch):
 
 
 def test_direct_args_are_the_clean_profile():
-    args = build_pi_direct_args(Path("/tmp/trace.jsonl"), "fix it")
+    args = build_pi_direct_args("fix it", prompt_mode="append")
     for flag in (
         "-p",
         "--no-extensions",
@@ -243,7 +243,6 @@ def test_direct_args_can_replace_the_system_prompt_and_set_thinking(tmp_path):
     prompt = tmp_path / "v4.md"
     prompt.write_text("facts")
     args = build_pi_direct_args(
-        tmp_path / "t",
         "fix it",
         False,
         prompt=prompt,
@@ -255,12 +254,13 @@ def test_direct_args_can_replace_the_system_prompt_and_set_thinking(tmp_path):
     assert args[args.index("--thinking") + 1] == "low"
 
 
-def test_direct_args_default_to_append_mode_with_the_worker_prompt(tmp_path):
+def test_direct_args_default_to_replace_mode_with_the_worker_prompt():
+    """The shipped agent file replaces Pi's prompt, so a bare direct run measures that; `append` is phases 0-2."""
     from ladder.run_ladder import PROMPT_FILE, build_pi_direct_args
 
-    args = build_pi_direct_args(tmp_path / "t", "fix it", False)
-    assert args[args.index("--append-system-prompt") + 1] == str(PROMPT_FILE)
-    assert "--system-prompt" not in args
+    args = build_pi_direct_args("fix it", False)
+    assert args[args.index("--system-prompt") + 1] == PROMPT_FILE.read_text()
+    assert "--append-system-prompt" not in args
 
 
 def test_run_record_leaves_direct_only_fields_empty_in_other_modes(
@@ -297,27 +297,6 @@ def test_run_record_leaves_direct_only_fields_empty_in_other_modes(
     assert record["thinking"] is None and record["prompt_version"] is None
 
 
-def test_direct_args_load_the_thinking_stripper_before_the_recorder(tmp_path):
-    """The recorder must see the stripped payload, so the stripper loads first."""
-    from ladder.run_ladder import RECORD_EXT, STRIP_EXT, build_pi_direct_args
-
-    args = build_pi_direct_args(tmp_path / "t", "fix it", True, strip_thinking=True)
-    exts = [args[i + 1] for i, a in enumerate(args) if a == "-e"]
-    assert exts.index(str(STRIP_EXT)) < exts.index(str(RECORD_EXT))
-    assert str(STRIP_EXT) not in build_pi_direct_args(tmp_path / "t", "fix it", True)
-
-
-def test_direct_args_load_the_budget_hook_before_the_recorder(tmp_path):
-    from ladder.run_ladder import BUDGET_EXT, RECORD_EXT, build_pi_direct_args
-
-    args = build_pi_direct_args(
-        tmp_path / "t", "fix it", True, thinking="medium", budget_hook=True
-    )
-    exts = [args[i + 1] for i, a in enumerate(args) if a == "-e"]
-    assert exts.index(str(BUDGET_EXT)) < exts.index(str(RECORD_EXT))
-    assert args[args.index("--thinking") + 1] == "medium"
-
-
 def test_mode_args_run_mellum_inside_the_operator_profile_with_the_mode_extension():
     """Mellum mode: the operator's full profile (extensions, skills), plus the mode, guards, recorder."""
     from ladder.run_ladder import MODE_EXT, MODEL, RECORD_EXT, build_pi_mode_args
@@ -336,28 +315,6 @@ def test_mode_env_activates_the_mode_headlessly():
     env = child_env({}, "/t", None, offline=False, mode=True)
     assert env["MELLUM_MODE"] == "1"
     assert "MELLUM_MODE" not in child_env({}, "/t", None, offline=False)
-
-
-def test_split_brief_yields_one_prompt_per_step_with_the_header_prepended_to_the_first():
-    from ladder.run_ladder import split_brief
-
-    brief = "# Task: t\n\nTest command: x\n\n## Step 1\nread\n\n## Step 2\nedit\n"
-    steps = split_brief(brief)
-    assert len(steps) == 2
-    assert steps[0].startswith("# Task: t") and steps[0].rstrip().endswith("read")
-    assert steps[1].strip() == "edit"
-
-
-def test_chunk_args_continue_one_session_and_load_guards_and_recorder(tmp_path):
-    from ladder.run_ladder import GUARDS_EXT, RECORD_EXT, build_pi_chunk_args
-
-    args = build_pi_chunk_args(tmp_path / "sessions", "run", "step text", True)
-    assert args[args.index("--session-dir") + 1] == str(tmp_path / "sessions")
-    assert args[args.index("--session-id") + 1] == "run"
-    assert "--no-session" not in args and "--system-prompt" in args
-    exts = [args[i + 1] for i, a in enumerate(args) if a == "-e"]
-    assert str(GUARDS_EXT) in exts and str(RECORD_EXT) in exts
-    assert args[-1] == "step text"
 
 
 def test_mode_runs_record_guards_on_because_the_mode_always_loads_them(
@@ -387,15 +344,6 @@ def test_mode_runs_record_guards_on_because_the_mode_always_loads_them(
         (tmp_path / "out" / "rung1-baseline-mode-guards-r1" / "run.json").read_text()
     )
     assert record["guards"] is True and record["subagents_config"] is None
-
-
-def test_split_brief_without_step_headings_returns_the_whole_text_and_warns(caplog):
-    from ladder.run_ladder import split_brief
-
-    with caplog.at_level("WARNING"):
-        steps = split_brief("# Task\n\n## Step 1: Read\nx\n")
-    assert steps == ["# Task\n\n## Step 1: Read\nx"]
-    assert "no `## Step N` headings" in caplog.text
 
 
 def test_worker_files_are_this_checkouts():
@@ -443,34 +391,6 @@ def test_mode_env_isolates_the_run_log_under_scratch(tmp_path):
     assert Path(env["MELLUM_MODE_RUNS"]).is_relative_to(tmp_path)
     assert env["PI_CODING_AGENT_DIR"] == str(tmp_path / "agent")
     assert "PI_OFFLINE" not in env
-
-
-def test_run_record_names_the_brief_file_relative_to_the_repo(monkeypatch, tmp_path):
-    import subprocess as sp
-
-    from ladder import run_ladder
-    from ladder.rungs import CheckResult, Rung
-
-    monkeypatch.setattr(
-        run_ladder.subprocess,
-        "run",
-        lambda args, **kw: sp.CompletedProcess(args, 0, stdout="", stderr=""),
-    )
-    monkeypatch.setattr(
-        run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch
-    )
-    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
-    rung = Rung(
-        1, "calculator", "fix it", ["true"], lambda ws, base: CheckResult(False, True)
-    )
-    run_ladder.run_once(rung, "brief", "baseline", 1, tmp_path / "out", 5, {}, False)
-    record = json.loads(
-        (tmp_path / "out" / "rung1-baseline-brief-r1" / "run.json").read_text()
-    )
-    assert record["brief_file"] == "ladder/ladder/briefs/rung1.md"
-    assert (REPO_ROOT / record["brief_file"]).is_file()
-    # subprocess.run is stubbed above, so git describe yields None here.
-    assert record["worker_version"] and "worker_git" in record
 
 
 def test_mode_env_turns_facts_off_only_when_asked(tmp_path):
@@ -747,63 +667,6 @@ def test_runner_process_outcomes_do_not_invent_settlement(
             in next((tmp_path / "out").glob("*/stdout.txt")).read_text()
         )
         assert record["telemetry"]["status"] == "incomplete"
-
-
-@pytest.mark.parametrize("outcome", ["normal", "signal", "deadline", "budget"])
-def test_chunked_process_metadata_describes_last_launched_invocation(
-    monkeypatch, tmp_path, outcome
-):
-    """An earlier settled step must not supply a later process's outcome."""
-    import subprocess
-
-    from ladder.rungs import CheckResult, Rung
-
-    from ladder import run_ladder
-
-    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda *a, **kw: tmp_path)
-    monkeypatch.setattr(run_ladder, "baseline_index", lambda *a: (set(), {}))
-    monkeypatch.setattr(run_ladder, "git", lambda *a: "")
-    monkeypatch.setattr(run_ladder, "direct_agent_dir", lambda *a: tmp_path / "agent")
-    monkeypatch.setattr(run_ladder, "split_brief", lambda text: ["first", "second"])
-    launches = []
-    first_stdout = '{"type":"agent_settled","aborted":false}\n'
-    final_stdout = '{"type":"agent_start"}\n'
-    if outcome == "budget":
-        clocks = iter([0, 0, 2, 2])
-        monkeypatch.setattr(run_ladder.time, "monotonic", lambda: next(clocks))
-
-    def execute(argv, **kw):
-        if argv[0] == "git":
-            return subprocess.CompletedProcess(argv, 0, stdout="test-revision", stderr="")
-        launches.append(argv)
-        if len(launches) == 1:
-            return subprocess.CompletedProcess(argv, 0, stdout=first_stdout, stderr="")
-        if outcome == "deadline":
-            raise subprocess.TimeoutExpired(argv, 1, output=final_stdout.encode())
-        return subprocess.CompletedProcess(
-            argv, -15 if outcome == "signal" else 0, stdout=final_stdout, stderr=""
-        )
-
-    monkeypatch.setattr(run_ladder.subprocess, "run", execute)
-    rung = Rung(
-        1, "calculator", "fix it", ["true"], lambda *a: CheckResult(False, True)
-    )
-    record = run_ladder.run_once(
-        rung, "chunked", "baseline", 1, tmp_path / "out", 1, {}, False
-    )
-    expected_exit = 0 if outcome in {"normal", "budget"} else None
-    assert record["process"]["exitCode"] == expected_exit
-    assert record["process"]["signal"] == (15 if outcome == "signal" else None)
-    assert record["process"]["settled"] is (outcome == "budget")
-    assert record["process"]["aborted"] is (False if outcome == "budget" else None)
-    assert record["process"]["deadlineHit"] is (outcome in {"deadline", "budget"})
-    assert record["launch"]["argv"] == launches[-1]
-    assert record["prompts"] == (1 if outcome == "budget" else 2)
-    assert record["prompts_planned"] == 2
-    retained = next((tmp_path / "out").glob("*/stdout.txt")).read_text()
-    assert first_stdout in retained
-    if outcome != "budget":
-        assert final_stdout in retained
 
 
 def test_run_once_stops_leftover_processes_in_the_workspace_and_records_them(
