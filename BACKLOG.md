@@ -104,14 +104,15 @@ decision, so it is measured before it ships.
 `outside_write_list` with the list forwarded.
 
 **Phase 4 ids: `Complaint(agent_name, text)` loses its automatic id.**
-Every AgentClinic phase 4 failure on 2026-10-13 (A21 3/3, control 1/3) is
-the same miss: ids assigned in the route, left `None`, or the constructor
-changed, while the spec says ids are "assigned automatically" and
-`Complaint(agent_name, text)` "still works". Only the hidden tests check
-it; each failing run passed its own test command. Rung 9 across A19,
-control and A21: 3/9. A21 changed two things, so a screen runs each alone
-on rung 9 ([result](docs/superpowers/research/2026-10-13-a21-result.md)).
-*Reopens when* the screen shows one change alone at 0/3, or phase 4 fails this way in ac-demo or a later rung 9 run.
+AgentClinic phase 4 (rung 9) passes 1/3 to 2/3 in every arm on 2026-10-13.
+The common failure: ids assigned in the route, left `None`, or the
+constructor changed, though the spec says ids are "assigned automatically"
+and `Complaint(agent_name, text)` "still works"; only the hidden tests
+check it, and each failing run passed its own test command. A screen ran
+A21's two changes alone: the id miss follows the one-file roadmap, 5 of 6
+runs against 1 of 6 with phase files
+([screen](docs/superpowers/research/2026-10-13-rung9-screen.md)).
+*Reopens when* the one-file roadmap is recommended to users, or phase 4 fails this way in ac-demo.
 
 **Facts and learn v2: uv and `.venv`.** A session in ac-demo lost an
 exit-127 detour to bare `python` (not on PATH; only `uv run` works) and a
