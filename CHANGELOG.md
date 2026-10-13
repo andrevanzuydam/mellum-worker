@@ -4,12 +4,7 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
-### Changed
-
-- The README's lighter `## Mellum` section (`Test command:` plus `Do not:`
-  naming the bends, no `Write only:`) is now measured: ladder phase A21
-  passed 9/12 AgentClinic runs with no writes outside the layout, the same
-  as A19's section rerun the same day. Ladder records A21 and A21 control.
+## [0.1.8] - 2026-10-13
 
 ### Added
 
@@ -17,6 +12,13 @@ Versions match git tags; pin one in both install lines.
   `## Mellum` bullets, no `Write only:` list) and `--roadmap one-file` (the
   four phase specs as one `specs/roadmap.md`, asked for as "Implement Phase
   N of specs/roadmap.md"), recorded in `run.json`, for measuring A21.
+
+### Changed
+
+- The README's lighter `## Mellum` section (`Test command:` plus `Do not:`
+  naming the bends, no `Write only:`) is now measured: ladder phase A21
+  passed 9/12 AgentClinic runs with no writes outside the layout, the same
+  as A19's section rerun the same day. Ladder records A21 and A21 control.
 
 ### Fixed
 
