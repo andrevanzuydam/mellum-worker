@@ -4,6 +4,13 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Added
+
+- The ladder's AgentClinic rungs take `--facts-section light` (the README's
+  `## Mellum` bullets, no `Write only:` list) and `--roadmap one-file` (the
+  four phase specs as one `specs/roadmap.md`, asked for as "Implement Phase
+  N of specs/roadmap.md"), recorded in `run.json`, for measuring A21.
+
 ### Fixed
 
 - Ladder runs now stop any process still running in the run's workspace

@@ -19,7 +19,7 @@ import signal
 import subprocess
 import tempfile
 import time
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from uuid import uuid4
 
@@ -375,14 +375,68 @@ def strip_mellum_section(text: str) -> str:
     return "".join(out)
 
 
+# A21's `## Mellum` bullets: what the README recommends since v0.1.5 (the test command,
+# then the bends the records show), with no `Write only:` list.
+LIGHT_SECTION = (
+    "- Test command: uv run python -m pytest tests\n"
+    "- Do not: install packages or add dependencies; add __init__.py, conftest.py,"
+    " pytest.ini or setup.cfg files; weaken tests\n"
+)
+AGENTCLINIC_FIXTURES = ("agentclinic-p1", "agentclinic-p2", "agentclinic-p3", "agentclinic-p4")
+
+
+def light_mellum_section(text: str, bullets: str = LIGHT_SECTION) -> str:
+    """Replace the body of the ``## Mellum`` section with ``bullets``, framed by blank lines.
+    The heading and everything outside the section are kept byte for byte."""
+    out, skipping = [], False
+    for line in text.splitlines(keepends=True):
+        if re.match(r"##[ \t]+Mellum[ \t]*$", line.rstrip("\r\n")):
+            out.append(line)
+            out.append("\n" + bullets)
+            skipping = True
+            continue
+        if skipping and re.match(r"#{1,2}[ \t]", line):
+            skipping = False
+            out.append("\n")
+        if not skipping:
+            out.append(line)
+    return "".join(out)
+
+
+def one_file_roadmap() -> str:
+    """The four AgentClinic phase specs, verbatim, as one ``specs/roadmap.md`` (as ac-demo keeps
+    them): each spec's ``# Phase N`` heading becomes ``## Phase N``."""
+    parts = ["# AgentClinic roadmap\n\nFour ordered phases. Each builds on the one before; implement them in order.\n"]
+    for spec in sorted((FIXTURES / "agentclinic-p4" / "specs").glob("phase-*.md")):
+        parts.append("\n#" + spec.read_text())
+    return "".join(parts)
+
+
+def variant_rung(rung: Rung, roadmap: str) -> Rung:
+    """With the one-file roadmap, an AgentClinic rung asks for its phase of specs/roadmap.md."""
+    if roadmap != "one-file":
+        return rung
+    return replace(rung, sentence=f"Implement Phase {rung.number - 5} of specs/roadmap.md")
+
+
 def prepare_workspace(
-    rung: Rung, scratch: Path, strip_facts_section: bool = False
+    rung: Rung,
+    scratch: Path,
+    strip_facts_section: bool = False,
+    facts_section: str = "fixture",
+    roadmap: str = "phase-files",
 ) -> Path:
     ws = copy_fixture(rung.fixture, scratch / f"rung{rung.number}")
     agents = ws / "AGENTS.md"
+    # All before the baseline commit, so the changed files are the baseline.
     if strip_facts_section and agents.exists():
-        # Before the baseline commit, so the stripped file is the baseline.
         agents.write_bytes(strip_mellum_section(agents.read_bytes().decode()).encode())
+    if facts_section == "light" and agents.exists():
+        agents.write_text(light_mellum_section(agents.read_text()))
+    if roadmap == "one-file":
+        for spec in (ws / "specs").glob("phase-*.md"):
+            spec.unlink()
+        (ws / "specs" / "roadmap.md").write_text(one_file_roadmap())
     git(ws, "init", "-q")
     git(ws, "add", "-A")
     git(
@@ -441,9 +495,18 @@ def run_once(
     mode_facts: str = "on",
     strip_facts_section: bool = False,
     pi_executable: str = "pi",
+    facts_section: str = "fixture",
+    roadmap: str = "phase-files",
 ) -> dict:
+    rung = variant_rung(rung, roadmap)
     scratch = Path(tempfile.mkdtemp(prefix="ladder-"))
-    ws = prepare_workspace(rung, scratch, strip_facts_section=strip_facts_section)
+    ws = prepare_workspace(
+        rung,
+        scratch,
+        strip_facts_section=strip_facts_section,
+        facts_section=facts_section,
+        roadmap=roadmap,
+    )
     paths, lines = baseline_index(ws)
     trace = scratch / "trace.jsonl"
     if mode == "delegated":
@@ -599,6 +662,8 @@ def run_once(
         "budget_hook": budget_hook if mode == "direct" else None,
         "mode_facts": mode_facts if mode == "mode" else None,
         "strip_facts_section": strip_facts_section,
+        "facts_section": facts_section,
+        "roadmap": roadmap,
         "leftover_processes": leftovers,
         "guards_env": json.loads(os.environ["MELLUM_GUARDS"])
         if os.environ.get("MELLUM_GUARDS")
@@ -763,13 +828,30 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="remove the `## Mellum` section from the workspace's AGENTS.md before the run (fallback-only condition)",
     )
+    parser.add_argument(
+        "--facts-section",
+        choices=["fixture", "light"],
+        default="fixture",
+        help="AgentClinic rungs: light replaces the `## Mellum` bullets with the README's (no Write only)",
+    )
+    parser.add_argument(
+        "--roadmap",
+        choices=["phase-files", "one-file"],
+        default="phase-files",
+        help="AgentClinic rungs: one-file joins the phase specs into specs/roadmap.md and asks for Phase N of it",
+    )
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--omlx", default="http://127.0.0.1:8001")
     return parser
 
 
 def main(argv: list[str] | None = None) -> None:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if (args.facts_section != "fixture" or args.roadmap != "phase-files") and any(
+        RUNGS[n].fixture not in AGENTCLINIC_FIXTURES for n in args.rung
+    ):
+        parser.error("--facts-section and --roadmap apply only to the AgentClinic rungs 6-9")
     # Absolute, so the record's prompt_file is relative to REPO_ROOT; run from ladder/,
     # `prompts/ablation/v4a-no-procedure.md` is ladder/prompts/ablation/....
     args.prompt = args.prompt.resolve()
@@ -818,6 +900,8 @@ def main(argv: list[str] | None = None) -> None:
                     args.mode_facts,
                     args.strip_facts_section,
                     pi_executable=selected_pi["executable"],
+                    facts_section=args.facts_section,
+                    roadmap=args.roadmap,
                 )
                 row = table_row(record)
                 with table.open("a") as stream:

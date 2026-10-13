@@ -693,7 +693,9 @@ def test_run_once_wires_the_switches_into_the_child_env_and_the_workspace(
     )
     assert len(child_envs) == 1
     assert child_envs[0].get("MELLUM_MODE_FACTS") == expect_env
-    assert prepared == [{"strip_facts_section": strip}]
+    assert prepared == [
+        {"strip_facts_section": strip, "facts_section": "fixture", "roadmap": "phase-files"}
+    ]
 
 
 @pytest.mark.parametrize("outcome", ["normal", "signal", "deadline"])
@@ -834,3 +836,104 @@ def test_run_once_stops_leftover_processes_in_the_workspace_and_records_them(
     record = json.loads(next((tmp_path / "out").glob("*/run.json")).read_text())
     assert len(calls) == 1
     assert record["leftover_processes"] == left
+
+
+# ---- A21: the lighter ## Mellum section and a one-file roadmap (fixture variants) ----
+
+LIGHT = (
+    "- Test command: uv run python -m pytest tests\n"
+    "- Do not: install packages or add dependencies; add __init__.py, conftest.py,"
+    " pytest.ini or setup.cfg files; weaken tests\n"
+)
+
+
+def test_light_section_replaces_the_bullets_and_keeps_the_rest_exactly():
+    from ladder.run_ladder import light_mellum_section
+
+    text = "# AgentClinic\n\n## Mellum\n\n- Test command: x\n- Write only: app.py\n\n## Notes\n\nkeep\n"
+    assert light_mellum_section(text, LIGHT) == (
+        "# AgentClinic\n\n## Mellum\n\n" + LIGHT + "\n## Notes\n\nkeep\n"
+    )
+
+
+def test_one_file_roadmap_joins_the_four_phase_specs_in_order():
+    from ladder.run_ladder import one_file_roadmap
+
+    text = one_file_roadmap()
+    assert text.startswith("# AgentClinic roadmap\n")
+    heads = [l for l in text.splitlines() if l.startswith("## Phase ")]
+    assert heads == [
+        "## Phase 1 — Home Page",
+        "## Phase 2 — Complaints Board",
+        "## Phase 3 — Add Complaint",
+        "## Phase 4 — Resolve and Reopen",
+    ]
+    assert "# Phase" not in text.replace("## Phase", "")
+    assert "`python app.py` starts the app with uvicorn, with reload." in text
+
+
+@pytest.mark.slow
+def test_prepare_workspace_applies_both_variants_before_the_baseline_commit(tmp_path):
+    from ladder.run_ladder import git, prepare_workspace
+    from ladder.rungs import RUNGS
+
+    ws = prepare_workspace(RUNGS[7], tmp_path, facts_section="light", roadmap="one-file")
+    agents = (ws / "AGENTS.md").read_text()
+    assert LIGHT in agents and "Write only" not in agents
+    assert sorted(p.name for p in (ws / "specs").iterdir()) == ["roadmap.md"]
+    assert git(ws, "status", "--porcelain").strip() == ""
+    assert "Write only" not in git(ws, "show", "HEAD:AGENTS.md")
+
+
+def test_task_sentence_names_the_phase_of_the_one_file_roadmap():
+    from ladder.run_ladder import variant_rung
+    from ladder.rungs import RUNGS
+
+    assert variant_rung(RUNGS[6], "one-file").sentence == "Implement Phase 1 of specs/roadmap.md"
+    assert variant_rung(RUNGS[9], "one-file").sentence == "Implement Phase 4 of specs/roadmap.md"
+    assert variant_rung(RUNGS[6], "phase-files") is RUNGS[6]
+
+
+def test_parser_variant_defaults_and_choices():
+    from ladder.run_ladder import build_parser
+
+    base = ["--profile", "baseline", "--rung", "6", "--out", "x"]
+    args = build_parser().parse_args(base)
+    assert args.facts_section == "fixture" and args.roadmap == "phase-files"
+    args = build_parser().parse_args([*base, "--facts-section", "light", "--roadmap", "one-file"])
+    assert args.facts_section == "light" and args.roadmap == "one-file"
+
+
+def test_variants_are_refused_on_rungs_without_the_agentclinic_fixture():
+    from ladder.run_ladder import main
+
+    with pytest.raises(SystemExit):
+        main(["--profile", "baseline", "--rung", "2", "--out", "x", "--roadmap", "one-file"])
+
+
+def test_run_record_names_the_variants_and_uses_the_roadmap_sentence(monkeypatch, tmp_path):
+    import json
+
+    from ladder import run_ladder
+    from ladder.rungs import RUNGS
+
+    seen = {}
+    _real_run_for_git(monkeypatch, run_ladder)
+    monkeypatch.setattr(
+        run_ladder, "prepare_workspace", lambda rung, scratch, **kw: seen.update(kw) or scratch
+    )
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    monkeypatch.setattr(run_ladder, "mirror_agent_dir", lambda *a, **k: tmp_path / "agent")
+    import dataclasses
+
+    from ladder.rungs import CheckResult
+
+    rung = dataclasses.replace(RUNGS[7], check=lambda ws, base: CheckResult(True, True))
+    run_ladder.run_once(
+        rung, "mode", "baseline", 1, tmp_path / "out", 5, {}, False,
+        facts_section="light", roadmap="one-file",
+    )
+    record = json.loads(next((tmp_path / "out").glob("*/run.json")).read_text())
+    assert record["facts_section"] == "light" and record["roadmap"] == "one-file"
+    assert record["sentence"] == "Implement Phase 2 of specs/roadmap.md"
+    assert seen["facts_section"] == "light" and seen["roadmap"] == "one-file"
