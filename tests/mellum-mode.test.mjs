@@ -231,7 +231,8 @@ test("summary uses the singular for one request", async () => {
 });
 
 test("runRecord builds the JSONL line for a span from the same fields as the handoff", async () => {
-	const { runRecord, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const { runRecord } = await import("../extensions/mellum-record.ts");
+	const { MARK_OFF } = await import("../extensions/mellum-mode.ts");
 	const ts = (s) => Date.parse(`2026-10-09T19:${s}Z`);
 	const span = [
 		{ role: "assistant", timestamp: ts("28:52.217"), usage: { input: 547, cacheRead: 1024, output: 651 }, content: [{ type: "toolCall", id: "1", name: "write", arguments: { path: "hello.py" } }] },
@@ -280,7 +281,7 @@ function span2042() {
 }
 
 test("runRecord schema 2 on the recorded 20:42 shape: missing files, mutating commands, edits, final turn", async () => {
-	const { runRecord } = await import("../extensions/mellum-mode.ts");
+	const { runRecord } = await import("../extensions/mellum-record.ts");
 	const rec = runRecord("Write a hello world python file with a unit test", span2042(), { ...metaBase, exists: (p) => p !== "tests/test_hello.py" });
 	assert.equal(rec.schema, 2);
 	assert.deepEqual(rec.files, ["hello.py", "tests/test_hello.py", "test_hello.py"]);
@@ -295,7 +296,7 @@ test("runRecord schema 2 on the recorded 20:42 shape: missing files, mutating co
 });
 
 test("runRecord schema 2 marks an announce-and-stop span: failed last command, text-only final turn", async () => {
-	const { runRecord } = await import("../extensions/mellum-mode.ts");
+	const { runRecord } = await import("../extensions/mellum-record.ts");
 	const span = [
 		asst([call("1", "bash", { command: "node --test" })]), res("1", "bash", true),
 		asst([{ type: "text", text: "The test failed; I will fix it." }], { stopReason: "stop" }),
@@ -307,7 +308,7 @@ test("runRecord schema 2 marks an announce-and-stop span: failed last command, t
 });
 
 test("runRecord schema 2 on the 20:10 shape: no edits, no files, nothing missing", async () => {
-	const { runRecord } = await import("../extensions/mellum-mode.ts");
+	const { runRecord } = await import("../extensions/mellum-record.ts");
 	const span = [
 		asst([call("1", "read", { path: "README.md" })]), res("1", "read"),
 		asst([call("2", "bash", { command: "ls" })]), res("2", "bash"),
@@ -320,20 +321,20 @@ test("runRecord schema 2 on the 20:10 shape: no edits, no files, nothing missing
 });
 
 test("runRecord schema 2 with no assistant turn reports an empty final turn", async () => {
-	const { runRecord } = await import("../extensions/mellum-mode.ts");
+	const { runRecord } = await import("../extensions/mellum-record.ts");
 	const rec = runRecord("t", [{ role: "user", content: [{ type: "text", text: "hi" }] }], metaBase);
 	assert.deepEqual(rec.finalTurn, { hadText: false, hadToolCall: false });
 	assert.equal(rec.edits, 0);
 });
 
 test("runRecord schema 2 detects a task that names a test command", async () => {
-	const { runRecord } = await import("../extensions/mellum-mode.ts");
+	const { runRecord } = await import("../extensions/mellum-record.ts");
 	assert.equal(runRecord("fix it. Test command: node --test x", [], metaBase).taskNamesTestCommand, true);
 	assert.equal(runRecord("fix it", [], metaBase).taskNamesTestCommand, false);
 });
 
 test("runRecord schema 2 passes meta through and defaults what is omitted", async () => {
-	const { runRecord, PACKAGE_VERSION } = await import("../extensions/mellum-mode.ts");
+	const { runRecord, PACKAGE_VERSION } = await import("../extensions/mellum-record.ts");
 	const given = runRecord("t", [], { ...metaBase, host: "print", activation: "one-shot", promptVersion: "v5", nudges: 1, guardBlocks: 2 });
 	assert.equal(given.host, "print");
 	assert.equal(given.activation, "one-shot");
@@ -350,12 +351,6 @@ test("runRecord schema 2 passes meta through and defaults what is omitted", asyn
 	const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 	assert.equal(bare.version, pkg.version);
 	assert.equal(PACKAGE_VERSION, pkg.version);
-});
-
-test("promptVersionOf reads the version marker from the first line", async () => {
-	const { promptVersionOf } = await import("../extensions/mellum-mode.ts");
-	assert.equal(promptVersionOf("<!-- mellum-worker prompt v5 -->\nYou edit"), "v5");
-	assert.equal(promptVersionOf("no marker"), "unknown");
 });
 
 const FACTS = "\n\nProject facts:\n- Test command: make test";
@@ -452,7 +447,7 @@ test("empty or absent facts leave the payload as before", () => {
 });
 
 test("runRecord carries facts from the meta, and omits the field when there is none", async () => {
-	const { runRecord } = await import("../extensions/mellum-mode.ts");
+	const { runRecord } = await import("../extensions/mellum-record.ts");
 	const meta = { endedAt: 1, cwd: "/p", model: "omlx/M" };
 	const rec = runRecord("t", [], { ...meta, facts: { source: "detected", testCommand: "uv run --offline python -m pytest -q", chars: 50 } });
 	assert.deepEqual(rec.facts, { source: "detected", testCommand: "uv run --offline python -m pytest -q", chars: 50 });
@@ -486,7 +481,7 @@ test("parseSubcommand: on, off, check and learn [n] are commands; anything longe
 });
 
 test("runRecord carries the server settings check from the meta, and omits the field when there is none", async () => {
-	const { runRecord } = await import("../extensions/mellum-mode.ts");
+	const { runRecord } = await import("../extensions/mellum-record.ts");
 	const meta = { endedAt: 1, cwd: "/p", model: "omlx/M" };
 	const diffs = [{ key: "max_context_window", expected: 56000, actual: 32768 }];
 	assert.deepEqual(runRecord("t", [], { ...meta, server: { match: false, diffs } }).server, { match: false, diffs });

@@ -34,6 +34,10 @@ Versions match git tags; pin one in both install lines.
   exists at `44e1b0b`. `rescore` no longer backfills `baseline_lines` or
   `thinking_reentries`, which no record lacks.
 
+- Mellum Mode's undocumented `MELLUM_MODE_PROVIDER` and `MELLUM_MODE_MODEL`
+  overrides, and the `MELLUM_MODE_DEBUG` file writer. Mode runs the one
+  measured model entry; `/mellum check` says when the provider entry differs.
+
 ## [0.1.8] - 2026-10-13
 
 ### Added

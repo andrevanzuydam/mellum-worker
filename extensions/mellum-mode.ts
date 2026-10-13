@@ -43,10 +43,6 @@ export const MARK_ON = "[mellum-mode on]";
 export const MARK_OFF = "[mellum-mode off]";
 export const BOOTSTRAP_MARKER = "superpowers:using-superpowers bootstrap for pi";
 export const WORKER_TOOLS = ["read", "grep", "find", "ls", "bash", "edit", "write"];
-// The record code lives in mellum-record.ts; these keep the existing imports from here working.
-export { PACKAGE_VERSION, promptVersionOf, runRecord, spanStats } from "./mellum-record.ts";
-export type { Activation, Msg, RecordMeta, RunRecord, SpanCommand, SpanStats } from "./mellum-record.ts";
-export type { ServerCheck } from "./mellum-check.ts";
 const DEFAULT_MODEL = { provider: "omlx", id: "Mellum2.1-12B-A2.5B-Thinking-6bit" };
 
 const INSTRUCTION_ROLES = new Set(["system", "developer"]);
@@ -389,8 +385,7 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 			ctx.ui?.notify?.("mellum-mode is already on", "info");
 			return;
 		}
-		const provider = process.env.MELLUM_MODE_PROVIDER || DEFAULT_MODEL.provider;
-		const id = process.env.MELLUM_MODE_MODEL || DEFAULT_MODEL.id;
+		const { provider, id } = DEFAULT_MODEL;
 		const model = ctx.modelRegistry.find(provider, id);
 		if (!model) {
 			warn(ctx, `mellum-mode: model ${provider}/${id} not found; mode stays off`, "error");
@@ -562,10 +557,6 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 	// Off: the parent gets one handoff block per finished span instead of Mellum's
 	// every read, edit and test run. The session itself keeps everything.
 	pi.on("context", (event: any) => {
-		if (process.env.MELLUM_MODE_DEBUG) {
-			const shapes = event.messages.map((m: any) => `${m.role}${m.customType ? ":" + m.customType : ""}${textOf(m).includes(MARK_ON) ? "[ON]" : ""}${textOf(m).includes(MARK_OFF) ? "[OFF]" : ""}`);
-			appendFileSync(process.env.MELLUM_MODE_DEBUG, JSON.stringify({ active, shapes }) + "\n");
-		}
 		if (active) {
 			lastContext = event.messages;
 			turnsSinceContext = [];

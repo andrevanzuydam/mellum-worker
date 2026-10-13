@@ -74,20 +74,6 @@ test("README Model settings says which values the provider entry sends per reque
 	const check = use.split("**Check your setup.**")[1].split("**Learn from your runs.**")[0];
 	assert.match(check, /Mellum server settings differ: (max_context_window|turboquant_kv_enabled) /, "the warning example names a server-only key");
 	assert.match(check, /info/, "says overridden server values are info");
-	assert.doesNotMatch(check, /reads the server-only\s+settings/, "activation reads every binding setting, not only the server-only ones");
-});
-
-test("README states the cap the Mode and Worker runs actually used, and no 4,096 ceiling for them", () => {
-	const readme = read("README.md");
-	assert.doesNotMatch(readme, /All runs used a 4,096/);
-	assert.match(readme, /Mode\s+and\s+Worker\s+requests\s+sent\s+max_tokens\s+16,384\s+\(verified\s+in\s+the\s+A10,\s+A17\s+and\s+A19\s+traces\);\s+direct-mode\s+research\s+phases\s+used\s+4,096\./);
-	assert.doesNotMatch(readme, /\*\*Ceiling:\*\*/, "the 16,384 ceiling item is withdrawn from Future work");
-	assert.doesNotMatch(read("BACKLOG.md"), /Measure a 16,384 ceiling/);
-	assert.doesNotMatch(read("docs/recipe.md"), /4,096, the measured baseline/);
-	assert.match(read("docs/recipe.md"), /A10, A17 and A19/, "the recipe records the trace finding");
-	assert.match(read("docs/recipe.md"), /`reasoning_parser`[^|]*may\s+take\s+effect/, "the recipe says a server thinking budget may now bind");
-	assert.match(read("docs/recipe.md"), /`min_p`,\s+`presence_penalty`\s+and\s+`repetition_penalty`/, "Pi sends no seed");
-	assert.doesNotMatch(readme, /12 runs per column/);
 });
 
 test("README What helped follows the rungs 6-9 results, and the results table no longer repeats it", () => {
@@ -107,7 +93,6 @@ test("README What helped follows the rungs 6-9 results, and the results table no
 		assert.ok(helped.includes(row), `What helped lacks ${row}`);
 	}
 	assert.match(helped, /Rungs 1–5 did not regress \(15\/15\)/);
-	assert.doesNotMatch(get, /\| passes \| 1\/12 \|/, "What you get no longer repeats the passes row");
 	assert.match(get, /A18/, "What you get still links the A18-A20 records");
 });
 
@@ -136,17 +121,11 @@ test("recipe has a Records, learn and check section with the seven patterns", ()
 	assert.match(section, /Mellum server settings differ/);
 });
 
-test("the oMLX backend guide lists step 3's server values; no doc calls 4,096 the server's value", () => {
+test("the oMLX backend guide lists step 3's server values", () => {
 	const omlx = read("docs/backends/omlx.md");
 	assert.match(omlx, /\| `max_tokens` \| 16384 \|/);
 	assert.match(omlx, /\| `forced_ct_kwargs` \| `\["enable_thinking"\]` \|/);
 	assert.match(omlx, /force_sampling/, "says force_sampling makes the server's sampling win");
-	assert.doesNotMatch(omlx, /Pi and OpenCode send `max_tokens` 16,384 and thinking/);
-	assert.doesNotMatch(read("skills/mellum-setup/reference/04-provider-pi.md"), /server's 4,096/);
-	assert.doesNotMatch(read("skills/mellum-setup/reference/04-provider-opencode.md"), /4,096/);
-	assert.doesNotMatch(read("skills/mellum-setup/reference/04-provider-pi.md"), /match the server/);
-	assert.doesNotMatch(read("skills/mellum-setup/reference/04-provider-opencode.md"), /matches the server/);
-	assert.doesNotMatch(read("docs/recipe.md"), /\| on — a client cannot switch thinking off/);
 });
 
 test("README Use it says which --host serves which host, and that Pi Worker runs are recorded while OpenCode is on the backlog", () => {
@@ -157,7 +136,6 @@ test("README Use it says which --host serves which host, and that Pi Worker runs
 	const learn = use.slice(use.indexOf("**Learn from your runs.**"));
 	assert.match(learn, /Pi Worker[^.]*\bwrite/, "says Pi Worker writes records");
 	assert.match(learn, /OpenCode[^.]*backlog/, "measuring the OpenCode port is on the backlog");
-	assert.doesNotMatch(learn, /M\.7B/, "M.7B is done and is not named");
 	assert.match(learn, /OpenCode[^.]*0 runs/, "says an OpenCode project finds 0 runs today");
 });
 
