@@ -12,11 +12,38 @@ Your main model stays in charge.
   with the worker prompt and seven file tools, then hands the session back.
   No extra packages. 15/15 on the ladder with project facts.
 - **Mellum Worker**: a [pi-subagents](https://github.com/nicobailon/pi-subagents)
-  child. Your model briefs it and runs the tests itself. 15/15.
+  child. Your model briefs it and runs the tests itself. 15/15. Retired
+  once the mediated test below is measured ([M.12](ROADMAP.md#phases)).
 
 Every setting was measured by the ladder (`ladder/`; records in
 `docs/ladder/`). The 6-bit MLX weights (for Apple Silicon, served by oMLX)
 are on [Hugging Face](https://huggingface.co/pauleveritt/Mellum2.1-12B-A2.5B-Thinking-mlx-6bit).
+
+## Domain engineering
+
+You do domain engineering: specs and tests. Mellum does the bounded work:
+edit code until the named test command exits 0. Everything this package adds
+is a guardrail that holds that line: a 643-character prompt, seven file
+tools, a nudge and a loop breaker, project facts from a `## Mellum` section,
+a handoff and a run record you can read, and `learn` to turn records into
+facts.
+
+The next guardrail is the **mediated test**: your main model turns a request
+or a spec phase into a failing test, shows it to you, confirms it fails, and
+hands it to Mellum as "make this pass". Mellum's best measured shape is a
+named failing test: rung 4, three files, 3/3 in every arm. Whether that
+shape lifts the four-phase build (rungs 6–9, 9/12 with the `## Mellum`
+section) is M.11's question and is unmeasured; the lead is phase 4, which
+misses its automatic id in most runs because the spec's test line never asks
+for it. You can do it by hand today:
+
+```
+/mellum Make tests/test_resolve.py pass. Test command: uv run python -m pytest tests
+```
+
+Write the test first, run it, and read the failure before you hand it over;
+run it again afterwards. The reasoning is in the
+[triage note](docs/superpowers/research/2026-10-13-roadmap-triage.md).
 
 ## Install
 
@@ -37,7 +64,8 @@ OpenCode, in the `plugin` array of `~/.config/opencode/opencode.json(c)`:
 { "plugin": ["mellum-worker@git+https://github.com/pauleveritt/mellum-worker.git#v0.1.8"] }
 ```
 
-Then ask "run the mellum-setup skill".
+Then ask "run the mellum-setup skill". The OpenCode port is ported and
+unmeasured, and measuring it is a [backlog entry](BACKLOG.md), not a phase.
 
 ## Use it
 
@@ -193,8 +221,8 @@ Records come from `MELLUM_MODE_RUNS` (default
 `~/.pi/agent/mellum-mode-runs.jsonl`) and `MELLUM_WORKER_RUNS` (default
 `~/.pi/agent/mellum-worker-runs.jsonl`; `0` or empty turns it off); `--file` reads
 one file instead. Pi Mode and Pi Worker write records, and `learn` reports
-both. OpenCode runs join with M.3, so `learn` in an OpenCode project finds
-0 runs until then.
+both. The OpenCode port writes no records and measuring it is on the
+backlog, so `learn` in an OpenCode project finds 0 runs.
 
 **See the last run.** `/mellum last` shows the newest run at or under the
 current directory, Mode or Worker, as a table, with no model call. It goes into the
@@ -325,14 +353,16 @@ after a prompt change. From `ladder/`: `uv run python -m pytest`, and
 
 ## Future work
 
-In order; see [ROADMAP.md](ROADMAP.md) and [BACKLOG.md](BACKLOG.md).
+Two phases remain; see [ROADMAP.md](ROADMAP.md). Everything else is a
+[backlog entry](BACKLOG.md) with a reopen condition.
 
-- **M.8:** Worker one-liners (`async: false`, re-dispatch hint, intercom
-  opt-out).
-- **M.9:** an in-process Worker through Pi's SDK.
-- **M.10:** a mediated brief, compared against project facts.
-- **M.3, M.4:** measure the OpenCode port and record its Worker runs; an
-  Ollama backend.
+- **M.11:** the mediated test, measured: a rung 9 screen first, then a
+  preregistered run on rungs 6–9, then the `/mellum` command that writes
+  the test with your main model, shows it, runs it red and dispatches.
+- **M.12:** one worker: retire the pi-subagents Worker and rename Mellum
+  Mode to mellum-worker. `/mellum` stays.
+- **Backlog:** measuring the OpenCode port, an Ollama backend, execution
+  bounds, versioned assessments.
 
 ## Releases
 

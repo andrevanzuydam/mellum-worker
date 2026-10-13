@@ -1,7 +1,7 @@
 ---
 phase: M.7D
 cycle: 1
-lifecycle: active
+lifecycle: superseded
 ---
 
 # M.7D versioned deterministic assessments implementation plan
@@ -18,7 +18,7 @@ Explicit opt-in flags integrate the existing runner, rescore and summary.
 **Tech Stack:** Python 3.14, uv/pytest, Node's existing test suite,
 fixture-installed FastAPI/TestClient, Python standard library.
 
-**Spec:** [M.7D design](../specs/2026-10-11-m7d-versioned-assessment-design.md),
+**Spec:** [M.7D design](../../specs/2026-10-11-m7d-versioned-assessment-design.md),
 approved by Paul on 2026-10-11. Read `docs/sdd.md` before editing SDD records.
 
 ## Global Constraints
@@ -320,3 +320,13 @@ sidecar: identical evidence must serialize identically.
 Close with the finite matrix and preserved originals. Unknown retained evidence
 is a legitimate outcome; no new trial, judge or infrastructure to fill gaps.
 A startup/evidence limitation is recorded, not grounds to expand the phase.
+
+## Result
+
+Superseded 2026-10-13, unbuilt. The roadmap triage
+([note](../../research/2026-10-13-roadmap-triage.md)) retired the phase: a
+second consecutive instrument-only phase after M.7C, and the ladder's existing
+checks had already found the Phase 4 id miss and the false-success claims the
+four dimensions were to separate. Nothing was measured. The spec stays at its
+path as evidence; the backlog entry "Versioned assessments" carries the reopen
+condition.

@@ -10,6 +10,16 @@ Versions match git tags; pin one in both install lines.
   AgentClinic phase 4 id miss follows the one-file roadmap (5 of 6 runs,
   against 1 of 6 with one spec file per phase). Exploratory, n = 3 per arm.
 
+### Changed
+
+- The README now opens with the idea the package serves, domain engineering
+  (you write specs and tests, Mellum makes the test command exit 0), names
+  the mediated test as the next guardrail and how to do it by hand today,
+  unmeasured, and says the OpenCode port is ported and unmeasured with its
+  measurement on the backlog. Future work lists M.11 (the mediated test) and
+  M.12 (one worker, Mellum Mode renamed mellum-worker) in place of M.8–M.10,
+  M.3 and M.4.
+
 ## [0.1.8] - 2026-10-13
 
 ### Added

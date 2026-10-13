@@ -43,15 +43,13 @@ The Worker's child still sees only the brief and the prompt, so a parent
 that omits the test command gets the guess. A `v6` default is a prompt
 change for both paths, sized in the
 [steering note](docs/superpowers/research/2026-10-09-steering-and-next-phase.md)
-§2; rungs 6–9 are the ac-demo-shaped fixture it asked for. *Reopens when*
-Paul schedules a delegated phase on rungs 6–9 in `ladder/`, or a Worker run
-is recorded failing on the guessed command.
+§2; rungs 6–9 are the ac-demo-shaped fixture it asked for. *Reopens when* a Mode run record shows the prompt's default run and fail in a project without a `## Mellum` section; the Worker path goes with M.12.
 
 **Ladder drives the one-shot command.** After M.5, `pi -p "/mellum
 <sentence>"` works, so the ladder could launch the shipped command (and get
 run records per run) instead of `MELLUM_MODE=1`. That changes the measured
 launch (an on-marker in the messages), so it is a phase compared against
-A17, not a runner tweak. *Reopens when* the next Mode phase is scheduled.
+A17, not a runner tweak. *Reopens when* M.11's screen is set up: its runner drives `/mellum` with a test file, and launching the shipped command is the same change.
 
 **Final reply omits moves and pre-existing work.** Recorded forms: a reply
 silent about `rm tests/test_hello.py`; a reply claiming to have created files
@@ -61,10 +59,6 @@ makes "exits 0" the goal. The handoff and the Worker's parent test run are
 the measured answers; schema-2 records (M.5) make the gap countable.
 *Reopens when* records show two or more runs whose final reply claims success
 with `filesMissingAtEnd` non-empty or `lastCommand` not `ok`.
-
-**One change, then test.** In the ac-demo run Mellum made two edits between
-test runs and left dead code behind. A prompt line enforcing one change per
-test run is a prompt change. *Reopens when* the ladder measures it.
 
 **OpenCode 2.x plugin shape.** The V2 host reads `default.setup`, not
 `server`, and uses a flat `skills` array. *Reopens when* a 2.x host is
@@ -77,21 +71,6 @@ the run stopped unfinished. A check for a final turn that announces an action
 without making a tool call would catch it, but it is a guard change on a
 single observed miss in 30 Mode runs (A14, A17). *Reopens when* a second
 announce-and-stop miss is recorded in a ladder phase or a run record.
-
-**Mediated brief: the main model writes Mellum's task.** Mode sends the
-`/mellum` text to Mellum word for word, so it passes only when the user writes
-a fact sheet (files, test command, constraints), and few developers will. A
-big model can write that brief from a loose request or a spec file. Two
-shapes: a Mode variant (`/mellum brief <request>`: the parent writes the brief,
-shows it, then runs it under Mode) or a parent-side skill plus a
-model-callable tool that queues `/mellum <brief>` as a follow-up. Tight
-leash: a main model rewriting a handoff packet has gone wrong in other
-projects, so the brief is shown before it runs, is checked against a fixed
-shape (files, test command, constraints, nothing else), and Mode records the
-brief and the user's original text side by side. The worker prompt is
-unchanged, so this is not a measured setting. *Reopens when* M.10 is
-scheduled: compare mediated runs on rungs 6–9 against A18 (loose `/mellum`,
-facts off) and A19 (the `## Mellum` section), with schema-2 records.
 
 **Write-only guard: refuse writes outside the facts block's list.** Mode
 forwards the `## Mellum` section's `Write only:` line as text; nothing
@@ -141,3 +120,44 @@ each as a run. pi-subagents children run one prompt per process, so it does
 not arise there. The fix is a new baseline at each new user prompt, with
 the dedupe key per prompt. *Reopens when* a host re-uses a Worker child
 across prompts, or `learn` reports from `-e` sessions start to matter.
+
+**OpenCode port: measure it and record its runs (was M.3).** The OpenCode
+port ships a step-capped Worker subagent, installed through the plugin array,
+with no Mode, guards or run records; the README says it is unmeasured.
+Measuring it needs a `--harness opencode` runner in `ladder/` and a record
+writer built against observed runs. The Pi Worker's retirement in M.12 does
+not touch it. *Reopens when* an OpenCode user reports a run worth measuring,
+or someone offers the runner.
+
+**Ollama backend (was M.4).** GGUF weights, a Modelfile, a tool-call check,
+provider templates for both hosts and a ladder rerun;
+[`docs/backends/ollama.md`](docs/backends/ollama.md) lists what a port needs.
+Only oMLX has been run. *Reopens when* a machine without Apple Silicon is on
+hand to run the ladder against it.
+
+**Execution bounds (was M.7E).** A measured opt-in policy for bash commands
+with no timeout under the shipped guards, preserving explicit overrides and
+verifying process cleanup, with completion scored separately. The
+[phase](docs/superpowers/research/2026-10-11-pi110-opt-in-guards.md) and
+[hello](docs/superpowers/research/2026-10-11-pi110-hello-guards.md) probes show
+the mechanism in bare Pi, not a benefit; `Do not: start servers` and the
+ladder's leftover-process cleanup (0.1.8) cover the cases seen in Mode.
+*Reopens when* a ladder record or run record shows a Mode run cut by a
+blocking command that those two did not handle.
+
+**Versioned assessments (was M.7D).** Four independent dimensions (behavior,
+verification, completion, report support) as a sidecar beside each run's
+`run.json`, originals preserved;
+[approved spec](docs/superpowers/specs/2026-10-11-m7d-versioned-assessment-design.md),
+[superseded plan](docs/superpowers/plans/archive/2026-10-11-m7d-versioned-assessment.md).
+Retired on 2026-10-13 as instrument work the current checks already cover
+([triage](docs/superpowers/research/2026-10-13-roadmap-triage.md)). *Reopens when* a decision is blocked because two arms tie
+on pass/fail but differ in verification or report, and the existing `check`
+fields cannot show it.
+
+**pi-subagents Worker: one-liners and an in-process child (were M.8, M.9).**
+`async: false`, a re-dispatch line in the description and the intercom
+opt-out ([A11](docs/ladder/ablation-a11-delegated-nointercom/README.md)); a
+`mellum_worker(task)` tool through Pi's SDK
+([cost note](docs/superpowers/research/2026-10-09-worker-cost-options.md) §2,
+§3b). *Reopens when* M.12 does not retire the Pi Worker.

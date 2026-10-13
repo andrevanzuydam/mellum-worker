@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-11  
 **Phase:** M.7D  
-**Status:** Approved by Paul on 2026-10-11; implementation plan review owed.
+**Status:** Approved by Paul on 2026-10-11; implementation plan review owed. Superseded 2026-10-13, unbuilt ([triage](../research/2026-10-13-roadmap-triage.md)); kept as evidence.
 
 ## Intent and boundary
 

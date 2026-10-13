@@ -149,14 +149,14 @@ test("the oMLX backend guide lists step 3's server values; no doc calls 4,096 th
 	assert.doesNotMatch(read("docs/recipe.md"), /\| on — a client cannot switch thinking off/);
 });
 
-test("README Use it says which --host serves which host, and that Pi Worker runs are recorded while OpenCode runs join with M.3", () => {
+test("README Use it says which --host serves which host, and that Pi Worker runs are recorded while OpenCode is on the backlog", () => {
 	const use = read("README.md").split("\n## Use it\n")[1].split("\n## What you get\n")[0];
 	const check = use.split("**Check your setup.**")[1].split("**Learn from your runs.**")[0];
 	assert.match(check, /`--host pi`[^.]*Pi Mode and Pi Worker/, "--host pi is for Pi Mode and Pi Worker");
 	assert.match(check, /`--host opencode`[^.]*OpenCode/, "--host opencode is for OpenCode");
 	const learn = use.slice(use.indexOf("**Learn from your runs.**"));
 	assert.match(learn, /Pi Worker[^.]*\bwrite/, "says Pi Worker writes records");
-	assert.match(learn, /OpenCode\s+runs\s+join[^.]*M\.3/, "OpenCode runs join with M.3");
+	assert.match(learn, /OpenCode[^.]*backlog/, "measuring the OpenCode port is on the backlog");
 	assert.doesNotMatch(learn, /M\.7B/, "M.7B is done and is not named");
 	assert.match(learn, /OpenCode[^.]*0 runs/, "says an OpenCode project finds 0 runs today");
 });

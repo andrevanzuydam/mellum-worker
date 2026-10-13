@@ -342,7 +342,7 @@ from the child's system prompt (the marker is found on any line, after
 pi-subagents' preamble), and `server` from the same 1,000 ms settings check
 as Mode. `extensions/mellum-guards.ts` writes it inside the pi-subagents
 child, one line per finished run; a child killed before it settles writes
-none. The OpenCode writer joins with M.3.
+none. The OpenCode port writes no records; measuring it is on the backlog.
 
 Records written after 0.1.6 also have `toolCalls` (count per tool name),
 `toolErrors` (tool results marked as errors, any tool) and
