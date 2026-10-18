@@ -150,3 +150,15 @@ opt-out ([A11](docs/ladder/ablation-a11-delegated-nointercom/README.md)); a
 `mellum_worker(task)` tool through Pi's SDK
 ([cost note](docs/superpowers/research/2026-10-09-worker-cost-options.md) §2,
 §3b). *Reopens when* M.12 does not retire the Pi Worker.
+
+**Freeze-the-oracle exit gate.** Make "done" an external test the worker cannot
+weaken, instead of its own final message. Promote the ladder's scorer checks —
+`existing_tests_kept` (no existing test edited or removed; additions allowed)
+and `outside_write_list` — into a runtime guard on the worker, and gate the
+exit on an actual run of the frozen acceptance test with the failure
+re-dispatched as the next "make this pass". M.11 supplies the external, complete
+test but Excludes guard changes, so the unweakenable half is here
+([note](docs/superpowers/research/2026-10-18-harness-exit-gate.md)).
+*Reopens when* M.11's screen moves rung 9 and a trace shows a worker editing or
+deleting a test to exit, or writing outside the allowed paths, on a run that
+then scored as done.

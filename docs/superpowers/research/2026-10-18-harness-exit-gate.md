@@ -1,0 +1,88 @@
+# The exit gate: don't let the worker decide done
+
+Date: 2026-10-18. A design input for M.11 (the mediated test) and for a
+companion runtime guard that M.11's Excludes keeps out of scope. Written from
+a review session; the probes below ran on a plain `mlx_lm.server` serving the
+6-bit MLX weights on an M-series 48 GB Mac, outside the scored ladder (no Pi).
+
+**What is measured.** Two single-arm, greedy (temperature 0) probes on the
+served worker, n = 1 each, not the ladder's scored protocol:
+
+- *Rung 1, full tool loop, hand-driven.* The worker was given the v5 prompt,
+  the seven tool signatures and the sentence "the cart total ignores quantity,
+  fix it"; each tool call was executed for real against a scratch copy of the
+  `calculator` fixture and the result fed back. It reached a passing test in
+  seven turns (~13 s): `find` -> `read calculator.js` -> `read
+  calculator.test.js` -> `edit` (price * quantity) -> `read package.json` ->
+  `bash npm test` (exit 0) -> stop. `node --test` then exited 0, 3/3.
+- *Phase 4 (rung 9), single shot, no tools.* Given the v5 prompt, the
+  `phase-4-resolve-reopen` spec and the current `models.py`, and asked for the
+  updated `models.py` plus tests. Output added a `status` field and
+  `resolve`/`reopen` methods but **no `id` field**, and its self-written tests
+  asserted only status transitions. The hidden oracle's `first.id !=
+  second.id` would raise `AttributeError`.
+
+**What is conjecture.** Everything about rates and about whether the fix
+works. That a mediated (externally authored) failing test lifts rungs 6-9
+against A21 (9/12) is unmeasured. That a freeze-the-oracle guard changes any
+outcome is unmeasured. The single-shot Phase 4 is an illustration of the
+[ac-demo lead](2026-10-13-ac-demo-one-file-sessions.md) (n = 3 per phase), not
+new evidence.
+
+## The principle
+
+A self-exit is safe only when the oracle that defines "done" is **external**
+(the worker did not author it), **complete** (it covers the whole spec, not a
+subset the worker chose) and **unweakenable** (the worker cannot edit or delete
+it). The two probes above differ on exactly these axes and nothing else:
+
+- Rung 1 passed because `calculator.test.js` was already present and complete —
+  it even names `zero quantity contributes zero`. The worker read it, satisfied
+  it, and its self-exit was correct.
+- Phase 4 false-exited because the worker authored the oracle from the spec's
+  `Tests:` line, which omits the id; its test passed, so it stopped. Same model,
+  same loop; the only difference is who wrote the oracle and whether it was
+  complete.
+
+So the fix is not "trust the worker less in general" — it is "move the oracle
+out of the worker's hands and keep it whole."
+
+## Two mechanisms
+
+1. **Mediated test (= M.11).** The main model turns the spec into a failing
+   test, confirms it red on the current tree, hands the worker "make this
+   pass", and re-runs that test after. This supplies *external* and (if the
+   author reads the whole spec) *complete*. It is screen-first; this note adds
+   nothing to M.11's screen, it only records the companion below and the probes.
+
+2. **Freeze-the-oracle guard (new; deferred).** M.11 Excludes "any ... guard
+   change", so the *unweakenable* property is a separate item. The ladder
+   already enforces it as a scorer — `existing_tests_kept` (no existing test
+   edited or removed; additions allowed, checked at the AST level) and
+   `outside_write_list` (no write outside the allowed paths). The proposal is to
+   promote those two checks from grading into a runtime contract on the worker,
+   and to gate the exit on an actual run of the frozen test with re-dispatch of
+   the failure, rather than on the worker's final message. See the BACKLOG
+   entry "Freeze-the-oracle exit gate".
+
+## What would falsify this
+
+- If M.11's rung-9 screen does **not** move with an external, complete failing
+  test, then "supply the oracle" is not the fix (or not sufficient), and the id
+  miss has another cause.
+- If traces show the worker essentially never edits or deletes tests, the
+  freeze-the-oracle guard is solving a problem that does not occur, and only the
+  mediated test is warranted.
+
+## Risks
+
+- The judgment moves up a level, it does not vanish: a main model that writes an
+  incomplete failing test reintroduces the same gap one layer higher.
+- A ladder runner that calls the main model is excluded by M.11; the screen's
+  test is written once by hand, so the screen measures the mechanism, not an
+  automated test-writer.
+- A runtime write-list/test-keep guard that does not mirror the ladder's allowed
+  paths exactly could block legitimate edits; it must track `AGENTCLINIC_ALLOWED`
+  and the additions-allowed rule, not invent its own.
+- The probes here are n = 1 and greedy; they illustrate the mechanism and must
+  not be cited as rates.
