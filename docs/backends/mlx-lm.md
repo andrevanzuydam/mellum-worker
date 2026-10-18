@@ -26,10 +26,27 @@ Verified once, as a smoke (not the measured suite): rung 1, direct mode,
 ```bash
 HF_HUB_OFFLINE=1 python -m mlx_lm.server \
   --model /abs/path/to/Mellum2.1-12B-A2.5B-Thinking-6bit \
-  --host 127.0.0.1 --port 11500
+  --host 127.0.0.1 --port 11500 \
+  --prompt-cache-size 4 --prompt-cache-bytes 4294967296 \
+  --chat-template-args '{"enable_thinking": true}' \
+  --max-tokens 16384
 # the served id is whatever mlx_lm canonicalises --model to (usually that
 # absolute path); read it from GET /v1/models.
 ```
+
+Why those extra flags (the bare `--model`/`--host`/`--port` form runs, but
+crawls on multi-turn agent loops):
+
+- **`--prompt-cache-size 4 --prompt-cache-bytes 4294967296`** — keep the prompt
+  cache across the agent loop's turns. Each turn re-sends the whole (growing)
+  transcript; without the cache, every turn re-processes it from scratch and a
+  mediated run drags. The 4 GiB ceiling holds a few concurrent sequences.
+- **`--chat-template-args '{"enable_thinking": true}'`** — Mellum is a thinking
+  model; this turns thinking on by default. It is a *default*: a request can
+  still override per call with `chat_template_kwargs.enable_thinking` (this is
+  how the ladder's `--effort-ramp` runs early slices thinking-off).
+- **`--max-tokens 16384`** — the per-turn generation cap, matching the ladder's
+  `tuned` profile so the server does not truncate a long thinking turn.
 
 Then run the ladder against it, passing `--model-id` = that served id:
 
