@@ -428,6 +428,28 @@ def read_events(trace: Path) -> list[dict]:
     return [json.loads(line) for line in trace.read_text().splitlines() if line.strip()]
 
 
+def redispatch_message(test_rel: str, test_output: str) -> str:
+    """The task handed to a fresh worker when the frozen acceptance test still fails."""
+    return (
+        f"The acceptance test {test_rel} still fails:\n{test_output[-1200:]}\n"
+        f"Fix the code and make {test_rel} pass. "
+        "Test command: uv run --offline python -m pytest tests"
+    )
+
+
+def run_acceptance(ws: Path, test_rel: str) -> tuple[int, str]:
+    """Run the frozen acceptance test in the workspace: (exit code, combined output)."""
+    proc = subprocess.run(
+        ["uv", "run", "--offline", "python", "-m", "pytest", test_rel, "-q"],
+        cwd=ws,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        check=False,
+    )
+    return proc.returncode, (proc.stdout + proc.stderr).strip()
+
+
 def run_once(
     rung: Rung,
     mode: str,
@@ -452,6 +474,7 @@ def run_once(
     request_overrides: dict | None = None,
     model_id: str | None = None,
     acceptance_test: Path | None = None,
+    redispatch: int = 0,
 ) -> dict:
     rung = variant_rung(rung, roadmap)
     if acceptance_test is not None:
@@ -524,43 +547,63 @@ def run_once(
     launch["argv"] = argv
     started = time.time()
     monotonic_started = time.monotonic()
-    returncode = None
-    process_stdout = ""
-    stderr = ""
-    deadline_hit = False
-    stdout = ""
-    try:
-        proc = subprocess.run(
-            argv,
-            cwd=ws,
-            env=env,
-            stdin=subprocess.DEVNULL,
-            capture_output=True,
-            text=True,
-            timeout=deadline,
-            check=False,
-        )
-        returncode = proc.returncode
-        process_stdout = proc.stdout
-        stderr = proc.stderr
-        stdout = proc.stdout + ("\n[stderr]\n" + proc.stderr if proc.stderr else "")
-    except subprocess.TimeoutExpired as error:
-        deadline_hit = True
-        captured = error.stdout or b""
-        process_stdout = (
-            captured.decode(errors="replace")
-            if isinstance(captured, bytes)
-            else str(captured)
-        )
-        stdout = process_stdout
-        captured_stderr = error.stderr or b""
-        stderr = (
-            captured_stderr.decode(errors="replace")
-            if isinstance(captured_stderr, bytes)
-            else str(captured_stderr)
-        )
-        if captured_stderr:
-            stdout += "\n[stderr]\n" + stderr
+
+    def _launch(launch_argv):
+        try:
+            proc = subprocess.run(
+                launch_argv,
+                cwd=ws,
+                env=env,
+                stdin=subprocess.DEVNULL,
+                capture_output=True,
+                text=True,
+                timeout=deadline,
+                check=False,
+            )
+            return proc.returncode, proc.stdout, proc.stderr, False
+        except subprocess.TimeoutExpired as error:
+            captured = error.stdout or b""
+            out = (
+                captured.decode(errors="replace")
+                if isinstance(captured, bytes)
+                else str(captured)
+            )
+            captured_stderr = error.stderr or b""
+            err = (
+                captured_stderr.decode(errors="replace")
+                if isinstance(captured_stderr, bytes)
+                else str(captured_stderr)
+            )
+            return None, out, err, True
+
+    returncode, process_stdout, stderr, deadline_hit = _launch(argv)
+    stdout = process_stdout + ("\n[stderr]\n" + stderr if stderr else "")
+    # Re-dispatch (direct + mediated only): re-run the frozen test and, on failure,
+    # hand the failure to a fresh worker on the same workspace, up to `redispatch` times.
+    redispatch_attempts = 0
+    if acceptance_test is not None and redispatch and mode == "direct":
+        test_rel = f"tests/{acceptance_test.name}"
+        for _ in range(redispatch):
+            if deadline_hit:
+                break
+            code, acc_out = run_acceptance(ws, test_rel)
+            if code == 0:
+                break
+            redispatch_attempts += 1
+            reargs = build_pi_direct_args(
+                redispatch_message(test_rel, acc_out),
+                guards,
+                prompt,
+                prompt_mode,
+                thinking,
+                model_id=mid,
+            )
+            returncode, process_stdout, stderr, deadline_hit = _launch(
+                [selected_pi["executable"], *reargs[1:]]
+            )
+            stdout += "\n[re-dispatch]\n" + process_stdout + (
+                "\n[stderr]\n" + stderr if stderr else ""
+            )
     wall = time.time() - started
     # Servers Mellum started with `&` outlive Pi; stop them before staging the
     # workspace so they neither hold ports for later runs nor write after it.
@@ -606,6 +649,7 @@ def run_once(
         "acceptance_test": acceptance_test.name
         if (acceptance_test is not None and mode == "direct")
         else None,
+        "redispatch_attempts": redispatch_attempts if mode == "direct" else None,
         "versions": versions,
         "launch": launch,
         "telemetry": telemetry,
@@ -793,6 +837,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="direct mode: a hand-written failing test placed in the workspace's tests/ before the baseline; the task becomes 'make tests/<name> pass' and the existing-tests scorer freezes it (the mediated-test screen, M.11)",
     )
+    parser.add_argument(
+        "--redispatch",
+        type=int,
+        default=0,
+        help="with --acceptance-test: after a run, re-run the frozen test and, on failure, hand the failure to a fresh worker on the same workspace, up to N times (the verify-and-re-hand loop)",
+    )
     return parser
 
 
@@ -814,6 +864,8 @@ def main(argv: list[str] | None = None) -> None:
     if args.mode != "direct" and any(direct_only.values()):
         used = ", ".join(name for name, on in direct_only.items() if on)
         parser.error(f"{used} apply only to --mode direct")
+    if args.redispatch and args.acceptance_test is None:
+        parser.error("--redispatch requires --acceptance-test")
     if args.backend == "mlx-lm" and args.base_url is None:
         parser.error(
             "--backend mlx-lm requires --base-url (e.g. http://127.0.0.1:8080/v1); "
@@ -890,6 +942,7 @@ def main(argv: list[str] | None = None) -> None:
                     request_overrides=request_overrides,
                     model_id=args.model_id,
                     acceptance_test=args.acceptance_test,
+                    redispatch=args.redispatch,
                 )
                 row = table_row(record)
                 with table.open("a") as stream:

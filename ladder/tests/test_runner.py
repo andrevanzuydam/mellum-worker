@@ -626,6 +626,58 @@ def test_run_once_wires_the_switches_into_the_child_env_and_the_workspace(
 # ---- backend / base-url / sampling overrides (the scriptable-MLX-server benchmark) ----
 
 
+def test_redispatch_message_names_the_test_and_includes_the_failure():
+    from ladder.run_ladder import redispatch_message
+
+    msg = redispatch_message("tests/acc.py", "E   assert 1 == 2")
+    assert "tests/acc.py" in msg and "assert 1 == 2" in msg and "fail" in msg.lower()
+
+
+def test_parser_redispatch_default_and_set():
+    from ladder.run_ladder import build_parser
+
+    base = ["--profile", "baseline", "--rung", "9", "--out", "x", "--acceptance-test", "/tmp/t.py"]
+    assert build_parser().parse_args(base).redispatch == 0
+    assert build_parser().parse_args([*base, "--redispatch", "3"]).redispatch == 3
+
+
+def test_main_refuses_redispatch_without_acceptance_test(tmp_path):
+    from ladder.run_ladder import main
+
+    with pytest.raises(SystemExit):
+        main(["--profile", "baseline", "--rung", "9", "--out", str(tmp_path / "o"),
+              "--mode", "direct", "--redispatch", "2"])
+
+
+def test_run_once_redispatches_until_acceptance_passes(monkeypatch, tmp_path):
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    launches = []
+
+    def fake_run(argv, **k):
+        launches.append(argv)
+        return sp.CompletedProcess(argv, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(run_ladder.subprocess, "run", fake_run)
+    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    seq = iter([(1, "boom"), (0, "ok")])  # acceptance: fail once, then pass
+    monkeypatch.setattr(run_ladder, "run_acceptance", lambda ws, name: next(seq))
+    acc = tmp_path / "test_acc.py"
+    acc.write_text("x")
+    rung = Rung(9, "agentclinic-p4", "impl", ["true"], lambda ws, base: CheckResult(False, True))
+    rec = run_ladder.run_once(
+        rung, "direct", "tuned", 1, tmp_path / "out", 5, {}, False,
+        acceptance_test=acc, redispatch=3,
+    )
+    assert rec["redispatch_attempts"] == 1
+    pi_launches = [a for a in launches if "-p" in a]
+    assert len(pi_launches) == 2  # initial + one re-dispatch
+
+
 def test_parser_acceptance_test_default_and_set():
     from ladder.run_ladder import build_parser
 

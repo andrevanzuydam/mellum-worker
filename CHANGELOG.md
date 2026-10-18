@@ -27,6 +27,10 @@ Versions match git tags; pin one in both install lines.
   task "make tests/<name> pass". Because the test is in the baseline, the
   existing-tests scorer freezes it (the worker cannot weaken it) — the
   mediated-test screen for M.11, run on real Pi and scored by the hidden tests.
+  `--redispatch N` adds the verify-and-re-hand loop: after a run it re-runs the
+  frozen test and, on failure, hands the failure to a fresh worker on the same
+  workspace, up to N times (needs `--acceptance-test`; the run record names the
+  number of re-dispatches).
 
 - `EXAMPLE.md`: a worked, example-driven guide to using Mellum — one-shot
   `/mellum`, multi-task spans, handing it a failing test (the reliable pattern),
