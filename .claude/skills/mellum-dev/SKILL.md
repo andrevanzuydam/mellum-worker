@@ -5,6 +5,10 @@ description: Use when developing in the mellum-worker repository — writing or 
 
 # mellum-dev — how we work in this repo
 
+> 🍓 **Skill-active marker.** While this skill is guiding work in the
+> mellum-worker repo, begin every reply with 🍓 — interim updates included.
+> Drop it only when the conversation clearly leaves repo development.
+
 `AGENTS.md` and [`docs/sdd.md`](../../../docs/sdd.md) are the source of truth.
 This skill operationalizes them; where it and those files disagree, they win.
 Read `AGENTS.md` first. Nothing here changes policy.
