@@ -607,8 +607,9 @@ def run_once(
     if acceptance_test is not None and redispatch and mode == "direct":
         test_rel = f"tests/{acceptance_test.name}"
         for _ in range(redispatch):
-            if deadline_hit:
-                break
+            # A timed-out attempt is still a failing frozen test, so retry on it
+            # too — a fresh, hotter worker on the same (cumulative) workspace,
+            # not a give-up. Keep the per-attempt --deadline small to bound cost.
             code, acc_out = run_acceptance(ws, test_rel)
             if code == 0:
                 break

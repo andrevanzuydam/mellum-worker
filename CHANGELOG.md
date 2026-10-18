@@ -45,7 +45,11 @@ Versions match git tags; pin one in both install lines.
   the seed moves with the attempt number, so a retry explores a different path
   yet stays reproducible. Set the step to 0 to keep every retry greedy (the old
   behaviour). The run record names the step and the per-attempt
-  temperature/seed schedule. `seed` is now an overridable request param.
+  temperature/seed schedule. `seed` is now an overridable request param. A
+  re-dispatch now also fires when an attempt hits the deadline (a timeout is
+  still a failing frozen test), so a fresh hotter worker continues on the same
+  workspace instead of the loop giving up — keep the per-attempt `--deadline`
+  small to bound the total.
 
 - The README now opens with the idea the package serves, domain engineering
   (you write specs and tests, Mellum makes the test command exit 0), names

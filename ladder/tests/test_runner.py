@@ -729,6 +729,36 @@ def test_run_once_grows_temperature_and_seed_across_redispatches(monkeypatch, tm
     ]
 
 
+def test_run_once_redispatches_even_when_attempts_time_out(monkeypatch, tmp_path):
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    def fake(argv, **k):
+        # the worker (pi -p) always times out; git and other calls succeed
+        if "-p" in argv:
+            raise sp.TimeoutExpired(argv, k.get("timeout", 1), output=b"", stderr=b"")
+        return sp.CompletedProcess(argv, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(run_ladder.subprocess, "run", fake)
+    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    # the frozen test never passes, so only the retry cap stops the loop
+    monkeypatch.setattr(run_ladder, "run_acceptance", lambda ws, name: (1, "still failing"))
+    acc = tmp_path / "test_acc.py"
+    acc.write_text("x")
+    rung = Rung(9, "agentclinic-p4", "impl", ["true"], lambda ws, base: CheckResult(False, True))
+    rec = run_ladder.run_once(
+        rung, "direct", "tuned", 1, tmp_path / "out", 5, {}, False,
+        acceptance_test=acc, redispatch=3,
+    )
+    # a timed-out attempt is still a failing frozen test, so every retry fires
+    assert rec["deadline_hit"] is True
+    assert rec["redispatch_attempts"] == 3
+    assert [s["attempt"] for s in rec["redispatch_schedule"]] == [1, 2, 3]
+
+
 def test_parser_acceptance_test_default_and_set():
     from ladder.run_ladder import build_parser
 
