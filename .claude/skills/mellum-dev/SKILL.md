@@ -81,6 +81,17 @@ it and re-dispatching the failure. This is M.11 + the freeze-the-oracle guard,
 **unmeasured until M.11's rung-9 screen** — a lead, not a rule. See the
 [exit-gate note](../../../docs/superpowers/research/2026-10-18-harness-exit-gate.md).
 
+**Making "complete" real.** "Complete" is the load-bearing word, so verify it
+before trusting a mediated acceptance test. The test must be a **superset of the
+rung's hidden oracle** (`ladder/fixtures/agentclinic-hidden/_hidden_pN.py`): it
+checks everything the oracle checks, plus the spec requirements the oracle leaves
+thin. Author it from the spec, never from the worker's output. Dry-run it (plain
+pytest, no model): it **and** the oracle pass the complete
+`ladder/fixtures/agentclinic-done` implementation (green), and the test **fails**
+a build with the known miss — e.g. Phase 4's id assigned in the route only, not
+on `Complaint` (red). A test that cannot go red on the failure mode is not
+complete, whatever it covers.
+
 ## 7. Finishing a phase
 
 Update the phase Status cell and `## Now` in `ROADMAP.md`; write the plan's
