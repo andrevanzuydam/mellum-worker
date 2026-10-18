@@ -1,83 +1,72 @@
 # Session progress — 2026-10-18
 
-A progress snapshot for reporting: what is validated (evidence in hand) vs what
-is still running, plus a diagnosis of the stock rung-6 failures seen mid-run.
+A progress snapshot for reporting: what is validated, the mechanisms shipped
+this session, the finished stock baseline, and what is still open.
 
-## Validated today (evidence in hand)
+## Validated (evidence in hand)
 
-1. **Measurement harness built test-first and green** — 202 ladder tests +
-   313 node assertions. Capabilities landed tests-first:
-   - `--backend` / `--base-url` / `--temperature` / `--top-p` (a7b3420)
-   - `--model-id`, fixes the mlx-lm served-id mismatch (cdab135)
-   - `--acceptance-test` + `--redispatch`, the M.11 mediated-test screen and the
-     verify-and-re-hand loop (5bf4a0d, 6426b2b, ff17d60)
+1. **Harness green, test-first** — 316 node + 206 ladder tests.
+2. **Mellum drives Pi's agent loop natively** — emits JSON tool calls, edits
+   files, passes rungs on real `pi -p`. Observed live; the core viability fact.
+3. **Mediated test (M.11) works end-to-end on real Pi** — mediated rung-9 PASS
+   (one worker, converged first attempt, hidden oracle green) vs stock rung-9
+   FAIL. Recorded as an n=1 lead (5cb550f).
+4. **Freeze-the-oracle validated without full runs** — phase 1-3 mediated tests
+   pass 9/9 against the golden fixture; the rung 6 + 9 mediated tests were
+   confirmed **supersets of the ladder's hidden oracle** (7/7 against the
+   complete `agentclinic-done` implementation).
+5. **Pi is a tool-call-format gate, not a size gate** — a model works on Pi iff
+   it emits JSON tool calls; code-block models need an adapter, regardless of
+   size.
 
-2. **Mellum natively drives Pi's agent loop** — it emits JSON tool_calls, edits
-   files, and passes rungs on real `pi -p`. Observed live; the core viability
-   fact for the project.
+## Shipped this session (new mechanisms)
 
-3. **The mediated test (M.11) works end-to-end on real Pi** — mediated rung-9
-   PASS (one worker, converged first attempt, hidden oracle green) vs stock
-   rung-9 FAIL (deadline). Recorded as an n=1 lead, not preregistered (5cb550f).
+- **Temperature-grown + seeded re-dispatch** (aa5f6f3) — retries ramp the
+  temperature 0 -> 0.2 -> ... -> 1.0 and move the seed, so a retry explores a new
+  path instead of re-running the same greedy decode.
+- **Re-dispatch on a timed-out attempt** (107b480) — a timeout is still a failing
+  frozen test, so it re-dispatches a fresh worker rather than aborting the loop.
+- **Small deadline slicing** (operating technique) — one long attempt becomes a
+  relay of short, fresh-context, escalating-temperature workers on one
+  cumulative workspace; bounded cost `<= (N+1) x deadline`. Fights both stuck
+  trajectories and context bloat (each slice drops the accumulated transcript).
+- **"Complete"-check recipe** in the mellum-dev skill §6 (543b717) — a mediated
+  acceptance test must be a superset of the hidden oracle and dry-run green on
+  `agentclinic-done` / red on the known failure mode.
 
-4. **Freeze-the-oracle mechanism sound, validated without a full run** — the
-   phase 1-3 mediated acceptance tests pass 9/9 against the golden fixture,
-   proving the tests encode the spec before run-time is spent.
+## Stock baseline (preregistered, finished)
 
-5. **Pi's small-model limit diagnosed; Pi exonerated** — the 2B distill fails in
-   Pi because it answers in markdown code blocks, not JSON tool_calls (confirmed
-   by controlled replay with Pi removed). Pi needs tool-call-trained models;
-   model size is not the gate. Decision: keep Pi, focus on Mellum.
+Stock arm A, rungs 6-9, n=3, on `mlx_lm.server`:
 
-## In flight — not yet a result
+| rung | result |
+|------|--------|
+| 6 | 1/3 |
+| 7 | 3/3 |
+| 8 | 1/3 |
+| 9 | 0/3 |
+| total | 5/12 |
 
-Preregistered stock-vs-mediated rungs 6-9 run (n=3). Arm A (stock) partway:
+Rung 9 at 0/3 is the historical wall (the Phase 4 auto-`id` miss). Rungs 6/8
+dropped to deadline hits — a slow-backend artifact, not a capability drop (one
+rung-6 run built a correct app and was cut off before writing its tests). The
+past best, A21 on oMLX, was 9/12 (rungs 6-8 perfect, rung 9 0/3), 0 deadline
+hits.
 
-| rung | r1 | r2 | r3 |
-|------|------|---------|------|
-| 6 | FAIL | FAIL | pass |
-| 7 | pass | pass | pass |
-| 8 | FAIL | running | - |
-| 9 | - | - | - |
+## In flight / open
 
-Arm B (mediated) not started. No promote/no-promote verdict yet.
+- **oMLX is not installed on this machine** (no app, binary, or package), so the
+  apples-to-apples comparison against A21's 9/12 is blocked until an oMLX server
+  is up on :8001.
+- **Mediated demo (rung 6 + 9)** with small deadline slicing was run on
+  `mlx_lm.server`; the re-dispatch temperature ramp was confirmed firing live
+  (slice 1 relaunched at temperature 0.2, seed 43, on the accumulating
+  workspace).
+- The **preregistered mediated arm B** (amended to use the ramp) is still owed on
+  a fast backend to decide promotion against the 9/12 rule.
 
-## Finding: why stock rung 6 r1 and r2 failed
+## Concept proposed (not built)
 
-Rung 6 is AgentClinic phase 1 (home). The task requires the worker to deliver
-both a working app AND the visible tests from the spec. Scoring combines the
-visible facts command (`pytest tests -q`), the hidden oracle (`_hidden_p1.py`,
-copied in at scoring time), existing-tests-kept, and the write-list.
-
-All three rung-6 runs hit the 600s deadline (`deadline_hit: true` for every run,
-including the r3 pass). Rung 6 sits right at the edge of stock Mellum's time
-budget, so convergence within 600s is close to a coin-flip.
-
-- **r1 — built a correct app, wrote no tests, ran out of time.** The hidden
-  oracle passed (`pytest _hidden_p1.py` → 1 passed: the app logic was right), but
-  the visible `pytest tests -q` reported "no tests ran" because the worker left
-  `tests/` empty (only `.gitkeep`). It was still in `toolUse` at 600s (53
-  requests, 14 tool_errors) — guillotined before it wrote the visible tests the
-  spec asks for. Confirmed live in the surviving workspace.
-
-- **r2 — did not converge.** It wrote `tests/test_home.py` but the app was wrong
-  (hidden oracle failed) and the visible suite failed too; stalled at 31
-  requests / 10 tool_errors, deadline hit.
-
-- **r3 (pass)** — same deadline pressure, but its workspace was in a fully
-  passing state (visible + hidden green) at the cut.
-
-**Takeaway:** the rung-6 failures are a throughput/deadline problem, not a
-capability gap — Mellum can build the app (r1 proves the logic), but at stock
-settings it is a coin-flip whether it finishes the full visible+hidden
-acceptance within 600s. Contributing to the time pressure: high tool_errors
-(10-23 per run, fumbled tool calls that burn turns) and large prompt growth (up
-to ~192k chars, slowing each request). This is direct motivation for the
-mediated path (arm B): handing a frozen failing test focuses the worker and
-should converge faster and more reliably.
-
-## Built (process, not a measurement)
-
-mellum-dev skill + CI workflow (node + ladder jobs) + CLAUDE.md auto-load + the
-🍓 marker (a66f163, ad2f4ec, a026463); EXAMPLE.md (000a88f); SDD research notes,
-preregistration, and backlog entries.
+**Orchestrator + small-coder split** — Mellum tool-calls and orchestrates; a
+small model writes code via a `write_code` tool and Mellum writes the result.
+An appealing cost play; the risk is handoff overhead and dropped cross-cutting
+requirements. Backlog candidate, gated by a frozen acceptance test.
