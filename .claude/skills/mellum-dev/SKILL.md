@@ -102,10 +102,10 @@ against its linked evidence, pass `node --test tests/docs-caps.test.mjs` and
 tag. A release is a tag where `package.json`, the tag, both README install
 lines and a `CHANGELOG.md` section agree.
 
-## 8. Coding principles (adapted from the tina4 developer skill)
+## 8. Coding principles (our developer coding standards)
 
-Borrowed from the Tina4 developer discipline, kept to what transfers to this
-repo (nothing framework-specific — no routes, ORM or journeys):
+Our general developer discipline, kept to what transfers to this repo (nothing
+framework-specific — no routes, ORM or journeys):
 
 - **Real tests, no mocks.** A change to our own code gets named positive *and*
   negative tests, run against real dependencies — real fixtures, servers,
