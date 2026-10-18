@@ -150,3 +150,15 @@ opt-out ([A11](docs/ladder/ablation-a11-delegated-nointercom/README.md)); a
 `mellum_worker(task)` tool through Pi's SDK
 ([cost note](docs/superpowers/research/2026-10-09-worker-cost-options.md) §2,
 §3b). *Reopens when* M.12 does not retire the Pi Worker.
+
+**Benchmark a plain mlx_lm.server against oMLX, and sampling screens.** The
+ladder now supports both (`--backend mlx-lm --base-url`, and
+`--temperature`/`--top-p`; direct mode only), but no runs have been made. The
+two servers cannot be made byte-identical — `thinking_budget`,
+`max_tool_result_tokens` and penalty handling are oMLX server-only with no
+mlx_lm.server equivalent — so an oMLX-vs-mlx-lm result is a harness finding
+about servers, not a claim about the shipped worker; sampling sweeps are the
+same, since the ladder is greedy by design ([sdd](docs/sdd.md)).
+*Reopens when* someone runs a screen (a few rungs, a research note naming the
+server's launch flags and n); a measured claim additionally needs a
+preregistered run with the server differences pinned.
