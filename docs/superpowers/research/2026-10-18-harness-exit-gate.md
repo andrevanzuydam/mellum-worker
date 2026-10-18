@@ -99,3 +99,28 @@ out of the worker's hands and keep it whole."
   and the additions-allowed rule, not invent its own.
 - The probes here are n = 1 and greedy; they illustrate the mechanism and must
   not be cited as rates.
+
+## Follow-up, 2026-10-18: the gate (not the oracle alone) reached green
+
+The hand-driven Phase 4 probe above (which "did not reach green") was re-run
+after adding the two things it had lacked, nothing else: the acceptance test
+was **frozen** (edits to it rejected) and each stop was met by **re-running the
+frozen test and re-dispatching its failure**, with a larger per-turn budget.
+Same external test, same model, same served weights. It converged at turn 25:
+the mediated acceptance test and the **hidden oracle** (never shown to the
+worker) both passed, exit 0. The worker's final `models.py` gives each complaint
+a distinct, stable auto id via a module `_next_id` counter in `__post_init__` —
+the requirement the single-shot and the model-authored-test runs had dropped.
+
+Why this is the point: the earlier probe already had the external, complete
+oracle and still failed. Adding only the harness — freeze plus re-dispatch plus
+budget — is what closed it. So the external oracle **redirects** the worker to
+the missed requirement, but convergence came from **not trusting the self-exit**:
+re-running the frozen test and handing the failure back until green. The oracle
+(M.11) and the gate (the BACKLOG "Freeze-the-oracle exit gate") are both
+load-bearing; the oracle alone is necessary, not sufficient.
+
+Scope is unchanged. n = 1, greedy, a hand-driver against `mlx_lm.server`, 25
+turns, not the scored ladder. It shows the mechanism can reach green end to end,
+hidden oracle included; it is not a rate and does not establish that M.11 moves
+rung 9. That remains the preregistered screen on Pi.
