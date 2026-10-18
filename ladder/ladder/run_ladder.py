@@ -437,6 +437,25 @@ def redispatch_message(test_rel: str, test_output: str) -> str:
     )
 
 
+def redispatch_overrides(
+    base_overrides: dict | None, attempt: int, temp_step: float
+) -> dict:
+    """Request overrides for re-dispatch ``attempt`` (1-based).
+
+    A greedy (temperature 0) re-dispatch re-runs the same deterministic decode,
+    so a retry must change the sampling to explore a different path. We grow the
+    temperature by ``temp_step`` per attempt (capped at 1.0) and move the seed by
+    the attempt number, so each retry diverges yet stays reproducible. The seed
+    only bites once temperature > 0; the ramp guarantees that from attempt 1.
+    """
+    out = dict(base_overrides or {})
+    base_temp = out.get("temperature") or 0
+    base_seed = out.get("seed", 42)
+    out["temperature"] = round(min(1.0, base_temp + attempt * temp_step), 4)
+    out["seed"] = base_seed + attempt
+    return out
+
+
 def run_acceptance(ws: Path, test_rel: str) -> tuple[int, str]:
     """Run the frozen acceptance test in the workspace: (exit code, combined output)."""
     proc = subprocess.run(
@@ -475,6 +494,7 @@ def run_once(
     model_id: str | None = None,
     acceptance_test: Path | None = None,
     redispatch: int = 0,
+    redispatch_temperature_step: float = 0.2,
 ) -> dict:
     rung = variant_rung(rung, roadmap)
     if acceptance_test is not None:
@@ -550,12 +570,12 @@ def run_once(
     started = time.time()
     monotonic_started = time.monotonic()
 
-    def _launch(launch_argv):
+    def _launch(launch_argv, launch_env=env):
         try:
             proc = subprocess.run(
                 launch_argv,
                 cwd=ws,
-                env=env,
+                env=launch_env,
                 stdin=subprocess.DEVNULL,
                 capture_output=True,
                 text=True,
@@ -583,6 +603,7 @@ def run_once(
     # Re-dispatch (direct + mediated only): re-run the frozen test and, on failure,
     # hand the failure to a fresh worker on the same workspace, up to `redispatch` times.
     redispatch_attempts = 0
+    redispatch_schedule: list[dict] = []
     if acceptance_test is not None and redispatch and mode == "direct":
         test_rel = f"tests/{acceptance_test.name}"
         for _ in range(redispatch):
@@ -592,6 +613,27 @@ def run_once(
             if code == 0:
                 break
             redispatch_attempts += 1
+            # Grow temperature + move the seed so the retry explores a new path
+            # instead of re-running the same greedy decode. Rebuild the agent dir
+            # (it bakes the request params) and point Pi at it for this attempt.
+            overrides = redispatch_overrides(
+                request_overrides, redispatch_attempts, redispatch_temperature_step
+            )
+            redispatch_schedule.append(
+                {
+                    "attempt": redispatch_attempts,
+                    "temperature": overrides["temperature"],
+                    "seed": overrides["seed"],
+                }
+            )
+            re_agent_dir = direct_agent_dir(
+                scratch / f"pi-agent-redispatch-{redispatch_attempts}",
+                prof,
+                **({"base_url": base_url} if base_url else {}),
+                request_overrides=overrides,
+                model_id=mid,
+            )
+            re_env = child_env(dict(os.environ), str(trace), re_agent_dir, offline=True)
             reargs = build_pi_direct_args(
                 redispatch_message(test_rel, acc_out),
                 guards,
@@ -601,7 +643,7 @@ def run_once(
                 model_id=mid,
             )
             returncode, process_stdout, stderr, deadline_hit = _launch(
-                [selected_pi["executable"], *reargs[1:]]
+                [selected_pi["executable"], *reargs[1:]], re_env
             )
             stdout += "\n[re-dispatch]\n" + process_stdout + (
                 "\n[stderr]\n" + stderr if stderr else ""
@@ -652,6 +694,10 @@ def run_once(
         if (acceptance_test is not None and mode == "direct")
         else None,
         "redispatch_attempts": redispatch_attempts if mode == "direct" else None,
+        "redispatch_temperature_step": redispatch_temperature_step
+        if (redispatch and mode == "direct")
+        else None,
+        "redispatch_schedule": redispatch_schedule if mode == "direct" else None,
         "versions": versions,
         "launch": launch,
         "telemetry": telemetry,
@@ -845,6 +891,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=0,
         help="with --acceptance-test: after a run, re-run the frozen test and, on failure, hand the failure to a fresh worker on the same workspace, up to N times (the verify-and-re-hand loop)",
     )
+    parser.add_argument(
+        "--redispatch-temperature-step",
+        type=float,
+        default=0.2,
+        help="with --redispatch: how much to grow the request temperature per retry (and the seed moves with the attempt), so a retry explores a new path instead of re-running the same greedy decode. Capped at 1.0; 0 keeps every retry greedy",
+    )
     return parser
 
 
@@ -953,6 +1005,7 @@ def main(argv: list[str] | None = None) -> None:
                     model_id=args.model_id,
                     acceptance_test=args.acceptance_test,
                     redispatch=args.redispatch,
+                    redispatch_temperature_step=args.redispatch_temperature_step,
                 )
                 row = table_row(record)
                 with table.open("a") as stream:

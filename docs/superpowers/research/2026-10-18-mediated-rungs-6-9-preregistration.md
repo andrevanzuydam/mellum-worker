@@ -25,6 +25,15 @@ forced) serving the 6-bit weights.
   (not the worker), named `test_*.py`. Phase 4's exists (`test_phase4.py`);
   phases 1-3 are owed before arm B can run.
 
+  **Amendment (2026-10-18, before any arm-B run):** a greedy `--redispatch`
+  re-runs the same deterministic decode, so the retries added nothing beyond the
+  appended failure text. Arm B now runs with the default temperature ramp
+  (`--redispatch-temperature-step 0.2`: temperature grows 0.2 per retry, capped
+  at 1.0, seed moves with the attempt), so each retry explores a new path. Arm A
+  (stock, no `--redispatch`) is unaffected and its runs stand. This changes arm
+  B's retry mechanism only; the question, n, scoring and decision rule are
+  unchanged.
+
 Arm B differs from A by the whole mediated bundle (placed test + no-servers
 guidance + re-dispatch), not the placed test alone — so this decides the
 *approach*, not the placed test in isolation.

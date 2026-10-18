@@ -639,6 +639,14 @@ def test_parser_redispatch_default_and_set():
     base = ["--profile", "baseline", "--rung", "9", "--out", "x", "--acceptance-test", "/tmp/t.py"]
     assert build_parser().parse_args(base).redispatch == 0
     assert build_parser().parse_args([*base, "--redispatch", "3"]).redispatch == 3
+    # the temperature ramp per retry defaults to 0.2 and is overridable
+    assert build_parser().parse_args(base).redispatch_temperature_step == 0.2
+    assert (
+        build_parser()
+        .parse_args([*base, "--redispatch-temperature-step", "0.3"])
+        .redispatch_temperature_step
+        == 0.3
+    )
 
 
 def test_main_refuses_redispatch_without_acceptance_test(tmp_path):
@@ -676,6 +684,49 @@ def test_run_once_redispatches_until_acceptance_passes(monkeypatch, tmp_path):
     assert rec["redispatch_attempts"] == 1
     pi_launches = [a for a in launches if "-p" in a]
     assert len(pi_launches) == 2  # initial + one re-dispatch
+
+
+def test_redispatch_overrides_grows_temperature_and_moves_the_seed():
+    from ladder.run_ladder import redispatch_overrides
+
+    a1 = redispatch_overrides({}, 1, 0.2)
+    a2 = redispatch_overrides({}, 2, 0.2)
+    assert a1["temperature"] == 0.2 and a1["seed"] == 43
+    assert a2["temperature"] == 0.4 and a2["seed"] == 44
+    # temperature is capped at 1.0
+    assert redispatch_overrides({}, 10, 0.2)["temperature"] == 1.0
+    # a custom base temperature and seed are honoured
+    b = redispatch_overrides({"temperature": 0.5, "seed": 100}, 1, 0.1)
+    assert b["temperature"] == 0.6 and b["seed"] == 101
+
+
+def test_run_once_grows_temperature_and_seed_across_redispatches(monkeypatch, tmp_path):
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    monkeypatch.setattr(
+        run_ladder.subprocess,
+        "run",
+        lambda argv, **k: sp.CompletedProcess(argv, 0, stdout="", stderr=""),
+    )
+    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    seq = iter([(1, "boom"), (1, "boom"), (0, "ok")])  # fail twice, then pass
+    monkeypatch.setattr(run_ladder, "run_acceptance", lambda ws, name: next(seq))
+    acc = tmp_path / "test_acc.py"
+    acc.write_text("x")
+    rung = Rung(9, "agentclinic-p4", "impl", ["true"], lambda ws, base: CheckResult(False, True))
+    rec = run_ladder.run_once(
+        rung, "direct", "tuned", 1, tmp_path / "out", 5, {}, False,
+        acceptance_test=acc, redispatch=3, redispatch_temperature_step=0.2,
+    )
+    assert rec["redispatch_attempts"] == 2
+    assert rec["redispatch_schedule"] == [
+        {"attempt": 1, "temperature": 0.2, "seed": 43},
+        {"attempt": 2, "temperature": 0.4, "seed": 44},
+    ]
 
 
 def test_parser_acceptance_test_default_and_set():

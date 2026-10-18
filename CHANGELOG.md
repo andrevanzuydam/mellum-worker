@@ -39,6 +39,14 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- `--redispatch` now varies the sampling on each retry instead of re-running
+  the same greedy decode: the request temperature grows by
+  `--redispatch-temperature-step` (default 0.2, capped at 1.0) per attempt and
+  the seed moves with the attempt number, so a retry explores a different path
+  yet stays reproducible. Set the step to 0 to keep every retry greedy (the old
+  behaviour). The run record names the step and the per-attempt
+  temperature/seed schedule. `seed` is now an overridable request param.
+
 - The README now opens with the idea the package serves, domain engineering
   (you write specs and tests, Mellum makes the test command exit 0), names
   the mediated test as the next guardrail and how to do it by hand today,

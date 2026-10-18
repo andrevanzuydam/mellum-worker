@@ -150,3 +150,13 @@ def test_check_effective_params_honours_overrides():
         check_effective_params(sent, "tuned")
     # with the override declared, the sent request is correct
     check_effective_params(sent, "tuned", {"temperature": 0.7})
+
+
+def test_seed_is_an_overridable_request_param():
+    # re-dispatch varies the seed per retry, so seed must be overridable (not a
+    # server-only key). It does nothing at temperature 0, but the retry ramp
+    # raises temperature, where a distinct seed makes each retry reproducible.
+    from ladder.omlx_profiles import OVERRIDABLE_REQUEST_PARAMS, effective_request
+
+    assert "seed" in OVERRIDABLE_REQUEST_PARAMS
+    assert effective_request("tuned", {"seed": 43})["seed"] == 43
