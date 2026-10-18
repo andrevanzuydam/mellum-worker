@@ -22,6 +22,11 @@ Versions match git tags; pin one in both install lines.
   absolute path); it defaults to the Mellum id, so oMLX runs are unchanged.
   `docs/backends/mlx-lm.md` documents the recipe and the issues hit proving it.
 
+- `EXAMPLE.md`: a worked, example-driven guide to using Mellum — one-shot
+  `/mellum`, multi-task spans, handing it a failing test (the reliable pattern),
+  project facts, `/mellum check`/`last`, and measuring via the ladder's mlx-lm
+  backend.
+
 ### Changed
 
 - The README now opens with the idea the package serves, domain engineering
