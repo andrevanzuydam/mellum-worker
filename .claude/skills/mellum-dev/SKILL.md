@@ -113,3 +113,19 @@ repo (nothing framework-specific — no routes, ORM or journeys):
 - **Earn the claim.** State a result only when real evidence backs it — a green
   test, a recorded ladder run — and label a screen as the lead it is. This is
   the measured-settings and screens-first rules, said as a habit.
+
+## 9. Run it where the user can see it
+
+Never bury a test run or a ladder run in a hidden background call. The user
+watches it happen:
+
+- **Tests** go in the Terminal panel (`run_in_terminal`), and the pane is
+  **opened on that tab** (`show_pane` terminal, `tab_id`). Prefer verbose
+  (`uv run python -m pytest -v`, per-test names; `npm test`).
+- **A ladder run** (`run_ladder`) prints only its final row, so it is not
+  watchable on its own: also **follow its live trace**
+  (`ladder-*/trace.jsonl`, the newest by mtime) in a Terminal tab and open the
+  pane on it, so each worker turn streams in front of the user.
+- A tab the user cannot see is the same as no visibility — always
+  `show_pane` the live tab. If a run is long, say where to look and keep it on
+  screen.
