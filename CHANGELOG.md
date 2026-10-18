@@ -6,6 +6,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `README.md` gains a "This session — 2026-10-18" summary of the M.11 harness
+  work and its screens, flagged as ladder capability and findings (on
+  `mlx_lm.server`), not a measured claim.
+
 - Ladder records for a rung 9 screen that ran A21's two changes alone: the
   AgentClinic phase 4 id miss follows the one-file roadmap (5 of 6 runs,
   against 1 of 6 with one spec file per phase). Exploratory, n = 3 per arm.
