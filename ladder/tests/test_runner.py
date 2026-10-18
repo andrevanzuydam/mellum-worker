@@ -695,6 +695,17 @@ def test_main_refuses_acceptance_test_outside_direct_mode(tmp_path):
               "--mode", "mode", "--acceptance-test", "/tmp/t.py"])
 
 
+def test_main_refuses_acceptance_test_not_collectable_by_pytest(tmp_path):
+    """A test pytest won't collect (not test_*.py) would be placed but never run; fail fast."""
+    from ladder.run_ladder import main
+
+    bad = tmp_path / "acc_p4.py"  # pytest only auto-collects test_*.py
+    bad.write_text("def test_x():\n    assert True\n")
+    with pytest.raises(SystemExit):
+        main(["--profile", "baseline", "--rung", "9", "--out", str(tmp_path / "o"),
+              "--mode", "direct", "--acceptance-test", str(bad)])
+
+
 def test_run_once_places_acceptance_test_and_sets_make_it_pass(monkeypatch, tmp_path):
     import subprocess as sp
 

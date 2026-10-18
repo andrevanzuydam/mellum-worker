@@ -23,8 +23,8 @@ Versions match git tags; pin one in both install lines.
   `docs/backends/mlx-lm.md` documents the recipe and the issues hit proving it.
 
 - `run_ladder --acceptance-test <file>` (direct mode): places a hand-written
-  failing test in the workspace's `tests/` before the baseline and makes the
-  task "make tests/<name> pass". Because the test is in the baseline, the
+  failing test (named `test_*.py` so pytest collects it) in the workspace's
+  `tests/` before the baseline and makes the task "make tests/<name> pass". Because the test is in the baseline, the
   existing-tests scorer freezes it (the worker cannot weaken it) — the
   mediated-test screen for M.11, run on real Pi and scored by the hidden tests.
   `--redispatch N` adds the verify-and-re-hand loop: after a run it re-runs the

@@ -864,6 +864,14 @@ def main(argv: list[str] | None = None) -> None:
     if args.mode != "direct" and any(direct_only.values()):
         used = ", ".join(name for name, on in direct_only.items() if on)
         parser.error(f"{used} apply only to --mode direct")
+    if args.acceptance_test is not None and not (
+        args.acceptance_test.name.startswith("test_")
+        and args.acceptance_test.suffix == ".py"
+    ):
+        parser.error(
+            "--acceptance-test must be a pytest file named test_*.py, or "
+            "`pytest tests` will not collect it and the worker never sees it"
+        )
     if args.redispatch and args.acceptance_test is None:
         parser.error("--redispatch requires --acceptance-test")
     if args.backend == "mlx-lm" and args.base_url is None:
