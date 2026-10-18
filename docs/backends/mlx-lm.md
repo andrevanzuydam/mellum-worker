@@ -24,17 +24,22 @@ Verified once, as a smoke (not the measured suite): rung 1, direct mode,
 ## Serve
 
 ```bash
-cd <weights-parent>            # e.g. the folder that holds the model dir
 HF_HUB_OFFLINE=1 python -m mlx_lm.server \
-  --model <model-dir-name> --host 127.0.0.1 --port 11500
+  --model /abs/path/to/Mellum2.1-12B-A2.5B-Thinking-6bit \
+  --host 127.0.0.1 --port 11500
+# the served id is whatever mlx_lm canonicalises --model to (usually that
+# absolute path); read it from GET /v1/models.
 ```
 
-Then run the ladder against it:
+Then run the ladder against it, passing `--model-id` = that served id:
 
 ```bash
-cd ladder && uv run --offline python -m ladder.run_ladder \
+cd ladder
+SERVED=$(curl -s http://127.0.0.1:11500/v1/models | python -c \
+  "import sys,json;print(json.load(sys.stdin)['data'][0]['id'])")
+uv run --offline python -m ladder.run_ladder \
   --mode direct --backend mlx-lm --base-url http://127.0.0.1:11500/v1 \
-  --profile tuned --rung 1 --repeat 1 --out ../docs/ladder/<name>
+  --model-id "$SERVED" --profile tuned --rung 1 --repeat 1 --out ../docs/ladder/<name>
 ```
 
 ## Issues hit, and the fix
@@ -47,10 +52,12 @@ cd ladder && uv run --offline python -m ladder.run_ladder \
    and tries to fetch it**, failing with
    `Repository Not Found for url: https://huggingface.co/api/models/Mellum2.1-...`
    (a 404/401), and the run scores `error` with 0 requests.
-   **Fix:** launch the server from **inside the weights' parent dir** with the
-   **bare dir name** (`--model Mellum2.1-12B-A2.5B-Thinking-6bit`), so the short
-   id the ladder sends resolves to the same local path. See the known gap below
-   for the proper fix.
+   **Fix:** pass **`--model-id <served id>`** (the id from `GET /v1/models`, usually
+   the weights' absolute path) so the request carries the id the server actually
+   serves. The serve recipe above does exactly this. (Before `--model-id` existed
+   the only workaround was launching the server from inside the weights' parent
+   dir with the bare dir name so the short id resolved locally; `--model-id`
+   replaces that trick.)
 
 2. **Set `HF_HUB_OFFLINE=1` on the server.** It stops a model-id miss from
    turning into a slow (or hanging, on an air-gapped box) HuggingFace network
@@ -69,14 +76,15 @@ cd ladder && uv run --offline python -m ladder.run_ladder \
    returns `finish_reason: tool_calls` with empty text. Use
    `/v1/chat/completions` (the ladder and Pi do) to get parsed `tool_calls`.
 
-## Known gap (follow-up)
+## Resolved: the `--model-id` override
 
-The ladder hardcodes the model id it sends (`MODEL_ID` in
-`ladder/ladder/pi_profile.py`). A real `mlx_lm.server` serves under whatever id
-it canonicalised (usually a path), so today it only works via the cwd + bare-name
-trick in issue 1. The proper fix is a `--model-id` override on the `mlx-lm`
-backend, so the id Pi sends can be set to match any served id without the trick.
-Until then, follow the serve recipe above exactly.
+The ladder used to hardcode the model id it sends (`MODEL_ID`), so a real
+`mlx_lm.server` — which serves under whatever id it canonicalised, usually a
+path — only worked via the cwd + bare-name trick. `--model-id` (direct mode)
+now sets the id the request carries, so it can match any served id directly.
+Default is the Mellum id, so the oMLX path is unchanged. Verified as a smoke:
+rung 1 scored `pass` with `--model-id` set to the served absolute path, no cwd
+trick (n = 1, not the measured suite).
 
 ## Settings parity (honest limits)
 

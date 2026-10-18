@@ -645,6 +645,75 @@ def test_parser_backend_base_url_and_sampling_defaults_and_choices():
     assert args.temperature == 0.7 and args.top_p == 0.9
 
 
+def test_direct_args_use_the_model_id_override():
+    from ladder.run_ladder import build_pi_direct_args
+
+    args = build_pi_direct_args("fix it", model_id="/abs/path/Mellum-x")
+    assert args[args.index("--model") + 1] == "omlx//abs/path/Mellum-x"
+
+
+def test_direct_args_model_defaults_to_mellum():
+    from ladder.run_ladder import MODEL, build_pi_direct_args
+
+    args = build_pi_direct_args("fix it")
+    assert args[args.index("--model") + 1] == MODEL
+
+
+def test_parser_model_id_default_and_set():
+    from ladder.run_ladder import build_parser
+
+    base = ["--profile", "baseline", "--rung", "1", "--out", "x"]
+    assert build_parser().parse_args(base).model_id is None
+    assert build_parser().parse_args([*base, "--model-id", "/abs/Mellum-x"]).model_id == "/abs/Mellum-x"
+
+
+def test_main_refuses_model_id_outside_direct_mode(tmp_path):
+    from ladder.run_ladder import main
+
+    with pytest.raises(SystemExit):
+        main(["--profile", "baseline", "--rung", "1", "--out", str(tmp_path / "o"),
+              "--mode", "mode", "--model-id", "x"])
+
+
+def test_run_once_sends_the_model_id_override(monkeypatch, tmp_path):
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    monkeypatch.setattr(
+        run_ladder.subprocess, "run",
+        lambda a, **k: sp.CompletedProcess(a, 0, stdout="", stderr=""),
+    )
+    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    rung = Rung(1, "calculator", "fix it", ["true"], lambda ws, base: CheckResult(False, True))
+    rec = run_ladder.run_once(
+        rung, "direct", "tuned", 1, tmp_path / "out", 5, {}, False,
+        model_id="/abs/path/Mellum-x", base_url="http://127.0.0.1:8080/v1",
+    )
+    assert "omlx//abs/path/Mellum-x" in rec["launch"]["argv"]
+    assert rec["model_id"] == "/abs/path/Mellum-x"
+
+
+def test_run_once_model_id_defaults_to_mellum(monkeypatch, tmp_path):
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.run_ladder import MODEL_ID
+    from ladder.rungs import CheckResult, Rung
+
+    monkeypatch.setattr(
+        run_ladder.subprocess, "run",
+        lambda a, **k: sp.CompletedProcess(a, 0, stdout="", stderr=""),
+    )
+    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    rung = Rung(1, "calculator", "fix it", ["true"], lambda ws, base: CheckResult(False, True))
+    rec = run_ladder.run_once(rung, "direct", "tuned", 1, tmp_path / "out", 5, {}, False)
+    assert rec["model_id"] == MODEL_ID
+
+
 def test_main_refuses_mlx_lm_backend_without_a_base_url(tmp_path):
     from ladder.run_ladder import main
 

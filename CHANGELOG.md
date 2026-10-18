@@ -17,7 +17,10 @@ Versions match git tags; pin one in both install lines.
   `--top-p` override the greedy request defaults. `--backend omlx` stays the
   default and applies/restores the server profile as before, so existing
   records stand; the run record and `versions` now name the backend, base URL
-  and any sampling overrides.
+  and any sampling overrides. `--model-id` (direct mode) sets the id the request
+  carries so it matches what a plain mlx_lm.server serves (often the weights'
+  absolute path); it defaults to the Mellum id, so oMLX runs are unchanged.
+  `docs/backends/mlx-lm.md` documents the recipe and the issues hit proving it.
 
 ### Changed
 

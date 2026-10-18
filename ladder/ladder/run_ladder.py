@@ -71,6 +71,7 @@ def build_pi_direct_args(
     prompt: Path = PROMPT_FILE,
     prompt_mode: str = "replace",
     thinking: str = "high",
+    model_id: str = MODEL_ID,
 ) -> list[str]:
     """The worker alone. `replace` (the default) sends the worker prompt only, which is what
     the shipped agent file does; `append` keeps Pi's base prompt under it (phases 0-2)."""
@@ -93,7 +94,7 @@ def build_pi_direct_args(
         "--thinking",
         thinking,
         "--model",
-        MODEL,
+        f"omlx/{model_id}",
         "--tools",
         TOOLS,
         *prompt_args,
@@ -443,6 +444,7 @@ def run_once(
     backend: str = "omlx",
     base_url: str | None = None,
     request_overrides: dict | None = None,
+    model_id: str | None = None,
 ) -> dict:
     rung = variant_rung(rung, roadmap)
     scratch = Path(tempfile.mkdtemp(prefix="ladder-"))
@@ -484,14 +486,18 @@ def run_once(
         args = build_pi_mode_args(rung.sentence)
         guards = True  # the mode always loads the guard extension
     else:
+        mid = model_id or MODEL_ID
         agent_dir = direct_agent_dir(
             scratch / "pi-agent",
             prof,
             **({"base_url": base_url} if base_url else {}),
             request_overrides=request_overrides,
+            model_id=mid,
         )
         env = child_env(dict(os.environ), str(trace), agent_dir, offline=True)
-        args = build_pi_direct_args(rung.sentence, guards, prompt, prompt_mode, thinking)
+        args = build_pi_direct_args(
+            rung.sentence, guards, prompt, prompt_mode, thinking, model_id=mid
+        )
     selected_pi = versions.get("pi_launch") or resolve_pi(pi_executable)
     env, environment = workspace_preflight(ws, rung.fixture, env)
     if mode == "delegated":
@@ -582,6 +588,7 @@ def run_once(
         "backend": backend if mode == "direct" else None,
         "base_url": (base_url or DEFAULT_BASE_URL) if mode == "direct" else None,
         "request_overrides": request_overrides if mode == "direct" else None,
+        "model_id": (model_id or MODEL_ID) if mode == "direct" else None,
         "versions": versions,
         "launch": launch,
         "telemetry": telemetry,
@@ -758,6 +765,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="direct mode: override the request top_p (default 1)",
     )
+    parser.add_argument(
+        "--model-id",
+        default=None,
+        help="direct mode: the model id the request carries; must match what the server serves (default the Mellum id). A plain mlx_lm.server often serves under the weights' absolute path — pass it here instead of the cwd/bare-name trick",
+    )
     return parser
 
 
@@ -773,6 +785,7 @@ def main(argv: list[str] | None = None) -> None:
         "--base-url": args.base_url is not None,
         "--temperature": args.temperature is not None,
         "--top-p": args.top_p is not None,
+        "--model-id": args.model_id is not None,
     }
     if args.mode != "direct" and any(direct_only.values()):
         used = ", ".join(name for name, on in direct_only.items() if on)
@@ -799,6 +812,7 @@ def main(argv: list[str] | None = None) -> None:
         "pi_launch": selected_pi,
         "backend": args.backend,
         "base_url": args.base_url or DEFAULT_BASE_URL,
+        "model_id": args.model_id or MODEL_ID,
         "request_overrides": request_overrides,
         "omlx": tool_version(["omlx", "--version"]) if use_admin else None,
     }
@@ -850,6 +864,7 @@ def main(argv: list[str] | None = None) -> None:
                     backend=args.backend,
                     base_url=args.base_url,
                     request_overrides=request_overrides,
+                    model_id=args.model_id,
                 )
                 row = table_row(record)
                 with table.open("a") as stream:
