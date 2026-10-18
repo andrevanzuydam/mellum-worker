@@ -90,3 +90,26 @@ against its linked evidence, pass `node --test tests/docs-caps.test.mjs` and
 `npm test`, and reconcile `[Unreleased]`. A phase may close before a release
 tag. A release is a tag where `package.json`, the tag, both README install
 lines and a `CHANGELOG.md` section agree.
+
+## 8. Coding principles (adapted from the tina4 developer skill)
+
+Borrowed from the Tina4 developer discipline, kept to what transfers to this
+repo (nothing framework-specific — no routes, ORM or journeys):
+
+- **Real tests, no mocks.** A change to our own code gets named positive *and*
+  negative tests, run against real dependencies — real fixtures, servers,
+  SQLite — not mocks. The ladder and the node suite already work this way.
+- **Use the real harness; scaffold, don't hand-roll.** Exercise the shipped
+  path — `run_ladder`, Pi, the real guards — not a throwaway stand-in. A result
+  from a scratch driver is a lead at best; conclusions come from the real
+  harness. (This is why `--acceptance-test` lives in the ladder, not a script.)
+- **Built-ins and zero dependencies first.** The package ships dependency-free
+  and the ladder has none; reach for the standard library and existing code
+  before a dependency, and never for one an install script would need (pacote
+  breaks on `build`/`prepare`/`prepack`/`install` scripts).
+- **Security by default.** Secrets live in `.env`, never in code, logs, URLs or
+  run records; fail safe (no secret or stack trace to a user-facing surface);
+  parameterise any SQL.
+- **Earn the claim.** State a result only when real evidence backs it — a green
+  test, a recorded ladder run — and label a screen as the lead it is. This is
+  the measured-settings and screens-first rules, said as a habit.
