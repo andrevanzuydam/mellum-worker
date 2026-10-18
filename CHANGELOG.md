@@ -39,6 +39,16 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- `--effort-ramp` (with `--redispatch`): an effort ladder across attempts. The
+  initial try and early re-dispatches run **quick** — Pi thinking `off` and a
+  small `max_tokens` (2k), which on an easy fix is sub-second — then escalate to
+  `medium`/8k and finally `high`/16k only as the frozen test keeps failing. The
+  frozen test gates it, so compute is spent in proportion to measured difficulty
+  (a quick slice that passes stops the ladder). `qwen-chat-template` maps Pi's
+  thinking level into `chat_template_kwargs.enable_thinking`, and `max_tokens`
+  is now an overridable request param; the run record names the per-attempt
+  thinking level and budget. Default off — existing runs are unchanged.
+
 - `--redispatch` now varies the sampling on each retry instead of re-running
   the same greedy decode: the request temperature grows by
   `--redispatch-temperature-step` (default 0.25) per attempt up to

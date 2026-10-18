@@ -59,7 +59,7 @@ REQUEST_PARAMS: dict[str, dict] = {
 # Request params a caller may override from the command line. Sampling only:
 # the ladder is greedy by design, so these exist for sampling screens, never to
 # change a measured default. Server-only and structural keys are not overridable.
-OVERRIDABLE_REQUEST_PARAMS = ("temperature", "top_p", "top_k", "min_p", "seed")
+OVERRIDABLE_REQUEST_PARAMS = ("temperature", "top_p", "top_k", "min_p", "seed", "max_tokens")
 
 
 def effective_request(name: str, overrides: dict | None = None) -> dict:

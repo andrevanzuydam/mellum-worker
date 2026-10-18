@@ -745,6 +745,45 @@ def test_run_once_grows_temperature_and_seed_across_redispatches(monkeypatch, tm
     ]
 
 
+def test_redispatch_effort_ramps_thinking_and_tokens():
+    from ladder.run_ladder import redispatch_effort
+
+    # quick start (initial attempt 0), escalating as the frozen test keeps failing
+    assert redispatch_effort(0, 5) == {"thinking": "off", "max_tokens": 2048}
+    assert redispatch_effort(1, 5) == {"thinking": "off", "max_tokens": 2048}
+    assert redispatch_effort(2, 5) == {"thinking": "medium", "max_tokens": 8192}
+    assert redispatch_effort(5, 5) == {"thinking": "high", "max_tokens": 16384}
+
+
+def test_run_once_effort_ramp_escalates_across_redispatches(monkeypatch, tmp_path):
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    monkeypatch.setattr(
+        run_ladder.subprocess,
+        "run",
+        lambda argv, **k: sp.CompletedProcess(argv, 0, stdout="", stderr=""),
+    )
+    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    seq = iter([(1, "boom"), (1, "boom"), (1, "boom"), (0, "ok")])  # fail 3, then pass
+    monkeypatch.setattr(run_ladder, "run_acceptance", lambda ws, name: next(seq))
+    acc = tmp_path / "test_acc.py"
+    acc.write_text("x")
+    rung = Rung(9, "agentclinic-p4", "impl", ["true"], lambda ws, base: CheckResult(False, True))
+    rec = run_ladder.run_once(
+        rung, "direct", "tuned", 1, tmp_path / "out", 5, {}, False,
+        acceptance_test=acc, redispatch=3, effort_ramp=True,
+    )
+    # with effort_ramp on, each re-dispatch slice carries its escalating effort
+    sched = rec["redispatch_schedule"]
+    assert [(s["thinking"], s["max_tokens"]) for s in sched] == [
+        ("off", 2048), ("medium", 8192), ("high", 16384),
+    ]
+
+
 def test_run_once_redispatches_even_when_attempts_time_out(monkeypatch, tmp_path):
     import subprocess as sp
 

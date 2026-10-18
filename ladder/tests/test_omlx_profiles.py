@@ -152,6 +152,15 @@ def test_check_effective_params_honours_overrides():
     check_effective_params(sent, "tuned", {"temperature": 0.7})
 
 
+def test_max_tokens_is_an_overridable_request_param():
+    # the effort ramp sets a small max_tokens for quick early slices, so it must
+    # be overridable per re-dispatch (it flows to the agent entry's maxTokens).
+    from ladder.omlx_profiles import OVERRIDABLE_REQUEST_PARAMS, effective_request
+
+    assert "max_tokens" in OVERRIDABLE_REQUEST_PARAMS
+    assert effective_request("tuned", {"max_tokens": 2048})["max_tokens"] == 2048
+
+
 def test_seed_is_an_overridable_request_param():
     # re-dispatch varies the seed per retry, so seed must be overridable (not a
     # server-only key). It does nothing at temperature 0, but the retry ramp

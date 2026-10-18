@@ -460,6 +460,23 @@ def redispatch_overrides(
     return out
 
 
+def redispatch_effort(attempt: int, total: int) -> dict:
+    """Effort for attempt ``attempt`` of an effort-ramped run (0 = the initial try).
+
+    Start quick and cheap, escalate only as the frozen test keeps failing: early
+    attempts run with thinking off and a small token budget (sub-second on an easy
+    fix), the middle with moderate thinking, the last at full thinking and budget.
+    The frozen test gates it — a quick slice that passes stops the ladder, so
+    compute is spent in proportion to measured difficulty.
+    """
+    frac = attempt / max(total, 1)
+    if frac < 0.34:
+        return {"thinking": "off", "max_tokens": 2048}
+    if frac < 0.67:
+        return {"thinking": "medium", "max_tokens": 8192}
+    return {"thinking": "high", "max_tokens": 16384}
+
+
 def run_acceptance(ws: Path, test_rel: str) -> tuple[int, str]:
     """Run the frozen acceptance test in the workspace: (exit code, combined output)."""
     proc = subprocess.run(
@@ -500,6 +517,7 @@ def run_once(
     redispatch: int = 0,
     redispatch_temperature_step: float = 0.25,
     redispatch_temperature_cap: float = 0.5,
+    effort_ramp: bool = False,
 ) -> dict:
     rung = variant_rung(rung, roadmap)
     if acceptance_test is not None:
@@ -551,16 +569,24 @@ def run_once(
         guards = True  # the mode always loads the guard extension
     else:
         mid = model_id or MODEL_ID
+        # Effort ramp: the initial attempt (0) starts quick — thinking off, small
+        # budget — and re-dispatches escalate it (see the loop below).
+        init_thinking = thinking
+        init_overrides = request_overrides
+        if effort_ramp:
+            eff0 = redispatch_effort(0, redispatch)
+            init_thinking = eff0["thinking"]
+            init_overrides = {**(request_overrides or {}), "max_tokens": eff0["max_tokens"]}
         agent_dir = direct_agent_dir(
             scratch / "pi-agent",
             prof,
             **({"base_url": base_url} if base_url else {}),
-            request_overrides=request_overrides,
+            request_overrides=init_overrides,
             model_id=mid,
         )
         env = child_env(dict(os.environ), str(trace), agent_dir, offline=True)
         args = build_pi_direct_args(
-            rung.sentence, guards, prompt, prompt_mode, thinking, model_id=mid
+            rung.sentence, guards, prompt, prompt_mode, init_thinking, model_id=mid
         )
     selected_pi = versions.get("pi_launch") or resolve_pi(pi_executable)
     env, environment = workspace_preflight(ws, rung.fixture, env)
@@ -628,13 +654,20 @@ def run_once(
                 redispatch_temperature_step,
                 temp_cap=redispatch_temperature_cap,
             )
-            redispatch_schedule.append(
-                {
-                    "attempt": redispatch_attempts,
-                    "temperature": overrides["temperature"],
-                    "seed": overrides["seed"],
-                }
-            )
+            entry = {
+                "attempt": redispatch_attempts,
+                "temperature": overrides["temperature"],
+                "seed": overrides["seed"],
+            }
+            # Effort ramp: escalate thinking + token budget as the test keeps failing.
+            re_thinking = thinking
+            if effort_ramp:
+                eff = redispatch_effort(redispatch_attempts, redispatch)
+                re_thinking = eff["thinking"]
+                overrides["max_tokens"] = eff["max_tokens"]
+                entry["thinking"] = eff["thinking"]
+                entry["max_tokens"] = eff["max_tokens"]
+            redispatch_schedule.append(entry)
             re_agent_dir = direct_agent_dir(
                 scratch / f"pi-agent-redispatch-{redispatch_attempts}",
                 prof,
@@ -648,7 +681,7 @@ def run_once(
                 guards,
                 prompt,
                 prompt_mode,
-                thinking,
+                re_thinking,
                 model_id=mid,
             )
             returncode, process_stdout, stderr, deadline_hit = _launch(
@@ -709,6 +742,7 @@ def run_once(
         "redispatch_temperature_cap": redispatch_temperature_cap
         if (redispatch and mode == "direct")
         else None,
+        "effort_ramp": effort_ramp if (redispatch and mode == "direct") else None,
         "redispatch_schedule": redispatch_schedule if mode == "direct" else None,
         "versions": versions,
         "launch": launch,
@@ -915,6 +949,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=0.5,
         help="with --redispatch: ceiling for the temperature ramp. Past it the temperature holds and only the seed moves, so retries keep diverging without going hot (high temperature corrupts the worker's JSON tool calls)",
     )
+    parser.add_argument(
+        "--effort-ramp",
+        action="store_true",
+        help="with --redispatch: start quick (thinking off, small token budget) and escalate thinking off->medium->high and max_tokens 2k->16k as the frozen test keeps failing. The test gates it, so compute is spent in proportion to difficulty",
+    )
     return parser
 
 
@@ -1025,6 +1064,7 @@ def main(argv: list[str] | None = None) -> None:
                     redispatch=args.redispatch,
                     redispatch_temperature_step=args.redispatch_temperature_step,
                     redispatch_temperature_cap=args.redispatch_temperature_cap,
+                    effort_ramp=args.effort_ramp,
                 )
                 row = table_row(record)
                 with table.open("a") as stream:
