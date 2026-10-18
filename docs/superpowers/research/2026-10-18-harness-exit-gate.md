@@ -21,6 +21,19 @@ served worker, n = 1 each, not the ladder's scored protocol:
   `resolve`/`reopen` methods but **no `id` field**, and its self-written tests
   asserted only status transitions. The hidden oracle's `first.id !=
   second.id` would raise `AttributeError`.
+- *Phase 4 mediated test, hand-driven loop.* The main model wrote the failing
+  test from the full spec (id included), it was confirmed red, then handed to
+  the worker as "make this pass" and driven through the tool loop against the
+  served weights. This time the worker added both a `status` and an `id` field
+  to `models.py` — the fields the single-shot had omitted — so the external
+  oracle did redirect it to the missed requirement. But its id code was buggy
+  (it did not collect) and the crude driver truncated on `finish_reason=length`
+  across several turns, so neither the mediated test nor the hidden oracle
+  reached green. The lead: an external, complete oracle **redirects** the worker
+  to a requirement its own tests drop, but reaching green also needs harness
+  quality — generation budget, re-dispatch of the failure, enough turns —
+  which this toy driver did not supply. Redirection is necessary, not
+  sufficient.
 
 **What is conjecture.** Everything about rates and about whether the fix
 works. That a mediated (externally authored) failing test lifts rungs 6-9
