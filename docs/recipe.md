@@ -1,6 +1,6 @@
 # Mellum Worker and Mellum Mode: Mellum 2.1 as a coding worker under Pi
 
-**Status: shipped 2026-10-09; two ways to use the worker (§4 delegated, §4b in-session), both measured. Follow-ups are scheduled in [2026-10-09-future-work.md](superpowers/research/2026-10-09-future-work.md). Every number links to its record under `docs/ladder/`; the lean-down that produced the shipped worker is summarised in [ablation-summary.md](ladder/ablation-summary.md).**
+**Status: shipped 2026-10-09; two ways to use the worker (§4 delegated, §4b in-session), both measured. What remains is in [`ROADMAP.md`](../ROADMAP.md) (M.11, M.12) and [`BACKLOG.md`](../BACKLOG.md); the [2026-10-09 table](superpowers/research/2026-10-09-future-work.md) is history. Every number links to its record under `docs/ladder/`; the lean-down that produced the shipped worker is summarised in [ablation-summary.md](ladder/ablation-summary.md).**
 
 Installed from this repo; measured by the ladder (`ladder/`), whose fixtures and phase records (`docs/ladder/`) live here too.
 
@@ -419,7 +419,7 @@ Not settled:
   the extension, 13/15 ([A1](ladder/ablation-a1-noguards/README.md)).
 - **The nudge does not fire inside a pi-subagents child.** Zero nudges in
   sixty delegated runs while eleven children "produced no output"; the
-  parent's re-dispatch is what recovers them. First backlog item.
+  parent's re-dispatch is what recovers them. Retired with the Worker (M.12).
 - The Markdown brief as a mediator: chunked into one prompt per step it
   passes everything at 2.4× the cost; as one prompt with step-wise
   "reply" instructions it drops to 11/15 because the model stops at the
