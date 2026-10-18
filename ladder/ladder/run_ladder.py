@@ -430,8 +430,12 @@ def read_events(trace: Path) -> list[dict]:
 
 def redispatch_message(test_rel: str, test_output: str) -> str:
     """The task handed to a fresh worker when the frozen acceptance test still fails."""
+    # Keep the part that says WHAT failed — the FAILURES section (tracebacks and
+    # assertions) — not a blind tail that can be all warnings and the summary.
+    marker = test_output.find("FAILURES")
+    detail = (test_output[marker:] if marker != -1 else test_output[-1800:])[:1800]
     return (
-        f"The acceptance test {test_rel} still fails:\n{test_output[-1200:]}\n"
+        f"The acceptance test {test_rel} still fails:\n{detail}\n"
         f"Fix the code and make {test_rel} pass. "
         "Test command: uv run --offline python -m pytest tests"
     )
@@ -480,7 +484,10 @@ def redispatch_effort(attempt: int, total: int) -> dict:
 def run_acceptance(ws: Path, test_rel: str) -> tuple[int, str]:
     """Run the frozen acceptance test in the workspace: (exit code, combined output)."""
     proc = subprocess.run(
-        ["uv", "run", "--offline", "python", "-m", "pytest", test_rel, "-q"],
+        # -p no:warnings: deprecation warnings drowned the real failure and pushed
+        # it out of the message window. --tb=short keeps the assertion, compactly.
+        ["uv", "run", "--offline", "python", "-m", "pytest", test_rel, "-q",
+         "-p", "no:warnings", "--tb=short"],
         cwd=ws,
         capture_output=True,
         text=True,

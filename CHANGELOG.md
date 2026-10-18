@@ -37,6 +37,15 @@ Versions match git tags; pin one in both install lines.
   project facts, `/mellum check`/`last`, and measuring via the ladder's mlx-lm
   backend.
 
+### Fixed
+
+- The re-dispatch retry message now carries the real test failure. It ran
+  `pytest -q` (whose output is dominated by deprecation warnings) and sent the
+  last 1200 chars — which were all warnings plus the terse summary, omitting the
+  assertion. Re-dispatches now run `pytest -q -p no:warnings --tb=short` and the
+  message carries the FAILURES section, so the worker sees what actually failed
+  instead of retrying blind.
+
 ### Changed
 
 - `--effort-ramp` (with `--redispatch`): an effort ladder across attempts. The

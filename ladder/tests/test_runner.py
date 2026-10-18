@@ -633,6 +633,43 @@ def test_redispatch_message_names_the_test_and_includes_the_failure():
     assert "tests/acc.py" in msg and "assert 1 == 2" in msg and "fail" in msg.lower()
 
 
+def test_run_acceptance_suppresses_warnings_and_keeps_the_traceback(monkeypatch, tmp_path):
+    import subprocess as sp
+
+    from ladder import run_ladder
+
+    captured = {}
+
+    def fake(argv, **k):
+        captured["argv"] = argv
+        return sp.CompletedProcess(argv, 1, stdout="", stderr="")
+
+    monkeypatch.setattr(run_ladder.subprocess, "run", fake)
+    run_ladder.run_acceptance(tmp_path, "tests/acc.py")
+    # warnings off (they drowned the signal) and a short traceback (keeps the assertion)
+    assert "no:warnings" in captured["argv"]
+    assert "--tb=short" in captured["argv"]
+
+
+def test_redispatch_message_sends_the_failure_not_the_warning_noise():
+    from ladder.run_ladder import redispatch_message
+
+    # pytest output: failures first (the assertion), then the summary — no warnings
+    # because run_acceptance disables them. The message must carry the assertion.
+    out = (
+        "FF\n"
+        "=================================== FAILURES ===================================\n"
+        "tests/t.py:24: in test_resolve\n"
+        "    assert r.status_code == 303\n"
+        "E   assert 404 == 303\n"
+        "=========================== short test summary info ===========================\n"
+        "FAILED tests/t.py::test_resolve\n2 failed in 0.7s"
+    )
+    msg = redispatch_message("tests/t.py", out)
+    assert "assert 404 == 303" in msg  # the real failure reaches the worker
+    assert "FAILURES" in msg
+
+
 def test_parser_redispatch_default_and_set():
     from ladder.run_ladder import build_parser
 
