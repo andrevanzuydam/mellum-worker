@@ -28,11 +28,13 @@ forced) serving the 6-bit weights.
   **Amendment (2026-10-18, before any arm-B run):** a greedy `--redispatch`
   re-runs the same deterministic decode, so the retries added nothing beyond the
   appended failure text. Arm B now runs with the default temperature ramp
-  (`--redispatch-temperature-step 0.2`: temperature grows 0.2 per retry, capped
-  at 1.0, seed moves with the attempt), so each retry explores a new path. Arm A
-  (stock, no `--redispatch`) is unaffected and its runs stand. This changes arm
-  B's retry mechanism only; the question, n, scoring and decision rule are
-  unchanged.
+  (`--redispatch-temperature-step 0.25` up to `--redispatch-temperature-cap 0.5`,
+  seed moving with the attempt and continuing past the cap), so each retry
+  explores a new path without going hot — a screen showed a 0→1.0 ramp corrupts
+  the worker's JSON tool calls and thrashes the app, so the cap stays low and
+  reseeding carries the later retries. Arm A (stock, no `--redispatch`) is
+  unaffected and its runs stand. This changes arm B's retry mechanism only; the
+  question, n, scoring and decision rule are unchanged.
 
 Arm B differs from A by the whole mediated bundle (placed test + no-servers
 guidance + re-dispatch), not the placed test alone — so this decides the

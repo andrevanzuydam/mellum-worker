@@ -41,15 +41,18 @@ Versions match git tags; pin one in both install lines.
 
 - `--redispatch` now varies the sampling on each retry instead of re-running
   the same greedy decode: the request temperature grows by
-  `--redispatch-temperature-step` (default 0.2, capped at 1.0) per attempt and
-  the seed moves with the attempt number, so a retry explores a different path
-  yet stays reproducible. Set the step to 0 to keep every retry greedy (the old
-  behaviour). The run record names the step and the per-attempt
-  temperature/seed schedule. `seed` is now an overridable request param. A
-  re-dispatch now also fires when an attempt hits the deadline (a timeout is
-  still a failing frozen test), so a fresh hotter worker continues on the same
-  workspace instead of the loop giving up — keep the per-attempt `--deadline`
-  small to bound the total.
+  `--redispatch-temperature-step` (default 0.25) per attempt up to
+  `--redispatch-temperature-cap` (default 0.5), and the seed moves with the
+  attempt number. Past the cap the temperature holds and only the seed keeps
+  moving, so retries keep diverging (reproducibly) without going hot — high
+  temperature corrupts the worker's JSON tool calls (observed: a 0→1.0 ramp ran
+  44 tool errors in 121 requests and thrashed a working app into a broken one).
+  Set the step to 0 to keep every retry greedy. The run record names the step,
+  the cap and the per-attempt temperature/seed schedule. `seed` is now an
+  overridable request param. A re-dispatch now also fires when an attempt hits
+  the deadline (a timeout is still a failing frozen test), so a fresh worker
+  continues on the same workspace instead of the loop giving up — keep the
+  per-attempt `--deadline` small to bound the total.
 
 - The README now opens with the idea the package serves, domain engineering
   (you write specs and tests, Mellum makes the test command exit 0), names

@@ -438,20 +438,24 @@ def redispatch_message(test_rel: str, test_output: str) -> str:
 
 
 def redispatch_overrides(
-    base_overrides: dict | None, attempt: int, temp_step: float
+    base_overrides: dict | None,
+    attempt: int,
+    temp_step: float,
+    temp_cap: float = 1.0,
 ) -> dict:
     """Request overrides for re-dispatch ``attempt`` (1-based).
 
     A greedy (temperature 0) re-dispatch re-runs the same deterministic decode,
     so a retry must change the sampling to explore a different path. We grow the
-    temperature by ``temp_step`` per attempt (capped at 1.0) and move the seed by
-    the attempt number, so each retry diverges yet stays reproducible. The seed
-    only bites once temperature > 0; the ramp guarantees that from attempt 1.
+    temperature by ``temp_step`` per attempt up to ``temp_cap`` and move the seed
+    by the attempt number. Past the cap the temperature holds but the seed keeps
+    moving, so retries keep diverging (reproducibly) without going hot — high
+    temperature corrupts a tool-calling worker's JSON, so the cap stays low.
     """
     out = dict(base_overrides or {})
     base_temp = out.get("temperature") or 0
     base_seed = out.get("seed", 42)
-    out["temperature"] = round(min(1.0, base_temp + attempt * temp_step), 4)
+    out["temperature"] = round(min(temp_cap, base_temp + attempt * temp_step), 4)
     out["seed"] = base_seed + attempt
     return out
 
@@ -494,7 +498,8 @@ def run_once(
     model_id: str | None = None,
     acceptance_test: Path | None = None,
     redispatch: int = 0,
-    redispatch_temperature_step: float = 0.2,
+    redispatch_temperature_step: float = 0.25,
+    redispatch_temperature_cap: float = 0.5,
 ) -> dict:
     rung = variant_rung(rung, roadmap)
     if acceptance_test is not None:
@@ -618,7 +623,10 @@ def run_once(
             # instead of re-running the same greedy decode. Rebuild the agent dir
             # (it bakes the request params) and point Pi at it for this attempt.
             overrides = redispatch_overrides(
-                request_overrides, redispatch_attempts, redispatch_temperature_step
+                request_overrides,
+                redispatch_attempts,
+                redispatch_temperature_step,
+                temp_cap=redispatch_temperature_cap,
             )
             redispatch_schedule.append(
                 {
@@ -696,6 +704,9 @@ def run_once(
         else None,
         "redispatch_attempts": redispatch_attempts if mode == "direct" else None,
         "redispatch_temperature_step": redispatch_temperature_step
+        if (redispatch and mode == "direct")
+        else None,
+        "redispatch_temperature_cap": redispatch_temperature_cap
         if (redispatch and mode == "direct")
         else None,
         "redispatch_schedule": redispatch_schedule if mode == "direct" else None,
@@ -895,8 +906,14 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--redispatch-temperature-step",
         type=float,
-        default=0.2,
-        help="with --redispatch: how much to grow the request temperature per retry (and the seed moves with the attempt), so a retry explores a new path instead of re-running the same greedy decode. Capped at 1.0; 0 keeps every retry greedy",
+        default=0.25,
+        help="with --redispatch: how much to grow the request temperature per retry (the seed moves with the attempt regardless), so a retry explores a new path instead of re-running the same greedy decode. 0 keeps every retry greedy",
+    )
+    parser.add_argument(
+        "--redispatch-temperature-cap",
+        type=float,
+        default=0.5,
+        help="with --redispatch: ceiling for the temperature ramp. Past it the temperature holds and only the seed moves, so retries keep diverging without going hot (high temperature corrupts the worker's JSON tool calls)",
     )
     return parser
 
@@ -1007,6 +1024,7 @@ def main(argv: list[str] | None = None) -> None:
                     acceptance_test=args.acceptance_test,
                     redispatch=args.redispatch,
                     redispatch_temperature_step=args.redispatch_temperature_step,
+                    redispatch_temperature_cap=args.redispatch_temperature_cap,
                 )
                 row = table_row(record)
                 with table.open("a") as stream:

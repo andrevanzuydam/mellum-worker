@@ -639,13 +639,20 @@ def test_parser_redispatch_default_and_set():
     base = ["--profile", "baseline", "--rung", "9", "--out", "x", "--acceptance-test", "/tmp/t.py"]
     assert build_parser().parse_args(base).redispatch == 0
     assert build_parser().parse_args([*base, "--redispatch", "3"]).redispatch == 3
-    # the temperature ramp per retry defaults to 0.2 and is overridable
-    assert build_parser().parse_args(base).redispatch_temperature_step == 0.2
+    # the temperature ramp per retry defaults to a 0.25 step capped at 0.5
+    assert build_parser().parse_args(base).redispatch_temperature_step == 0.25
+    assert build_parser().parse_args(base).redispatch_temperature_cap == 0.5
     assert (
         build_parser()
         .parse_args([*base, "--redispatch-temperature-step", "0.3"])
         .redispatch_temperature_step
         == 0.3
+    )
+    assert (
+        build_parser()
+        .parse_args([*base, "--redispatch-temperature-cap", "0.7"])
+        .redispatch_temperature_cap
+        == 0.7
     )
 
 
@@ -693,11 +700,20 @@ def test_redispatch_overrides_grows_temperature_and_moves_the_seed():
     a2 = redispatch_overrides({}, 2, 0.2)
     assert a1["temperature"] == 0.2 and a1["seed"] == 43
     assert a2["temperature"] == 0.4 and a2["seed"] == 44
-    # temperature is capped at 1.0
+    # temperature is capped (default ceiling 1.0)
     assert redispatch_overrides({}, 10, 0.2)["temperature"] == 1.0
     # a custom base temperature and seed are honoured
     b = redispatch_overrides({"temperature": 0.5, "seed": 100}, 1, 0.1)
     assert b["temperature"] == 0.6 and b["seed"] == 101
+
+
+def test_redispatch_overrides_caps_temperature_but_keeps_reseeding():
+    from ladder.run_ladder import redispatch_overrides
+
+    # step 0.25 capped at 0.5: temp holds at the cap past attempt 2, seed moves on
+    s = [redispatch_overrides({}, n, 0.25, temp_cap=0.5) for n in range(1, 5)]
+    assert [r["temperature"] for r in s] == [0.25, 0.5, 0.5, 0.5]
+    assert [r["seed"] for r in s] == [43, 44, 45, 46]
 
 
 def test_run_once_grows_temperature_and_seed_across_redispatches(monkeypatch, tmp_path):
