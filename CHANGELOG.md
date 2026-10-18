@@ -22,6 +22,12 @@ Versions match git tags; pin one in both install lines.
   absolute path); it defaults to the Mellum id, so oMLX runs are unchanged.
   `docs/backends/mlx-lm.md` documents the recipe and the issues hit proving it.
 
+- `run_ladder --acceptance-test <file>` (direct mode): places a hand-written
+  failing test in the workspace's `tests/` before the baseline and makes the
+  task "make tests/<name> pass". Because the test is in the baseline, the
+  existing-tests scorer freezes it (the worker cannot weaken it) — the
+  mediated-test screen for M.11, run on real Pi and scored by the hidden tests.
+
 - `EXAMPLE.md`: a worked, example-driven guide to using Mellum — one-shot
   `/mellum`, multi-task spans, handing it a failing test (the reliable pattern),
   project facts, `/mellum check`/`last`, and measuring via the ladder's mlx-lm

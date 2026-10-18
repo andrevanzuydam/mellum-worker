@@ -371,6 +371,7 @@ def prepare_workspace(
     strip_facts_section: bool = False,
     facts_section: str = "fixture",
     roadmap: str = "phase-files",
+    acceptance_test: Path | None = None,
 ) -> Path:
     ws = copy_fixture(rung.fixture, scratch / f"rung{rung.number}")
     agents = ws / "AGENTS.md"
@@ -383,6 +384,11 @@ def prepare_workspace(
         for spec in (ws / "specs").glob("phase-*.md"):
             spec.unlink()
         (ws / "specs" / "roadmap.md").write_text(one_file_roadmap())
+    # Place the mediated acceptance test in the baseline, so the worker must
+    # make it pass and the existing_tests_kept scorer freezes it (unweakenable).
+    if acceptance_test is not None:
+        (ws / "tests").mkdir(exist_ok=True)
+        shutil.copy(acceptance_test, ws / "tests" / acceptance_test.name)
     git(ws, "init", "-q")
     git(ws, "add", "-A")
     git(
@@ -445,8 +451,15 @@ def run_once(
     base_url: str | None = None,
     request_overrides: dict | None = None,
     model_id: str | None = None,
+    acceptance_test: Path | None = None,
 ) -> dict:
     rung = variant_rung(rung, roadmap)
+    if acceptance_test is not None:
+        rung = replace(
+            rung,
+            sentence=f"Make tests/{acceptance_test.name} pass. "
+            "Test command: uv run --offline python -m pytest tests",
+        )
     scratch = Path(tempfile.mkdtemp(prefix="ladder-"))
     ws = prepare_workspace(
         rung,
@@ -454,6 +467,7 @@ def run_once(
         strip_facts_section=strip_facts_section,
         facts_section=facts_section,
         roadmap=roadmap,
+        acceptance_test=acceptance_test,
     )
     paths, lines = baseline_index(ws)
     trace = scratch / "trace.jsonl"
@@ -589,6 +603,9 @@ def run_once(
         "base_url": (base_url or DEFAULT_BASE_URL) if mode == "direct" else None,
         "request_overrides": request_overrides if mode == "direct" else None,
         "model_id": (model_id or MODEL_ID) if mode == "direct" else None,
+        "acceptance_test": acceptance_test.name
+        if (acceptance_test is not None and mode == "direct")
+        else None,
         "versions": versions,
         "launch": launch,
         "telemetry": telemetry,
@@ -770,6 +787,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="direct mode: the model id the request carries; must match what the server serves (default the Mellum id). A plain mlx_lm.server often serves under the weights' absolute path — pass it here instead of the cwd/bare-name trick",
     )
+    parser.add_argument(
+        "--acceptance-test",
+        type=Path,
+        default=None,
+        help="direct mode: a hand-written failing test placed in the workspace's tests/ before the baseline; the task becomes 'make tests/<name> pass' and the existing-tests scorer freezes it (the mediated-test screen, M.11)",
+    )
     return parser
 
 
@@ -786,6 +809,7 @@ def main(argv: list[str] | None = None) -> None:
         "--temperature": args.temperature is not None,
         "--top-p": args.top_p is not None,
         "--model-id": args.model_id is not None,
+        "--acceptance-test": args.acceptance_test is not None,
     }
     if args.mode != "direct" and any(direct_only.values()):
         used = ", ".join(name for name, on in direct_only.items() if on)
@@ -865,6 +889,7 @@ def main(argv: list[str] | None = None) -> None:
                     base_url=args.base_url,
                     request_overrides=request_overrides,
                     model_id=args.model_id,
+                    acceptance_test=args.acceptance_test,
                 )
                 row = table_row(record)
                 with table.open("a") as stream:

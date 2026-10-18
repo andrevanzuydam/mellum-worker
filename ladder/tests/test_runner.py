@@ -614,11 +614,79 @@ def test_run_once_wires_the_switches_into_the_child_env_and_the_workspace(
     assert len(child_envs) == 1
     assert child_envs[0].get("MELLUM_MODE_FACTS") == expect_env
     assert prepared == [
-        {"strip_facts_section": strip, "facts_section": "fixture", "roadmap": "phase-files"}
+        {
+            "strip_facts_section": strip,
+            "facts_section": "fixture",
+            "roadmap": "phase-files",
+            "acceptance_test": None,
+        }
     ]
 
 
 # ---- backend / base-url / sampling overrides (the scriptable-MLX-server benchmark) ----
+
+
+def test_parser_acceptance_test_default_and_set():
+    from ladder.run_ladder import build_parser
+
+    base = ["--profile", "baseline", "--rung", "9", "--out", "x"]
+    assert build_parser().parse_args(base).acceptance_test is None
+    a = build_parser().parse_args([*base, "--acceptance-test", "/tmp/t.py"])
+    assert str(a.acceptance_test) == "/tmp/t.py"
+
+
+def test_main_refuses_acceptance_test_outside_direct_mode(tmp_path):
+    from ladder.run_ladder import main
+
+    with pytest.raises(SystemExit):
+        main(["--profile", "baseline", "--rung", "9", "--out", str(tmp_path / "o"),
+              "--mode", "mode", "--acceptance-test", "/tmp/t.py"])
+
+
+def test_run_once_places_acceptance_test_and_sets_make_it_pass(monkeypatch, tmp_path):
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    seen = {}
+
+    def prepare(rung, scratch, **kw):
+        seen.update(kw)
+        scratch.mkdir(parents=True, exist_ok=True)
+        return scratch
+
+    monkeypatch.setattr(run_ladder, "prepare_workspace", prepare)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    monkeypatch.setattr(
+        run_ladder.subprocess, "run",
+        lambda a, **k: sp.CompletedProcess(a, 0, stdout="", stderr=""),
+    )
+    acc = tmp_path / "test_acc.py"
+    acc.write_text("def test_x():\n    assert True\n")
+    rung = Rung(9, "agentclinic-p4", "Implement specs/phase-4-resolve-reopen.md",
+                ["true"], lambda ws, base: CheckResult(False, True))
+    rec = run_ladder.run_once(
+        rung, "direct", "tuned", 1, tmp_path / "out", 5, {}, False, acceptance_test=acc
+    )
+    assert seen.get("acceptance_test") == acc
+    assert rec["launch"]["argv"][-1] == (
+        "Make tests/test_acc.py pass. Test command: uv run --offline python -m pytest tests"
+    )
+    assert rec["acceptance_test"] == "test_acc.py"
+
+
+@pytest.mark.slow
+def test_prepare_workspace_places_the_acceptance_test_in_the_baseline(tmp_path):
+    from ladder.run_ladder import git, prepare_workspace
+    from ladder.rungs import RUNGS
+
+    acc = tmp_path / "test_acc.py"
+    acc.write_text("def test_x():\n    assert True\n")
+    ws = prepare_workspace(RUNGS[9], tmp_path, acceptance_test=acc)
+    placed = ws / "tests" / "test_acc.py"
+    assert placed.exists() and placed.read_text() == acc.read_text()
+    assert git(ws, "ls-files", "tests/test_acc.py").strip() == "tests/test_acc.py"
 
 
 def test_parser_backend_base_url_and_sampling_defaults_and_choices():
