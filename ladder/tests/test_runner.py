@@ -733,9 +733,10 @@ def test_run_once_places_acceptance_test_and_sets_make_it_pass(monkeypatch, tmp_
         rung, "direct", "tuned", 1, tmp_path / "out", 5, {}, False, acceptance_test=acc
     )
     assert seen.get("acceptance_test") == acc
-    assert rec["launch"]["argv"][-1] == (
-        "Make tests/test_acc.py pass. Test command: uv run --offline python -m pytest tests"
-    )
+    sentence = rec["launch"]["argv"][-1]
+    assert sentence.startswith("Make tests/test_acc.py pass.")
+    assert "do not run the app or start servers" in sentence  # blocking-command guard
+    assert "Test command: uv run --offline python -m pytest tests" in sentence
     assert rec["acceptance_test"] == "test_acc.py"
 
 

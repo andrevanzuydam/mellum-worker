@@ -481,6 +481,8 @@ def run_once(
         rung = replace(
             rung,
             sentence=f"Make tests/{acceptance_test.name} pass. "
+            "Verify only with the test command; do not run the app or start "
+            "servers — they block. "
             "Test command: uv run --offline python -m pytest tests",
         )
     scratch = Path(tempfile.mkdtemp(prefix="ladder-"))
