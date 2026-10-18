@@ -70,3 +70,14 @@ Two supporting facts:
 Per the M.11 row, a moved rung-9 screen is what makes the preregistered rungs 6-9
 run and then the Mode-command spec owed. The freeze-the-oracle guard and the
 worker bash-timeout ("Execution bounds") remain their own BACKLOG items.
+
+## Effort
+
+2026-10-18: **~3.2 h active** (21 commits, 16:44–19:50) within a **~5.4 h
+session** (clone ~14:24 → ~19:50; the difference is exploration, model runs and
+waits, not hands-on). Span measured from git commit timestamps, not a timer.
+That span covers the whole day's work this note caps: the mlx-lm backend +
+`--model-id` + sampling flags, the exit-gate SDD records, the `mellum-dev` skill
++ CI + `EXAMPLE.md`, and the mediated-test path (`--acceptance-test`,
+`--redispatch`, the pytest-collectable-name and no-servers fixes) ending in this
+screen.
