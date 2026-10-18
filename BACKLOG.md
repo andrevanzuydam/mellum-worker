@@ -162,3 +162,15 @@ test but Excludes guard changes, so the unweakenable half is here
 *Reopens when* M.11's screen moves rung 9 and a trace shows a worker editing or
 deleting a test to exit, or writing outside the allowed paths, on a run that
 then scored as done.
+
+**Benchmark a plain mlx_lm.server against oMLX, and sampling screens.** The
+ladder now supports both (`--backend mlx-lm --base-url`, and
+`--temperature`/`--top-p`; direct mode only), but no runs have been made. The
+two servers cannot be made byte-identical — `thinking_budget`,
+`max_tool_result_tokens` and penalty handling are oMLX server-only with no
+mlx_lm.server equivalent — so an oMLX-vs-mlx-lm result is a harness finding
+about servers, not a claim about the shipped worker; sampling sweeps are the
+same, since the ladder is greedy by design ([sdd](docs/sdd.md)).
+*Reopens when* someone runs a screen (a few rungs, a research note naming the
+server's launch flags and n); a measured claim additionally needs a
+preregistered run with the server differences pinned.
