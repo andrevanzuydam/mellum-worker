@@ -10,6 +10,15 @@ Versions match git tags; pin one in both install lines.
   AgentClinic phase 4 id miss follows the one-file roadmap (5 of 6 runs,
   against 1 of 6 with one spec file per phase). Exploratory, n = 3 per arm.
 
+- The ladder can point a direct-mode run at a second backend and sweep
+  sampling for screens: `--backend mlx-lm --base-url <url>` targets a plain
+  OpenAI-compatible MLX server (no oMLX admin API, so the server's own launch
+  flags, not the ladder, set the server-only values), and `--temperature` /
+  `--top-p` override the greedy request defaults. `--backend omlx` stays the
+  default and applies/restores the server profile as before, so existing
+  records stand; the run record and `versions` now name the backend, base URL
+  and any sampling overrides.
+
 ### Changed
 
 - The README now opens with the idea the package serves, domain engineering

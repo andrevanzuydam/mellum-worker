@@ -618,6 +618,187 @@ def test_run_once_wires_the_switches_into_the_child_env_and_the_workspace(
     ]
 
 
+# ---- backend / base-url / sampling overrides (the scriptable-MLX-server benchmark) ----
+
+
+def test_parser_backend_base_url_and_sampling_defaults_and_choices():
+    from ladder.run_ladder import build_parser
+
+    base = ["--profile", "baseline", "--rung", "1", "--out", "x"]
+    args = build_parser().parse_args(base)
+    assert args.backend == "omlx" and args.base_url is None
+    assert args.temperature is None and args.top_p is None
+    args = build_parser().parse_args(
+        [
+            *base,
+            "--backend",
+            "mlx-lm",
+            "--base-url",
+            "http://127.0.0.1:8080/v1",
+            "--temperature",
+            "0.7",
+            "--top-p",
+            "0.9",
+        ]
+    )
+    assert args.backend == "mlx-lm" and args.base_url == "http://127.0.0.1:8080/v1"
+    assert args.temperature == 0.7 and args.top_p == 0.9
+
+
+def test_main_refuses_mlx_lm_backend_without_a_base_url(tmp_path):
+    from ladder.run_ladder import main
+
+    with pytest.raises(SystemExit):
+        main(
+            [
+                "--profile", "baseline", "--rung", "1",
+                "--out", str(tmp_path / "o"), "--backend", "mlx-lm",
+            ]
+        )
+
+
+def test_main_refuses_direct_only_flags_outside_direct_mode(tmp_path):
+    from ladder.run_ladder import main
+
+    for extra in (
+        ["--base-url", "http://h/v1"],
+        ["--temperature", "0.7"],
+        ["--top-p", "0.9"],
+        ["--backend", "mlx-lm", "--base-url", "http://h/v1"],
+    ):
+        with pytest.raises(SystemExit):
+            main(
+                [
+                    "--profile", "baseline", "--rung", "1",
+                    "--out", str(tmp_path / "o"), "--mode", "mode", *extra,
+                ]
+            )
+
+
+def test_run_once_wires_base_url_and_overrides_into_direct(monkeypatch, tmp_path):
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    seen = {}
+
+    def fake_direct(dest, prof, **kw):
+        seen.update(kw)
+        dest.mkdir(parents=True, exist_ok=True)
+        return dest
+
+    monkeypatch.setattr(run_ladder, "direct_agent_dir", fake_direct)
+    monkeypatch.setattr(
+        run_ladder.subprocess,
+        "run",
+        lambda a, **k: sp.CompletedProcess(a, 0, stdout="", stderr=""),
+    )
+    monkeypatch.setattr(
+        run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch
+    )
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    rung = Rung(
+        1, "calculator", "fix it", ["true"], lambda ws, base: CheckResult(False, True)
+    )
+    run_ladder.run_once(
+        rung, "direct", "tuned", 1, tmp_path / "out", 5, {}, False,
+        base_url="http://127.0.0.1:8080/v1",
+        request_overrides={"temperature": 0.7, "top_p": 0.9},
+    )
+    assert seen["base_url"] == "http://127.0.0.1:8080/v1"
+    assert seen["request_overrides"] == {"temperature": 0.7, "top_p": 0.9}
+
+
+def test_run_record_names_backend_base_url_and_overrides(monkeypatch, tmp_path):
+    import json
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    _real_run_for_git(monkeypatch, run_ladder)
+    monkeypatch.setattr(
+        run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch
+    )
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    rung = Rung(
+        1, "calculator", "fix it", ["true"], lambda ws, base: CheckResult(False, True)
+    )
+    run_ladder.run_once(
+        rung, "direct", "tuned", 1, tmp_path / "out", 5, {}, False,
+        backend="mlx-lm", base_url="http://127.0.0.1:8080/v1",
+        request_overrides={"temperature": 0.7},
+    )
+    record = json.loads(next((tmp_path / "out").glob("*/run.json")).read_text())
+    assert record["backend"] == "mlx-lm"
+    assert record["base_url"] == "http://127.0.0.1:8080/v1"
+    assert record["request_overrides"] == {"temperature": 0.7}
+
+
+def test_run_record_leaves_backend_fields_empty_in_other_modes(monkeypatch, tmp_path):
+    import json
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    _real_run_for_git(monkeypatch, run_ladder)
+    monkeypatch.setattr(
+        run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch
+    )
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    monkeypatch.setattr(run_ladder, "mirror_agent_dir", lambda s, d, t, **kw: d)
+    rung = Rung(
+        1, "calculator", "fix it", ["true"], lambda ws, base: CheckResult(False, True)
+    )
+    run_ladder.run_once(rung, "delegated", "baseline", 1, tmp_path / "out", 5, {}, True)
+    record = json.loads(next((tmp_path / "out").glob("*/run.json")).read_text())
+    assert record["backend"] is None and record["base_url"] is None
+    assert record["request_overrides"] is None
+
+
+def test_main_runs_the_admin_profile_only_for_the_omlx_backend(monkeypatch, tmp_path):
+    """omlx backend applies/restores the server profile; a plain mlx-lm server has no admin API, so it must not."""
+    import contextlib
+
+    from ladder import run_ladder
+
+    calls = []
+
+    class FakeClient:
+        def __init__(self, base):
+            calls.append(("client", base))
+
+    @contextlib.contextmanager
+    def fake_profile(client, model_id, name, path):
+        calls.append(("profile", name))
+        yield {"max_tokens": 1}
+
+    monkeypatch.setattr(run_ladder, "AdminClient", FakeClient)
+    monkeypatch.setattr(run_ladder, "profile", fake_profile)
+    monkeypatch.setattr(run_ladder, "resolve_pi", lambda e: {"executable": e, "version": "t"})
+    monkeypatch.setattr(run_ladder, "tool_version", lambda cmd: "t")
+    monkeypatch.setattr(
+        run_ladder, "run_once", lambda *a, **k: {"score": {"effective_params": None}}
+    )
+    monkeypatch.setattr(run_ladder, "table_row", lambda record: "")
+
+    run_ladder.main(
+        ["--profile", "baseline", "--rung", "1", "--out", str(tmp_path / "o"), "--mode", "direct"]
+    )
+    assert ("client", "http://127.0.0.1:8001") in calls
+    assert any(c[0] == "profile" for c in calls)
+
+    calls.clear()
+    run_ladder.main(
+        [
+            "--profile", "baseline", "--rung", "1", "--out", str(tmp_path / "o2"),
+            "--mode", "direct", "--backend", "mlx-lm",
+            "--base-url", "http://127.0.0.1:8080/v1",
+        ]
+    )
+    assert calls == []
+
+
 @pytest.mark.parametrize("outcome", ["normal", "signal", "deadline"])
 def test_runner_process_outcomes_do_not_invent_settlement(
     monkeypatch, tmp_path, outcome

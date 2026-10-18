@@ -19,6 +19,7 @@ import signal
 import subprocess
 import tempfile
 import time
+from contextlib import nullcontext
 from dataclasses import asdict, replace
 from pathlib import Path
 from uuid import uuid4
@@ -26,6 +27,7 @@ from uuid import uuid4
 from .omlx_profiles import PROFILES, AdminClient, check_effective_params, profile
 from .pi_launch import resolve_pi, subagents_revision, workspace_preflight
 from .pi_profile import (
+    DEFAULT_BASE_URL,
     LADDER_ROOT,
     REPO_ROOT,
     direct_agent_dir,
@@ -438,6 +440,9 @@ def run_once(
     pi_executable: str = "pi",
     facts_section: str = "fixture",
     roadmap: str = "phase-files",
+    backend: str = "omlx",
+    base_url: str | None = None,
+    request_overrides: dict | None = None,
 ) -> dict:
     rung = variant_rung(rung, roadmap)
     scratch = Path(tempfile.mkdtemp(prefix="ladder-"))
@@ -479,7 +484,12 @@ def run_once(
         args = build_pi_mode_args(rung.sentence)
         guards = True  # the mode always loads the guard extension
     else:
-        agent_dir = direct_agent_dir(scratch / "pi-agent", prof)
+        agent_dir = direct_agent_dir(
+            scratch / "pi-agent",
+            prof,
+            **({"base_url": base_url} if base_url else {}),
+            request_overrides=request_overrides,
+        )
         env = child_env(dict(os.environ), str(trace), agent_dir, offline=True)
         args = build_pi_direct_args(rung.sentence, guards, prompt, prompt_mode, thinking)
     selected_pi = versions.get("pi_launch") or resolve_pi(pi_executable)
@@ -569,6 +579,9 @@ def run_once(
         else None,
         "prompt_mode": prompt_mode if mode == "direct" else None,
         "thinking": thinking if mode == "direct" else None,
+        "backend": backend if mode == "direct" else None,
+        "base_url": (base_url or DEFAULT_BASE_URL) if mode == "direct" else None,
+        "request_overrides": request_overrides if mode == "direct" else None,
         "versions": versions,
         "launch": launch,
         "telemetry": telemetry,
@@ -722,6 +735,29 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--omlx", default="http://127.0.0.1:8001")
+    parser.add_argument(
+        "--backend",
+        choices=["omlx", "mlx-lm"],
+        default="omlx",
+        help="direct mode: omlx (default; applies and restores the server profile via oMLX's admin API) or mlx-lm (a plain OpenAI-compatible MLX server with no admin API, so its launch flags, not the ladder, set the server-only values)",
+    )
+    parser.add_argument(
+        "--base-url",
+        default=None,
+        help="direct mode: OpenAI-completions base URL Pi posts to (default the oMLX endpoint http://127.0.0.1:8001/v1); required with --backend mlx-lm",
+    )
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=None,
+        help="direct mode: override the request temperature (default greedy 0). The ladder is greedy by design, so this is for sampling screens, not measured claims",
+    )
+    parser.add_argument(
+        "--top-p",
+        type=float,
+        default=None,
+        help="direct mode: override the request top_p (default 1)",
+    )
     return parser
 
 
@@ -732,33 +768,64 @@ def main(argv: list[str] | None = None) -> None:
         RUNGS[n].fixture not in AGENTCLINIC_FIXTURES for n in args.rung
     ):
         parser.error("--facts-section and --roadmap apply only to the AgentClinic rungs 6-9")
+    direct_only = {
+        "--backend mlx-lm": args.backend != "omlx",
+        "--base-url": args.base_url is not None,
+        "--temperature": args.temperature is not None,
+        "--top-p": args.top_p is not None,
+    }
+    if args.mode != "direct" and any(direct_only.values()):
+        used = ", ".join(name for name, on in direct_only.items() if on)
+        parser.error(f"{used} apply only to --mode direct")
+    if args.backend == "mlx-lm" and args.base_url is None:
+        parser.error(
+            "--backend mlx-lm requires --base-url (e.g. http://127.0.0.1:8080/v1); "
+            "a plain MLX server has no admin API for the ladder to configure"
+        )
+    request_overrides = {
+        key: value
+        for key, value in (("temperature", args.temperature), ("top_p", args.top_p))
+        if value is not None
+    } or None
     # Absolute, so the record's prompt_file is relative to REPO_ROOT; run from ladder/,
     # `prompts/ablation/v4a-no-procedure.md` is ladder/prompts/ablation/....
     args.prompt = args.prompt.resolve()
     install_signal_handlers()
 
-    client = AdminClient(args.omlx)
+    use_admin = args.backend == "omlx"
     selected_pi = resolve_pi(args.pi_executable)
     versions = {
         "pi": selected_pi["version"],
         "pi_launch": selected_pi,
-        "omlx": tool_version(["omlx", "--version"]),
+        "backend": args.backend,
+        "base_url": args.base_url or DEFAULT_BASE_URL,
+        "request_overrides": request_overrides,
+        "omlx": tool_version(["omlx", "--version"]) if use_admin else None,
     }
     args.out.mkdir(parents=True, exist_ok=True)
     table = args.out / "table.md"
     if not table.exists():
         table.write_text(HEADER)
-    settings_path = Path.home() / ".omlx" / "model_settings.json"
-    with profile(client, MODEL_ID, args.profile, settings_path) as live:
-        versions["model_settings"] = {
-            k: live.get(k)
-            for k in (
-                "max_tokens",
-                "thinking_budget_tokens",
-                "presence_penalty",
-                "max_tool_result_tokens",
-            )
-        }
+    # oMLX: apply the server-only profile through the admin API and restore it after.
+    # mlx-lm: no admin API, so the server's launch flags must already match the profile.
+    if use_admin:
+        settings_path = Path.home() / ".omlx" / "model_settings.json"
+        profile_ctx = profile(
+            AdminClient(args.omlx), MODEL_ID, args.profile, settings_path
+        )
+    else:
+        profile_ctx = nullcontext(None)
+    with profile_ctx as live:
+        if live is not None:
+            versions["model_settings"] = {
+                k: live.get(k)
+                for k in (
+                    "max_tokens",
+                    "thinking_budget_tokens",
+                    "presence_penalty",
+                    "max_tool_result_tokens",
+                )
+            }
         for number in args.rung:
             for repeat in range(1, args.repeat + 1):
                 record = run_once(
@@ -780,13 +847,18 @@ def main(argv: list[str] | None = None) -> None:
                     pi_executable=selected_pi["executable"],
                     facts_section=args.facts_section,
                     roadmap=args.roadmap,
+                    backend=args.backend,
+                    base_url=args.base_url,
+                    request_overrides=request_overrides,
                 )
                 row = table_row(record)
                 with table.open("a") as stream:
                     stream.write(row)
                 if args.mode == "direct" and record["score"]["effective_params"]:
                     check_effective_params(
-                        record["score"]["effective_params"], args.profile
+                        record["score"]["effective_params"],
+                        args.profile,
+                        request_overrides,
                     )
                 print(row, end="", flush=True)
 
