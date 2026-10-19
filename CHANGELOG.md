@@ -60,6 +60,14 @@ Versions match git tags; pin one in both install lines.
   own small PR, with a changelog entry or a dated research note and the evidence
   inline.
 
+- `extensions/content-tool-call-assist/` vendors the Pi extension that lets a
+  small model drive the loop from content tool-calls (JSON `{"tool","args"}` /
+  `{"name","arguments"}` or Hermes-XML), gated on the real tool names so model
+  data is not mistaken for a call. `scripts/patch-pi.sh [PI_DIR]` installs it
+  into a Pi checkout (its imports resolve only there); the ladder's
+  `--pi-extension` then loads it for small-model runs. Also mirrored to our Pi
+  fork.
+
 ### Fixed
 
 - The re-dispatch retry message now carries the real test failure. It ran
