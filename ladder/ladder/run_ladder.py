@@ -72,6 +72,8 @@ def build_pi_direct_args(
     prompt_mode: str = "replace",
     thinking: str = "high",
     model_id: str = MODEL_ID,
+    model_spec: str | None = None,
+    extra_extensions: tuple[Path, ...] = (),
 ) -> list[str]:
     """The worker alone. `replace` (the default) sends the worker prompt only, which is what
     the shipped agent file does; `append` keeps Pi's base prompt under it (phases 0-2)."""
@@ -94,7 +96,7 @@ def build_pi_direct_args(
         "--thinking",
         thinking,
         "--model",
-        f"omlx/{model_id}",
+        model_spec if model_spec else f"omlx/{model_id}",
         "--tools",
         TOOLS,
         *prompt_args,
@@ -103,6 +105,10 @@ def build_pi_direct_args(
     ]
     if guards:
         args += ["-e", str(GUARDS_EXT)]
+    # Extra extensions (e.g. a tool-call-assist plugin so a small model that
+    # emits tool calls in its content can drive the loop) load alongside --no-extensions.
+    for ext in extra_extensions:
+        args += ["-e", str(ext)]
     return [*args, sentence]
 
 
@@ -525,6 +531,8 @@ def run_once(
     redispatch_temperature_step: float = 0.25,
     redispatch_temperature_cap: float = 0.5,
     effort_ramp: bool = False,
+    model_spec: str | None = None,
+    extra_extensions: tuple[Path, ...] = (),
 ) -> dict:
     rung = variant_rung(rung, roadmap)
     if acceptance_test is not None:
@@ -593,7 +601,8 @@ def run_once(
         )
         env = child_env(dict(os.environ), str(trace), agent_dir, offline=True)
         args = build_pi_direct_args(
-            rung.sentence, guards, prompt, prompt_mode, init_thinking, model_id=mid
+            rung.sentence, guards, prompt, prompt_mode, init_thinking, model_id=mid,
+            model_spec=model_spec, extra_extensions=extra_extensions,
         )
     selected_pi = versions.get("pi_launch") or resolve_pi(pi_executable)
     env, environment = workspace_preflight(ws, rung.fixture, env)
@@ -690,6 +699,8 @@ def run_once(
                 prompt_mode,
                 re_thinking,
                 model_id=mid,
+                model_spec=model_spec,
+                extra_extensions=extra_extensions,
             )
             returncode, process_stdout, stderr, deadline_hit = _launch(
                 [selected_pi["executable"], *reargs[1:]], re_env
@@ -961,6 +972,17 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="with --redispatch: start quick (thinking off, small token budget) and escalate thinking off->medium->high and max_tokens 2k->16k as the frozen test keeps failing. The test gates it, so compute is spent in proportion to difficulty",
     )
+    parser.add_argument(
+        "--model-spec",
+        default=None,
+        help="direct mode: override Pi's --model (e.g. 'content-assist/mlx-community--Qwen2.5-Coder-1.5B-Instruct-4bit') in place of the default omlx/<id>. Use with --pi-extension to drive a small model for fast ladder iteration",
+    )
+    parser.add_argument(
+        "--pi-extension",
+        action="append",
+        default=[],
+        help="direct mode: an extra Pi extension to load with -e (repeatable), e.g. the content-tool-call-assist plugin that lets a small model's content tool-calls drive the loop",
+    )
     return parser
 
 
@@ -1072,11 +1094,17 @@ def main(argv: list[str] | None = None) -> None:
                     redispatch_temperature_step=args.redispatch_temperature_step,
                     redispatch_temperature_cap=args.redispatch_temperature_cap,
                     effort_ramp=args.effort_ramp,
+                    model_spec=args.model_spec,
+                    extra_extensions=tuple(Path(p) for p in args.pi_extension),
                 )
                 row = table_row(record)
                 with table.open("a") as stream:
                     stream.write(row)
-                if args.mode == "direct" and record["score"]["effective_params"]:
+                if (
+                    args.mode == "direct"
+                    and not args.model_spec
+                    and record["score"]["effective_params"]
+                ):
                     check_effective_params(
                         record["score"]["effective_params"],
                         args.profile,

@@ -851,6 +851,32 @@ def test_run_once_redispatches_even_when_attempts_time_out(monkeypatch, tmp_path
     assert [s["attempt"] for s in rec["redispatch_schedule"]] == [1, 2, 3]
 
 
+def test_build_pi_direct_args_model_spec_and_extra_extensions(tmp_path):
+    from ladder.run_ladder import build_pi_direct_args
+
+    ext = tmp_path / "content-assist"
+    a = build_pi_direct_args("do it", model_spec="content-assist/tiny", extra_extensions=(ext,))
+    # the model override replaces the default omlx/<id> target
+    assert a[a.index("--model") + 1] == "content-assist/tiny"
+    assert not any(x.startswith("omlx/") for x in a)
+    # the extra extension is loaded via -e, alongside the record extension
+    assert str(ext) in a
+    # default behaviour is unchanged
+    b = build_pi_direct_args("do it")
+    assert b[b.index("--model") + 1].startswith("omlx/")
+
+
+def test_parser_model_spec_and_pi_extension(tmp_path):
+    from ladder.run_ladder import build_parser
+
+    base = ["--profile", "baseline", "--rung", "1", "--out", "x"]
+    assert build_parser().parse_args(base).model_spec is None
+    assert build_parser().parse_args(base).pi_extension == []
+    ns = build_parser().parse_args([*base, "--model-spec", "content-assist/tiny", "--pi-extension", "/p/ext"])
+    assert ns.model_spec == "content-assist/tiny"
+    assert ns.pi_extension == ["/p/ext"]
+
+
 def test_parser_acceptance_test_default_and_set():
     from ladder.run_ladder import build_parser
 

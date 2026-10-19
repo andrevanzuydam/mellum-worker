@@ -41,6 +41,15 @@ Versions match git tags; pin one in both install lines.
   project facts, `/mellum check`/`last`, and measuring via the ladder's mlx-lm
   backend.
 
+- `run_ladder --model-spec <spec>` and `--pi-extension <path>` (direct mode,
+  `--pi-extension` repeatable): drive a small OpenAI-compatible model as the
+  worker for fast iteration. `--model-spec` overrides Pi's `--model` (e.g.
+  `content-assist/<id>`) in place of the default `omlx/<id>`, and
+  `--pi-extension` loads an extra Pi extension with `-e` alongside
+  `--no-extensions` — together they let a content-tool-call-assist plugin turn a
+  small model's content tool-calls into real ones. Defaults unchanged; tests
+  cover the arg builder and the parser.
+
 ### Fixed
 
 - The re-dispatch retry message now carries the real test failure. It ran
