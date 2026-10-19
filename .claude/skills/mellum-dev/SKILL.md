@@ -140,3 +140,39 @@ watches it happen:
 - A tab the user cannot see is the same as no visibility — always
   `show_pane` the live tab. If a run is long, say where to look and keep it on
   screen.
+
+## 10. One PR per win or learning
+
+Every verified win and every real learning lands as its own small, focused PR —
+never batched into a grab-bag. One change, one reason, one review.
+
+- **A win** is a *measured* improvement: a ladder pass-rate gain (before → after
+  rows), or a confirmed fix. A lead or a screen is **not** a win yet — see §3;
+  only open the PR once a preregistered run backs the claim.
+- **A learning** is a result worth keeping even when nothing ships — most often
+  a plausible "optimization" the ladder caught as a *regression*, or a
+  hypothesis the evidence disproved. Negative results are first-class; they stop
+  us re-running the same dead end.
+
+What each PR carries:
+
+- **Win PR:** the one focused change, its `CHANGELOG.md` `[Unreleased]` entry
+  (§5), and the ladder evidence inline in the body (the before/after rows, n,
+  deadline, model). Nothing unrelated rides along.
+- **Learning PR:** a dated research note under
+  `docs/superpowers/research/YYYY-MM-DD-<topic>.md` stating the hypothesis, what
+  was run, the result that settled it, and the decision — plus the one-line
+  `BACKLOG.md`/`ROADMAP.md` pointer if it moves a lead. The code change is just
+  the revert, or none.
+
+How:
+
+- Branch off `main`; stage **explicit paths** only (never `git add -A`); keep it
+  small enough to read in one sitting.
+- Never commit `trace.jsonl`, `stdout.txt` or `diff.patch`; raw evidence goes in
+  a `research-YYYY-MM-DD` release, linked from the note (per `AGENTS.md`).
+- Title is a concise `{feat,fix,docs}` subject; the body **leads with a short
+  table** — *what changed · why · evidence* — then detail. End with the
+  AI-generated attribution line the prompt specifies.
+- Keep the framework name out of every PR title, body and commit (standing
+  constraint).

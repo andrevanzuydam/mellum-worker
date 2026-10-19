@@ -50,6 +50,16 @@ Versions match git tags; pin one in both install lines.
   small model's content tool-calls into real ones. Defaults unchanged; tests
   cover the arg builder and the parser.
 
+- `LESSONS.md`: 100 lessons from the small-model-as-worker effort (plus a dated
+  addendum), and
+  `docs/superpowers/research/2026-10-19-small-model-tool-presentation.md`
+  recording a negative result — stripping a model's native tool field regresses
+  tool-calling (fix the chat template's line feeds instead).
+
+- The `mellum-dev` skill gains §10: land each verified win or learning as its
+  own small PR, with a changelog entry or a dated research note and the evidence
+  inline.
+
 ### Fixed
 
 - The re-dispatch retry message now carries the real test failure. It ran
@@ -70,6 +80,12 @@ Versions match git tags; pin one in both install lines.
   thinking level into `chat_template_kwargs.enable_thinking`, and `max_tokens`
   is now an overridable request param; the run record names the per-attempt
   thinking level and budget. Default off — existing runs are unchanged.
+
+- Worker prompt v6 adds a keep-every-existing-test guardrail (add new tests
+  alongside the existing ones; change only what the task requires). It is
+  spec-aligned guidance; on a 2B model it showed no measured lift (the model
+  ignores it) and no regression — see the 2026-10-19 research note — so it is
+  kept as guidance for more capable workers, not as a measured improvement.
 
 - `--redispatch` now varies the sampling on each retry instead of re-running
   the same greedy decode: the request temperature grows by
