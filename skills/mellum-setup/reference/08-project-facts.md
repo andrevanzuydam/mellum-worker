@@ -1,12 +1,12 @@
-# Phase 8: Project facts for Mellum Mode (optional)
+# Phase 8: Project facts for Mellum Worker (optional)
 
 Why: on the ladder's four AgentClinic rungs (build a small FastAPI app from
-loose phase specs, 12 runs per condition), Mellum Mode passed 9 of 12 runs
+loose phase specs, 12 runs per condition), Mellum Worker passed 9 of 12 runs
 with this section and 1 of 12 without it (rescored under the added-tests
 rule; 0 of 12 under the strict rule that run used), at a median of 26
 requests against 50.
 
-Pi only: Mellum Mode is what reads the section; OpenCode has no Mode, so
+Pi only: Mellum Worker is what reads the section; OpenCode has no Mode, so
 skip this phase there. Like phase 6, this is always a question, never an
 automatic write: AGENTS.md belongs to the user's project. It applies to
 the project the user runs `pi` in (Mode reads `AGENTS.md` from that
@@ -21,7 +21,7 @@ grep -niE '^##[[:space:]]+Mellum[[:space:]]*$' AGENTS.md
 ```
 
 Ask: "Do you want a `## Mellum` section in this project's AGENTS.md, so
-Mellum Mode is told the project's test command?"
+Mellum Worker is told the project's test command?"
 
 If yes:
 

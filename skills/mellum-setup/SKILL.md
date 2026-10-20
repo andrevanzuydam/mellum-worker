@@ -1,6 +1,6 @@
 ---
 name: mellum-setup
-description: Set up Mellum 2.1 as a bounded coding worker in OpenCode or Pi. Use when the user asks to install, configure, or verify Mellum Worker or Mellum Mode, or to get the Mellum model running on oMLX. Walks through weights, server, provider, agent, rules, a smoke test, and optional project facts for Mellum Mode, one checked phase at a time.
+description: Set up Mellum 2.1 as a bounded coding worker in OpenCode or Pi. Use when the user asks to install, configure, or verify Mellum Worker or Mellum Worker, or to get the Mellum model running on oMLX. Walks through weights, server, provider, agent, rules, a smoke test, and optional project facts for Mellum Worker, one checked phase at a time.
 ---
 
 # Mellum setup
@@ -47,7 +47,7 @@ optional and per project; offer it in Pi once phase 7 passes. When the
 checks pass, tell the user:
 
 - Pi: "Mellum Worker is available to pi-subagents as `mellum-worker`, and
-  `/mellum <task>`, `/mellum on`, `/mellum off` run Mellum Mode in this session."
+  `/mellum <task>`, `/mellum on`, `/mellum off` run Mellum Worker in this session."
 - OpenCode: "Mellum Worker is the `mellum-worker` subagent. Ask your main
   agent to delegate a bounded task to it."
 

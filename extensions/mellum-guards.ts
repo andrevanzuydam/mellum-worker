@@ -1,7 +1,7 @@
 /**
  * Child-only guards for the Mellum worker: pure `ToolCall -> Decision`
  * functions in the shape proven in the ladder (`ladder/`), adapted
- * to Pi's hooks at the bottom of this file; Mellum Mode reuses `createGuardSet` while it is on.
+ * to Pi's hooks at the bottom of this file; Mellum Worker reuses `createGuardSet` while it is on.
  *
  * Each guard exists for a recorded pathology:
  * - newFileOnlyWrite: a model wrote the changed fragment as the whole file

@@ -8,7 +8,7 @@ a 12B-A2.5B thinking model, as a local, bounded coding worker for
 a precise brief, edits code, runs the tests until they pass, and reports.
 Your main model stays in charge.
 
-- **Mellum Mode** (Pi): `/mellum <task>` runs Mellum inside your session
+- **Mellum Worker** (Pi): `/mellum <task>` runs Mellum inside your session
   with the worker prompt and seven file tools, then hands the session back.
   No extra packages. 15/15 on the ladder with project facts.
 - **Mellum Worker**: a [pi-subagents](https://github.com/nicobailon/pi-subagents)
@@ -69,7 +69,7 @@ unmeasured, and measuring it is a [backlog entry](BACKLOG.md), not a phase.
 
 ## Use it
 
-**Mellum Mode (Pi).** Type `/mellum <task>`:
+**Mellum Worker (Pi).** Type `/mellum <task>`:
 
 ```
 /mellum Add hello.py at the repo root with hello() returning "Hello, World!", and tests/test_hello.py that imports it. Test command: uv run --offline python -m pytest -q tests
@@ -257,7 +257,7 @@ Rungs 1–5, five coding tasks, three runs each, on an M5 Max through oMLX
 
 | Host | Deliverable | Use | Passes | Wall s, mean | Requests per run | Your main model per run |
 | --- | --- | --- | --- | --- | --- | --- |
-| Pi | Mellum Mode | `/mellum <task>` | 14/15 (15/15 with facts) | 70 | 13.1 | none |
+| Pi | Mellum Worker | `/mellum <task>` | 14/15 (15/15 with facts) | 70 | 13.1 | none |
 | Pi | Mellum Worker | "Use mellum-worker to ..." | 15/15 | 54 | 11.1 | 6.5 turns, ~3k output and 120k mostly cached input tokens |
 | OpenCode | Worker subagent | "Delegate to mellum-worker ..." | ported, unmeasured | | | |
 
@@ -359,7 +359,7 @@ has no Mode or guards: Worker only, step-capped, unmeasured.
 
 ```
 prompts/mellum-worker.md      the prompt, single source
-extensions/                   Mellum Mode and the child guards (Pi)
+extensions/                   Mellum Worker and the child guards (Pi)
 opencode/plugin.js            skills-path hook (OpenCode)
 skills/mellum-setup/          the guided installer
 templates/                    agent files and provider fragments, per host
@@ -382,7 +382,7 @@ deferred is a [backlog entry](BACKLOG.md) with a reopen condition.
 - **The mediated test:** a rung 9 screen first, then a preregistered run on
   rungs 6–9, then the `/mellum` command that writes the test with your main
   model, shows it, runs it red and dispatches. PR #1 is a candidate.
-- **One worker:** retire the pi-subagents Worker and rename Mellum Mode to
+- **One worker:** retire the pi-subagents Worker and rename Mellum Worker to
   mellum-worker. `/mellum` stays.
 - **Also parked:** measuring the OpenCode port, an Ollama backend, execution
   bounds, versioned assessments.

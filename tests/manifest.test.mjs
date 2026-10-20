@@ -18,7 +18,7 @@ test("every pi extension and skills path exists", () => {
 });
 
 test("pi extensions list is explicit and never includes the guards file", () => {
-	assert.deepEqual(pkg.pi.extensions, ["./extensions/mellum-mode.ts"]);
+	assert.deepEqual(pkg.pi.extensions, ["./extensions/mellum-worker.ts"]);
 });
 
 test("package version matches the newest git tag when one exists", () => {

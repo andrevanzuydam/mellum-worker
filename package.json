@@ -20,7 +20,7 @@
   },
   "pi": {
     "extensions": [
-      "./extensions/mellum-mode.ts"
+      "./extensions/mellum-worker.ts"
     ],
     "skills": [
       "./skills"

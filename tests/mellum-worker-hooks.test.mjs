@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import install from "../extensions/mellum-mode.ts";
+import install from "../extensions/mellum-worker.ts";
 import { checkSetup, formatFindings, loadExpected, providerEntry } from "../extensions/mellum-check.ts";
 
 // No test reads or writes the real ~/.pi/agent: activation reads $HOME/.pi/agent/models.json
@@ -76,7 +76,7 @@ test("context hook is dormant when no mellum span exists, and collapses when one
 	const plain = [{ role: "user", content: [{ type: "text", text: "hi" }] }];
 	assert.equal(handlers.context({ messages: plain }), undefined);
 	const t = (text) => ({ role: "user", content: [{ type: "text", text }] });
-	const messages = [t("hi"), t("[mellum-mode on]"), t("task"), { role: "assistant", content: [{ type: "text", text: "done" }] }, t("[mellum-mode off]"), t("next")];
+	const messages = [t("hi"), t("[mellum-worker on]"), t("task"), { role: "assistant", content: [{ type: "text", text: "done" }] }, t("[mellum-worker off]"), t("next")];
 	const out = handlers.context({ messages });
 	assert.ok(out && Array.isArray(out.messages));
 	assert.ok(out.messages.length < messages.length);
@@ -108,7 +108,7 @@ test("/mellum off notifies a one-line summary of the span", async () => {
 	handlers.turn_end({ message: { role: "assistant", usage: { output: 300 }, content: [{ type: "toolCall", id: "1", name: "bash", arguments: { command: "node --test" } }] } });
 	handlers.turn_end({ message: { role: "assistant", usage: { output: 100 }, content: [{ type: "text", text: "done" }] } });
 	await commands.mellum.handler("off", ctx);
-	const line = notes.map(([m]) => m).find((m) => m.startsWith("mellum-mode off:"));
+	const line = notes.map(([m]) => m).find((m) => m.startsWith("mellum-worker off:"));
 	assert.ok(line, `no summary notify; got ${JSON.stringify(notes)}`);
 	assert.match(line, /2 requests, 1 tool call, 400 output tokens, \d+ s/);
 });
@@ -133,7 +133,7 @@ test("/mellum off appends one run record line to the file named by MELLUM_MODE_R
 	};
 	const span = [
 		{ role: "user", content: [{ type: "text", text: "fix the cart" }] },
-		{ role: "user", content: [{ type: "text", text: "[mellum-mode on]" }] },
+		{ role: "user", content: [{ type: "text", text: "[mellum-worker on]" }] },
 		{ role: "assistant", timestamp: Date.now(), usage: { output: 12 }, content: [{ type: "toolCall", id: "1", name: "bash", arguments: { command: "node --test" } }] },
 		{ role: "toolResult", toolCallId: "1", toolName: "bash", content: [{ type: "text", text: "pass" }] },
 		{ role: "assistant", timestamp: Date.now(), usage: { output: 5 }, content: [{ type: "text", text: "ok" }] },
@@ -192,7 +192,7 @@ test("run record reconstructs the span from the last context snapshot plus the t
 		// context fires before each request; the final assistant turn arrives only via turn_end
 		const before = [
 			{ role: "user", content: [{ type: "text", text: "fix the cart" }] },
-			{ role: "custom", customType: "mellum-mode", content: "[mellum-mode on]" },
+			{ role: "custom", customType: "mellum-worker", content: "[mellum-worker on]" },
 			{ role: "assistant", timestamp: 1000, usage: { output: 10 }, content: [{ type: "toolCall", id: "1", name: "bash", arguments: { command: "node --test" } }] },
 			{ role: "toolResult", toolCallId: "1", toolName: "bash", isError: true, content: [{ type: "text", text: "fail 1" }] },
 		];
@@ -221,12 +221,12 @@ test("a failing record write warns but never disturbs deactivation", async () =>
 	try {
 		const { handlers, ctx, calls, mellum } = recordingPi();
 		await mellum("on");
-		handlers.context({ messages: [{ role: "user", content: [{ type: "text", text: "t" }] }, { role: "user", content: [{ type: "text", text: "[mellum-mode on]" }] }, { role: "assistant", content: [{ type: "text", text: "x" }] }] });
+		handlers.context({ messages: [{ role: "user", content: [{ type: "text", text: "t" }] }, { role: "user", content: [{ type: "text", text: "[mellum-worker on]" }] }, { role: "assistant", content: [{ type: "text", text: "x" }] }] });
 		await mellum("off");
 		assert.deepEqual(calls.setModel.at(-1), ctx.model, "previous model restored");
-		assert.ok(calls.sendMessage.some((m) => m.content === "[mellum-mode off]"), "off marker sent");
+		assert.ok(calls.sendMessage.some((m) => m.content === "[mellum-worker off]"), "off marker sent");
 		assert.ok(calls.notify.some(([m, l]) => m.includes("could not write the run record") && l === "warning"));
-		assert.ok(calls.notify.some(([m]) => m.startsWith("mellum-mode off:")), "off notification still shown");
+		assert.ok(calls.notify.some(([m]) => m.startsWith("mellum-worker off:")), "off notification still shown");
 		for (let i = 0; i < 8; i++) assert.equal(handlers.tool_call({ toolName: "read", input: { path: "x" } }), undefined, "mode is off afterwards");
 	} finally {
 		delete process.env.MELLUM_MODE_RUNS;
@@ -251,7 +251,7 @@ test("no context seen while on means nothing is written", async () => {
 
 const snapshot = [
 	{ role: "user", content: [{ type: "text", text: "fix the cart" }] },
-	{ role: "user", content: [{ type: "text", text: "[mellum-mode on]" }] },
+	{ role: "user", content: [{ type: "text", text: "[mellum-worker on]" }] },
 	{ role: "assistant", timestamp: 1000, usage: { output: 5 }, content: [{ type: "text", text: "ok" }] },
 ];
 
@@ -365,7 +365,7 @@ function headlessPi({ hasUI = false, withWait = true, startsRun = true, settledF
 			setImmediate(async () => {
 				handlers.agent_start?.({}, ctx);
 				const reply = { role: "assistant", timestamp: 1000, usage: { output: 5 }, content: [{ type: "text", text: "done" }] };
-				handlers.context({ messages: [{ role: "user", content: [{ type: "text", text }] }, { role: "custom", customType: "mellum-mode", content: "[mellum-mode on]" }, reply] });
+				handlers.context({ messages: [{ role: "user", content: [{ type: "text", text }] }, { role: "custom", customType: "mellum-worker", content: "[mellum-worker on]" }, reply] });
 				handlers.turn_end({ message: reply });
 				if (settledFirst) await handlers.agent_settled({}, ctx);
 				resolveIdle();
@@ -393,7 +393,7 @@ async function recordLines(body) {
 	}
 }
 
-const offMarkers = (calls) => calls.sendMessage.filter((m) => m.content === "[mellum-mode off]").length;
+const offMarkers = (calls) => calls.sendMessage.filter((m) => m.content === "[mellum-worker off]").length;
 const modeIsOff = (handlers) => { for (let i = 0; i < 8; i++) assert.equal(handlers.tool_call(read), undefined, "guard hooks inert: mode is off"); };
 
 test("headless one shot: the handler waits for the run, then restores the model and writes the record", async () => {
@@ -423,7 +423,7 @@ test("headless one shot where agent_settled fires before idle: still one deactiv
 	assert.equal(restores, 1, "one restore setModel");
 	assert.equal(offMarkers(h.calls), 1, "one off-marker");
 	assert.equal(lines.length, 1, "one record line");
-	assert.equal(h.calls.notify.filter(([m]) => m.startsWith("mellum-mode off:")).length, 1, "one off notification");
+	assert.equal(h.calls.notify.filter(([m]) => m.startsWith("mellum-worker off:")).length, 1, "one off notification");
 	modeIsOff(h.handlers);
 });
 
@@ -526,9 +526,9 @@ test("/mellum on reads the project's facts, marks the source, and forwards the b
 	await inProject({ "AGENTS.md": FACTS_MD }, async () => {
 		const { handlers, ctx, calls, mellum } = recordingPi({ mode: "tui" });
 		await mellum("on");
-		const on = calls.sendMessage.find((m) => String(m.content).includes("[mellum-mode on]"));
-		assert.equal(on.content, "[mellum-mode on] facts: agents-md");
-		const payload = { messages: [userMsg("[mellum-mode on] facts: agents-md"), userMsg("task one")] };
+		const on = calls.sendMessage.find((m) => String(m.content).includes("[mellum-worker on]"));
+		assert.equal(on.content, "[mellum-worker on] facts: agents-md");
+		const payload = { messages: [userMsg("[mellum-worker on] facts: agents-md"), userMsg("task one")] };
 		for (let i = 0; i < 2; i++) {
 			const out = handlers.before_provider_request({ payload }, ctx);
 			assert.equal(out.messages[1].content[0].text, "task one\n\nProject facts:\n- Test command: make test\n- Do not: add dependencies");
@@ -580,8 +580,8 @@ test("MELLUM_MODE_FACTS=0 records off, marks off, and forwards nothing", async (
 		const rec = await withRunsFile(async () => {
 			const { handlers, ctx, calls, mellum } = recordingPi({ mode: "tui" });
 			await mellum("on");
-			assert.equal(calls.sendMessage.find((m) => String(m.content).includes("[mellum-mode on]")).content, "[mellum-mode on] facts: off");
-			const out = handlers.before_provider_request({ payload: { messages: [userMsg("[mellum-mode on]"), userMsg("t")] } }, ctx);
+			assert.equal(calls.sendMessage.find((m) => String(m.content).includes("[mellum-worker on]")).content, "[mellum-worker on] facts: off");
+			const out = handlers.before_provider_request({ payload: { messages: [userMsg("[mellum-worker on]"), userMsg("t")] } }, ctx);
 			assert.equal(out.messages[1].content[0].text, "t");
 			handlers.context({ messages: snapshot });
 			await mellum("off");
@@ -595,7 +595,7 @@ test("a section over the cap warns on activation and falls back", async () => {
 		const { calls, mellum } = recordingPi({ mode: "tui" });
 		await mellum("on");
 		assert.ok(calls.notify.some(([m, l]) => /600/.test(m) && l === "warning"), JSON.stringify(calls.notify));
-		assert.equal(calls.sendMessage.find((m) => String(m.content).includes("[mellum-mode on]")).content, "[mellum-mode on] facts: none");
+		assert.equal(calls.sendMessage.find((m) => String(m.content).includes("[mellum-worker on]")).content, "[mellum-worker on] facts: none");
 	});
 });
 
@@ -617,7 +617,7 @@ test("without a UI the over-cap warning goes to stderr", async () => {
 
 test("the parent's handoff summary line names the facts source from the span's on-marker", async () => {
 	const { handlers } = recordingPi();
-	const out = handlers.context({ messages: [userMsg("task"), { role: "custom", customType: "mellum-mode", content: "[mellum-mode on] facts: detected" }, { role: "assistant", content: [{ type: "text", text: "done" }] }, { role: "custom", customType: "mellum-mode", content: "[mellum-mode off]" }, userMsg("next")] });
+	const out = handlers.context({ messages: [userMsg("task"), { role: "custom", customType: "mellum-worker", content: "[mellum-worker on] facts: detected" }, { role: "assistant", content: [{ type: "text", text: "done" }] }, { role: "custom", customType: "mellum-worker", content: "[mellum-worker off]" }, userMsg("next")] });
 	const handoff = out.messages.find((m) => JSON.stringify(m).includes("handoff"));
 	assert.match(JSON.stringify(handoff), /, facts: detected/);
 });
@@ -1077,7 +1077,7 @@ test("/mellum check <words> is a one-shot task, not the check", async () => {
 // ---- /mellum last: the newest run as a Markdown table ----
 
 test("parseSubcommand: last is a command; a longer prompt starting with last is a task", async () => {
-	const { parseSubcommand } = await import("../extensions/mellum-mode.ts");
+	const { parseSubcommand } = await import("../extensions/mellum-worker.ts");
 	assert.deepEqual(parseSubcommand("last"), { cmd: "last" });
 	assert.deepEqual(parseSubcommand(" last "), { cmd: "last" });
 	assert.deepEqual(parseSubcommand("last week's bug"), { cmd: "task", task: "last week's bug" });

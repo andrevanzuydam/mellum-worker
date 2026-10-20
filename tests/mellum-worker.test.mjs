@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { filterForMellum, MARK_ON, MARK_OFF, BOOTSTRAP_MARKER } from "../extensions/mellum-mode.ts";
+import { filterForMellum, MARK_ON, MARK_OFF, BOOTSTRAP_MARKER } from "../extensions/mellum-worker.ts";
 
 const text = (role, t) => ({ role, content: [{ type: "text", text: t }] });
 
@@ -79,7 +79,7 @@ test("a missing marker while interactively active is reported, not silently wide
 });
 
 test("after /mellum off, the parent sees one handoff block in place of the mode's turns", async () => {
-	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-worker.ts");
 	const msgs = [
 		text("user", "earlier parent turn"),
 		{ role: "assistant", content: [{ type: "text", text: "parent reply" }] },
@@ -98,7 +98,7 @@ test("after /mellum off, the parent sees one handoff block in place of the mode'
 	const out = collapseHandoffs(msgs);
 	assert.deepEqual(out.map(m => m.role), ["user", "assistant", "user", "user"]);
 	const handoff = out[2].content[0].text;
-	assert.match(handoff, /\[mellum-mode handoff\]/);
+	assert.match(handoff, /\[mellum-worker handoff\]/);
 	assert.match(handoff, /fix the cart total/);
 	assert.match(handoff, /calculator\.js/);
 	assert.match(handoff, /pass 3/);
@@ -109,13 +109,13 @@ test("after /mellum off, the parent sees one handoff block in place of the mode'
 });
 
 test("an open span (mode still on) is left alone by the collapse", async () => {
-	const { collapseHandoffs } = await import("../extensions/mellum-mode.ts");
+	const { collapseHandoffs } = await import("../extensions/mellum-worker.ts");
 	const msgs = [text("user", "task"), text("user", MARK_ON), { role: "assistant", content: [{ type: "text", text: "working" }] }];
 	assert.deepEqual(collapseHandoffs(msgs), msgs);
 });
 
 test("a new prompt queued before the off-marker is kept after the handoff", async () => {
-	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-worker.ts");
 	const msgs = [
 		text("user", "fix it"),
 		text("user", MARK_ON),
@@ -130,8 +130,8 @@ test("a new prompt queued before the off-marker is kept after the handoff", asyn
 });
 
 test("markers arrive at the context event as custom messages, not user messages", async () => {
-	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-mode.ts");
-	const custom = (t) => ({ role: "custom", customType: "mellum-mode", content: [{ type: "text", text: t }] });
+	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-worker.ts");
+	const custom = (t) => ({ role: "custom", customType: "mellum-worker", content: [{ type: "text", text: t }] });
 	const msgs = [
 		text("user", "fix it"),
 		custom(MARK_ON),
@@ -145,7 +145,7 @@ test("markers arrive at the context event as custom messages, not user messages"
 });
 
 test("handoff lists the bash commands run and flags written files that no longer exist", async () => {
-	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-worker.ts");
 	const ts = (s) => Date.parse(`2026-10-09T19:${s}Z`);
 	const msgs = [
 		text("user", "Write a hello world python file with a unit test"),
@@ -173,7 +173,7 @@ test("handoff lists the bash commands run and flags written files that no longer
 });
 
 test("handoff summary reports a failed last command and tolerates missing usage and timestamps", async () => {
-	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-worker.ts");
 	const msgs = [
 		text("user", "fix it"),
 		text("user", MARK_ON),
@@ -188,13 +188,13 @@ test("handoff summary reports a failed last command and tolerates missing usage 
 });
 
 test("collapseHandoffs without an exists option never flags files", async () => {
-	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-worker.ts");
 	const msgs = [text("user", "t"), text("user", MARK_ON), { role: "assistant", content: [{ type: "toolCall", id: "1", name: "write", arguments: { path: "nope/zzz.py" } }] }, text("user", MARK_OFF)];
 	assert.match(collapseHandoffs(msgs)[0].content[0].text, /Files edited or written: nope\/zzz\.py\n/);
 });
 
 test("a bash call with no result is reported as unfinished, not ok, and does not steal the last output", async () => {
-	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-worker.ts");
 	const msgs = [
 		text("user", "t"),
 		text("user", MARK_ON),
@@ -211,7 +211,7 @@ test("a bash call with no result is reported as unfinished, not ok, and does not
 });
 
 test("the commands list is capped and multi-line commands are collapsed to one line", async () => {
-	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-worker.ts");
 	const calls = [];
 	for (let i = 1; i <= 18; i++) {
 		calls.push({ role: "assistant", content: [{ type: "toolCall", id: String(i), name: "bash", arguments: { command: i === 18 ? "cat <<'X'\nline one\nline two\nX" : `echo ${i}` } }] });
@@ -225,14 +225,14 @@ test("the commands list is capped and multi-line commands are collapsed to one l
 });
 
 test("summary uses the singular for one request", async () => {
-	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const { collapseHandoffs, MARK_OFF } = await import("../extensions/mellum-worker.ts");
 	const h = collapseHandoffs([text("user", "t"), text("user", MARK_ON), { role: "assistant", content: [{ type: "text", text: "hi" }] }, text("user", MARK_OFF)])[0].content[0].text;
 	assert.match(h, /Mellum: 1 request, 0 output tokens, wall unknown, no commands/);
 });
 
 test("runRecord builds the JSONL line for a span from the same fields as the handoff", async () => {
 	const { runRecord } = await import("../extensions/mellum-record.ts");
-	const { MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const { MARK_OFF } = await import("../extensions/mellum-worker.ts");
 	const ts = (s) => Date.parse(`2026-10-09T19:${s}Z`);
 	const span = [
 		{ role: "assistant", timestamp: ts("28:52.217"), usage: { input: 547, cacheRead: 1024, output: 651 }, content: [{ type: "toolCall", id: "1", name: "write", arguments: { path: "hello.py" } }] },
@@ -455,7 +455,7 @@ test("runRecord carries facts from the meta, and omits the field when there is n
 });
 
 test("the handoff summary line carries facts: <source> when the on-marker does", async () => {
-	const { collapseHandoffs } = await import("../extensions/mellum-mode.ts");
+	const { collapseHandoffs } = await import("../extensions/mellum-worker.ts");
 	const build = (on) => collapseHandoffs([text("user", "task"), text("user", on), { role: "assistant", content: [{ type: "text", text: "done" }] }, text("user", MARK_OFF), text("user", "next")]);
 	const withFacts = build(`${MARK_ON} facts: agents-md+detected`).map((m) => textOf(m)).join("\n");
 	assert.match(withFacts, /, facts: agents-md\+detected\n/);
@@ -467,7 +467,7 @@ function textOf(m) {
 }
 
 test("parseSubcommand: on, off, check and learn [n] are commands; anything longer is a task", async () => {
-	const { parseSubcommand } = await import("../extensions/mellum-mode.ts");
+	const { parseSubcommand } = await import("../extensions/mellum-worker.ts");
 	assert.deepEqual(parseSubcommand(""), { cmd: "on" });
 	assert.deepEqual(parseSubcommand("  "), { cmd: "on" });
 	assert.deepEqual(parseSubcommand("on"), { cmd: "on" });
@@ -490,9 +490,9 @@ test("runRecord carries the server settings check from the meta, and omits the f
 });
 
 test("openSpan takes the task from the prompt before an off-marker, as back-to-back one-shots deliver it", async () => {
-	const { openSpan, MARK_ON, MARK_OFF } = await import("../extensions/mellum-mode.ts");
+	const { openSpan, MARK_ON, MARK_OFF } = await import("../extensions/mellum-worker.ts");
 	const user = (text) => ({ role: "user", content: [{ type: "text", text }] });
-	const marker = (text) => ({ role: "custom", customType: "mellum-mode", content: text });
+	const marker = (text) => ({ role: "custom", customType: "mellum-worker", content: text });
 	const reply = { role: "assistant", content: [{ type: "text", text: "done" }] };
 	// Seen in ac-demo, 2026-10-12: the first one-shot's off-marker is queued for the next turn,
 	// so it lands after the second prompt, between that prompt and the second on-marker.

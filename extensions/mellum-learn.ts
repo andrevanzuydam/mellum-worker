@@ -1,5 +1,5 @@
 /**
- * `learn`: reads Mellum Mode's JSONL run records and names what went wrong, with a
+ * `learn`: reads Mellum Worker's JSONL run records and names what went wrong, with a
  * suggested `## Mellum` section for AGENTS.md. Pure: front ends read the records files
  * and write AGENTS.md (spec section 3). Loads without Pi: the import of mellum-record.ts is
  * type-only, and mellum-facts.ts uses only node:path.

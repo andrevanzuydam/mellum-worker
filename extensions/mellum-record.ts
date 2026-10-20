@@ -1,7 +1,7 @@
 /**
- * The run record shared by Mellum Mode and the Worker's guards: span statistics, the
+ * The run record shared by Mellum Worker and the Worker's guards: span statistics, the
  * schema-2 JSONL line, and the version stamps. Pure apart from reading package.json once.
- * Must not import mellum-mode.ts (Mode imports the guards, the guards import this).
+ * Must not import mellum-worker.ts (Mode imports the guards, the guards import this).
  */
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";

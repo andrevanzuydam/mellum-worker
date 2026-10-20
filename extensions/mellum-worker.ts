@@ -39,8 +39,8 @@ import { type Activation, type Msg, promptVersionOf, runRecord, textOf, spanStat
 import { formatMerge, formatReport, learnFromTexts, mergeSuggestion, modeRunsFile, overCap, recordFiles } from "./mellum-learn.ts";
 import { formatLast, pickLast } from "./mellum-last.ts";
 
-export const MARK_ON = "[mellum-mode on]";
-export const MARK_OFF = "[mellum-mode off]";
+export const MARK_ON = "[mellum-worker on]";
+export const MARK_OFF = "[mellum-worker off]";
 export const BOOTSTRAP_MARKER = "superpowers:using-superpowers bootstrap for pi";
 export const WORKER_TOOLS = ["read", "grep", "find", "ls", "bash", "edit", "write"];
 const DEFAULT_MODEL = { provider: "omlx", id: "Mellum2.1-12B-A2.5B-Thinking-6bit" };
@@ -188,7 +188,7 @@ function handoffMessage(task: string, span: Msg[], opts: HandoffOptions = {}, fa
 	const hidden = stats.commands.length - shown.length;
 	const commandLines = shown.map((c) => `- ${clip(oneLine(c.command), 200)}${!c.finished ? " (no result)" : c.failed ? " (failed)" : ""}`);
 	const body = [
-		"[mellum-mode handoff] Mellum ran a task in this session; its tool calls are in the transcript but not repeated here.",
+		"[mellum-worker handoff] Mellum ran a task in this session; its tool calls are in the transcript but not repeated here.",
 		summaryLine(stats, factsSource),
 		`Task: ${clip(task.trim(), 400)}`,
 		`Files edited or written: ${fileList.length ? fileList.join(", ") : "none"}`,
@@ -382,13 +382,13 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 
 	async function activate(ctx: any, notify: boolean, how: Activation) {
 		if (active) {
-			ctx.ui?.notify?.("mellum-mode is already on", "info");
+			ctx.ui?.notify?.("mellum-worker is already on", "info");
 			return;
 		}
 		const { provider, id } = DEFAULT_MODEL;
 		const model = ctx.modelRegistry.find(provider, id);
 		if (!model) {
-			warn(ctx, `mellum-mode: model ${provider}/${id} not found; mode stays off`, "error");
+			warn(ctx, `mellum-worker: model ${provider}/${id} not found; mode stays off`, "error");
 			return;
 		}
 		const previous = { model: ctx.model, tools: pi.getActiveTools() };
@@ -397,7 +397,7 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 		const pendingServer = checkServer();
 		const switched = await pi.setModel(model);
 		if (!switched) {
-			warn(ctx, `mellum-mode: could not select ${provider}/${id} (auth or provider error); mode stays off`, "error");
+			warn(ctx, `mellum-worker: could not select ${provider}/${id} (auth or provider error); mode stays off`, "error");
 			return;
 		}
 		saved = previous;
@@ -420,31 +420,31 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 		if (spanFacts.warning) warn(ctx, spanFacts.warning, "warning");
 		server = await pendingServer;
 		if (server.match === false) warn(ctx, serverWarning(server.diffs), "warning");
-		if (notify) pi.sendMessage({ customType: "mellum-mode", content: `${MARK_ON} facts: ${spanFacts.source}`, display: true }, { deliverAs: "nextTurn" });
-		if (notify) ctx.ui?.notify?.(`mellum-mode on: ${provider}/${id}, tools ${WORKER_TOOLS.join(",")}`, "info");
+		if (notify) pi.sendMessage({ customType: "mellum-worker", content: `${MARK_ON} facts: ${spanFacts.source}`, display: true }, { deliverAs: "nextTurn" });
+		if (notify) ctx.ui?.notify?.(`mellum-worker on: ${provider}/${id}, tools ${WORKER_TOOLS.join(",")}`, "info");
 	}
 
 	async function deactivate(ctx: any) {
 		if (!active) {
-			ctx.ui?.notify?.("mellum-mode is not on", "info");
+			ctx.ui?.notify?.("mellum-worker is not on", "info");
 			return;
 		}
 		if (!saved?.model) {
-			warn(ctx, "mellum-mode: no previous model to restore; staying on. Pick a model with /model, then /mellum off.", "warning");
+			warn(ctx, "mellum-worker: no previous model to restore; staying on. Pick a model with /model, then /mellum off.", "warning");
 			return;
 		}
 		const restored = await pi.setModel(saved.model);
 		if (!restored) {
-			warn(ctx, "mellum-mode: could not restore the previous model; staying on", "error");
+			warn(ctx, "mellum-worker: could not restore the previous model; staying on", "error");
 			return;
 		}
 		pi.setActiveTools(saved.tools);
 		writeRunRecord(ctx);
 		active = false;
 		guards = undefined;
-		pi.sendMessage({ customType: "mellum-mode", content: MARK_OFF, display: true }, { deliverAs: "nextTurn" });
+		pi.sendMessage({ customType: "mellum-worker", content: MARK_OFF, display: true }, { deliverAs: "nextTurn" });
 		const secs = Math.round((Date.now() - span.startedAt) / 1000);
-		ctx.ui?.notify?.(`mellum-mode off: ${span.requests} request${span.requests === 1 ? "" : "s"}, ${span.toolCalls} tool call${span.toolCalls === 1 ? "" : "s"}, ${span.outputTokens.toLocaleString("en-US")} output tokens, ${secs} s`, "info");
+		ctx.ui?.notify?.(`mellum-worker off: ${span.requests} request${span.requests === 1 ? "" : "s"}, ${span.toolCalls} tool call${span.toolCalls === 1 ? "" : "s"}, ${span.outputTokens.toLocaleString("en-US")} output tokens, ${secs} s`, "info");
 	}
 
 	// Never lets an error escape: deactivation must complete whatever happens here.
@@ -458,7 +458,7 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 			mkdirSync(dirname(file), { recursive: true });
 			appendFileSync(file, JSON.stringify(runRecord(open.task, open.span, { endedAt: Date.now(), cwd: process.cwd(), model: activeModel, exists: existsInCwd, host, activation, promptVersion, nudges, guardBlocks, facts: { source: spanFacts.source, testCommand: spanFacts.testCommand, chars: spanFacts.chars }, server })) + "\n");
 		} catch (error) {
-			warn(ctx, `mellum-mode: could not write the run record${file ? ` to ${file}` : ""}: ${(error as Error)?.message ?? String(error)}`, "warning");
+			warn(ctx, `mellum-worker: could not write the run record${file ? ` to ${file}` : ""}: ${(error as Error)?.message ?? String(error)}`, "warning");
 		}
 	}
 
@@ -491,7 +491,7 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 			const want = sub.task ?? "";
 			// One shot: the task runs under the mode and the mode ends when the agent settles.
 			if (active) {
-				warn(ctx, "mellum-mode is already on; type the task as a normal prompt, or /mellum off first", "warning");
+				warn(ctx, "mellum-worker is already on; type the task as a normal prompt, or /mellum off first", "warning");
 				return;
 			}
 			// Read while the ctx is certainly live. Without a UI (pi -p, JSON mode) Pi treats the
@@ -524,7 +524,7 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 				clearTimeout(timer);
 				onRunStart = undefined;
 			}
-			if (!didStart) warn(ctx, `mellum-mode: the task did not start within ${startTimeoutMs / 1000} s; switching the mode off`, "warning");
+			if (!didStart) warn(ctx, `mellum-worker: the task did not start within ${startTimeoutMs / 1000} s; switching the mode off`, "warning");
 			await waitForIdle();
 			// Pi resolves the idle wait after agent_settled handlers return, so normally
 			// agent_settled has already deactivated; cover the other order too.
@@ -550,7 +550,7 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 	// lossy change to the user's session, and it would erase the on-marker. Refuse while on.
 	pi.on("session_before_compact", (event: any, ctx: any) => {
 		if (!active || event?.reason === "manual") return undefined;
-		ctx.ui?.notify?.("mellum-mode: auto-compaction skipped while the mode is on (/mellum off first, or /compact)", "warning");
+		ctx.ui?.notify?.("mellum-worker: auto-compaction skipped while the mode is on (/mellum off first, or /compact)", "warning");
 		return { cancel: true };
 	});
 
@@ -575,7 +575,7 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 			delete out.mellumModeMarkerMissing;
 			if (!warnedMissing) {
 				warnedMissing = true;
-				ctx?.ui?.notify?.("mellum-mode: the on-marker is gone from the context; sending only the last message", "warning");
+				ctx?.ui?.notify?.("mellum-worker: the on-marker is gone from the context; sending only the last message", "warning");
 			}
 		}
 		return out;
