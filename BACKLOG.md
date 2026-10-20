@@ -194,3 +194,13 @@ needs that evidence, and the settings come from a checked-in project file so an
 arm can differ by one value ([spec](docs/superpowers/specs/2026-10-20-learning-center-design.md)
 §12). *Reopens when* LC.3's harness can run a rung fixture twice with one
 parameter changed.
+
+**Pathologies page.** A reference in `learn/` of the ways small models fail:
+announce-and-stop, false success, test-command thrash, a bent project, long
+runs, servers, settings drift, empty finals, loops, writing outside the
+layout, a test edited to pass, a lost phase id. Each gets the record that
+shows it and the guard, fact or spec shape that answers it. `learn` already
+counts seven of these from run records; the page adds the ladder's and links
+`docs/ladder/`, so a lesson links one pathology instead of restating it.
+*Reopens when* the ditch lesson names more than the page covers, or a second
+lesson needs the same explanation.
