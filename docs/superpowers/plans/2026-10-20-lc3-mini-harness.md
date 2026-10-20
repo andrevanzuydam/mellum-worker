@@ -64,8 +64,8 @@ lifecycle: active
 
 - [ ] **Step 1: Write the failing wrapper.** `spawnSync("uvx", ["pytest", "learn/code/tests", "-q"], {cwd: ROOT})`; assert `status === 0` with stderr shown.
 - [ ] **Step 2: Run it and see it fail.** `node --test tests/harness.test.mjs` → FAIL: no tests collected (pytest exit 5).
-- [ ] **Step 3: Write the first failing Python test.** `learn/code/tests/test_harness.py` inserts `learn/code` on `sys.path` and asserts `harness.load_task` exists.
-- [ ] **Step 4: Run it and see it fail for the right reason.** Same wrapper → FAIL, `ModuleNotFoundError: harness`.
+- [ ] **Step 3: Write the first Python test.** `learn/code/tests/test_profile.py` asserts the generated profile names one `llamacpp` provider and the model id `Mellum2.1-12B-A2.5B-Thinking` — the pin the harness will read.
+- [ ] **Step 4: Run and see it pass.** Same wrapper → PASS 1/1.
 - [ ] **Step 5: Commit.** `git add tests/harness.test.mjs learn/code/tests/test_harness.py && git commit -m "test(lc3): run the harness's Python tests from npm test"`
 
 ---
