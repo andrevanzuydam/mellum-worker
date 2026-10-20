@@ -289,7 +289,8 @@ LC.1, before any lesson, and kept current as the center grows.
 | LC.2 | Getting started lesson 1, lesson 1's toolchain, the root `pyproject.toml` and `scripts/backend.py` replacing the Justfile, the private profile, and the maintainer pages |
 | LC.3 | Getting started lesson 2: the mini harness and its recorder, one easy task, the score line |
 | LC.3A | Getting started lesson 3: the medium and hard tasks, the suite, telemetry, validation grading |
-| LC.3B | A preregistered llama.cpp reference ladder run, recorded in `docs/ladder/` |
+| LC.3B | The ladder takes a provider, base URL and model, and a rung-1 smoke drives llama.cpp |
+| LC.3C | A preregistered llama.cpp reference run, recorded in `docs/ladder/` |
 | LC.4 | A digest of Paul's phases, then Paul's findings lessons |
 | LC.5 | Andre's findings lessons, gated on consent |
 
