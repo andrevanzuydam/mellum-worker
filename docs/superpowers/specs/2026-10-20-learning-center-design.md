@@ -323,6 +323,7 @@ LC.1, before any lesson, and kept current as the center grows.
 | LC.6 | The harness takes sessions with one or more prompts, `--repeat`, and n on every line |
 | LC.7 | The ditch, and the harness and suite pages renumbered to lessons 3 and 4 |
 | LC.8 | One worker: retire the pi-subagents Worker and rename Mode to Mellum Worker |
+| LC.8A | Drop the OpenCode port and its skill phases |
 | LC.9 | Lesson 5: a Pi extension, the `mellum-worker` extension, and `/mellum` |
 | LC.10+ | One phase per findings lesson, in track order |
 
