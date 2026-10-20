@@ -1,3 +1,6 @@
+import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -81,3 +84,24 @@ def test_score_keeps_the_run_and_copies_the_tests(tmp_path):
 def test_score_fails_a_wrong_solution(tmp_path):
     passed, _ = _scored(tmp_path, "fake-pi-wrong.sh")
     assert not passed
+
+
+EASY = HERE.parent / "tasks" / "easy"
+
+
+def _task_tests_pass(cwd, tests):
+    result = subprocess.run(
+        ["uvx", "pytest", "-q", str(tests)], cwd=cwd, capture_output=True,
+        text=True, env={**os.environ, "PYTHONPATH": str(cwd)},
+    )
+    return result.returncode == 0
+
+
+def test_the_easy_task_can_fail_and_pass(tmp_path):
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    assert not _task_tests_pass(empty, EASY / "tests")
+    solved = tmp_path / "solved"
+    solved.mkdir()
+    shutil.copytree(EASY / "solution", solved, dirs_exist_ok=True)
+    assert _task_tests_pass(solved, EASY / "tests")
