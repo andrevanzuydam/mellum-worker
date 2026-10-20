@@ -179,6 +179,7 @@ def suite(
     tasks_dir: Path = TASKS,
     runs_dir: Path = RUNS,
     pi_binary: str = "pi",
+    grade_run: bool = False,
 ) -> tuple[int, int]:
     available = sorted(
         path.name for path in Path(tasks_dir).iterdir()
@@ -194,9 +195,10 @@ def suite(
     for name in names:
         task = load_task(tasks_dir, name)
         run_dir = run_task(task, runs_dir=runs_dir, pi_binary=pi_binary)
+        grades = grade(run_dir / "workspace") if grade_run else []
         ok, tail = score(run_dir, task)
-        counts = report(run_dir)
-        print(_line(task, run_dir, ok, counts))
+        print(_line(task, run_dir, ok, report(run_dir)))
+        _print_grades(grades)
         if not ok:
             print(tail, file=sys.stderr)
         passed += ok
@@ -211,6 +213,11 @@ def _line(task: Task, run_dir: Path, passed: bool, counts: dict) -> str:
             f"{counts['tool_errors']} tool errors)")
 
 
+def _print_grades(grades: list[tuple[str, bool, str]]) -> None:
+    for name, ok, detail in grades:
+        print(f"{name}: {'PASS' if ok else 'FAIL'}" + (f" ({detail})" if not ok else ""))
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
@@ -220,17 +227,19 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--runs-dir", type=Path, default=RUNS)
     run.add_argument("--pi-binary", default="pi")
     run.add_argument("--dry-run", action="store_true")
+    run.add_argument("--grade", action="store_true")
 
     many = sub.add_parser("suite", help="run several tasks and total them")
     many.add_argument("names", nargs="+", help="easy, medium, hard, all, or several")
     many.add_argument("--tasks-dir", type=Path, default=TASKS)
     many.add_argument("--runs-dir", type=Path, default=RUNS)
     many.add_argument("--pi-binary", default="pi")
+    many.add_argument("--grade", action="store_true")
     args = parser.parse_args(argv)
 
     if args.command == "suite":
         suite(args.names, tasks_dir=args.tasks_dir, runs_dir=args.runs_dir,
-              pi_binary=args.pi_binary)
+              pi_binary=args.pi_binary, grade_run=args.grade)
         return 0
 
 
@@ -241,8 +250,10 @@ def main(argv: list[str] | None = None) -> int:
                                  model, task.prompt)))
         return 0
     run_dir = run_task(task, runs_dir=args.runs_dir, pi_binary=args.pi_binary)
+    grades = grade(run_dir / "workspace") if args.grade else []
     passed, tail = score(run_dir, task)
     print(_line(task, run_dir, passed, report(run_dir)))
+    _print_grades(grades)
     if not passed:
         print(tail, file=sys.stderr)
     return 0

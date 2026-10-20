@@ -47,3 +47,27 @@ test("suite all prints every task and a total", () => {
   assert.match(r.stdout, /^mul: PASS/m);
   assert.match(r.stdout, /^2\/2 passed$/m);
 });
+
+test("--grade prints one line per grader beside the score", () => {
+  const runs = mkdtempSync(join(tmpdir(), "mellum-runs-"));
+  const r = run(runs, "fake-pi.sh", "--grade");
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /^add: PASS/m);
+  for (const tool of ["ruff", "pyrefly", "complexipy"])
+    assert.match(r.stdout, new RegExp(`^${tool}: PASS$`, "m"));
+});
+
+test("a lint failure does not change the score", () => {
+  const runs = mkdtempSync(join(tmpdir(), "mellum-runs-"));
+  const r = run(runs, "fake-pi-unused-import.sh", "--grade");
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /^add: PASS/m);
+  assert.match(r.stdout, /^ruff: FAIL/m);
+  assert.match(r.stdout, /^pyrefly: PASS/m);
+});
+
+test("without --grade there are no grader lines", () => {
+  const runs = mkdtempSync(join(tmpdir(), "mellum-runs-"));
+  const r = run(runs, "fake-pi.sh");
+  assert.doesNotMatch(r.stdout, /^ruff:/m);
+});
