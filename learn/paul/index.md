@@ -9,16 +9,16 @@ order.
 
 ## Lessons
 
-1. **The primary agent is the wrong worker** (LC.7) — Bare Pi passes 8 of 15 rungs; the same model as a bounded worker passes 15.
-2. **A short prompt, not a procedure** (LC.8) — Prompt v5 is 643 characters, and each line it lost had a run behind it.
-3. **Thinking is working memory** (LC.9) — Stripping earlier thinking cuts prefill 57% and makes the run slower.
-4. **Guards for empty turns and loops** (LC.10) — Without the nudge and the breaker, two of fifteen runs end with nothing.
-5. **Project facts** (LC.11) — A 600-character facts section takes a four-phase build from 1/12 to 9/12.
-6. **Write only the files you list** (LC.12) — Runs pass the hidden tests and still fail by writing outside the layout.
-7. **Who holds the loop** (LC.13) — Worker, Mode and a delegated child pass alike and cost differently.
-8. **A prose brief stops at its first reply** (LC.14) — The same brief as one prompt loses four passes; as steps it costs 2.4x the time.
-9. **The intercom block is a prefill tax** (LC.15) — Off: the child prompt halves and prefill drops 20%, with the same passes.
-10. **One spec file per phase** (LC.16) — A one-file roadmap misses the last phase's id in 5 of 6 runs; n = 3.
+1. **The primary agent is the wrong worker** (LC.8) — Bare Pi passes 8 of 15 rungs; the same model as a bounded worker passes 15.
+2. **A short prompt, not a procedure** (LC.9) — Prompt v5 is 643 characters, and each line it lost had a run behind it.
+3. **Thinking is working memory** (LC.10) — Stripping earlier thinking cuts prefill 57% and makes the run slower.
+4. **Guards for empty turns and loops** (LC.11) — Without the nudge and the breaker, two of fifteen runs end with nothing.
+5. **Project facts** (LC.12) — A 600-character facts section takes a four-phase build from 1/12 to 9/12.
+6. **Write only the files you list** (LC.13) — Runs pass the hidden tests and still fail by writing outside the layout.
+7. **Who holds the loop** (LC.14) — Worker, Mode and a delegated child pass alike and cost differently.
+8. **A prose brief stops at its first reply** (LC.15) — The same brief as one prompt loses four passes; as steps it costs 2.4x the time.
+9. **The intercom block is a prefill tax** (LC.16) — Off: the child prompt halves and prefill drops 20%, with the same passes.
+10. **One spec file per phase** (LC.17) — A one-file roadmap misses the last phase's id in 5 of 6 runs; n = 3.
 
 The order above is a recommendation, not a dependency chain: the baseline
 first, then the prompt, then the behaviours, then the shapes that make more

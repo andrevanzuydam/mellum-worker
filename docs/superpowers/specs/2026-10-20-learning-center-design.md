@@ -110,7 +110,7 @@ would revisit this, not LC.2.
    reply over a project that does not run, an empty final, a test edited to
    pass, files written outside the layout. The lesson states the rule the
    rest of the track rests on: before fixing, get evidence. No SDD teaching;
-   the pathologies are named and the reference page linked. Phase LC.6.
+   the pathologies are named and the reference page linked. Phase LC.7.
 3. **Make a mini harness.** Write `learn/code/harness.py`: each task is
    copied into a fresh directory, handed to a child `pi` with the private
    profile, scored by the task's tests, and its telemetry kept. Run it on one
@@ -133,7 +133,7 @@ one's result.
 suite pages become lessons 3 and 4; they are renumbered when the ditch lands,
 and the phase rows keep what they shipped.
 
-**Sessions and repeats.** A session is one isolated Pi context and workspace,
+**Sessions and repeats (LC.6).** A session is one isolated Pi context and workspace,
 fed one or more prompts; the suite scores once, at the finish. More than one
 prompt is how a learner drives a multi-step task. `--repeat N` runs a task N
 times (default 1), every line states its n, and the suite counts sessions
@@ -313,8 +313,9 @@ LC.1, before any lesson, and kept current as the center grows.
 | LC.3C | A preregistered llama.cpp reference run, recorded in `docs/ladder/` |
 | LC.4 | A digest of Paul's phases, the track index, and one phase row per lesson |
 | LC.5 | Andre's track: index and consent, adding one phase row per approved idea |
-| LC.6 | The ditch, and the harness and suite pages renumbered to lessons 3 and 4 |
-| LC.7+ | One phase per findings lesson, in track order |
+| LC.6 | The harness takes sessions with one or more prompts, `--repeat`, and n on every line |
+| LC.7 | The ditch, and the harness and suite pages renumbered to lessons 3 and 4 |
+| LC.8+ | One phase per findings lesson, in track order |
 
 2026-10-20: the M series closed and its last two phases moved to the
 backlog; its rows are archived in `ROADMAP-M.md`. PR #1 remains a candidate

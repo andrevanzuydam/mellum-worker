@@ -124,8 +124,8 @@ test("Paul's track lists ten lessons, one phase each", () => {
   const index = page("paul/index.md");
   const items = index.match(/^\d+\. \*\*/gm) ?? [];
   assert.equal(items.length, 10);
-  assert.match(index, /LC\.7/);
-  assert.match(index, /LC\.16/);
+  assert.match(index, /LC\.8/);
+  assert.match(index, /LC\.17/);
 });
 
 test("learn/ never says tutorial or case study", () => {
