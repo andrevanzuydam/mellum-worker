@@ -1,7 +1,7 @@
 ---
 phase: LC.3B
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # LC.3B Ladder backend override implementation plan
@@ -105,3 +105,16 @@ lifecycle: active
 - `cd ladder && uv run pytest -q` passes, and `npm test` from the root still passes.
 - The smoke's table shows `PASS` for rung 1 and no oMLX admin error.
 - Nothing under `docs/ladder/` is added.
+
+## Result
+
+2026-10-20. Shipped on `lc3b`, unreleased: `--provider`, `--base-url`,
+`--model` and `--context-window` on `run_ladder`; a direct profile written
+for that provider; the oMLX admin profile skipped when the provider is not
+`omlx`; and `run.json` naming the provider, base URL and model it measured.
+
+Verified: `ladder/` pytest 183/183, `npm test` 346/346, docs caps. A rung-1
+smoke on llama.cpp passed (7 requests, 0 tool errors, 8.8 s) and recorded
+`llama-server` 0.7.0; the version had to come from stderr, and the backend
+block was added after the first smoke showed neither was recorded. The smoke
+wrote only to `/tmp`; no `docs/ladder/` record and no claim.
