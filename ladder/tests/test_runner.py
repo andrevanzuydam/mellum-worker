@@ -800,3 +800,16 @@ def test_run_record_names_the_variants_and_uses_the_roadmap_sentence(monkeypatch
     assert record["facts_section"] == "light" and record["roadmap"] == "one-file"
     assert record["sentence"] == "Implement Phase 2 of specs/roadmap.md"
     assert seen["facts_section"] == "light" and seen["roadmap"] == "one-file"
+
+
+def test_direct_args_take_the_model():
+    args = build_pi_direct_args(
+        "fix it", model="llamacpp/Mellum2.1-12B-A2.5B-Thinking")
+    assert args[args.index("--model") + 1] == "llamacpp/Mellum2.1-12B-A2.5B-Thinking"
+
+
+def test_direct_args_default_to_the_omlx_model():
+    from ladder.run_ladder import MODEL
+
+    args = build_pi_direct_args("fix it")
+    assert args[args.index("--model") + 1] == MODEL

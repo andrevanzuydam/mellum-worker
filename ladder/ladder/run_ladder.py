@@ -69,6 +69,7 @@ def build_pi_direct_args(
     prompt: Path = PROMPT_FILE,
     prompt_mode: str = "replace",
     thinking: str = "high",
+    model: str = MODEL,
 ) -> list[str]:
     """The worker alone. `replace` (the default) sends the worker prompt only, which is what
     the shipped agent file does; `append` keeps Pi's base prompt under it (phases 0-2)."""
@@ -91,7 +92,7 @@ def build_pi_direct_args(
         "--thinking",
         thinking,
         "--model",
-        MODEL,
+        model,
         "--tools",
         TOOLS,
         *prompt_args,
