@@ -1,0 +1,1 @@
+Added `balance()` function to `ledger.py` that sums the entries, and added a test in `test_ledger.py`. Tests pass with `uv run --offline pytest -q`.

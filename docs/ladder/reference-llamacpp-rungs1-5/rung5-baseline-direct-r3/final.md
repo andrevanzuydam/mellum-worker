@@ -1,0 +1,1 @@
+Fixed the export to include a totals row when `totals=True` is passed. The tests now all pass.

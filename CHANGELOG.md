@@ -5,6 +5,11 @@ Versions match git tags; pin one in both install lines.
 ## [Unreleased]
 
 ### Added
+- A llama.cpp reference record for ladder rungs 1–5, preregistered first:
+  14/15 passed, with the one failure (rung 4, repeat 3 hit the token cap with
+  no final reply) reported as it happened. It is what lessons cite as a
+  `reference-run`; rungs 6–9 are unrun.
+
 - The ladder takes `--provider`, `--base-url`, `--model` and
   `--context-window`, records the backend it measured, and skips oMLX's admin
   profile when the provider is not `omlx`; a rung-1 smoke drives llama.cpp

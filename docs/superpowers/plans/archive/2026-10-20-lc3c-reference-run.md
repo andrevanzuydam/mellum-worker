@@ -1,7 +1,7 @@
 ---
 phase: LC.3C
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # LC.3C Reference run implementation plan
@@ -66,3 +66,21 @@ lifecycle: active
 - [ ] **Step 2: Update the backend doc's Open list** and the changelog.
 - [ ] **Step 3: Close the phase.** Status cell, `## Now`, `## Result`, archive this plan; run `npm test`, `node --test tests/docs-caps.test.mjs`.
 - [ ] **Step 4: Commit** `docs: close LC.3C — the llama.cpp reference run`.
+
+## Result
+
+2026-10-20. Shipped: the preregistration and
+`docs/ladder/reference-llamacpp-rungs1-5/` (README, `table.md`, and each
+run's `run.json`, `final.md`, `brief.md`).
+
+Verified: 15/15 runs valid — every first request carried the greedy block and
+`max_tokens` 4096; every record named `llamacpp`, the 8002 base URL and the
+model; worker `v0.1.8-62-g16072e9`, prompt v5, `llama-server` 0.7.0.
+**14/15 passed.** Rung 4 repeat 3 failed on `length` (8 requests, 1 tool
+error, empty reply). The first invocation was interrupted by the agent's tool
+timeout after rung 5 repeat 2; the missing repeat ran alone with identical
+flags and is in the record, which says so.
+
+Raw evidence (`trace.jsonl`, `stdout.txt`, `diff.patch`) is owed as
+`reference-llamacpp-rungs1-5.tar.gz` on `research-2026-10-20`, with its
+SHA-256, and stays out of git.
