@@ -1,7 +1,7 @@
 ---
 phase: LC.3A
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # LC.3A Suite, telemetry and grading implementation plan
@@ -142,3 +142,16 @@ lifecycle: active
 - `npm test` and `node --test tests/docs-caps.test.mjs` pass; `uvx zensical build` is clean.
 - `uv run learn/code/harness.py suite all --grade` (live) runs three tasks against the local server and prints three score lines with grader lines.
 - The live suite needs the LC.2 server and weights; it is not part of the suite run in `npm test`.
+
+## Result
+
+2026-10-20. Shipped on `lc3a`, unreleased: `suite` with `all`, the
+`report(run)` counts on every score line, `grade(workspace)` with `ruff`,
+`pyrefly` and `complexipy`, medium and hard fixtures, lesson 3, and the
+maintainer commands.
+
+Verified: `npm test` 345/345, docs caps, `uvx zensical build` clean, and a
+live `suite all --grade` against the llama.cpp server — 3/3 passed; the
+medium and hard solutions passed their tests and ruff flagged `I001` on
+their import blocks, with `pyrefly` and `complexipy` clean. The grader
+detail now prints the finding (the first line), not ruff's summary line.
