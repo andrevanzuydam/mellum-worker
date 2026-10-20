@@ -16,11 +16,11 @@ Versions match git tags; pin one in both install lines.
 
 - A Learning Center site skeleton in `learn/` (Zensical): what the center is, how to read a lesson, the evidence badges and how to contribute; no lessons yet. Build it with `uvx zensical build`.
 
-- A `Justfile` runs Mellum 2.1 through llama.cpp on Apple Silicon without a
-  daemon: `just serve` at 56k context on BF16 weights, `just start-16g` at
-  Q4_K_M and 50k for a 16 GB machine, plus `chat`, `status`, `stop`, `models`,
-  `pull` and `logs`. It is a second backend beside oMLX, and nothing is
-  ladder-measured on it yet.
+- `uv run scripts/backend.py serve|start|status|stop|chat` runs Mellum 2.1
+  through llama.cpp on Apple Silicon without a daemon: Q4_K_M at 50k context,
+  with the settings read from `[tool.mellum]` in the root `pyproject.toml`.
+  It is a second backend beside oMLX, and nothing is ladder-measured on it
+  yet; the Justfile it replaces never reached a release.
 
 - [docs/backends/llamacpp.md](docs/backends/llamacpp.md) records that backend:
   the flags, the measured numbers (8.38 GB peak and 207 tok/s generation at

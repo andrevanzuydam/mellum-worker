@@ -19,7 +19,8 @@ build, and the GGUF's own chat template is used — the model ships a ChatML
 ## Weights
 
 `JetBrains/Mellum2.1-12B-A2.5B-Thinking-GGUF` publishes BF16 and four
-quants. `just pull Q4_K_M` fetches into the Hugging Face cache.
+quants. `scripts/backend.py` passes the model to `llama-server -hf`, which
+downloads and caches it in the Hugging Face cache on first start.
 
 | File | Size |
 | --- | --- |
@@ -31,33 +32,40 @@ quants. `just pull Q4_K_M` fetches into the Hugging Face cache.
 
 ## Serve
 
-`just` in the repo root wraps this; the recipes are the whole config.
-No daemon, no launch agent — the model is resident only while a server
-runs.
+`scripts/backend.py` wraps this; `[tool.mellum]` in the root
+`pyproject.toml` is the whole config. No daemon, no launch agent — the
+model is resident only while a server runs. The script serves the 16 GB
+profile: `Q4_K_M`, 50k context, `-b/-ub 512`, `q8_0` KV.
 
 ```bash
-just serve            # foreground, BF16, 56k ctx, this machine
-just start            # same, background + pidfile + health wait
-just start-16g        # Q4_K_M, 50k ctx, -b/-ub 512, q8_0 KV
-just chat "prompt"    # one-shot; thinking prints to stderr
-just status / stop / models / logs
+uv run scripts/backend.py serve     # foreground
+uv run scripts/backend.py start     # background + pidfile + health wait
+uv run scripts/backend.py status    # up/down, and the server's n_ctx
+uv run scripts/backend.py stop
+uv run scripts/backend.py chat "prompt"   # one-shot; thinking to stderr
 ```
 
-The command `start-16g` runs:
+The command `start` runs:
 
 ```bash
-llama-server -m ~/.cache/huggingface/hub/Mellum2.1-12B-A2.5B-Thinking-Q4_K_M.gguf \
-  --host 127.0.0.1 --port 8002 -c 50000 -np 1 -ngl 99 --jinja -fa auto \
-  -b 512 -ub 512 -ctk q8_0 -ctv q8_0
+llama-server -hf JetBrains/Mellum2.1-12B-A2.5B-Thinking-GGUF:Q4_K_M \
+  -a Mellum2.1-12B-A2.5B-Thinking --host 127.0.0.1 --port 8002 \
+  -c 50000 -np 1 -ngl 99 --jinja -fa auto -b 512 -ub 512 \
+  -ctk q8_0 -ctv q8_0
 ```
+
+2026-10-20: the Justfile that shipped in `b51a1e8` was retired before
+release for `scripts/backend.py`. The Learning Center's learner installs
+`uv` anyway, the same file can hold the settings, and the flags stay
+readable in Python instead of shell recipes.
 
 ## Settings, against the oMLX recipe
 
 | oMLX (measured) | llama.cpp | Note |
 | --- | --- | --- |
-| `max_context_window` 56000 | `-c 56000` | server default; clients may send less |
-| `max_tokens` 16384 | client `max_tokens` | a thinking model needs the cap |
-| `force_sampling` 1 / 0.95 / 20 | `temperature`/`top_p`/`top_k` per request | in `just chat` |
+| `max_context_window` 56000 | `-c 56000` | the script serves 50k (`[tool.mellum] context`) |
+| `max_tokens` 16384 | client `max_tokens` | from `[tool.mellum] max_tokens` |
+| `force_sampling` 1 / 0.95 / 20 | `temperature`/`top_p`/`top_k` per request | from `[tool.mellum]`, sent by `chat` and Pi |
 | `forced_ct_kwargs` thinking on | `--reasoning on` | server-side, closest equivalent; not yet exercised on the ladder |
 | `--max-concurrent-requests 1` | `-np 1` | |
 | TurboQuant off | `-ctk/-ctv f16` | the hybrid cache stays native; `q8_0` only for the 16 GB preset |
@@ -90,3 +98,5 @@ plausible for the first time.
 - Thinking is forced with `--reasoning on`, not with the oMLX
   `forced_ct_kwargs` mechanism; whether clients can override it has not
   been checked.
+- The script exposes the 16 GB profile only. The BF16 56k server from the
+  old Justfile is a hand command now, not a recipe.
