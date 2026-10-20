@@ -17,9 +17,11 @@ superseded plans move to `archive/`.
 
 ## Research and verdicts — `research/`
 
-`YYYY-MM-DD-<topic>.md`, with `-finding.md` for a measured result and a
-sibling directory for evidence. Each opens with what is measured and what is
-conjecture, and ends with what would falsify it and the risks.
+`YYYY-MM-DD-<topic>.md`, with a sibling directory for evidence that is not
+text. Preregistrations, results and screens (`docs/sdd.md`, "Evals") are
+research notes too. Each opens with what is measured and what is conjecture,
+and ends with what would falsify it and the risks; notes from before the
+SDD scaffold (2026-10-07 and 2026-10-09) may lack the header.
 
 ## Nothing here is edited after it lands
 

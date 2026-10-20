@@ -28,6 +28,9 @@ scorer column that was zero becomes non-zero.
 | [A17](ablation-a17-mode-v012/README.md) | (Mellum Mode as shipped in mellum-worker v0.1.2, same launch as A14) | 14/15 | ships | no regression: 12.9 requests vs 13.1, wall 44 s vs 70 s (server state, not code); miss moved from rung 4 to rung 5 |
 | [A18](ablation-a18-agentclinic-facts-off/README.md) | (M.7 baseline: Mellum Mode on AgentClinic rungs 6–9, project facts off; 12 runs, not the 15-run rungs 1–5) | 1/12 rescored (0/12 strict) | baseline | scored under the later "added tests allowed" rule; median 50 requests; 11 of 12 runs hit `No module named 'app'` under `uv run --offline pytest -q`, and 5 of the 6 runs with green project and hidden tests failed only the write-list (`__init__.py`, `pytest.ini`, `pyproject.toml`/`uv.lock`); no pass on rung 9 |
 | [A19](ablation-a19-facts-on/README.md) | (M.7: project facts on, rungs 1–9; the `## Mellum` section on 6–9, the detected `python -m pytest` fallback on 2–5) | 15/15 on 1–5; 9/12 on 6–9 | **ships** | ship rule met: 15/15 ≥ 13, 9/12 ≥ A18 + 3, median 26 requests vs A18's 50; no `No module named 'app'`, empty write-list in all 12; failures are rung 9 ids (2) and a wrong added test plus deadline (8 r2) |
+| [A21](ablation-a21-light-section-roadmap/README.md) | (the README's lighter `## Mellum` section, no `Write only:`, and the four phases as one `specs/roadmap.md`; rungs 6–9, 12 runs; preregistered) | 9/12 | ships | equals the control and A19; 0 runs outside the layout; rung 9 0/3 ([result](../superpowers/research/2026-10-13-a21-result.md)) |
+| [A21 control](ablation-a21-control/README.md) | (A19's fixture rerun the same day on Pi 1.1.0) | 9/12 | reference | no drift from A19 |
+| [screens](screen-rung9-one-file-roadmap/README.md) | (rung 9 only, three runs each: the one-file roadmap alone; the [light section alone](screen-rung9-light-section/README.md)) | 1/3, 1/3 | lead | the phase 4 id miss follows the one-file roadmap, 5 of 6 against 1 of 6 ([screen](../superpowers/research/2026-10-13-rung9-screen.md)); n = 3 |
 | [A20](ablation-a20-facts-fallback-only/README.md) | (M.7: section stripped, fallback command only, rungs 6–9) | 7/12 | informs docs | 75% of A19's gain over A18, median 28 requests; 5 runs ran the prompt's `uv run --offline pytest -q` first, hit the import error and account for 4 of 5 failures (write-list entries in all 4) |
 
 ## The worker, before and after
@@ -111,6 +114,8 @@ runs, which removed the only evidence against A3.
   switches are inert (1c/1d); the records cite it. Backlog.
 
 ## Open
+
+*2026-10-18: items 1–3 below were M.8 and are retired with the pi-subagents Worker, which M.12 removes ([triage](../superpowers/research/2026-10-13-roadmap-triage.md)); the dormant guards and the profile switching above have no backlog entry and are left as they are. Kept as written.*
 
 1. **The nudge does not fire inside pi-subagents children** (A9): the
    parent's re-dispatch recovers the empty turn instead, 10 of 11 times.
