@@ -374,6 +374,28 @@ OpenCode loads a one-hook plugin for the skill. The skill writes provider,
 agent and rules into your config from [templates/](templates/). OpenCode
 has no Mode or guards: Worker only, step-capped, unmeasured.
 
+## Working on it — the 🍓 skill
+
+Development here runs through the **`mellum-dev` skill**
+([`.claude/skills/mellum-dev/SKILL.md`](.claude/skills/mellum-dev/SKILL.md)),
+which operationalizes `AGENTS.md` and [`docs/sdd.md`](docs/sdd.md): spec-driven
+development, test-first, fail-fast **and** fail-loud, frozen-oracle runs,
+recording every run, running them where you can watch, and one small PR per win
+or loss.
+
+**Activate it.** In **Claude Code** it loads on its own — `CLAUDE.md` says to
+always load and follow it when developing here, so any session in this repo
+picks it up. You know it is active because replies open with the **🍓** marker
+(and **💥 Bazinga!** on an *earned*, verified win). With **other agents**, point
+them at the skill file and have them follow it; its authoritative sources are
+`AGENTS.md` and `docs/sdd.md`.
+
+**Why.** The measured claims here only hold if the process holds — tests shown
+to fail first, settings frozen without evidence, every run recorded, failures
+surfaced loudly instead of swallowed. The skill makes that the default rather
+than something to remember, and the 🍓 marker is a visible promise that it is in
+force.
+
 ## Layout
 
 ```

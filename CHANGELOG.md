@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `README.md` gains a "Working on it — the 🍓 skill" section: how to activate
+  the `mellum-dev` skill (auto-loaded by `CLAUDE.md` in Claude Code; the 🍓
+  marker shows it is active) and why — the measured claims hold only if the
+  process does.
+
 - `README.md` gains a "This session — 2026-10-18" summary of the M.11 harness
   work and its screens, flagged as ladder capability and findings (on
   `mlx_lm.server`), not a measured claim.
