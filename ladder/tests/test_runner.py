@@ -872,3 +872,44 @@ def test_direct_run_passes_the_backend_to_the_profile(monkeypatch, tmp_path):
     assert seen["model_id"] == "Mellum2.1-12B-A2.5B-Thinking"
     assert seen["base_url"] == "http://127.0.0.1:8002/v1"
     assert seen["context_window"] == 50000
+
+
+def test_tool_version_reads_stderr_too(monkeypatch):
+    import subprocess as sp
+
+    from ladder import run_ladder
+
+    monkeypatch.setattr(
+        run_ladder.subprocess, "run",
+        lambda cmd, **kw: sp.CompletedProcess(cmd, 0, stdout="", stderr="version: 1\nmore\n"),
+    )
+    assert run_ladder.tool_version(["llama-server", "--version"]) == "version: 1"
+
+
+def test_direct_record_names_the_backend(monkeypatch, tmp_path):
+    import json
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    monkeypatch.setattr(
+        run_ladder.subprocess, "run",
+        lambda args, **kw: sp.CompletedProcess(args, 0, stdout="", stderr=""),
+    )
+    monkeypatch.setattr(
+        run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    rung = Rung(1, "calculator", "fix it", ["true"],
+                lambda ws, base: CheckResult(False, True))
+    run_ladder.run_once(
+        rung, "direct", "baseline", 1, tmp_path / "out", 5, {}, False,
+        provider="llamacpp", base_url="http://127.0.0.1:8002/v1",
+        model="llamacpp/Mellum2.1-12B-A2.5B-Thinking", context_window=50000,
+    )
+    record = json.loads(
+        (tmp_path / "out" / "rung1-baseline-direct-r1" / "run.json").read_text())
+    assert record["backend"] == {
+        "provider": "llamacpp", "base_url": "http://127.0.0.1:8002/v1",
+        "model": "llamacpp/Mellum2.1-12B-A2.5B-Thinking",
+    }

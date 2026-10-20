@@ -559,6 +559,11 @@ def run_once(
         "repeat": repeat,
         "profile": prof,
         "mode": mode,
+        "backend": {
+            "provider": provider,
+            "base_url": base_url,
+            "model": model,
+        } if mode == "direct" else None,
         "harness": "pi",
         "plain": plain,
         "guards": guards,
@@ -659,11 +664,14 @@ def install_signal_handlers() -> None:
 
 def tool_version(cmd: list[str]) -> str:
     try:
-        return subprocess.run(
+        result = subprocess.run(
             cmd, capture_output=True, text=True, timeout=30, check=False
-        ).stdout.strip()
+        )
     except OSError, subprocess.TimeoutExpired:
         return "unknown"
+    lines = [line.strip() for line in (result.stdout + result.stderr).splitlines()
+             if line.strip()]
+    return lines[0] if lines else ""
 
 
 def build_parser() -> argparse.ArgumentParser:
