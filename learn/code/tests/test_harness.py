@@ -137,3 +137,25 @@ def test_report_without_text(tmp_path):
     assert harness.report(run_dir) == {
         "requests": 0, "tool_calls": 0, "tool_errors": 0, "final_reply": "",
     }
+
+
+def test_suite_runs_every_named_task(tmp_path):
+    passed, total = harness.suite(
+        ["all"], tasks_dir=TASKS, runs_dir=tmp_path / "runs",
+        pi_binary=str(FIX / "fake-pi.sh"),
+    )
+    assert (passed, total) == (2, 2)
+
+
+def test_suite_counts_a_failure(tmp_path):
+    passed, total = harness.suite(
+        ["add"], tasks_dir=TASKS, runs_dir=tmp_path / "runs",
+        pi_binary=str(FIX / "fake-pi-empty.sh"),
+    )
+    assert (passed, total) == (0, 1)
+
+
+def test_suite_rejects_an_unknown_name(tmp_path):
+    with pytest.raises(SystemExit) as exc:
+        harness.suite(["nope"], tasks_dir=TASKS, runs_dir=tmp_path / "runs")
+    assert "nope" in str(exc.value)

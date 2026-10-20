@@ -151,6 +151,44 @@ def score(run: Path, task: Task) -> tuple[bool, str]:
     return result.returncode == 0, tail
 
 
+def suite(
+    names: list[str],
+    *,
+    tasks_dir: Path = TASKS,
+    runs_dir: Path = RUNS,
+    pi_binary: str = "pi",
+) -> tuple[int, int]:
+    available = sorted(
+        path.name for path in Path(tasks_dir).iterdir()
+        if (path / "task.md").exists()
+    )
+    if "all" in names:
+        names = available
+    missing = [name for name in names if name not in available]
+    if missing:
+        raise SystemExit(f"no task named {', '.join(missing)} in {tasks_dir}; "
+                         f"available: {', '.join(available)}")
+    passed = total = 0
+    for name in names:
+        task = load_task(tasks_dir, name)
+        run_dir = run_task(task, runs_dir=runs_dir, pi_binary=pi_binary)
+        ok, tail = score(run_dir, task)
+        counts = report(run_dir)
+        print(_line(task, run_dir, ok, counts))
+        if not ok:
+            print(tail, file=sys.stderr)
+        passed += ok
+        total += 1
+    print(f"{passed}/{total} passed")
+    return passed, total
+
+
+def _line(task: Task, run_dir: Path, passed: bool, counts: dict) -> str:
+    return (f"{task.name}: {'PASS' if passed else 'FAIL'} (run {run_dir}; "
+            f"{counts['requests']} requests, {counts['tool_calls']} tool calls, "
+            f"{counts['tool_errors']} tool errors)")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
@@ -160,7 +198,19 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--runs-dir", type=Path, default=RUNS)
     run.add_argument("--pi-binary", default="pi")
     run.add_argument("--dry-run", action="store_true")
+
+    many = sub.add_parser("suite", help="run several tasks and total them")
+    many.add_argument("names", nargs="+", help="easy, medium, hard, all, or several")
+    many.add_argument("--tasks-dir", type=Path, default=TASKS)
+    many.add_argument("--runs-dir", type=Path, default=RUNS)
+    many.add_argument("--pi-binary", default="pi")
     args = parser.parse_args(argv)
+
+    if args.command == "suite":
+        suite(args.names, tasks_dir=args.tasks_dir, runs_dir=args.runs_dir,
+              pi_binary=args.pi_binary)
+        return 0
+
 
     task = load_task(args.tasks_dir, args.task)
     provider, model = profile_pin(PROFILE)
@@ -170,10 +220,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     run_dir = run_task(task, runs_dir=args.runs_dir, pi_binary=args.pi_binary)
     passed, tail = score(run_dir, task)
-    counts = report(run_dir)
-    print(f"{task.name}: {'PASS' if passed else 'FAIL'} (run {run_dir}; "
-          f"{counts['requests']} requests, {counts['tool_calls']} tool calls, "
-          f"{counts['tool_errors']} tool errors)")
+    print(_line(task, run_dir, passed, report(run_dir)))
     if not passed:
         print(tail, file=sys.stderr)
     return 0

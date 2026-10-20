@@ -35,3 +35,15 @@ test("--dry-run prints the child's argv", () => {
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /-p .*--no-session .*record-pi\.mjs/);
 });
+
+test("suite all prints every task and a total", () => {
+  const runs = mkdtempSync(join(tmpdir(), "mellum-runs-"));
+  const r = spawnSync("uv", ["run", "learn/code/harness.py", "suite", "all",
+    "--tasks-dir", TASKS, "--runs-dir", runs,
+    "--pi-binary", resolve(FIX, "fake-pi.sh"),
+  ], { cwd: ROOT, encoding: "utf8" });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /^add: PASS/m);
+  assert.match(r.stdout, /^mul: PASS/m);
+  assert.match(r.stdout, /^2\/2 passed$/m);
+});
