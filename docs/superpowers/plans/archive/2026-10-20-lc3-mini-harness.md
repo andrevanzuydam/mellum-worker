@@ -1,7 +1,7 @@
 ---
 phase: LC.3
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # LC.3 Make a mini harness implementation plan
@@ -182,3 +182,15 @@ Repeat with `fake-pi-empty.sh` and assert `add: FAIL`; `--dry-run` prints a line
 - `npm test` and `node --test tests/docs-caps.test.mjs` pass; `uvx zensical build` is clean.
 - `uv run learn/code/harness.py run --task easy` (live) prints one score line and leaves a run directory.
 - The live run's Pi call needs the server from LC.2 and the Q4_K_M weights; it is not part of the suite.
+
+## Result
+
+2026-10-20. Shipped on `lc3`, unreleased: `learn/code/harness.py` (one task,
+one isolated run, hidden tests copied after the exit, one score line),
+`learn/code/record-pi.mjs`, the `easy` fixture, lesson 2, and the harness
+commands in the maintainer pages.
+
+Verified: `npm test` 340/340, docs caps, `uvx zensical build` clean, and a
+live run through the llama.cpp server — `easy: PASS`, with a 21-row trace
+(4 provider requests, 3 tool calls, 0 tool errors) and the model's
+`fizz.py` passing the hidden tests.
