@@ -7,10 +7,14 @@ site_dir = "site"
 exclude_docs = "code/"
 nav = [
   { "Home" = "index.md" },
+  { "Getting started" = ["getting-started/index.md"] },
+  { "Paul's findings" = ["paul/index.md"] },
+  { "Andre's findings" = ["andre/index.md"] },
   { "About" = [
     "about/index.md", "about/how-to-read.md",
     "about/evidence.md", "about/contributing.md",
   ] },
   { "Glossary" = "glossary.md" },
+  { "Lesson template" = "lesson-template.md" },
   { "Credits" = "credits.md" },
 ]

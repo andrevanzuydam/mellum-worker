@@ -13,6 +13,10 @@ const PAGES = [
   "about/contributing.md",
   "glossary.md",
   "credits.md",
+  "getting-started/index.md",
+  "paul/index.md",
+  "andre/index.md",
+  "lesson-template.md",
 ];
 
 test("zensical.toml points docs_dir at learn/", () => {
@@ -39,4 +43,21 @@ test("evidence page defines all four badges", () => {
   const e = page("about/evidence.md");
   for (const b of ["reference-run", "cited", "screen", "conjecture"])
     assert.ok(e.includes(`\`${b}\``), `badge ${b} missing`);
+});
+
+const STEPS = ["Problem", "Eval case", "Evidence of the problem",
+  "Solution", "Evidence it worked", "Interpretation"];
+
+test("the lesson template has the six steps in order, badges on 1-5", () => {
+  const t = page("lesson-template.md");
+  const heads = [...t.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
+  assert.deepEqual(heads, STEPS);
+  const sections = t.split(/^## /m).slice(1);
+  sections.forEach((s, i) =>
+    assert.equal(/\*\*Badge:\*\*/.test(s), i < 5, `step ${i + 1} badge`));
+});
+
+test("learn/ never says tutorial or case study", () => {
+  for (const p of PAGES)
+    assert.doesNotMatch(page(p), /tutorial|case stud/i, p);
 });

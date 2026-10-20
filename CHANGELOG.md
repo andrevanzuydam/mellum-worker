@@ -5,6 +5,7 @@ Versions match git tags; pin one in both install lines.
 ## [Unreleased]
 
 ### Added
+- A Learning Center site skeleton in `learn/` (Zensical): what the center is, how to read a lesson, the evidence badges and how to contribute; no lessons yet. Build it with `uvx zensical build`.
 
 - Ladder records for a rung 9 screen that ran A21's two changes alone: the
   AgentClinic phase 4 id miss follows the one-file roadmap (5 of 6 runs,

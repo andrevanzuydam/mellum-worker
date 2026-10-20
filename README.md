@@ -304,6 +304,7 @@ Pi was not run on these rungs.
 
 ## Findings
 
+- [Learning Center](learn/index.md): problems, fixes, and evidence for small coding models.
 - [recipe.md §6](docs/recipe.md#6-what-is-settled-and-what-is-not): what is settled and what is not.
 - [recipe.md §4](docs/recipe.md#4-using-mellum-worker-delegated): recorded pathologies and the guard for each.
 - [Ablation summary](docs/ladder/ablation-summary.md): every setting measured in and out.
