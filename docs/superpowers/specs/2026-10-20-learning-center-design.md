@@ -112,10 +112,10 @@ would revisit this, not LC.2.
 3. **A suite and the telemetry.** Add the medium and hard tasks, watch base
    Pi pass easy and struggle on hard, and read the runs: turns, tool calls,
    tool errors and the final reply. The harness is the suite runner —
-   `uv run learn/code/harness.py --suite easy|medium|hard` prints one score
+   `uv run learn/code/harness.py suite easy|medium|hard` prints one score
    line per task and where its runs are — so lesson 1 needs no separate
-   front door. Validation grades through `uvx` from here. Phase LC.3, which
-   also records a llama.cpp reference ladder run.
+   front door. Validation grades through `uvx` from here. Phase LC.3A; the
+   llama.cpp reference ladder run is LC.3B.
 
 Each lesson lists what it produces, so lesson 2 can start from lesson 1's
 result.
@@ -230,7 +230,7 @@ learn/
   code/                       # lesson code, not published as pages
     profile/models.json       # generated from [tool.mellum]
     record-pi.mjs             # lesson recorder (LC.3)
-    tasks/                    # easy/medium/hard fixtures (LC.3)
+    tasks/                    # easy (LC.3), medium and hard (LC.3A)
   project/                    # maintainer docs: how this project works
 ```
 
@@ -287,7 +287,9 @@ LC.1, before any lesson, and kept current as the center grows.
 | --- | --- |
 | LC.1 | `zensical.toml`, home, About pages, glossary, credits, track index pages, lesson template, badge convention; local build — shipped 2026-10-20 |
 | LC.2 | Getting started lesson 1, lesson 1's toolchain, the root `pyproject.toml` and `scripts/backend.py` replacing the Justfile, the private profile, and the maintainer pages |
-| LC.3 | Getting started lessons 2–3: the mini harness, the easy/medium/hard suite, telemetry, validation grading, a llama.cpp reference ladder run |
+| LC.3 | Getting started lesson 2: the mini harness and its recorder, one easy task, the score line |
+| LC.3A | Getting started lesson 3: the medium and hard tasks, the suite, telemetry, validation grading |
+| LC.3B | A preregistered llama.cpp reference ladder run, recorded in `docs/ladder/` |
 | LC.4 | A digest of Paul's phases, then Paul's findings lessons |
 | LC.5 | Andre's findings lessons, gated on consent |
 
