@@ -270,3 +270,16 @@ def test_each_solution_passes_the_graders(tmp_path, name):
                     dirs_exist_ok=True)
     results = harness.grade(solved)
     assert all(ok for _, ok, _ in results), results
+
+
+def test_a_session_can_be_bounded(tmp_path):
+    import time as clock
+
+    task = harness.load_task(TASKS, "add")
+    started = clock.monotonic()
+    run_dir = harness.run_task(
+        task, runs_dir=tmp_path / "runs", profile=PROFILE,
+        pi_binary=str(FIX / "fake-pi-slow.sh"), deadline=1,
+    )
+    assert clock.monotonic() - started < 5
+    assert (run_dir / "deadline").exists()

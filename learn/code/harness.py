@@ -13,7 +13,9 @@ import json
 import os
 import shlex
 import shutil
+import signal
 import subprocess
+import time
 import sys
 import uuid
 from dataclasses import dataclass
@@ -110,6 +112,7 @@ def run_task(
     runs_dir: Path,
     profile: Path = PROFILE,
     pi_binary: str = "pi",
+    deadline: float | None = None,
 ) -> Path:
     run = new_run(runs_dir, task.name)
     workspace = run / "workspace"
@@ -129,15 +132,28 @@ def run_task(
         "PI_CODING_AGENT_DIR": str(run / "profile"),
         "MELLUM_TRACE_FILE": str(trace),
     }
+    started = time.monotonic()
     for prompt in task.prompts:
+        remaining = None if deadline is None else deadline - (time.monotonic() - started)
+        if remaining is not None and remaining <= 0:
+            (run / "deadline").write_text("hit\n")
+            break
         argv = pi_argv(
             pi_binary, run / "profile", RECORDER, provider, model, prompt,
             session_id=session_id, session_dir=sessions,
         )
         try:
-            subprocess.run(argv, cwd=workspace, env=env, check=False)
+            child = subprocess.Popen(argv, cwd=workspace, env=env,
+                                     start_new_session=True)
         except FileNotFoundError:
             raise SystemExit(f"pi not found: {pi_binary}; install Pi before running a task")
+        try:
+            child.wait(timeout=remaining)
+        except subprocess.TimeoutExpired:
+            os.killpg(child.pid, signal.SIGKILL)
+            child.wait()
+            (run / "deadline").write_text("hit\n")
+            break
     return run
 
 
@@ -215,10 +231,12 @@ def _run_sessions(
     pi_binary: str,
     repeat: int,
     grade_run: bool,
+    deadline: float | None,
 ) -> list[tuple[Path, bool, str, list, dict]]:
     results = []
     for _ in range(repeat):
-        run_dir = run_task(task, runs_dir=runs_dir, pi_binary=pi_binary)
+        run_dir = run_task(task, runs_dir=runs_dir, pi_binary=pi_binary,
+                           deadline=deadline)
         grades = grade(run_dir / "workspace") if grade_run else []
         passed, tail = score(run_dir, task)
         results.append((run_dir, passed, tail, grades, report(run_dir)))
@@ -247,6 +265,7 @@ def suite(
     pi_binary: str = "pi",
     grade_run: bool = False,
     repeat: int = 1,
+    deadline: float | None = 600,
 ) -> tuple[int, int]:
     available = sorted(
         path.name for path in Path(tasks_dir).iterdir()
@@ -264,7 +283,7 @@ def suite(
         task = load_task(tasks_dir, name)
         results = _run_sessions(
             task, runs_dir=runs_dir, pi_binary=pi_binary,
-            repeat=repeat, grade_run=grade_run,
+            repeat=repeat, grade_run=grade_run, deadline=deadline,
         )
         sessions_passed += _print_task(task, results, repeat)
         sessions_total += len(results)
@@ -285,9 +304,10 @@ def _line(
 ) -> str:
     tag = task.name + (f" [{index}/{repeat}]" if repeat > 1 else "")
     n_text = f"n={repeat}; " if repeat == 1 else ""
+    deadline = " deadline" if (Path(run_dir) / "deadline").exists() else ""
     return (f"{tag}: {'PASS' if passed else 'FAIL'} ({n_text}run {run_dir}; "
             f"{counts['requests']} requests, {counts['tool_calls']} tool calls, "
-            f"{counts['tool_errors']} tool errors)")
+            f"{counts['tool_errors']} tool errors{deadline})")
 
 
 def _print_grades(grades: list[tuple[str, bool, str]]) -> None:
@@ -306,6 +326,7 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--dry-run", action="store_true")
     run.add_argument("--grade", action="store_true")
     run.add_argument("--repeat", type=int, default=1)
+    run.add_argument("--deadline", type=float, default=600)
 
     many = sub.add_parser("suite", help="run several tasks and total them")
     many.add_argument("names", nargs="+", help="easy, medium, hard, all, or several")
@@ -314,6 +335,7 @@ def main(argv: list[str] | None = None) -> int:
     many.add_argument("--pi-binary", default="pi")
     many.add_argument("--grade", action="store_true")
     many.add_argument("--repeat", type=int, default=1)
+    many.add_argument("--deadline", type=float, default=600)
     args = parser.parse_args(argv)
 
     if args.repeat < 1:
@@ -322,7 +344,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "suite":
         suite(args.names, tasks_dir=args.tasks_dir, runs_dir=args.runs_dir,
               pi_binary=args.pi_binary, grade_run=args.grade,
-              repeat=args.repeat)
+              repeat=args.repeat, deadline=args.deadline)
         return 0
 
 
@@ -334,7 +356,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     results = _run_sessions(
         task, runs_dir=args.runs_dir, pi_binary=args.pi_binary,
-        repeat=args.repeat, grade_run=args.grade,
+        repeat=args.repeat, grade_run=args.grade, deadline=args.deadline,
     )
     _print_task(task, results, args.repeat)
     return 0
