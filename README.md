@@ -316,8 +316,10 @@ Pi was not run on these rungs.
 - Node 24 or newer; Pi 1.0 or newer (Worker also needs pi-subagents)
 - OpenCode port: OpenCode 1.18 or newer (V1 plugin API); 2.x not yet
 
-Other backends: [docs/backends/ollama.md](docs/backends/ollama.md) lists
-what a port needs. Only oMLX has been run.
+Other backends: [docs/backends/llamacpp.md](docs/backends/llamacpp.md) is
+smoke-tested but not ladder-measured, and
+[docs/backends/ollama.md](docs/backends/ollama.md) lists what a port needs.
+Only oMLX has been measured.
 
 ## How it works
 
