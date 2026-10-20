@@ -18,8 +18,9 @@ Pi profile and, in the next lesson, the harness are files in this repo.
 
 ## What you need
 
-- A terminal. The commands below are tested on macOS on Apple Silicon; Linux
-  and Windows use llama.cpp's own releases and the same commands.
+- A terminal. The commands are written for macOS on Apple Silicon, where this
+  repo has smoke-tested the backend; Linux and Windows use llama.cpp's own
+  releases and the same commands.
 - About 10 GB free: the `Q4_K_M` weights are 8.1 GB, and the server peaked at
   8.38 GB with a 50,000-token context.
 
