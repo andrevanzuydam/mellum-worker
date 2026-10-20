@@ -183,3 +183,20 @@ How:
   AI-generated attribution line the prompt specifies.
 - Keep the framework name out of every PR title, body and commit (standing
   constraint).
+
+## 11. Record every run that backs a claim
+
+Scratchpad runs are ephemeral. A measured result that backs a win or a learning
+is recorded **in the repo** before (or with) its PR — never left in `/tmp`:
+
+- **The record** → `docs/ladder/<YYYY-MM-DD-topic>/`: the `table.md` and, per
+  run, its `rung…-r{k}/run.json` (plus `final.md`/`brief.md`). Strip the raw
+  `trace.jsonl`, `stdout.txt`, and `diff.patch` — those never go in the tree.
+- **The note** → `docs/superpowers/research/YYYY-MM-DD-<topic>.md`: arms, n, the
+  rule, the result, and the decision (§3). It links the record and the release.
+- **Raw evidence** → a `research-YYYY-MM-DD` tag/release, linked from the note.
+- **Provenance** → when records move in from elsewhere, say from where and at
+  what commit (see `docs/ladder/PROVENANCE.md`).
+
+The win/loss PR (§10) carries the record and the note. A claim with no committed
+record behind it is a lead, not a result.
