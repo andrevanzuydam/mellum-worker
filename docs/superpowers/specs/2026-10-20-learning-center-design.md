@@ -105,20 +105,40 @@ would revisit this, not LC.2.
    --no-context-files --no-approve`, so the learner's own `~/.pi` is neither
    read nor written, and get an answer. Phase LC.2, which also does the port
    checklist (GGUF, serve command, tool-call check, provider profile).
-2. **Make a mini harness.** Write `learn/code/harness.py`: each task is
-   copied into a fresh directory, handed to a child `pi -p` with the private
+2. **The ditch.** One loose prompt to build AgentClinic, driven by hand in a
+   session; its transcript shows the ways the model fails — a confident final
+   reply over a project that does not run, an empty final, a test edited to
+   pass, files written outside the layout. The lesson states the rule the
+   rest of the track rests on: before fixing, get evidence. No SDD teaching;
+   the pathologies are named and the reference page linked. Phase LC.6.
+3. **Make a mini harness.** Write `learn/code/harness.py`: each task is
+   copied into a fresh directory, handed to a child `pi` with the private
    profile, scored by the task's tests, and its telemetry kept. Run it on one
-   easy task and read the score line. Phase LC.3.
-3. **A suite and the telemetry.** Add the medium and hard tasks, watch base
+   easy task and read the score line. Phase LC.3, shipped; the ditch renumbers
+   the page to lesson 3.
+4. **A suite and the telemetry.** Add the medium and hard tasks, watch base
    Pi pass easy and struggle on hard, and read the runs: turns, tool calls,
-   tool errors and the final reply. The harness is the suite runner —
+   tool errors and the final reply. One session is one observation, so the
+   suite states its n and the lesson says why a rate comes from the ladder.
+   The harness is the suite runner —
    `uv run learn/code/harness.py suite easy|medium|hard` prints one score
    line per task and where its runs are — so lesson 1 needs no separate
    front door. Validation grades through `uvx` from here. Phase LC.3A; the
    llama.cpp reference ladder run is LC.3B.
 
-Each lesson lists what it produces, so lesson 2 can start from lesson 1's
-result.
+Each lesson lists what it produces, so the next can start from the last
+one's result.
+
+2026-10-20: the ditch is inserted as lesson 2, so the shipped harness and
+suite pages become lessons 3 and 4; they are renumbered when the ditch lands,
+and the phase rows keep what they shipped.
+
+**Sessions and repeats.** A session is one isolated Pi context and workspace,
+fed one or more prompts; the suite scores once, at the finish. More than one
+prompt is how a learner drives a multi-step task. `--repeat N` runs a task N
+times (default 1), every line states its n, and the suite counts sessions
+rather than estimating a rate. The suite lesson says so: one session is one
+observation, and rates come from the ladder.
 
 ### Paul's findings
 
@@ -293,7 +313,8 @@ LC.1, before any lesson, and kept current as the center grows.
 | LC.3C | A preregistered llama.cpp reference run, recorded in `docs/ladder/` |
 | LC.4 | A digest of Paul's phases, the track index, and one phase row per lesson |
 | LC.5 | Andre's track: index and consent, adding one phase row per approved idea |
-| LC.6+ | One phase per findings lesson, in track order |
+| LC.6 | The ditch, and the harness and suite pages renumbered to lessons 3 and 4 |
+| LC.7+ | One phase per findings lesson, in track order |
 
 2026-10-20: the M series closed and its last two phases moved to the
 backlog; its rows are archived in `ROADMAP-M.md`. PR #1 remains a candidate

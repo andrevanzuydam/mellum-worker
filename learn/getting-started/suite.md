@@ -76,6 +76,15 @@ So a hard task that fails with 12 requests and 2 tool errors is telling you it
 kept going and kept hitting errors; a task that fails with 1 request and no
 tool calls wrote nothing. The counts on the score line are these rows, summed.
 
+## One session is not a rate
+
+A suite is a handful of sessions, and each session is one observation. The
+same task can pass next time: the model varies, and this harness runs a task
+once by default. Run it again before believing a difference, and still treat
+two or three sessions as a lead, not a rate. Rates come from the ladder with
+a preregistered arm, which is why findings lessons cite `docs/ladder/` and
+not these sessions.
+
 ## What this does and does not say
 
 Three runs on one machine are a lead, not a rate. If easy passes and hard

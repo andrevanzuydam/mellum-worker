@@ -115,7 +115,7 @@ test("lesson 3 runs the suite, grading and the trace", () => {
   const l = page("getting-started/suite.md");
   assert.match(l, /^track: getting-started$/m);
   for (const text of ["suite all --grade", "ruff", "pyrefly", "complexipy",
-    "trace.jsonl", "three", "graders"])
+    "trace.jsonl", "three", "graders", "one observation"])
     assert.ok(l.toLowerCase().includes(text), `lesson 3 lacks ${text}`);
   assert.match(page("getting-started/index.md"), /suite\.md/);
 });
@@ -124,8 +124,8 @@ test("Paul's track lists ten lessons, one phase each", () => {
   const index = page("paul/index.md");
   const items = index.match(/^\d+\. \*\*/gm) ?? [];
   assert.equal(items.length, 10);
-  assert.match(index, /LC\.6/);
-  assert.match(index, /LC\.15/);
+  assert.match(index, /LC\.7/);
+  assert.match(index, /LC\.16/);
 });
 
 test("learn/ never says tutorial or case study", () => {

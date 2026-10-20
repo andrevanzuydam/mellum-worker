@@ -60,6 +60,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The suite lesson says plainly that one session is one observation: the
+  harness runs a task once by default, and a rate comes from the ladder, not
+  from a handful of sessions.
+
 - The README now links all three Getting started lessons and the harness
   command, and the track index and "How to read a lesson" say what each
   lesson produces, so a reader can tell a lesson worked.
