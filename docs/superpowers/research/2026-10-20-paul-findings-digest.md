@@ -19,7 +19,11 @@ project is not measured.
 lesson that is the ladder runs that show the change held, not static
 analysis. Where a lesson changes code as well, it also names the suite.
 
-## Track order
+## Recommended order
+
+The lessons are independent. This is a reading order, not a dependency
+chain: each entry cites its own records, and Getting started is the only
+prerequisite unless an entry says otherwise.
 
 1. The primary agent is the wrong worker
 2. A short prompt, not a procedure

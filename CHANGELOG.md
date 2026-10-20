@@ -6,8 +6,9 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 - Paul's findings track is planned as ten lessons, each its own phase, from a
-  digest of M.1–M.7 and the A-series; the track index lists them in measured
-  order, from the primary-agent baseline to the one-file roadmap screen.
+  digest of M.1–M.7 and the A-series; the track index lists them in a
+  recommended order, from the primary-agent baseline to the one-file roadmap
+  screen, and each lesson stands alone.
 
 - A llama.cpp reference record for ladder rungs 1–5, preregistered first:
   14/15 passed, with the one failure (rung 4, repeat 3 hit the token cap with

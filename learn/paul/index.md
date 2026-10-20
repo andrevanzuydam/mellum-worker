@@ -2,9 +2,10 @@
 
 Lessons from the mellum-worker phases M.1–M.7 and the A-series ablations.
 Each is one idea from the [digest](https://github.com/pauleveritt/mellum-worker/blob/main/docs/superpowers/research/2026-10-20-paul-findings-digest.md),
-follows the six steps, and is its own phase. They stand alone and list
-their prerequisites; [Getting started](../getting-started/index.md) is the
-recommended one.
+follows the six steps, and is its own phase. They are independent: each
+lesson lists its prerequisites, [Getting started](../getting-started/index.md)
+is the only one unless a lesson says otherwise, and you can read them in any
+order.
 
 ## Lessons
 
@@ -19,6 +20,6 @@ recommended one.
 9. **The intercom block is a prefill tax** (LC.14) — Off: the child prompt halves and prefill drops 20%, with the same passes.
 10. **One spec file per phase** (LC.15) — A one-file roadmap misses the last phase's id in 5 of 6 runs; n = 3.
 
-The order follows the measured history: the baseline first, then the
-prompt, then the behaviours, then the shapes that only make sense once
-those are known.
+The order above is a recommendation, not a dependency chain: the baseline
+first, then the prompt, then the behaviours, then the shapes that make more
+sense once those are known.
