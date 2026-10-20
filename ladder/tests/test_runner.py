@@ -813,3 +813,62 @@ def test_direct_args_default_to_the_omlx_model():
 
     args = build_pi_direct_args("fix it")
     assert args[args.index("--model") + 1] == MODEL
+
+
+def test_parser_defaults_to_omlx(tmp_path):
+    from ladder.run_ladder import MODEL, build_parser
+
+    args = build_parser().parse_args(
+        ["--profile", "baseline", "--rung", "1", "--out", str(tmp_path)])
+    assert args.provider == "omlx"
+    assert args.base_url == "http://127.0.0.1:8001/v1"
+    assert args.model == MODEL
+    assert args.context_window == 56000
+
+
+def test_parser_takes_a_backend(tmp_path):
+    from ladder.run_ladder import build_parser
+
+    args = build_parser().parse_args([
+        "--profile", "baseline", "--rung", "1", "--out", str(tmp_path),
+        "--provider", "llamacpp", "--base-url", "http://127.0.0.1:8002/v1",
+        "--model", "llamacpp/Mellum2.1-12B-A2.5B-Thinking",
+        "--context-window", "50000",
+    ])
+    assert (args.provider, args.base_url, args.model, args.context_window) == (
+        "llamacpp", "http://127.0.0.1:8002/v1",
+        "llamacpp/Mellum2.1-12B-A2.5B-Thinking", 50000)
+
+
+def test_direct_run_passes_the_backend_to_the_profile(monkeypatch, tmp_path):
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    seen = {}
+
+    def fake_agent(dest, prof, base_url, **kwargs):
+        dest.mkdir(parents=True, exist_ok=True)
+        seen.update(prof=prof, base_url=base_url, **kwargs)
+        return dest
+
+    monkeypatch.setattr(run_ladder, "direct_agent_dir", fake_agent)
+    monkeypatch.setattr(
+        run_ladder.subprocess, "run",
+        lambda args, **kw: sp.CompletedProcess(args, 0, stdout="", stderr=""),
+    )
+    monkeypatch.setattr(
+        run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    rung = Rung(1, "calculator", "fix it", ["true"],
+                lambda ws, base: CheckResult(False, True))
+    run_ladder.run_once(
+        rung, "direct", "baseline", 1, tmp_path / "out", 5, {}, False,
+        provider="llamacpp", base_url="http://127.0.0.1:8002/v1",
+        model="llamacpp/Mellum2.1-12B-A2.5B-Thinking", context_window=50000,
+    )
+    assert seen["provider"] == "llamacpp"
+    assert seen["model_id"] == "Mellum2.1-12B-A2.5B-Thinking"
+    assert seen["base_url"] == "http://127.0.0.1:8002/v1"
+    assert seen["context_window"] == 50000

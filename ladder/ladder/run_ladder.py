@@ -19,6 +19,7 @@ import signal
 import subprocess
 import tempfile
 import time
+from contextlib import nullcontext
 from dataclasses import asdict, replace
 from pathlib import Path
 from uuid import uuid4
@@ -439,6 +440,10 @@ def run_once(
     pi_executable: str = "pi",
     facts_section: str = "fixture",
     roadmap: str = "phase-files",
+    provider: str = "omlx",
+    base_url: str = "http://127.0.0.1:8001/v1",
+    model: str = MODEL,
+    context_window: int = 56000,
 ) -> dict:
     rung = variant_rung(rung, roadmap)
     scratch = Path(tempfile.mkdtemp(prefix="ladder-"))
@@ -480,9 +485,15 @@ def run_once(
         args = build_pi_mode_args(rung.sentence)
         guards = True  # the mode always loads the guard extension
     else:
-        agent_dir = direct_agent_dir(scratch / "pi-agent", prof)
+        provider_name, model_id = model.split("/", 1)
+        agent_dir = direct_agent_dir(
+            scratch / "pi-agent", prof, base_url,
+            provider=provider_name, model_id=model_id,
+            context_window=context_window,
+        )
         env = child_env(dict(os.environ), str(trace), agent_dir, offline=True)
-        args = build_pi_direct_args(rung.sentence, guards, prompt, prompt_mode, thinking)
+        args = build_pi_direct_args(rung.sentence, guards, prompt, prompt_mode,
+                                    thinking, model)
     selected_pi = versions.get("pi_launch") or resolve_pi(pi_executable)
     env, environment = workspace_preflight(ws, rung.fixture, env)
     if mode == "delegated":
@@ -723,6 +734,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--omlx", default="http://127.0.0.1:8001")
+    parser.add_argument("--provider", default="omlx",
+                        help="model provider the direct profile writes (default omlx)")
+    parser.add_argument("--base-url", default="http://127.0.0.1:8001/v1",
+                        help="the provider's OpenAI-compatible base URL")
+    parser.add_argument("--model", default=MODEL,
+                        help="provider/model, e.g. llamacpp/Mellum2.1-12B-A2.5B-Thinking")
+    parser.add_argument("--context-window", type=int, default=56000,
+                        help="the model's context window in the direct profile")
     return parser
 
 
@@ -738,19 +757,21 @@ def main(argv: list[str] | None = None) -> None:
     args.prompt = args.prompt.resolve()
     install_signal_handlers()
 
-    client = AdminClient(args.omlx)
     selected_pi = resolve_pi(args.pi_executable)
-    versions = {
-        "pi": selected_pi["version"],
-        "pi_launch": selected_pi,
-        "omlx": tool_version(["omlx", "--version"]),
-    }
+    versions = {"pi": selected_pi["version"], "pi_launch": selected_pi}
     args.out.mkdir(parents=True, exist_ok=True)
     table = args.out / "table.md"
     if not table.exists():
         table.write_text(HEADER)
-    settings_path = Path.home() / ".omlx" / "model_settings.json"
-    with profile(client, MODEL_ID, args.profile, settings_path) as live:
+    if args.provider == "omlx":
+        client = AdminClient(args.omlx)
+        versions["omlx"] = tool_version(["omlx", "--version"])
+        settings_path = Path.home() / ".omlx" / "model_settings.json"
+        context = profile(client, MODEL_ID, args.profile, settings_path)
+    else:
+        versions["backend"] = tool_version(["llama-server", "--version"])
+        context = nullcontext({})
+    with context as live:
         versions["model_settings"] = {
             k: live.get(k)
             for k in (
@@ -781,11 +802,16 @@ def main(argv: list[str] | None = None) -> None:
                     pi_executable=selected_pi["executable"],
                     facts_section=args.facts_section,
                     roadmap=args.roadmap,
+                    provider=args.provider,
+                    base_url=args.base_url,
+                    model=args.model,
+                    context_window=args.context_window,
                 )
                 row = table_row(record)
                 with table.open("a") as stream:
                     stream.write(row)
-                if args.mode == "direct" and record["score"]["effective_params"]:
+                if (args.mode == "direct" and args.provider == "omlx"
+                        and record["score"]["effective_params"]):
                     check_effective_params(
                         record["score"]["effective_params"], args.profile
                     )
