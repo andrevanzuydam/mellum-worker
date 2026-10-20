@@ -1,7 +1,7 @@
 ---
 phase: LC.2
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # LC.2 Base Pi on llama.cpp implementation plan
@@ -45,29 +45,7 @@ lifecycle: active
 **Interfaces:**
 - Produces: `[project] requires-python = ">=3.14"`, `[tool.uv] package = false`, and the six `[tool.mellum]` keys in Global Constraints. Tasks 2–4 read them with `tomllib`; Task 7's doc names them.
 
-- [ ] **Step 1: Write the failing test**
-
-```js
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import test from "node:test";
-import assert from "node:assert/strict";
-
-const toml = () => readFileSync(resolve(import.meta.dirname, "..", "pyproject.toml"), "utf8");
-
-test("the root project pins Python and the model settings", () => {
-  const t = toml();
-  for (const line of [
-    'requires-python = ">=3.14"',
-    'model = "JetBrains/Mellum2.1-12B-A2.5B-Thinking-GGUF:Q4_K_M"',
-    "context = 50000",
-    "max_tokens = 16384",
-    "temperature = 1.0",
-    "top_p = 0.95",
-    "top_k = 20",
-  ]) assert.ok(t.includes(line), `pyproject.toml lacks ${line}`);
-});
-```
+- [ ] **Step 1: Write the failing test.** `tests/backend-config.test.mjs` asserts the file carries `requires-python = ">=3.14"` and each `[tool.mellum]` value from Global Constraints, with one failure message per missing line.
 
 - [ ] **Step 2: Run it and see it fail.** `node --test tests/backend-config.test.mjs` → FAIL, `ENOENT` on `pyproject.toml`.
 - [ ] **Step 3: Write `pyproject.toml`** with `[project] name = "mellum-worker-learning-center"`, `version = "0.0.0"`, the description "Learner workspace for the Mellum Learning Center", `requires-python = ">=3.14"`; `[tool.uv] package = false`; and the six values above under `[tool.mellum]`.
@@ -187,3 +165,18 @@ test("the root project pins Python and the model settings", () => {
 - `npm test` and `node --test tests/docs-caps.test.mjs` pass on the branch.
 - `uv run scripts/backend.py profile --dry-run` equals `learn/code/profile/models.json`.
 - The live smoke (download Q4_K_M, start, chat, Pi answer) is the lesson's own check; it needs the weights and is not part of the suite.
+
+## Result
+
+2026-10-20. Shipped on `learning-center`, unreleased: the root
+`pyproject.toml` (`requires-python = ">=3.14"`, `[tool.mellum]`),
+`scripts/backend.py` with `serve`, `start`, `stop`, `status`, `chat` and
+`profile` replacing the Justfile, the generated
+`learn/code/profile/models.json`, Getting started lesson 1, and the
+maintainer pages in `learn/project/`.
+
+Verified: `npm test` 334/334, `tests/docs-caps.test.mjs` 4/4,
+`uvx zensical build` clean, and a live smoke on the M5 Max — `start`
+served `Q4_K_M` with `n_ctx` 50176, `chat` answered in 94 tokens, and base
+Pi through the private profile replied "Hello". The 8.38 GB peak was not
+re-measured in this run.
