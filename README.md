@@ -311,6 +311,23 @@ Pi was not run on these rungs.
 - [Where the cost goes](docs/superpowers/research/2026-10-09-worker-cost-options.md): Mode versus Worker.
 - [Recovery report](docs/superpowers/research/2026-10-07-mellum-recovery/report.md): why Mellum cannot be the primary agent.
 
+## Learning Center
+
+`learn/` is a short course from a machine with no Python to a graded eval
+harness, with every claim labelled by the evidence behind it:
+
+1. [Base Pi on llama.cpp](learn/getting-started/base-pi-on-llamacpp.md) —
+   install `uv`, llama.cpp and the Mellum weights, chat, and get an answer
+   from base Pi.
+2. [Make a mini harness](learn/getting-started/harness.md) — one task, one
+   fresh directory, one score line.
+3. [A suite and the telemetry](learn/getting-started/suite.md) — three tasks
+   scored, graded with `ruff`, `pyrefly` and `complexipy`, and read from the
+   run's trace.
+
+Run the harness with `uv run learn/code/harness.py suite all --grade`; build
+the site with `uvx zensical build` (output in `site/`).
+
 ## Requirements
 
 - Apple Silicon Mac, [oMLX](https://github.com/jundot/omlx) 0.6.4 or newer, 9.9 GB for the weights

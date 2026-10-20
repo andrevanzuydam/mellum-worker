@@ -45,6 +45,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The README now links all three Getting started lessons and the harness
+  command, and the track index and "How to read a lesson" say what each
+  lesson produces, so a reader can tell a lesson worked.
+
 - The M series is closed and archived in `ROADMAP-M.md`. The mediated test and
   the one-worker rename are backlog entries now, the README's future work
   points at them instead of at phases, and the Learning Center is the only

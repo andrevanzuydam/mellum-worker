@@ -7,6 +7,15 @@ import { formatMerge, formatReport, learnFromTexts, mergeSuggestion } from "../e
 const ROOT = resolve(import.meta.dirname, "..");
 const read = (p) => readFileSync(resolve(ROOT, p), "utf8");
 
+test("the README links all three Getting started lessons", () => {
+  const readme = read("README.md");
+  for (const page of ["base-pi-on-llamacpp", "harness", "suite"])
+    assert.ok(readme.includes(`learn/getting-started/${page}.md`),
+      `README lacks the ${page} lesson`);
+  assert.ok(readme.includes("learn/code/harness.py suite all --grade"),
+    "README lacks the harness command");
+});
+
 test("README carries both pinned install lines and the status table", () => {
 	const readme = read("README.md");
 	const version = JSON.parse(read("package.json")).version;
