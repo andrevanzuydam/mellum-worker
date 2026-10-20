@@ -5,6 +5,10 @@ Versions match git tags; pin one in both install lines.
 ## [Unreleased]
 
 ### Added
+- A Project section in `learn/` for maintainers: what the repository
+  contains, where its records live, the `uv`/`pyproject.toml` toolchain, the
+  backend commands, the checks and the release steps.
+
 - Getting started lesson 1 walks a machine with no Python from `uv` to a
   first base-Pi answer on llama.cpp: the root `pyproject.toml` fetches the
   interpreter, `scripts/backend.py` starts the server and chats, and a

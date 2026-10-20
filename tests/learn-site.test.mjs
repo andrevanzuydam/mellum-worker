@@ -18,6 +18,8 @@ const PAGES = [
   "paul/index.md",
   "andre/index.md",
   "lesson-template.md",
+  "project/index.md",
+  "project/toolchain.md",
 ];
 
 test("zensical.toml points docs_dir at learn/", () => {
@@ -78,6 +80,17 @@ test("lesson 1 walks from uv to a base-Pi answer", () => {
   const index = page("getting-started/index.md");
   assert.ok(index.includes("base-pi-on-llamacpp.md"), "index does not link lesson 1");
   assert.doesNotMatch(index, /coming/);
+});
+
+test("the project pages orient a maintainer and name the checks", () => {
+  const index = page("project/index.md");
+  for (const text of ["scripts/backend.py", "docs/sdd.md", "AGENTS.md"])
+    assert.ok(index.includes(text), `project index lacks ${text}`);
+  const toolchain = page("project/toolchain.md");
+  for (const text of ["pyproject.toml", "[tool.mellum]",
+    "uv run scripts/backend.py", "PI_CODING_AGENT_DIR", "npm test",
+    "uv run pytest", "uvx zensical build"])
+    assert.ok(toolchain.includes(text), `toolchain lacks ${text}`);
 });
 
 test("learn/ never says tutorial or case study", () => {

@@ -14,6 +14,7 @@ nav = [
     "about/index.md", "about/how-to-read.md",
     "about/evidence.md", "about/contributing.md",
   ] },
+  { "Project" = ["project/index.md", "project/toolchain.md"] },
   { "Glossary" = "glossary.md" },
   { "Lesson template" = "lesson-template.md" },
   { "Credits" = "credits.md" },
