@@ -19,21 +19,21 @@ test("a passing run prints one score line", () => {
   const runs = mkdtempSync(join(tmpdir(), "mellum-runs-"));
   const r = run(runs, "fake-pi.sh");
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /^add: PASS \(run .+; \d+ requests, \d+ tool calls, \d+ tool errors\)$/m);
+  assert.match(r.stdout, /^add: PASS \(n=1; run .+; \d+ requests, \d+ tool calls, \d+ tool errors\)$/m);
 });
 
 test("a failing run says FAIL and shows the test tail", () => {
   const runs = mkdtempSync(join(tmpdir(), "mellum-runs-"));
   const r = run(runs, "fake-pi-empty.sh");
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /^add: FAIL \(run .+; \d+ requests, \d+ tool calls, \d+ tool errors\)$/m);
+  assert.match(r.stdout, /^add: FAIL \(n=1; run .+; \d+ requests, \d+ tool calls, \d+ tool errors\)$/m);
   assert.match(r.stderr, /failed|error/i);
 });
 
 test("--dry-run prints the child's argv", () => {
   const r = run(tmpdir(), "fake-pi.sh", "--dry-run");
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /-p .*--no-session .*record-pi\.mjs/);
+  assert.match(r.stdout, /-p .*record-pi\.mjs/);
 });
 
 test("suite all prints every task and a total", () => {
@@ -45,7 +45,7 @@ test("suite all prints every task and a total", () => {
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /^add: PASS/m);
   assert.match(r.stdout, /^mul: PASS/m);
-  assert.match(r.stdout, /^2\/2 passed$/m);
+  assert.match(r.stdout, /^2\/2 tasks passed \(2\/2 sessions\)$/m);
 });
 
 test("--grade prints one line per grader beside the score", () => {
@@ -70,4 +70,30 @@ test("without --grade there are no grader lines", () => {
   const runs = mkdtempSync(join(tmpdir(), "mellum-runs-"));
   const r = run(runs, "fake-pi.sh");
   assert.doesNotMatch(r.stdout, /^ruff:/m);
+});
+
+test("--repeat runs the session twice and reports n", () => {
+  const runs = mkdtempSync(join(tmpdir(), "mellum-runs-"));
+  const r = run(runs, "fake-pi.sh", "--repeat", "2");
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /^add \[1\/2\]: PASS/m);
+  assert.match(r.stdout, /^add \[2\/2\]: PASS/m);
+  assert.match(r.stdout, /^add: 2\/2 sessions passed$/m);
+});
+
+test("--repeat reports a failure per session", () => {
+  const runs = mkdtempSync(join(tmpdir(), "mellum-runs-"));
+  const r = run(runs, "fake-pi-empty.sh", "--repeat", "2");
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /^add: 0\/2 sessions passed$/m);
+});
+
+test("suite counts tasks and sessions", () => {
+  const runs = mkdtempSync(join(tmpdir(), "mellum-runs-"));
+  const r = spawnSync("uv", ["run", "learn/code/harness.py", "suite", "all",
+    "--tasks-dir", TASKS, "--runs-dir", runs, "--pi-binary", resolve(FIX, "fake-pi.sh"),
+    "--repeat", "2",
+  ], { cwd: ROOT, encoding: "utf8" });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /^2\/2 tasks passed \(4\/4 sessions\)$/m);
 });

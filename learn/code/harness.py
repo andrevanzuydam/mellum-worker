@@ -208,6 +208,37 @@ def score(run: Path, task: Task) -> tuple[bool, str]:
     return result.returncode == 0, tail
 
 
+def _run_sessions(
+    task: Task,
+    *,
+    runs_dir: Path,
+    pi_binary: str,
+    repeat: int,
+    grade_run: bool,
+) -> list[tuple[Path, bool, str, list, dict]]:
+    results = []
+    for _ in range(repeat):
+        run_dir = run_task(task, runs_dir=runs_dir, pi_binary=pi_binary)
+        grades = grade(run_dir / "workspace") if grade_run else []
+        passed, tail = score(run_dir, task)
+        results.append((run_dir, passed, tail, grades, report(run_dir)))
+    return results
+
+
+def _print_task(
+    task: Task, results: list[tuple], repeat: int
+) -> int:
+    for index, (run_dir, passed, tail, grades, counts) in enumerate(results, 1):
+        print(_line(task, run_dir, passed, counts, repeat, index))
+        _print_grades(grades)
+        if not passed:
+            print(tail, file=sys.stderr)
+    ok = sum(1 for result in results if result[1])
+    if repeat > 1:
+        print(f"{task.name}: {ok}/{repeat} sessions passed")
+    return ok
+
+
 def suite(
     names: list[str],
     *,
@@ -215,10 +246,12 @@ def suite(
     runs_dir: Path = RUNS,
     pi_binary: str = "pi",
     grade_run: bool = False,
+    repeat: int = 1,
 ) -> tuple[int, int]:
     available = sorted(
         path.name for path in Path(tasks_dir).iterdir()
-        if (path / "task.md").exists()
+        if (path / "tests").is_dir()
+        and ((path / "task.md").exists() or (path / "prompts").is_dir())
     )
     if "all" in names:
         names = available
@@ -226,24 +259,33 @@ def suite(
     if missing:
         raise SystemExit(f"no task named {', '.join(missing)} in {tasks_dir}; "
                          f"available: {', '.join(available)}")
-    passed = total = 0
+    tasks_passed = sessions_passed = sessions_total = 0
     for name in names:
         task = load_task(tasks_dir, name)
-        run_dir = run_task(task, runs_dir=runs_dir, pi_binary=pi_binary)
-        grades = grade(run_dir / "workspace") if grade_run else []
-        ok, tail = score(run_dir, task)
-        print(_line(task, run_dir, ok, report(run_dir)))
-        _print_grades(grades)
-        if not ok:
-            print(tail, file=sys.stderr)
-        passed += ok
-        total += 1
-    print(f"{passed}/{total} passed")
-    return passed, total
+        results = _run_sessions(
+            task, runs_dir=runs_dir, pi_binary=pi_binary,
+            repeat=repeat, grade_run=grade_run,
+        )
+        sessions_passed += _print_task(task, results, repeat)
+        sessions_total += len(results)
+        if all(result[1] for result in results):
+            tasks_passed += 1
+    print(f"{tasks_passed}/{len(names)} tasks passed "
+          f"({sessions_passed}/{sessions_total} sessions)")
+    return tasks_passed, len(names)
 
 
-def _line(task: Task, run_dir: Path, passed: bool, counts: dict) -> str:
-    return (f"{task.name}: {'PASS' if passed else 'FAIL'} (run {run_dir}; "
+def _line(
+    task: Task,
+    run_dir: Path,
+    passed: bool,
+    counts: dict,
+    repeat: int = 1,
+    index: int = 1,
+) -> str:
+    tag = task.name + (f" [{index}/{repeat}]" if repeat > 1 else "")
+    n_text = f"n={repeat}; " if repeat == 1 else ""
+    return (f"{tag}: {'PASS' if passed else 'FAIL'} ({n_text}run {run_dir}; "
             f"{counts['requests']} requests, {counts['tool_calls']} tool calls, "
             f"{counts['tool_errors']} tool errors)")
 
@@ -263,6 +305,7 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--pi-binary", default="pi")
     run.add_argument("--dry-run", action="store_true")
     run.add_argument("--grade", action="store_true")
+    run.add_argument("--repeat", type=int, default=1)
 
     many = sub.add_parser("suite", help="run several tasks and total them")
     many.add_argument("names", nargs="+", help="easy, medium, hard, all, or several")
@@ -270,11 +313,16 @@ def main(argv: list[str] | None = None) -> int:
     many.add_argument("--runs-dir", type=Path, default=RUNS)
     many.add_argument("--pi-binary", default="pi")
     many.add_argument("--grade", action="store_true")
+    many.add_argument("--repeat", type=int, default=1)
     args = parser.parse_args(argv)
+
+    if args.repeat < 1:
+        parser.error("--repeat must be at least 1")
 
     if args.command == "suite":
         suite(args.names, tasks_dir=args.tasks_dir, runs_dir=args.runs_dir,
-              pi_binary=args.pi_binary, grade_run=args.grade)
+              pi_binary=args.pi_binary, grade_run=args.grade,
+              repeat=args.repeat)
         return 0
 
 
@@ -284,13 +332,11 @@ def main(argv: list[str] | None = None) -> int:
         print(shlex.join(pi_argv(args.pi_binary, PROFILE, RECORDER, provider,
                                  model, task.prompt)))
         return 0
-    run_dir = run_task(task, runs_dir=args.runs_dir, pi_binary=args.pi_binary)
-    grades = grade(run_dir / "workspace") if args.grade else []
-    passed, tail = score(run_dir, task)
-    print(_line(task, run_dir, passed, report(run_dir)))
-    _print_grades(grades)
-    if not passed:
-        print(tail, file=sys.stderr)
+    results = _run_sessions(
+        task, runs_dir=args.runs_dir, pi_binary=args.pi_binary,
+        repeat=args.repeat, grade_run=args.grade,
+    )
+    _print_task(task, results, args.repeat)
     return 0
 
 
