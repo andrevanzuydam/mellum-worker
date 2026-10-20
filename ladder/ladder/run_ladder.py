@@ -986,9 +986,8 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: list[str] | None = None) -> None:
-    parser = build_parser()
-    args = parser.parse_args(argv)
+def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    """Cross-argument constraints, split out of main() so they are unit-testable."""
     if (args.facts_section != "fixture" or args.roadmap != "phase-files") and any(
         RUNGS[n].fixture not in AGENTCLINIC_FIXTURES for n in args.rung
     ):
@@ -999,7 +998,6 @@ def main(argv: list[str] | None = None) -> None:
         "--temperature": args.temperature is not None,
         "--top-p": args.top_p is not None,
         "--model-id": args.model_id is not None,
-        "--acceptance-test": args.acceptance_test is not None,
     }
     if args.mode != "direct" and any(direct_only.values()):
         used = ", ".join(name for name, on in direct_only.items() if on)
@@ -1014,11 +1012,21 @@ def main(argv: list[str] | None = None) -> None:
         )
     if args.redispatch and args.acceptance_test is None:
         parser.error("--redispatch requires --acceptance-test")
+    # The verify-and-re-dispatch loop and its effort ramp are implemented for direct
+    # mode only; Mellum Mode can be handed the frozen test but not yet re-dispatched.
+    if (args.redispatch or args.effort_ramp) and args.mode != "direct":
+        parser.error("--redispatch and --effort-ramp apply only to --mode direct")
     if args.backend == "mlx-lm" and args.base_url is None:
         parser.error(
             "--backend mlx-lm requires --base-url (e.g. http://127.0.0.1:8080/v1); "
             "a plain MLX server has no admin API for the ladder to configure"
         )
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    validate_args(args, parser)
     request_overrides = {
         key: value
         for key, value in (("temperature", args.temperature), ("top_p", args.top_p))

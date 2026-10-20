@@ -1381,3 +1381,41 @@ def test_run_record_names_the_variants_and_uses_the_roadmap_sentence(monkeypatch
     assert record["facts_section"] == "light" and record["roadmap"] == "one-file"
     assert record["sentence"] == "Implement Phase 2 of specs/roadmap.md"
     assert seen["facts_section"] == "light" and seen["roadmap"] == "one-file"
+
+
+_VALIDATE_BASE = ["--profile", "tuned", "--rung", "9", "--out", "/tmp/ladder-validate-test"]
+
+
+def test_acceptance_test_is_allowed_in_mode():
+    """Mellum Mode can be handed the frozen test; the mediation's test half is not direct-only."""
+    from ladder.run_ladder import build_parser, validate_args
+
+    parser = build_parser()
+    args = parser.parse_args([*_VALIDATE_BASE, "--mode", "mode", "--acceptance-test", "test_phase4.py"])
+    validate_args(args, parser)  # must not raise
+
+
+def test_base_url_stays_direct_only_in_mode():
+    import pytest
+
+    from ladder.run_ladder import build_parser, validate_args
+
+    parser = build_parser()
+    args = parser.parse_args([*_VALIDATE_BASE, "--mode", "mode", "--base-url", "http://127.0.0.1:8080/v1"])
+    with pytest.raises(SystemExit):
+        validate_args(args, parser)
+
+
+def test_redispatch_is_rejected_in_mode(capsys):
+    """The verify-and-re-dispatch loop is direct-only; passing it with Mode is a clear error, not a silent no-op."""
+    import pytest
+
+    from ladder.run_ladder import build_parser, validate_args
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [*_VALIDATE_BASE, "--mode", "mode", "--acceptance-test", "test_phase4.py", "--redispatch", "3"]
+    )
+    with pytest.raises(SystemExit):
+        validate_args(args, parser)
+    assert "redispatch" in capsys.readouterr().err.lower()

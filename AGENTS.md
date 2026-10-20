@@ -44,6 +44,14 @@ and evidence with dated corrections; never edit archived plans.
   `uv run python -m ladder.run_ladder --help` for runs. Never commit
   `trace.jsonl`, `stdout.txt` or `diff.patch`; raw evidence goes in a
   `research-YYYY-MM-DD` release.
+- **Run standard — use the two scripts, don't hand-assemble flags.**
+  `scripts/screen.sh <rung> <model-id>` is the measurement rig (direct, mediated:
+  `tuned`, repeat 3, redispatch 5, effort-ramp, thinking off, **guards on**, the
+  default prompt and tools). `scripts/product.sh <rung>` is the shipped worker
+  (Mellum Mode, guards + facts on). Both write to `runs/` (git-ignored) and want
+  `watch_ladder.py` alongside; promote a kept run to `docs/ladder/<date-topic>/`
+  with the raw stripped. Per-run `--prompt`/`--tools`/`--thinking` tweaks or
+  source edits are ablations, recorded as such — not how a standard run is made.
 - `node build.mjs` regenerates the agent templates after a prompt change, and
   a test fails on drift. `prompts/mellum-worker.md` is the only prompt source.
 - Never add a `build`, `prepare`, `prepack`, or `install` npm script; OpenCode

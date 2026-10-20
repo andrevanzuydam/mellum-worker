@@ -6,6 +6,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- **The run standard**: `scripts/screen.sh <rung> <model-id>` (the measurement
+  rig — direct, mediated, `tuned`/repeat 3/redispatch 5/effort-ramp/thinking
+  off/**guards on**, default prompt and tools) and `scripts/product.sh <rung>`
+  (the shipped worker — Mellum Mode, guards + facts on). Two fixed shapes so
+  runs compare like-for-like instead of hand-assembled flags; both write to
+  `runs/` (git-ignored) and expect `watch_ladder.py` alongside. See `AGENTS.md`.
+
 - `README.md` gains a "Getting started (the next engineer)" section: read
   `LESSONS.md` first, then ordered steps to run the ladder — the oMLX server,
   the one-time `~/.pi/agent/models.json` provider registration that Mellum Mode
@@ -103,6 +110,12 @@ Versions match git tags; pin one in both install lines.
   instead of retrying blind.
 
 ### Changed
+
+- `run_ladder --acceptance-test` now also works with `--mode mode`, not only
+  `--mode direct`: the frozen test is placed in the Mellum Mode workspace so the
+  shipped worker can be measured against it. The verify-and-re-dispatch loop
+  (`--redispatch`/`--effort-ramp`) stays direct-only and now errors clearly when
+  combined with Mode instead of silently doing nothing.
 
 - Worker prompt **v7** specializes to the "make one failing test pass" shape:
   read the named test *and* any spec it references, create the module the test
