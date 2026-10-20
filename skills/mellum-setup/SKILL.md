@@ -22,34 +22,29 @@ PKG=~/.pi/agent/git/github.com/pauleveritt/mellum-worker
 
 Every command below is relative to `$PKG`.
 
-## Which host am I in?
+## Host
 
-- Pi: the `/skill:` command form exists and `~/.pi/agent/settings.json` is present.
-- OpenCode: the `skill` tool loaded this file and `~/.config/opencode/` is present.
-
-Record the answer; phases 4 and 5 differ by host.
+This skill installs the Pi side only: `~/.pi/agent/settings.json` must exist.
+OpenCode is no longer supported.
 
 ## Phases
 
 | # | Phase | Check that means "already done" | Reference |
 | --- | --- | --- | --- |
-| 1 | Preflight | Apple Silicon, oMLX installed, host known | [reference/01-preflight.md](reference/01-preflight.md) |
+| 1 | Preflight | Apple Silicon, oMLX installed | [reference/01-preflight.md](reference/01-preflight.md) |
 | 2 | Weights | model folder with two `.safetensors` shards exists | [reference/02-weights.md](reference/02-weights.md) |
 | 3 | Server | `GET http://127.0.0.1:8001/v1/models` lists the model | [reference/03-server.md](reference/03-server.md) |
-| 4 | Provider | the host's model list shows `omlx/Mellum2.1-12B-A2.5B-Thinking-6bit` | Pi: [reference/04-provider-pi.md](reference/04-provider-pi.md), OpenCode: [reference/04-provider-opencode.md](reference/04-provider-opencode.md) |
-| 5 | Worker | `mellum-worker` agent file exists in the host's user agents dir | Pi: [reference/05-worker-pi.md](reference/05-worker-pi.md), OpenCode: [reference/05-worker-opencode.md](reference/05-worker-opencode.md) |
-| 6 | Rules | user accepted or declined the AGENTS.md fragment | [reference/06-rules.md](reference/06-rules.md) |
-| 7 | Smoke test | the calculator fixture's tests exit 0 after the worker ran | [reference/07-smoke.md](reference/07-smoke.md) |
-| 8 | Project facts (optional, Pi) | the project's `AGENTS.md` has a heading that is exactly `## Mellum` (not `## Mellum Worker`), or the user declined | [reference/08-project-facts.md](reference/08-project-facts.md) |
+| 4 | Provider | Pi's model list shows `omlx/Mellum2.1-12B-A2.5B-Thinking-6bit` | [reference/04-provider-pi.md](reference/04-provider-pi.md) |
+| 5 | Rules | user accepted or declined the AGENTS.md fragment | [reference/05-rules.md](reference/05-rules.md) |
+| 6 | Smoke test | the calculator fixture's tests exit 0 after `/mellum` ran | [reference/06-smoke.md](reference/06-smoke.md) |
+| 7 | Project facts (optional) | the project's `AGENTS.md` has a heading that is exactly `## Mellum` (not `## Mellum Worker`), or the user declined | [reference/07-project-facts.md](reference/07-project-facts.md) |
 
-Read a phase's reference file only when its check fails. Phase 8 is
-optional and per project; offer it in Pi once phase 7 passes. When the
-checks pass, tell the user:
+Read a phase's reference file only when its check fails. Phase 7 is
+optional and per project; offer it once phase 6 passes. When the checks
+pass, tell the user:
 
-- Pi: "Mellum Worker is available to pi-subagents as `mellum-worker`, and
-  `/mellum <task>`, `/mellum on`, `/mellum off` run Mellum Worker in this session."
-- OpenCode: "Mellum Worker is the `mellum-worker` subagent. Ask your main
-  agent to delegate a bounded task to it."
+- "Mellum Worker is the `/mellum <task>` command in this session, with
+  `/mellum on` and `/mellum off` to manage it."
 
 Do not invent settings. Every number in this skill was measured; if a
 reference file does not cover the user's situation, say so and stop.

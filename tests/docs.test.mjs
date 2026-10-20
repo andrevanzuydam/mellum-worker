@@ -111,10 +111,10 @@ test("README learn paragraph shows a trimmed report and the suggestion", () => {
 	assert.match(learn, /```\nmellum learn: \d+ runs in [\s\S]*Suggested for AGENTS\.md:[\s\S]*## Mellum[\s\S]*```/);
 });
 
-test("the setup smoke step ends with the check, for every host", () => {
-	const smoke = read("skills/mellum-setup/reference/07-smoke.md");
+test("the setup smoke step ends with the check, for Pi", () => {
+	const smoke = read("skills/mellum-setup/reference/06-smoke.md");
 	assert.ok(smoke.includes("scripts/mellum.mjs check --host"), "names the CLI");
-	assert.ok(smoke.includes("/mellum check"), "names the Pi Mode command");
+	assert.ok(smoke.includes("/mellum check"), "names the Pi command");
 	assert.ok(smoke.indexOf("scripts/mellum.mjs check") > smoke.indexOf("calculator.js` multiplies"), "after the fixture passes");
 });
 
