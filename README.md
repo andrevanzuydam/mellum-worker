@@ -13,7 +13,7 @@ Your main model stays in charge.
   No extra packages. 15/15 on the ladder with project facts.
 - **Mellum Worker**: a [pi-subagents](https://github.com/nicobailon/pi-subagents)
   child. Your model briefs it and runs the tests itself. 15/15. Retired
-  once the mediated test below is measured ([M.12](ROADMAP.md#phases)).
+  once the mediated test below is measured ([backlog](BACKLOG.md#one-worker)).
 
 Every setting was measured by the ladder (`ladder/`; records in
 `docs/ladder/`). The 6-bit MLX weights (for Apple Silicon, served by oMLX)
@@ -33,7 +33,7 @@ or a spec phase into a failing test, shows it to you, confirms it fails, and
 hands it to Mellum as "make this pass". Mellum's best measured shape is a
 named failing test: rung 4, three files, 3/3 in every arm. Whether that
 shape lifts the four-phase build (rungs 6–9, 9/12 with the `## Mellum`
-section) is M.11's question and is unmeasured; the lead is phase 4, which
+section) is the mediated test's question and is unmeasured; the lead is phase 4, which
 misses its automatic id in most runs because the spec's test line never asks
 for it. You can do it by hand today:
 
@@ -356,15 +356,16 @@ after a prompt change. From `ladder/`: `uv run python -m pytest`, and
 
 ## Future work
 
-Two phases remain; see [ROADMAP.md](ROADMAP.md). Everything else is a
-[backlog entry](BACKLOG.md) with a reopen condition.
+The M series closed on 2026-10-20 and is [archived](ROADMAP-M.md); the
+Learning Center is the active roadmap ([ROADMAP.md](ROADMAP.md)). Everything
+deferred is a [backlog entry](BACKLOG.md) with a reopen condition.
 
-- **M.11:** the mediated test, measured: a rung 9 screen first, then a
-  preregistered run on rungs 6–9, then the `/mellum` command that writes
-  the test with your main model, shows it, runs it red and dispatches.
-- **M.12:** one worker: retire the pi-subagents Worker and rename Mellum
-  Mode to mellum-worker. `/mellum` stays.
-- **Backlog:** measuring the OpenCode port, an Ollama backend, execution
+- **The mediated test:** a rung 9 screen first, then a preregistered run on
+  rungs 6–9, then the `/mellum` command that writes the test with your main
+  model, shows it, runs it red and dispatches. PR #1 is a candidate.
+- **One worker:** retire the pi-subagents Worker and rename Mellum Mode to
+  mellum-worker. `/mellum` stays.
+- **Also parked:** measuring the OpenCode port, an Ollama backend, execution
   bounds, versioned assessments.
 
 ## Releases

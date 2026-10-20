@@ -25,6 +25,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The M series is closed and archived in `ROADMAP-M.md`. The mediated test and
+  the one-worker rename are backlog entries now, the README's future work
+  points at them instead of at phases, and the Learning Center is the only
+  active programme.
+
 - The Learning Center teaches llama.cpp rather than Ollama, because that is
   what runs here; Ollama stays the backlogged port for a machine without
   Apple Silicon, and the skeleton's pages and badge definitions say so.
@@ -40,9 +45,8 @@ Versions match git tags; pin one in both install lines.
   (you write specs and tests, Mellum makes the test command exit 0), names
   the mediated test as the next guardrail and how to do it by hand today,
   unmeasured, and says the OpenCode port is ported and unmeasured with its
-  measurement on the backlog. Future work lists M.11 (the mediated test) and
-  M.12 (one worker, Mellum Mode renamed mellum-worker) in place of M.8–M.10,
-  M.3 and M.4.
+  measurement on the backlog. Future work points at the backlog — the mediated
+  test and one worker, in place of M.8–M.10, M.3 and M.4.
 
 - A bare `--mode direct` ladder run now sends the worker prompt in place of
   Pi's (`--prompt-mode replace`), which is what the shipped agent file does;

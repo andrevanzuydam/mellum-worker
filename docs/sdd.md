@@ -88,6 +88,10 @@ their original paths, with dated corrections beside the original reasoning.
 Closed phases keep their roadmap rows: state, date and links. There is no
 phase-row archive. An over-cap closed row owes a research doc.
 
+2026-10-20: a whole closed series may move to its own file once it has a
+close and a verdict. The M series is in `ROADMAP-M.md`, linked from
+`ROADMAP.md`, and is not edited afterwards. Individual closed rows still stay.
+
 ## Docs are a presentation layer
 
 Every primary document must render as plain Markdown on GitHub without a

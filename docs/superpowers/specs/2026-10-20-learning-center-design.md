@@ -288,8 +288,9 @@ LC.1, before any lesson, and kept current as the center grows.
 | LC.4 | A digest of Paul's phases, then Paul's findings lessons |
 | LC.5 | Andre's findings lessons, gated on consent |
 
-M.11 and M.12 stay on the roadmap. PR #1 is a candidate implementation of
-M.11; LC.5 tells its story and does not decide M.11.
+2026-10-20: the M series closed and its last two phases moved to the
+backlog; its rows are archived in `ROADMAP-M.md`. PR #1 remains a candidate
+for the mediated test, and LC.5 tells its story without deciding it.
 
 ## 11. Risks
 

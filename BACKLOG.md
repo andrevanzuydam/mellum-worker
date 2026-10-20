@@ -145,6 +145,28 @@ Retired on 2026-10-13 as instrument work the current checks already cover
 on pass/fail but differ in verification or report, and the existing `check`
 fields cannot show it.
 
+**The mediated test.** Your main model turns a request or a spec phase into
+a failing test, shows it, and hands it to the worker as "make this pass";
+completion is scored by the hidden tests and write list, with the test
+written once and not by the worker. Measured in the triage note's order: a
+rung 9 screen (three runs) first, then a preregistered run on rungs 6–9
+against A21's 9/12, then a command that records the test beside the request.
+Andre's [PR #1](https://github.com/pauleveritt/mellum-worker/pull/1) is a
+candidate implementation (`--acceptance-test`; an n = 1 rung 9 screen on
+mlx-lm, [digest](docs/superpowers/research/2026-10-20-pr-digest.md)).
+*Reopens when* someone can run the rung 9 screen and wants the result; the
+closed phase and its design inputs are in [`ROADMAP-M.md`](ROADMAP-M.md).
+
+**One worker.** Retire the pi-subagents Worker (agent template, child-only
+guard loading, Worker run records, the setup skill's agent-file and intercom
+phases, the ladder's `delegated` mode) and rename: `extensions/mellum-mode.ts`
+becomes `mellum-worker.ts` and "Mellum Mode" becomes mellum-worker in the
+docs, skill and templates. `/mellum` and the run-record path stay; `learn`
+and `last` keep reading old `kind: "worker"` records; a rung 1 and a rung 6
+smoke show the rename launches the same requests. *Reopens when* the mediated
+test lands, or the rename is worth doing on its own; the closed phase and its
+exclusions are in [`ROADMAP-M.md`](ROADMAP-M.md).
+
 **pi-subagents Worker: one-liners and an in-process child (were M.8, M.9).**
 `async: false`, a re-dispatch line in the description and the intercom
 opt-out ([A11](docs/ladder/ablation-a11-delegated-nointercom/README.md)); a
