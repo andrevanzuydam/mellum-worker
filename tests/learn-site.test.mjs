@@ -120,6 +120,14 @@ test("lesson 3 runs the suite, grading and the trace", () => {
   assert.match(page("getting-started/index.md"), /suite\.md/);
 });
 
+test("Paul's track lists ten lessons, one phase each", () => {
+  const index = page("paul/index.md");
+  const items = index.match(/^\d+\. \*\*/gm) ?? [];
+  assert.equal(items.length, 10);
+  assert.match(index, /LC\.6/);
+  assert.match(index, /LC\.15/);
+});
+
 test("learn/ never says tutorial or case study", () => {
   for (const p of PAGES)
     assert.doesNotMatch(page(p), /tutorial|case stud/i, p);

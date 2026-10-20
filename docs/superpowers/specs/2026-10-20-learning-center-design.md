@@ -167,13 +167,13 @@ names:
    scored, with a link to the code.
 3. **Evidence of the problem**: the runs that show it, with n and backend.
 4. **Solution**: the change, with a link to the commit or file.
-5. **Validation**: the test suite and static analysis (`ruff`, `pyrefly`,
-   and one complexity tool from LC.3) that show the change holds, with the
-   command run and what it said.
+5. **Validation**: what shows the change holds — the test suite and static
+   analysis (`ruff`, `pyrefly`, and one complexity tool from LC.3) for a code
+   change, the ladder runs for a setting, with the command and what it said.
 6. **Interpretation**: a short narrative, no badge.
 
 Steps 1–5 each open with one badge. A negative result keeps the template:
-Validation shows the test or the analysis that still fails.
+Validation shows the test, the analysis or the run that still fails.
 
 2026-10-20: step 5 replaced "Evidence it worked" with Validation, a test
 suite plus static analysis, because a lesson's fix is proved by what runs,
