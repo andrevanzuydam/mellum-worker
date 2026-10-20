@@ -53,12 +53,33 @@ def test_pi_argv_isolates_the_child():
     task = harness.load_task(TASKS, "add")
     argv = harness.pi_argv("pi", PROFILE, Path("rec.mjs"), "llamacpp", "model-x",
                            task.prompt)
-    for flag in ("-p", "--no-session", "--no-approve", "--no-context-files",
+    for flag in ("-p", "--no-approve", "--no-context-files",
                  "--no-extensions", "--no-skills"):
         assert flag in argv
+    assert "--no-session" not in argv
     assert argv[argv.index("-e") + 1].endswith("rec.mjs")
     assert argv[argv.index("--provider") + 1] == "llamacpp"
     assert argv[-1] == task.prompt
+
+
+def test_two_prompts_share_one_session(tmp_path):
+    task = harness.load_task(TASKS, "steps")
+    run_dir = harness.run_task(
+        task, runs_dir=tmp_path / "runs", profile=PROFILE,
+        pi_binary=str(FIX / "fake-pi-session.sh"),
+    )
+    lines = [line.split("|") for line in
+             (run_dir / "workspace" / "session-log.txt").read_text().splitlines()]
+    assert [line[2] for line in lines] == task.prompts
+    assert lines[0][0] == lines[1][0] and lines[0][0]
+    assert lines[0][1] == lines[1][1]
+    assert str(run_dir) in lines[0][1]
+    assert (run_dir / "workspace" / "one.txt").exists()
+    assert (run_dir / "workspace" / "two.txt").exists()
+    assert not (run_dir / "workspace" / "tests").exists()
+    rows = [json.loads(row) for row in
+            (run_dir / "trace.jsonl").read_text().splitlines()]
+    assert sum(row["type"] == "instance_start" for row in rows) == 2
 
 
 def test_runs_are_fresh_and_tests_are_hidden(tmp_path):

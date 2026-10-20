@@ -26,7 +26,7 @@ TASKS = CODE / "tasks"
 RECORDER = CODE / "record-pi.mjs"
 PROFILE = CODE / "profile"
 FLAGS = [
-    "-p", "--no-session", "--no-approve", "--no-extensions", "--no-skills",
+    "-p", "--no-approve", "--no-extensions", "--no-skills",
     "--no-prompt-templates", "--no-themes", "--no-context-files",
 ]
 
@@ -89,10 +89,18 @@ def pi_argv(
     provider: str,
     model: str,
     prompt: str,
+    *,
+    session_id: str | None = None,
+    session_dir: Path | None = None,
 ) -> list[str]:
+    session = (
+        ["--session-id", session_id, "--session-dir", str(session_dir)]
+        if session_id and session_dir
+        else []
+    )
     return [
         pi_binary, *FLAGS, "--provider", provider, "--model", model,
-        "-e", str(recorder), prompt,
+        *session, "-e", str(recorder), prompt,
     ]
 
 
@@ -109,20 +117,27 @@ def run_task(
     shutil.copytree(profile, run / "profile")
     if task.start is not None:
         shutil.copytree(task.start, workspace, dirs_exist_ok=True)
-    (run / "prompt.txt").write_text(task.prompt + "\n")
+    (run / "prompt.txt").write_text("\n\n".join(task.prompts) + "\n")
     trace = run / "trace.jsonl"
     trace.touch()
+    sessions = run / "sessions"
+    sessions.mkdir()
     provider, model = profile_pin(profile)
+    session_id = str(uuid.uuid4())
     env = {
         **os.environ,
         "PI_CODING_AGENT_DIR": str(run / "profile"),
         "MELLUM_TRACE_FILE": str(trace),
     }
-    argv = pi_argv(pi_binary, run / "profile", RECORDER, provider, model, task.prompt)
-    try:
-        subprocess.run(argv, cwd=workspace, env=env, check=False)
-    except FileNotFoundError:
-        raise SystemExit(f"pi not found: {pi_binary}; install Pi before running a task")
+    for prompt in task.prompts:
+        argv = pi_argv(
+            pi_binary, run / "profile", RECORDER, provider, model, prompt,
+            session_id=session_id, session_dir=sessions,
+        )
+        try:
+            subprocess.run(argv, cwd=workspace, env=env, check=False)
+        except FileNotFoundError:
+            raise SystemExit(f"pi not found: {pi_binary}; install Pi before running a task")
     return run
 
 
