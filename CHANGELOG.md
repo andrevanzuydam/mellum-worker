@@ -6,6 +6,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `README.md` gains a "Getting started (the next engineer)" section: read
+  `LESSONS.md` first, then ordered steps to run the ladder — the oMLX server,
+  the one-time `~/.pi/agent/models.json` provider registration that Mellum Mode
+  needs (direct mode wires its own, so a direct run can pass while Mode won't
+  even start), running visibly with `watch_ladder.py`, the direct-vs-Mode
+  distinction, the committed frozen acceptance tests, and `compare_runs.py`.
+
 - `docs/ladder/2026-10-20-mediated-6-9-v7/` records the measured pass: Mellum on
   AgentClinic rungs 6–9, n=3, mediated (frozen phase tests) with the v7 prompt +
   focused command + trimmed tools + fail-fast ramp — **12/12**, rung 9 (the

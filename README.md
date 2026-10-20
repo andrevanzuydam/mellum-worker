@@ -396,6 +396,54 @@ surfaced loudly instead of swallowed. The skill makes that the default rather
 than something to remember, and the 🍓 marker is a visible promise that it is in
 force.
 
+## Getting started (the next engineer)
+
+Start with **[`LESSONS.md`](LESSONS.md)** — a hundred lessons and a dated
+addendum from building this, gotchas included. Then, to run the ladder
+yourself:
+
+1. **The ladder lives in `ladder/`, on `uv`.** `cd ladder`; `uv run python -m
+   pytest` runs its suite, and `uv run python -m ladder.run_ladder --help` lists
+   every flag.
+
+2. **Serve Mellum on oMLX first.** Follow
+   [`docs/backends/omlx.md`](docs/backends/omlx.md): the model answers at
+   `http://127.0.0.1:8001/v1`, and the server holds the tuned settings the
+   records were measured under. `/mellum check` tells you when it's drifted.
+
+3. **Register the provider before you run Mellum Mode.** `--mode mode` is the
+   shipped worker, and it reads `~/.pi/agent/models.json`; without it Pi refuses
+   with `Model "omlx/Mellum…" not found`. Copy it once:
+   ```bash
+   cp templates/pi/models.omlx.json ~/.pi/agent/models.json
+   ```
+   `--mode direct` wires its own provider, so it runs without this step — which
+   is exactly why a direct run can pass while Mode won't even start. That one
+   cost a day; it's in the addendum.
+
+4. **Run it where you can watch** (skill §9). In one terminal start the
+   follower, then launch the run in another:
+   ```bash
+   python scripts/watch_ladder.py
+   ```
+   It tails the newest per-rung trace and prints each turn — the thinking and
+   the tool calls — as they happen, switching rungs on its own.
+
+5. **Know which worker you're measuring.** `--mode direct` is the isolation
+   rig: the ladder supplies the provider and the mediation (`--acceptance-test`,
+   `--redispatch`, `--effort-ramp`). `--mode mode` is the real product — Mellum
+   Mode with its guards and project facts. They aren't the same run, and a
+   direct number isn't a Mode number.
+
+6. **The frozen acceptance tests are committed**, so a mediated run reproduces:
+   point `--acceptance-test` at
+   [`docs/ladder/2026-10-20-v7-ablation/acceptance/`](docs/ladder/2026-10-20-v7-ablation/acceptance/)
+   (`test_phase1.py`…`test_phase4.py`).
+
+7. **Every run that backs a claim is recorded** under
+   `docs/ladder/<date-topic>/`; compare any two mechanically with `uv run python
+   scripts/compare_runs.py <dirA> <dirB>`.
+
 ## Layout
 
 ```
