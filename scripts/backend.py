@@ -94,7 +94,7 @@ def status(host: str, port: int) -> int:
 
 
 def start(settings: dict, host: str, port: int, pidfile: Path, logfile: Path,
-          binary: str) -> int:
+          binary: str, wait: int = 900) -> int:
     pid = _read_pid(pidfile)
     if health(host, port) is not None:
         suffix = f" (pid {pid})" if pid else ""
@@ -110,7 +110,7 @@ def start(settings: dict, host: str, port: int, pidfile: Path, logfile: Path,
             stdout=log, stderr=subprocess.STDOUT, start_new_session=True,
         )
     pidfile.write_text(str(process.pid))
-    for _ in range(900):
+    for _ in range(wait):
         if health(host, port) is not None:
             print(f"up on {host}:{port} (pid {process.pid})")
             print(f"log {logfile}", file=sys.stderr)
@@ -120,8 +120,8 @@ def start(settings: dict, host: str, port: int, pidfile: Path, logfile: Path,
             print(f"llama-server exited; see {logfile}", file=sys.stderr)
             return 1
         time.sleep(1)
-    pidfile.unlink(missing_ok=True)
-    print(f"no health response after 900s; see {logfile}", file=sys.stderr)
+    print(f"no health response after {wait}s; see {logfile}; "
+          "stop with: uv run scripts/backend.py stop", file=sys.stderr)
     return 1
 
 
@@ -229,6 +229,7 @@ def main(argv: list[str] | None = None) -> int:
         cmd.add_argument("--logfile", type=Path, default=LOGFILE)
         if name == "start":
             cmd.add_argument("--server-binary", default="llama-server")
+            cmd.add_argument("--wait-seconds", type=int, default=900)
 
     profile = sub.add_parser("profile", help="write the private Pi profile")
     profile.add_argument("--dry-run", action="store_true")
@@ -248,7 +249,7 @@ def main(argv: list[str] | None = None) -> int:
         return stop(args.pidfile)
     if args.command == "start":
         return start(settings, args.host, args.port, args.pidfile, args.logfile,
-                     args.server_binary)
+                     args.server_binary, args.wait_seconds)
 
     if args.command == "profile":
         rendered = render_profile(settings)

@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
-import { existsSync } from "node:fs";
+import { chmodSync, existsSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test, { after } from "node:test";
@@ -9,6 +9,7 @@ import assert from "node:assert/strict";
 const ROOT = resolve(import.meta.dirname, "..");
 const PID = join(tmpdir(), `mellum-test-${process.pid}.pid`);
 const LOG = join(tmpdir(), `mellum-test-${process.pid}.log`);
+const SLOW = join(tmpdir(), `mellum-slow-${process.pid}.sh`);
 // Async on purpose: spawnSync blocks the event loop, and the fake server
 // below answers from that loop.
 const run = (...args) => new Promise((done) => {
@@ -42,6 +43,20 @@ test("start reports an already-running server instead of spawning one", async ()
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /already up/);
   assert.equal(existsSync(PID), false);
+});
+
+test("a start that times out keeps the pidfile for stop", async () => {
+  writeFileSync(SLOW, "#!/bin/sh\nexec sleep 30\n");
+  chmodSync(SLOW, 0o755);
+  const r = await run("start", "--port", "1", "--pidfile", PID, "--logfile", LOG,
+    "--server-binary", SLOW, "--wait-seconds", "1");
+  assert.equal(r.status, 1, r.stderr);
+  assert.match(r.stderr, /no health response after 1s/);
+  assert.equal(existsSync(PID), true, "pidfile removed while the server lived");
+  const stopped = await run("stop", "--pidfile", PID);
+  assert.equal(stopped.status, 0, stopped.stderr);
+  assert.equal(existsSync(PID), false);
+  rmSync(SLOW, { force: true });
 });
 
 test("status reports a closed port as down", async () => {
