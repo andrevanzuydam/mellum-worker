@@ -3,6 +3,7 @@ import os
 import shutil
 import subprocess
 import sys
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -159,3 +160,46 @@ def test_suite_rejects_an_unknown_name(tmp_path):
     with pytest.raises(SystemExit) as exc:
         harness.suite(["nope"], tasks_dir=TASKS, runs_dir=tmp_path / "runs")
     assert "nope" in str(exc.value)
+
+
+def _workspace(tmp_path, source):
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "solution.py").write_text(textwrap.dedent(source))
+    return workspace
+
+
+def _grades(tmp_path, source):
+    return {name: ok for name, ok, _ in harness.grade(_workspace(tmp_path, source))}
+
+
+def test_grade_passes_a_clean_solution(tmp_path):
+    assert _grades(tmp_path, "def fizz(n: int) -> str:\n    return str(n)\n") == {
+        "ruff": True, "pyrefly": True, "complexipy": True,
+    }
+
+
+def test_grade_fails_ruff_on_an_unused_import(tmp_path):
+    grades = _grades(tmp_path, "import os\n\n\ndef fizz(n: int) -> str:\n    return str(n)\n")
+    assert grades == {"ruff": False, "pyrefly": True, "complexipy": True}
+
+
+def test_grade_fails_pyrefly_on_a_type_error(tmp_path):
+    grades = _grades(tmp_path, "def f(x: int) -> str:\n    return x\n")
+    assert grades["pyrefly"] is False
+    assert grades["ruff"] is True
+
+
+def test_grade_fails_complexipy_above_ten(tmp_path):
+    branches = "".join(f"    if x == {i}:\n        return {i}\n" for i in range(12))
+    grades = _grades(tmp_path, "def f(x: int) -> int:\n" + branches + "    return -1\n")
+    assert grades["complexipy"] is False
+    assert grades["ruff"] is True
+
+
+def test_grade_ignores_a_copied_tests_dir(tmp_path):
+    workspace = _workspace(tmp_path, "def fizz(n: int) -> str:\n    return str(n)\n")
+    (workspace / "tests").mkdir()
+    (workspace / "tests" / "test_x.py").write_text("import pytest\n")
+    results = dict((name, ok) for name, ok, _ in harness.grade(workspace))
+    assert results["ruff"] is True
