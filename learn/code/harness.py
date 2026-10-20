@@ -34,17 +34,36 @@ FLAGS = [
 @dataclass(frozen=True)
 class Task:
     name: str
-    prompt: str
+    prompts: list[str]
     tests: Path
     start: Path | None
+
+    @property
+    def prompt(self) -> str:
+        return self.prompts[0]
+
+
+def _read_prompt(path: Path) -> str:
+    text = path.read_text().strip()
+    if not text:
+        raise SystemExit(f"empty prompt: {path}")
+    return text
 
 
 def load_task(tasks_dir: Path, name: str) -> Task:
     base = Path(tasks_dir) / name
+    prompts_dir = base / "prompts"
+    if prompts_dir.is_dir():
+        files = sorted(prompts_dir.glob("*.md"))
+        if not files:
+            raise SystemExit(f"no prompts in {prompts_dir}")
+        prompts = [_read_prompt(path) for path in files]
+    else:
+        prompts = [_read_prompt(base / "task.md")]
     start = base / "start"
     return Task(
         name=name,
-        prompt=(base / "task.md").read_text().strip(),
+        prompts=prompts,
         tests=base / "tests",
         start=start if start.is_dir() else None,
     )

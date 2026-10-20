@@ -31,6 +31,24 @@ def test_load_task_reads_prompt_and_tests():
     assert (task.tests / "test_add.py").exists()
 
 
+def test_a_task_can_hold_prompts_in_order():
+    task = harness.load_task(TASKS, "steps")
+    assert task.prompts == [
+        "First: write a file named one.txt.",
+        "Second: write a file named two.txt.",
+    ]
+    assert task.prompt == task.prompts[0]
+
+
+def test_an_empty_prompt_is_named(tmp_path):
+    task_dir = tmp_path / "tasks" / "blank"
+    task_dir.mkdir(parents=True)
+    (task_dir / "task.md").write_text("   \n")
+    with pytest.raises(SystemExit) as exc:
+        harness.load_task(tmp_path / "tasks", "blank")
+    assert "blank" in str(exc.value)
+
+
 def test_pi_argv_isolates_the_child():
     task = harness.load_task(TASKS, "add")
     argv = harness.pi_argv("pi", PROFILE, Path("rec.mjs"), "llamacpp", "model-x",
