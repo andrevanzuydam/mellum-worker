@@ -203,3 +203,15 @@ def test_grade_ignores_a_copied_tests_dir(tmp_path):
     (workspace / "tests" / "test_x.py").write_text("import pytest\n")
     results = dict((name, ok) for name, ok, _ in harness.grade(workspace))
     assert results["ruff"] is True
+
+
+@pytest.mark.parametrize("name", ["medium", "hard"])
+def test_each_task_can_fail_and_pass(tmp_path, name):
+    task_dir = HERE.parent / "tasks" / name
+    empty = tmp_path / f"{name}-empty"
+    empty.mkdir()
+    assert not _task_tests_pass(empty, task_dir / "tests")
+    solved = tmp_path / f"{name}-solved"
+    solved.mkdir()
+    shutil.copytree(task_dir / "solution", solved, dirs_exist_ok=True)
+    assert _task_tests_pass(solved, task_dir / "tests")
