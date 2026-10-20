@@ -4,5 +4,6 @@ This track is in a fixed order. Lesson 2 builds on the result of lesson 1.
 
 ## Lessons
 
-1. **Base Pi on llama.cpp** (coming, phase LC.2) — Install the toolchain (`uv`, `uvx`, `ruff`, `pyrefly`), then llama.cpp and the Mellum GGUF, chat with the model, and connect Pi through a provider template to get an answer.
-2. **A mini harness and a suite** (coming, phase LC.3) — Build a small eval harness that runs Pi on a task and scores it; write an easy, a medium, and a hard task; watch base Pi pass easy and struggle on hard; read the telemetry to see why.
+1. **[Base Pi on llama.cpp](base-pi-on-llamacpp.md)** — Install `uv`, llama.cpp and the Mellum weights, chat with the model, and connect Pi through a private profile to get an answer. Start here.
+2. **Make a mini harness** (phase LC.3) — Write a small harness that runs Pi on a task in a fresh directory and scores it, then read the run's telemetry.
+3. **A suite and the telemetry** (phase LC.3) — Add a medium and a hard task, watch base Pi pass easy and struggle on hard, and read why.

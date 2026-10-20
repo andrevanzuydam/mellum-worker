@@ -14,6 +14,7 @@ const PAGES = [
   "glossary.md",
   "credits.md",
   "getting-started/index.md",
+  "getting-started/base-pi-on-llamacpp.md",
   "paul/index.md",
   "andre/index.md",
   "lesson-template.md",
@@ -55,6 +56,28 @@ test("the lesson template has the six steps in order, badges on 1-5", () => {
   const sections = t.split(/^## /m).slice(1);
   sections.forEach((s, i) =>
     assert.equal(/\*\*Badge:\*\*/.test(s), i < 5, `step ${i + 1} badge`));
+});
+
+test("lesson 1 walks from uv to a base-Pi answer", () => {
+  const l = page("getting-started/base-pi-on-llamacpp.md");
+  assert.match(l, /^track: getting-started$/m);
+  const order = [
+    "install uv", "pyproject.toml", "uvx ruff",
+    "uv run scripts/backend.py start", "uv run scripts/backend.py chat",
+    "PI_CODING_AGENT_DIR",
+  ];
+  let at = -1;
+  for (const step of order) {
+    const next = l.toLowerCase().indexOf(step.toLowerCase());
+    assert.ok(next > at, `${step} missing or out of order`);
+    at = next;
+  }
+  for (const text of ["--no-extensions", "--no-context-files", "--no-session",
+    "backend.py stop", "learn/code/profile"])
+    assert.ok(l.includes(text), `lesson 1 lacks ${text}`);
+  const index = page("getting-started/index.md");
+  assert.ok(index.includes("base-pi-on-llamacpp.md"), "index does not link lesson 1");
+  assert.doesNotMatch(index, /coming/);
 });
 
 test("learn/ never says tutorial or case study", () => {

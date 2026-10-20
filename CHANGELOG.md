@@ -5,6 +5,11 @@ Versions match git tags; pin one in both install lines.
 ## [Unreleased]
 
 ### Added
+- Getting started lesson 1 walks a machine with no Python from `uv` to a
+  first base-Pi answer on llama.cpp: the root `pyproject.toml` fetches the
+  interpreter, `scripts/backend.py` starts the server and chats, and a
+  private profile keeps the learner's own `~/.pi` out of the run.
+
 - A Learning Center site skeleton in `learn/` (Zensical): what the center is, how to read a lesson, the evidence badges and how to contribute; no lessons yet. Build it with `uvx zensical build`.
 
 - A `Justfile` runs Mellum 2.1 through llama.cpp on Apple Silicon without a
