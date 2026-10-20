@@ -17,7 +17,7 @@ import subprocess
 import sys
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 CODE = Path(__file__).resolve().parent
@@ -57,7 +57,7 @@ def profile_pin(profile_dir: Path) -> tuple[str, str]:
 
 
 def new_run(runs_dir: Path, name: str) -> Path:
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     run = Path(runs_dir) / f"{stamp}-{name}-{uuid.uuid4().hex[:6]}"
     run.mkdir(parents=True)
     return run

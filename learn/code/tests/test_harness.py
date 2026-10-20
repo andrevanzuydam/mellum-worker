@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-import harness  # noqa: E402
+import harness
 
 HERE = Path(__file__).resolve().parent
 FIX = HERE / "fixtures"
@@ -95,6 +95,7 @@ def _task_tests_pass(cwd, tests):
     result = subprocess.run(
         ["uvx", "pytest", "-q", str(tests)], cwd=cwd, capture_output=True,
         text=True, env={**os.environ, "PYTHONPATH": str(cwd)},
+        check=False,
     )
     return result.returncode == 0
 
@@ -206,7 +207,7 @@ def test_grade_ignores_a_copied_tests_dir(tmp_path):
     workspace = _workspace(tmp_path, "def fizz(n: int) -> str:\n    return str(n)\n")
     (workspace / "tests").mkdir()
     (workspace / "tests" / "test_x.py").write_text("import pytest\n")
-    results = dict((name, ok) for name, ok, _ in harness.grade(workspace))
+    results = {name: ok for name, ok, _ in harness.grade(workspace)}
     assert results["ruff"] is True
 
 
@@ -220,3 +221,13 @@ def test_each_task_can_fail_and_pass(tmp_path, name):
     solved.mkdir()
     shutil.copytree(task_dir / "solution", solved, dirs_exist_ok=True)
     assert _task_tests_pass(solved, task_dir / "tests")
+
+
+@pytest.mark.parametrize("name", ["easy", "medium", "hard"])
+def test_each_solution_passes_the_graders(tmp_path, name):
+    solved = tmp_path / name
+    solved.mkdir()
+    shutil.copytree(HERE.parent / "tasks" / name / "solution", solved,
+                    dirs_exist_ok=True)
+    results = harness.grade(solved)
+    assert all(ok for _, ok, _ in results), results
