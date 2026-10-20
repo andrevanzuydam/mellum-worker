@@ -118,12 +118,6 @@ writer built against observed runs. The Pi Worker's retirement in M.12 does
 not touch it. *Reopens when* an OpenCode user reports a run worth measuring,
 or someone offers the runner.
 
-**Ollama backend (was M.4).** GGUF weights, a Modelfile, a tool-call check,
-provider templates for both hosts and a ladder rerun;
-[`docs/backends/ollama.md`](docs/backends/ollama.md) lists what a port needs.
-Only oMLX has been run. *Reopens when* a machine without Apple Silicon is on
-hand to run the ladder against it.
-
 **Execution bounds (was M.7E).** A measured opt-in policy for bash commands
 with no timeout under the shipped guards, preserving explicit overrides and
 verifying process cleanup, with completion scored separately. The
@@ -150,3 +144,17 @@ opt-out ([A11](docs/ladder/ablation-a11-delegated-nointercom/README.md)); a
 `mellum_worker(task)` tool through Pi's SDK
 ([cost note](docs/superpowers/research/2026-10-09-worker-cost-options.md) §2,
 §3b). *Reopens when* M.12 does not retire the Pi Worker.
+
+**PyCharm learning content.** Learning Center material made for PyCharm
+users, building on the Getting started track. Paul's pitch to Andre
+(2026-10-20) names it as a later step that needs JetBrains approval; the
+[Learning Center spec](docs/superpowers/specs/2026-10-20-learning-center-design.md)
+excludes it. *Reopens when* JetBrains approves the content and L.3 has
+closed, so both Getting started lessons exist to build on.
+
+**Satyrn Education refactor.** Move the Learning Center from `learn/` in
+this repo to Satyrn Education, keeping lessons as plain Markdown with front
+matter so the move is a copy
+([spec](docs/superpowers/specs/2026-10-20-learning-center-design.md) §11).
+From Paul's pitch to Andre (2026-10-20). *Reopens when* L.5 has closed and
+Satyrn Education is ready to host the lessons.
