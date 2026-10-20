@@ -107,6 +107,34 @@ def run_task(
     return run
 
 
+def report(run: Path) -> dict:
+    rows = [
+        json.loads(line)
+        for line in (Path(run) / "trace.jsonl").read_text().splitlines()
+        if line.strip()
+    ]
+    final = ""
+    for row in reversed(rows):
+        if row.get("type") != "message_end":
+            continue
+        message = row.get("message") or {}
+        if message.get("role") != "assistant":
+            continue
+        for block in message.get("content") or []:
+            if block.get("type") == "text" and block.get("text"):
+                final = block["text"]
+                break
+        if final:
+            break
+    return {
+        "requests": sum(row.get("type") == "provider_request" for row in rows),
+        "tool_calls": sum(row.get("type") == "tool_call" for row in rows),
+        "tool_errors": sum(
+            row.get("type") == "tool_result" and row.get("isError") for row in rows),
+        "final_reply": final,
+    }
+
+
 def score(run: Path, task: Task) -> tuple[bool, str]:
     workspace = Path(run) / "workspace"
     target = workspace / "tests"
@@ -142,7 +170,10 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     run_dir = run_task(task, runs_dir=args.runs_dir, pi_binary=args.pi_binary)
     passed, tail = score(run_dir, task)
-    print(f"{task.name}: {'PASS' if passed else 'FAIL'} (run {run_dir})")
+    counts = report(run_dir)
+    print(f"{task.name}: {'PASS' if passed else 'FAIL'} (run {run_dir}; "
+          f"{counts['requests']} requests, {counts['tool_calls']} tool calls, "
+          f"{counts['tool_errors']} tool errors)")
     if not passed:
         print(tail, file=sys.stderr)
     return 0

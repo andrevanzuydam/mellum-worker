@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import subprocess
@@ -105,3 +106,34 @@ def test_the_easy_task_can_fail_and_pass(tmp_path):
     solved.mkdir()
     shutil.copytree(EASY / "solution", solved, dirs_exist_ok=True)
     assert _task_tests_pass(solved, EASY / "tests")
+
+
+def _write_trace(run, rows):
+    (run / "trace.jsonl").write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+
+
+def test_report_counts_the_trace(tmp_path):
+    run_dir = tmp_path / "r"
+    run_dir.mkdir()
+    _write_trace(run_dir, [
+        {"type": "instance_start"},
+        {"type": "provider_request", "request": 1},
+        {"type": "tool_call", "toolName": "bash"},
+        {"type": "tool_result", "isError": True},
+        {"type": "message_end",
+         "message": {"role": "assistant",
+                     "content": [{"type": "text", "text": "ok"}]}},
+        {"type": "agent_settled"},
+    ])
+    assert harness.report(run_dir) == {
+        "requests": 1, "tool_calls": 1, "tool_errors": 1, "final_reply": "ok",
+    }
+
+
+def test_report_without_text(tmp_path):
+    run_dir = tmp_path / "r"
+    run_dir.mkdir()
+    _write_trace(run_dir, [{"type": "instance_start"}])
+    assert harness.report(run_dir) == {
+        "requests": 0, "tool_calls": 0, "tool_errors": 0, "final_reply": "",
+    }
