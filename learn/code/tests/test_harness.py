@@ -180,8 +180,13 @@ def test_grade_passes_a_clean_solution(tmp_path):
 
 
 def test_grade_fails_ruff_on_an_unused_import(tmp_path):
-    grades = _grades(tmp_path, "import os\n\n\ndef fizz(n: int) -> str:\n    return str(n)\n")
-    assert grades == {"ruff": False, "pyrefly": True, "complexipy": True}
+    workspace = _workspace(
+        tmp_path, "import os\n\n\ndef fizz(n: int) -> str:\n    return str(n)\n")
+    results = {name: (ok, detail) for name, ok, detail in harness.grade(workspace)}
+    assert results["ruff"][0] is False
+    assert "F401" in results["ruff"][1], results["ruff"][1]
+    assert results["pyrefly"][0] is True
+    assert results["complexipy"][0] is True
 
 
 def test_grade_fails_pyrefly_on_a_type_error(tmp_path):

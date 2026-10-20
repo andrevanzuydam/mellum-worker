@@ -124,8 +124,9 @@ def grade(workspace: Path) -> list[tuple[str, bool, str]]:
             command, cwd=workspace, capture_output=True, text=True, check=False,
             env={**os.environ, "PYTHONPATH": str(workspace)},
         )
-        output = (result.stdout + result.stderr).strip().splitlines()
-        results.append((name, result.returncode == 0, output[-1] if output else ""))
+        output = [line for line in (result.stdout + result.stderr).splitlines()
+                  if line.strip()]
+        results.append((name, result.returncode == 0, output[0] if output else ""))
     return results
 
 
