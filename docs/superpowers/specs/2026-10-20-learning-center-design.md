@@ -6,7 +6,7 @@ Zuydam, the [PR digest](../research/2026-10-20-pr-digest.md), and these
 choices: a local backend with re-run evidence, lessons published with
 badges, a `learn/` directory, a mini harness first, a closing
 Interpretation on every lesson, and the terms center, track and lesson.
-Phases LC.1–LC.5 in [`ROADMAP.md`](../../../ROADMAP.md) carry it out; the
+Phases LC.1 onward in [`ROADMAP.md`](../../../ROADMAP.md) carry it out; the
 first plan,
 [LC.1](../plans/archive/2026-10-20-l1-learning-center-skeleton.md), shipped
 the skeleton on 2026-10-20.
@@ -225,8 +225,8 @@ learn/
   credits.md
   lesson-template.md          # the six-step template, copyable
   getting-started/index.md    # + lesson pages from LC.2, LC.3
-  paul/index.md               # + lessons from LC.4
-  andre/index.md              # + lessons from LC.5
+  paul/index.md               # + one page per lesson phase (LC.6+)
+  andre/index.md              # + one page per approved lesson
   code/                       # lesson code, not published as pages
     profile/models.json       # generated from [tool.mellum]
     record-pi.mjs             # lesson recorder (LC.3)
@@ -291,12 +291,13 @@ LC.1, before any lesson, and kept current as the center grows.
 | LC.3A | Getting started lesson 3: the medium and hard tasks, the suite, telemetry, validation grading |
 | LC.3B | The ladder takes a provider, base URL and model, and a rung-1 smoke drives llama.cpp |
 | LC.3C | A preregistered llama.cpp reference run, recorded in `docs/ladder/` |
-| LC.4 | A digest of Paul's phases, then Paul's findings lessons |
-| LC.5 | Andre's findings lessons, gated on consent |
+| LC.4 | A digest of Paul's phases, the track index, and one phase row per lesson |
+| LC.5 | Andre's track: index and consent, adding one phase row per approved idea |
+| LC.6+ | One phase per findings lesson, in track order |
 
 2026-10-20: the M series closed and its last two phases moved to the
 backlog; its rows are archived in `ROADMAP-M.md`. PR #1 remains a candidate
-for the mediated test, and LC.5 tells its story without deciding it.
+for the mediated test, and the Andre track tells its story without deciding it.
 
 ## 11. Risks
 
@@ -308,7 +309,7 @@ for the mediated test, and LC.5 tells its story without deciding it.
   checks each Interpretation against its weakest badge.
 - **Re-runs pile up.** Badges, not gating: lessons publish with the badges
   they have, and runs are roadmap items.
-- **Andre declines or changes scope.** LC.5 waits or is dropped; nothing
+- **Andre declines or changes scope.** The Andre track waits or is dropped; nothing
   else changes.
 - **The mini harness drifts from the ladder.** It is a teaching tool;
   findings lessons cite the ladder only.

@@ -8,8 +8,8 @@ One phase at a time; tangents go to the backlog, never into the current phase.
 
 **Active:** none; LC.1–LC.3C are closed. LC.4 is Next.
 **Shipped:** v0.1.8 (2026-10-13): A21 measured the README's lighter `## Mellum` section; see [`CHANGELOG.md`](CHANGELOG.md).
-**Next:** LC.4, Paul's findings lessons, in the [LC phases](#learning-center-lc).
-**After:** LC.5, Andre's findings lessons. The M series is closed ([archive](ROADMAP-M.md)) and its last two phases are backlogged.
+**Next:** LC.4, Paul's findings digest, in the [LC phases](#learning-center-lc).
+**After:** one lesson phase per lesson (LC.6 onward), with LC.5 setting up Andre's track. The M series is closed ([archive](ROADMAP-M.md)) and its last two phases are backlogged.
 **Parked:** OpenCode, Ollama, execution bounds, versioned assessments, the mediated test and one worker are [backlog entries](BACKLOG.md) with reopen conditions.
 
 ## Phases
@@ -21,7 +21,7 @@ The Learning Center is the active programme.
 ### Learning Center (LC)
 
 `LC` marks a workstream that ships something else and does not take an `M`
-number. LC.1 is closed; LC.2–LC.5 are intent, and their
+number. LC.1–LC.3C are closed; LC.4 onward are intent, and their
 [spec](docs/superpowers/specs/2026-10-20-learning-center-design.md) is the
 authority.
 
@@ -33,8 +33,12 @@ authority.
 | **LC.3A** | Getting started, lesson 3: the medium and hard fixtures, `suite easy|medium|hard`, the telemetry walkthrough over the trace, and validation grading through `uvx` `ruff`, `pyrefly` and one complexity tool with fixed thresholds. | Model or prompt changes; the ladder as the learner's harness; more than one complexity tool. | complete 2026-10-20 — [plan](docs/superpowers/plans/archive/2026-10-20-lc3a-suite-telemetry-grading.md). Live `suite all --grade`: 3/3 passed, with ruff's `I001` on the medium and hard import blocks and `pyrefly`/`complexipy` clean; `npm test` 345/345. The lesson is [A suite and the telemetry](learn/getting-started/suite.md). Shipped in [Unreleased]. |
 | **LC.3B** | The ladder takes a backend: `--provider`, `--base-url` and `--model`, and skips oMLX's admin API when the provider is not `omlx`; then a rung-1 smoke drives llama.cpp end to end. | Any measured claim; changing the ladder's scoring; the reference run (LC.3C). | complete 2026-10-20 — [plan](docs/superpowers/plans/archive/2026-10-20-lc3b-ladder-backend.md). Rung-1 smoke on llama.cpp: PASS, 7 requests, 0 tool errors, 8.8 s, `llama-server` 0.7.0 recorded; `ladder/` pytest 183/183, `npm test` 346/346. No `docs/ladder/` record and no claim. Shipped in [Unreleased]. |
 | **LC.3C** | The preregistered llama.cpp reference run: arms, n, reading and decision rule fixed first, then rungs 1–5 recorded in `docs/ladder/` with raw evidence in a `research-*` release. | Promoting a llama.cpp number to an oMLX claim; changing the worker. | complete 2026-10-20 — [plan](docs/superpowers/plans/archive/2026-10-20-lc3c-reference-run.md), [record](docs/ladder/reference-llamacpp-rungs1-5/README.md). Preregistered 15 runs, all valid: 14/15 passed; rung 4 repeat 3 stopped on `length` with an empty reply. Raw evidence owed as `research-2026-10-20`. No promotion; lessons cite it as `reference-run`. |
-| **LC.4** | Paul's findings track: lessons drawn from M.1–M.7 and the A-series ablations, each evidence step badged, each ending in an unbadged Interpretation. | New measurements; turning records into advice; Andre-attributed content. | not started — each lesson cites an existing record in `docs/ladder/` or `docs/superpowers/research/`. |
-| **LC.5** | Andre's findings track: lessons from the ten PR-digest ideas, six steps each, published only after Andre's explicit yes. | Publishing an Andre-attributed lesson without his approval; merging his PRs. | not started — the consent gate is a hard blocker; `learn/andre/` can ship empty. |
+| **LC.4** | Paul's findings digest: one six-step entry per lesson mined from M.1–M.7 and the A-series in a research note, the track index, and one LC row per lesson it identifies. | Writing a lesson; new measurements; advice not backed by a record. | not started — the digest adds the lesson rows, so each lesson is its own cycle. |
+| **LC.5** | Andre's findings setup: the track index from the ten PR-digest ideas and a record of Andre's consent, adding one LC row per idea he approves. | Writing or publishing an Andre-attributed lesson before his written yes; merging his PRs. | not started — the consent gate is the hard blocker; `learn/andre/` can ship empty. |
+
+Each findings lesson is its own phase and cycle, numbered in track order from
+LC.6: one page, one plan, one badge set, one close. LC.4 and LC.5 write the
+digest or index and add those rows; neither writes a lesson.
 
 ## Gates
 
