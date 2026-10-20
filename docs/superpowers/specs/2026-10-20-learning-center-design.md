@@ -111,8 +111,11 @@ would revisit this, not LC.2.
    easy task and read the score line. Phase LC.3.
 3. **A suite and the telemetry.** Add the medium and hard tasks, watch base
    Pi pass easy and struggle on hard, and read the runs: turns, tool calls,
-   tool errors and the final reply. Validation grades through `uvx` from
-   here. Phase LC.3, which also records a llama.cpp reference ladder run.
+   tool errors and the final reply. The harness is the suite runner —
+   `uv run learn/code/harness.py --suite easy|medium|hard` prints one score
+   line per task and where its runs are — so lesson 1 needs no separate
+   front door. Validation grades through `uvx` from here. Phase LC.3, which
+   also records a llama.cpp reference ladder run.
 
 Each lesson lists what it produces, so lesson 2 can start from lesson 1's
 result.
