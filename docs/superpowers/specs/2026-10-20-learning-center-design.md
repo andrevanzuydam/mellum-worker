@@ -297,7 +297,9 @@ LC.1, before any lesson, and kept current as the center grows.
 - **Consent gate.** No lesson attributed to Andre is published, and the site
   is not deployed publicly, until Andre says yes in writing (a PR comment or
   issue is enough; it is linked from LC.5's Status cell). Until then the
-  site builds locally only. LC.1–LC.4 do not depend on his PRs.
+  site builds locally only. LC.1–LC.4 do not depend on his PRs. 2026-10-20:
+  Andre consented in Discord (per Paul); a linkable quote is owed before an
+  Andre-attributed lesson publishes.
 - A lesson that cites an unmerged PR links the PR and the commit, not a
   branch, so the citation stays stable.
 
