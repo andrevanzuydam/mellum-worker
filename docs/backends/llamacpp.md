@@ -100,3 +100,8 @@ plausible for the first time.
   been checked.
 - The script exposes the 16 GB profile only. The BF16 56k server from the
   old Justfile is a hand command now, not a recipe.
+- A rung-1 smoke ran through the ladder on 2026-10-20 (`--mode direct
+  --profile baseline --provider llamacpp --base-url http://127.0.0.1:8002/v1
+  --model llamacpp/Mellum2.1-12B-A2.5B-Thinking --context-window 50000`):
+  PASS, 7 requests, no tool errors. It is a smoke, not a reference run;
+  nothing from it is in `docs/ladder/`.

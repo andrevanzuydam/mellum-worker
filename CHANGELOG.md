@@ -5,6 +5,11 @@ Versions match git tags; pin one in both install lines.
 ## [Unreleased]
 
 ### Added
+- The ladder takes `--provider`, `--base-url`, `--model` and
+  `--context-window`, records the backend it measured, and skips oMLX's admin
+  profile when the provider is not `omlx`; a rung-1 smoke drives llama.cpp
+  end to end. No reference run yet.
+
 - Getting started lesson 3, "A suite and the telemetry": `suite all --grade`
   runs the easy, medium and hard fixtures, prints each run's turns, tool calls
   and tool errors, and grades the model's files with `ruff`, `pyrefly` and
