@@ -2,7 +2,7 @@
 
 This center teaches you how to run a small coding model locally behind Pi — and fix what goes wrong, with evidence. Every finding is told the same way: the problem, how to reproduce it, the evidence, the fix, and whether the fix worked. You can see exactly how strong each piece of evidence is.
 
-Start with the **Getting started** track to set up Ollama and build a small eval harness. After that, any findings lesson stands alone and lists what you need first.
+Start with the **Getting started** track to set up llama.cpp and build a small eval harness. After that, any findings lesson stands alone and lists what you need first.
 
 Each step of a lesson carries an [evidence badge](about/evidence.md) — from measured runs to reasoned conjecture — so you always know what is proven and what is still open.
 

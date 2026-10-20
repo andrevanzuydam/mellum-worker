@@ -6,7 +6,7 @@ Each step of a lesson (except the Interpretation) opens with an evidence badge. 
 
 | Badge | Means | Needs |
 | --- | --- | --- |
-| `reference-run` | A preregistered run on Ollama, made for this lesson | A record in `docs/ladder/`, a preregistration, raw evidence in a `research-*` release |
+| `reference-run` | A preregistered run on llama.cpp, made for this lesson | A record in `docs/ladder/`, a preregistration, raw evidence in a `research-*` release |
 | `cited` | An existing record on oMLX or mlx-lm | A record in `docs/ladder/` or a research note on `main` |
 | `screen` | A few targeted runs or one observation | A research note, or a PR note or commit message cited by name |
 | `conjecture` | No run behind it | Reasoning, design, unit tests only |
@@ -15,7 +15,9 @@ For steps 1, 2, and 4 the badge is the strongest evidence the statement rests on
 
 ## Why the backend matters
 
-All measured evidence in this repo was originally run on oMLX (Apple Silicon). Once a lesson gets an Ollama `reference-run`, its badge will say so. Until then, a `cited` badge means the number came from oMLX or mlx-lm — your Ollama numbers may differ.
+All measured evidence in this repo was originally run on oMLX (Apple Silicon). Once a lesson gets a llama.cpp `reference-run`, its badge will say so. Until then, a `cited` badge means the number came from oMLX or mlx-lm — your llama.cpp numbers may differ, and llama.cpp itself is smoke-tested only so far ([backend](https://github.com/pauleveritt/mellum-worker/blob/main/docs/backends/llamacpp.md)).
+
+Changed 2026-10-20: the track teaches llama.cpp, not Ollama; the plan chose Ollama so a learner without Apple Silicon was covered, and that port stays a backlog option ([why](https://github.com/pauleveritt/mellum-worker/blob/main/docs/superpowers/specs/2026-10-20-learning-center-design.md)).
 
 ## Upgrading and downgrading a badge
 

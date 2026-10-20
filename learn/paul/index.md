@@ -6,4 +6,4 @@ The recommended order follows the phase timeline, but you can read any lesson fi
 
 ## Lessons
 
-Lessons are coming in phase L.4. A digest of the phases and ablations will be written first, then one lesson per idea.
+Lessons are coming in phase LC.4. A digest of the phases and ablations will be written first, then one lesson per idea.

@@ -6,4 +6,4 @@ The proposed reading order (for Andre to review) starts with a clean negative re
 
 ## Lessons
 
-Lessons are coming in phase L.5, after Andre agrees. No idea titles are listed yet.
+Lessons are coming in phase LC.5, after Andre agrees. No idea titles are listed yet.

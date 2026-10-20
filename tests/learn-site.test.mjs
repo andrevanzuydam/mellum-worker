@@ -46,7 +46,7 @@ test("evidence page defines all four badges", () => {
 });
 
 const STEPS = ["Problem", "Eval case", "Evidence of the problem",
-  "Solution", "Evidence it worked", "Interpretation"];
+  "Solution", "Validation", "Interpretation"];
 
 test("the lesson template has the six steps in order, badges on 1-5", () => {
   const t = page("lesson-template.md");

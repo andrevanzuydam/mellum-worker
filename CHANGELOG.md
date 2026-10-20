@@ -25,6 +25,14 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The Learning Center teaches llama.cpp rather than Ollama, because that is
+  what runs here; Ollama stays the backlogged port for a machine without
+  Apple Silicon, and the skeleton's pages and badge definitions say so.
+
+- The six-step lesson template's fifth step is Validation — the test suite
+  plus `ruff`, `pyrefly` and one complexity tool — rather than a prose claim
+  that the change worked, and the phase series is `LC`, not `L`.
+
 - The README's backend line now names llama.cpp as smoke-tested rather than
   measured, alongside the Ollama port's requirements.
 
