@@ -112,3 +112,34 @@ def test_workspace_without_recorder_keeps_the_template_line(tmp_path):
         prepare_pi_workspace(tmp_path, None) / "agents" / "mellum-worker.md"
     ).read_text()
     assert f"subagentOnlyExtensions: {REPO_ROOT}/extensions/mellum-guards.ts\n" in text
+
+
+def test_direct_agent_dir_takes_a_provider_and_model(tmp_path):
+    from ladder.pi_profile import direct_agent_dir
+
+    agent = direct_agent_dir(
+        tmp_path / "agent", "baseline", "http://127.0.0.1:8002/v1",
+        provider="llamacpp", model_id="Mellum2.1-12B-A2.5B-Thinking",
+        context_window=50000,
+    )
+    models = json.loads((agent / "models.json").read_text())
+    assert list(models["providers"]) == ["llamacpp"]
+    provider = models["providers"]["llamacpp"]
+    assert provider["baseUrl"] == "http://127.0.0.1:8002/v1"
+    entry = provider["models"][0]
+    assert entry["id"] == "Mellum2.1-12B-A2.5B-Thinking"
+    assert entry["contextWindow"] == 50000
+    settings = json.loads((agent / "settings.json").read_text())
+    assert settings["defaultProvider"] == "llamacpp"
+    assert settings["defaultModel"] == "Mellum2.1-12B-A2.5B-Thinking"
+
+
+def test_direct_agent_dir_defaults_to_omlx(tmp_path):
+    from ladder.pi_profile import direct_agent_dir
+
+    agent = direct_agent_dir(tmp_path / "agent", "baseline")
+    provider = json.loads((agent / "models.json").read_text())["providers"]["omlx"]
+    assert provider["baseUrl"] == "http://127.0.0.1:8001/v1"
+    assert provider["models"][0]["contextWindow"] == 56000
+    settings = json.loads((agent / "settings.json").read_text())
+    assert settings["defaultModel"] == "Mellum2.1-12B-A2.5B-Thinking-6bit"

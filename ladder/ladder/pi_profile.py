@@ -95,7 +95,13 @@ def prepare_pi_workspace(ws: Path, record_ext: Path | None) -> Path:
 
 
 def direct_agent_dir(
-    dest: Path, profile: str, base_url: str = "http://127.0.0.1:8001/v1"
+    dest: Path,
+    profile: str,
+    base_url: str = "http://127.0.0.1:8001/v1",
+    *,
+    provider: str = "omlx",
+    model_id: str = MODEL_ID,
+    context_window: int = 56000,
 ) -> Path:
     """A minimal Pi agent directory whose omlx model entry sends the profile's request values.
 
@@ -105,11 +111,11 @@ def direct_agent_dir(
     request = dict(REQUEST_PARAMS[profile])
     max_tokens = request.pop("max_tokens")
     entry = {
-        "id": MODEL_ID,
+        "id": model_id,
         "name": "Mellum ladder",
         "reasoning": True,
         "input": ["text"],
-        "contextWindow": 56000,
+        "contextWindow": context_window,
         "maxTokens": max_tokens,
         "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
         "compat": {
@@ -125,7 +131,7 @@ def direct_agent_dir(
         json.dumps(
             {
                 "providers": {
-                    "omlx": {
+                    provider: {
                         "baseUrl": base_url,
                         "api": "openai-completions",
                         "apiKey": "not-needed",
@@ -139,8 +145,8 @@ def direct_agent_dir(
     (dest / "settings.json").write_text(
         json.dumps(
             {
-                "defaultProvider": "omlx",
-                "defaultModel": MODEL_ID,
+                "defaultProvider": provider,
+                "defaultModel": model_id,
                 "defaultThinkingLevel": "high",
                 "compaction": {"enabled": False},
                 "quietStartup": True,
