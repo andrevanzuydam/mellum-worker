@@ -125,8 +125,8 @@ test("Paul's track lists ten lessons, one phase each", () => {
   const index = page("paul/index.md");
   const items = index.match(/^\d+\. \*\*/gm) ?? [];
   assert.equal(items.length, 10);
-  assert.match(index, /LC\.8/);
-  assert.match(index, /LC\.17/);
+  assert.match(index, /LC\.10/);
+  assert.match(index, /LC\.19/);
 });
 
 test("the ditch shows a claim that did not survive a check", () => {

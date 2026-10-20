@@ -126,6 +126,11 @@ would revisit this, not LC.2.
    front door. Validation grades through `uvx` from here. Phase LC.3A; the
    llama.cpp reference ladder run is LC.3B.
 
+5. **The worker extension.** What a Pi extension is, the `mellum-worker`
+   extension, and `/mellum` to invoke it. On the same AgentClinic session it
+   behaves like the ditch — no remedy is taught yet; it is the vehicle the
+   findings lessons improve. Phase LC.9.
+
 Each lesson lists what it produces, so the next can start from the last
 one's result.
 
@@ -317,7 +322,9 @@ LC.1, before any lesson, and kept current as the center grows.
 | LC.5 | Andre's track: index and consent, adding one phase row per approved idea |
 | LC.6 | The harness takes sessions with one or more prompts, `--repeat`, and n on every line |
 | LC.7 | The ditch, and the harness and suite pages renumbered to lessons 3 and 4 |
-| LC.8+ | One phase per findings lesson, in track order |
+| LC.8 | One worker: retire the pi-subagents Worker and rename Mode to Mellum Worker |
+| LC.9 | Lesson 5: a Pi extension, the `mellum-worker` extension, and `/mellum` |
+| LC.10+ | One phase per findings lesson, in track order |
 
 2026-10-20: the M series closed and its last two phases moved to the
 backlog; its rows are archived in `ROADMAP-M.md`. PR #1 remains a candidate
