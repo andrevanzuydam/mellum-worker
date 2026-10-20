@@ -143,8 +143,9 @@ watches it happen:
 
 ## 10. One PR per win or learning
 
-Every verified win and every real learning lands as its own small, focused PR —
-never batched into a grab-bag. One change, one reason, one review.
+Every verified win and every real learning lands as its own small, focused PR
+**to upstream** (`pauleveritt/mellum-worker`), opened from our fork — never
+batched into a grab-bag. One change, one reason, one review.
 
 - **A win** is a *measured* improvement: a ladder pass-rate gain (before → after
   rows), or a confirmed fix. A lead or a screen is **not** a win yet — see §3;
@@ -167,8 +168,11 @@ What each PR carries:
 
 How:
 
-- Branch off `main`; stage **explicit paths** only (never `git add -A`); keep it
-  small enough to read in one sitting.
+- Branch off **`upstream/main`** (fetch it first), not our fork's `main`, so the
+  PR is a clean, separable diff and never stacks another open PR's commits on
+  top; stage **explicit paths** only (never `git add -A`); keep it small enough
+  to read in one sitting. Push the branch to our fork (`origin`) and open the PR
+  against `upstream`.
 - Never commit `trace.jsonl`, `stdout.txt` or `diff.patch`; raw evidence goes in
   a `research-YYYY-MM-DD` release, linked from the note (per `AGENTS.md`).
 - Title is a concise `{feat,fix,docs}` subject; the body **leads with a short
