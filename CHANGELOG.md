@@ -7,11 +7,26 @@ Versions match git tags; pin one in both install lines.
 ### Added
 - A Learning Center site skeleton in `learn/` (Zensical): what the center is, how to read a lesson, the evidence badges and how to contribute; no lessons yet. Build it with `uvx zensical build`.
 
+- A `Justfile` runs Mellum 2.1 through llama.cpp on Apple Silicon without a
+  daemon: `just serve` at 56k context on BF16 weights, `just start-16g` at
+  Q4_K_M and 50k for a 16 GB machine, plus `chat`, `status`, `stop`, `models`,
+  `pull` and `logs`. It is a second backend beside oMLX, and nothing is
+  ladder-measured on it yet.
+
+- [docs/backends/llamacpp.md](docs/backends/llamacpp.md) records that backend:
+  the flags, the measured numbers (8.38 GB peak and 207 tok/s generation at
+  50k context on Q4_K_M), why this model's sliding-window layers make 50k
+  context nearly free, and what is still untested, so a 16 GB claim is not
+  mistaken for a measurement.
+
 - Ladder records for a rung 9 screen that ran A21's two changes alone: the
   AgentClinic phase 4 id miss follows the one-file roadmap (5 of 6 runs,
   against 1 of 6 with one spec file per phase). Exploratory, n = 3 per arm.
 
 ### Changed
+
+- The README's backend line now names llama.cpp as smoke-tested rather than
+  measured, alongside the Ollama port's requirements.
 
 - The README now opens with the idea the package serves, domain engineering
   (you write specs and tests, Mellum makes the test command exit 0), names
