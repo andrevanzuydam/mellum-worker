@@ -7,7 +7,8 @@ site_dir = "site"
 exclude_docs = "code/"
 nav = [
   { "Home" = "index.md" },
-  { "Getting started" = ["getting-started/index.md", "getting-started/base-pi-on-llamacpp.md", "getting-started/harness.md",
+  { "Getting started" = ["getting-started/index.md", "getting-started/base-pi-on-llamacpp.md", "getting-started/ditch.md",
+    "getting-started/harness.md",
     "getting-started/suite.md"] },
   { "Paul's findings" = ["paul/index.md"] },
   { "Andre's findings" = ["andre/index.md"] },

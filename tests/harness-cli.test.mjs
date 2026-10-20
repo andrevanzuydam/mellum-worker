@@ -97,3 +97,10 @@ test("suite counts tasks and sessions", () => {
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /^2\/2 tasks passed \(4\/4 sessions\)$/m);
 });
+
+test("--deadline stops a session and says so", () => {
+  const runs = mkdtempSync(join(tmpdir(), "mellum-runs-"));
+  const r = run(runs, "fake-pi-slow.sh", "--deadline", "1");
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /^add: FAIL .*deadline\)$/m);
+});

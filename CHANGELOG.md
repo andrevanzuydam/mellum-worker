@@ -5,6 +5,11 @@ Versions match git tags; pin one in both install lines.
 ## [Unreleased]
 
 ### Added
+- Getting started lesson 2, "The ditch": one open-ended AgentClinic session
+  whose final report claims a working app and a passing test run; checking
+  both shows four failing tests and a missing date filter. The harness gains
+  `--deadline` so a session like it cannot run the host out of memory.
+
 - The lesson harness runs a session: a task may hold one prompt or several
   (`prompts/`), all sent in one Pi session in one workspace and scored once at
   the finish. `--repeat N` repeats the session, every score line states its n,

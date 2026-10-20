@@ -7,8 +7,9 @@ The center has three [tracks](../glossary.md). The **Getting started** track is 
 Three lessons, done in order, from a clone of this repo:
 
 1. [Base Pi on llama.cpp](../getting-started/base-pi-on-llamacpp.md) — a server, a `chat` command, and Pi answering through a private profile.
-2. [Make a mini harness](../getting-started/harness.md) — one task in a fresh directory, scored.
-3. [A suite and the telemetry](../getting-started/suite.md) — three tasks, three graders, and the trace that explains a failure.
+2. [The ditch](../getting-started/ditch.md) — one AgentClinic session, and a report that does not survive a check.
+3. [Make a mini harness](../getting-started/harness.md) — one task in a fresh directory, scored.
+4. [A suite and the telemetry](../getting-started/suite.md) — three tasks, three graders, and the trace that explains a failure.
 
 Every command is `uv run` from the repository root. Each page ends with
 **What you have**, which is what the next lesson starts from, so you know a

@@ -1,8 +1,8 @@
 ---
 title: Make a mini harness
 track: getting-started
-position: 2
-prerequisites: [getting-started/base-pi-on-llamacpp]
+position: 3
+prerequisites: [getting-started/ditch]
 authors: [Paul Everitt]
 backends: [llamacpp]
 ---

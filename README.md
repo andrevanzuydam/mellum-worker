@@ -319,9 +319,11 @@ harness, with every claim labelled by the evidence behind it:
 1. [Base Pi on llama.cpp](learn/getting-started/base-pi-on-llamacpp.md) —
    install `uv`, llama.cpp and the Mellum weights, chat, and get an answer
    from base Pi.
-2. [Make a mini harness](learn/getting-started/harness.md) — one task, one
+2. [The ditch](learn/getting-started/ditch.md) — one open-ended AgentClinic
+   session, and a final report that does not survive being checked.
+3. [Make a mini harness](learn/getting-started/harness.md) — one task, one
    fresh directory, one score line.
-3. [A suite and the telemetry](learn/getting-started/suite.md) — three tasks
+4. [A suite and the telemetry](learn/getting-started/suite.md) — three tasks
    scored, graded with `ruff`, `pyrefly` and `complexipy`, and read from the
    run's trace.
 

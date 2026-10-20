@@ -1,7 +1,7 @@
 ---
 title: A suite and the telemetry
 track: getting-started
-position: 3
+position: 4
 prerequisites: [getting-started/harness]
 authors: [Paul Everitt]
 backends: [llamacpp]

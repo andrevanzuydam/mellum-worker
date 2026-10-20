@@ -15,6 +15,7 @@ const PAGES = [
   "credits.md",
   "getting-started/index.md",
   "getting-started/base-pi-on-llamacpp.md",
+  "getting-started/ditch.md",
   "getting-started/harness.md",
   "getting-started/suite.md",
   "paul/index.md",
@@ -126,6 +127,14 @@ test("Paul's track lists ten lessons, one phase each", () => {
   assert.equal(items.length, 10);
   assert.match(index, /LC\.8/);
   assert.match(index, /LC\.17/);
+});
+
+test("the ditch shows a claim that did not survive a check", () => {
+  const l = page("getting-started/ditch.md");
+  for (const text of ["Build AgentClinic", "26 requests", "errors=4",
+    "unrecognized arguments", "n = 1", "Before fixing, get evidence"])
+    assert.ok(l.includes(text), `the ditch lacks ${text}`);
+  assert.match(page("getting-started/index.md"), /ditch\.md/);
 });
 
 test("learn/ never says tutorial or case study", () => {
