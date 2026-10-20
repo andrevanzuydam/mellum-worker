@@ -6,7 +6,7 @@ One phase at a time; tangents go to the backlog, never into the current phase.
 
 ## Now
 
-**Active:** none. The roadmap was triaged on 2026-10-13 ([note](docs/superpowers/research/2026-10-13-roadmap-triage.md)): instrument phases retired, OpenCode and Ollama to the backlog, two phases left.
+**Active:** none; L.1's plan is written and starts next. The 2026-10-13 [triage](docs/superpowers/research/2026-10-13-roadmap-triage.md) was revised on 2026-10-20: Ollama left the backlog as L.2.
 **Shipped:** v0.1.8 (2026-10-13): A21 measured the README's lighter `## Mellum` section; see [`CHANGELOG.md`](CHANGELOG.md).
 **Next:** L.1, the Learning Center skeleton ([spec](docs/superpowers/specs/2026-10-20-learning-center-design.md), [plan](docs/superpowers/plans/2026-10-20-l1-learning-center-skeleton.md)); L.1–L.5 run ahead of M.11 by Paul's decision on 2026-10-20.
 **After:** M.11, the mediated test, screen first; Andre's PR #1 is a candidate implementation ([digest](docs/superpowers/research/2026-10-20-pr-digest.md)).
