@@ -8,16 +8,21 @@ run cannot see another run or the learner's own `~/.pi`.
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
+import shlex
 import shutil
 import subprocess
+import sys
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
 CODE = Path(__file__).resolve().parent
+RUNS = CODE / ".runs"
+TASKS = CODE / "tasks"
 RECORDER = CODE / "record-pi.mjs"
 PROFILE = CODE / "profile"
 FLAGS = [
@@ -116,3 +121,32 @@ def score(run: Path, task: Task) -> tuple[bool, str]:
     output = (result.stdout + result.stderr).strip()
     tail = "\n".join(output.splitlines()[-20:])
     return result.returncode == 0, tail
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    sub = parser.add_subparsers(dest="command", required=True)
+    run = sub.add_parser("run", help="run one task and score it")
+    run.add_argument("--task", required=True)
+    run.add_argument("--tasks-dir", type=Path, default=TASKS)
+    run.add_argument("--runs-dir", type=Path, default=RUNS)
+    run.add_argument("--pi-binary", default="pi")
+    run.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args(argv)
+
+    task = load_task(args.tasks_dir, args.task)
+    provider, model = profile_pin(PROFILE)
+    if args.dry_run:
+        print(shlex.join(pi_argv(args.pi_binary, PROFILE, RECORDER, provider,
+                                 model, task.prompt)))
+        return 0
+    run_dir = run_task(task, runs_dir=args.runs_dir, pi_binary=args.pi_binary)
+    passed, tail = score(run_dir, task)
+    print(f"{task.name}: {'PASS' if passed else 'FAIL'} (run {run_dir})")
+    if not passed:
+        print(tail, file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
