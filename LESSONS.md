@@ -365,3 +365,13 @@ the numbering runs straight through.
   [research/2026-10-19-small-model-tool-presentation.md](docs/superpowers/research/2026-10-19-small-model-tool-presentation.md).
   The ladder earned its keep: it caught a plausible optimization that was a
   regression.
+
+- **Fail fast *and* fail loud.** Fail fast: start on a small budget (thinking
+  off, ~2k tokens) and escalate only as a frozen test keeps failing, so compute
+  tracks difficulty — the opposite of handing every rung 16k up front (lesson
+  70). Fail loud: a run that goes quiet is a bug, not patience. A worker turn
+  stalled ~7 minutes on a blocking tool call with the deadline not biting, and
+  nothing surfaced it — the only tell was oMLX going idle. Make failure and
+  stalls obvious: stream every rung's trace on screen (a ladder run without its
+  trace visible is a bug), bound blocking tools, and carry the real assertion
+  into a retry (lessons 72–75), never a silent hang or a blind tail.

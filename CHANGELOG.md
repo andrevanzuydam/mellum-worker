@@ -6,6 +6,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `docs/ladder/2026-10-20-mediated-6-9-v7/` records the measured pass: Mellum on
+  AgentClinic rungs 6–9, n=3, mediated (frozen phase tests) with the v7 prompt +
+  focused command + trimmed tools + fail-fast ramp — **12/12**, rung 9 (the
+  phase-4 wall, best-ever 2/3) now **3/3**, clearing the historical 9/12 ceiling.
+  Note:
+  [`research/2026-10-20-mediated-6-9-v7.md`](docs/superpowers/research/2026-10-20-mediated-6-9-v7.md).
+
 - `README.md` gains a "Working on it — the 🍓 skill" section: how to activate
   the `mellum-dev` skill (auto-loaded by `CLAUDE.md` in Claude Code; the 🍓
   marker shows it is active) and why — the measured claims hold only if the
@@ -75,6 +82,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- `--effort-ramp` no longer crashes with `ProfileMismatch`. The guard that
+  checks effective params against the server profile fired when the ramp
+  escalated `max_tokens` past the profile's fixed value; it now skips that
+  check while `--effort-ramp` is set (the ramp owns the budget by design). The
+  crash was caught by the run's own fail-loud path.
+
 - The re-dispatch retry message now carries the real test failure. It ran
   `pytest -q` (whose output is dominated by deprecation warnings) and sent the
   last 1200 chars — which were all warnings plus the terse summary, omitting the
@@ -83,6 +96,20 @@ Versions match git tags; pin one in both install lines.
   instead of retrying blind.
 
 ### Changed
+
+- Worker prompt **v7** specializes to the "make one failing test pass" shape:
+  read the named test *and* any spec it references, create the module the test
+  imports if missing, run *only* the named test, never edit that test or add
+  other test files. This is Mellum's best-measured usage (see the 2026-10-20
+  record) — narrower than v6's general guidance, and the shipped templates
+  regenerate to it. The v6 keep-every-test guardrail folds in.
+
+- Mediated ladder runs verify with a **focused** command,
+  `pytest tests/<the-test>`, instead of the whole `tests/` directory, and the
+  worker's **tools are trimmed** to `read, ls, bash, edit, write` (`grep`/`find`
+  shell out to `fd`/`rg`, which are unavailable offline and wasted turns). Under
+  v6 the whole-dir command sent the worker chasing unrelated tests — a 93-turn
+  spin on rung 6; the focused command plus trimmed tools removed it.
 
 - `--effort-ramp` (with `--redispatch`): an effort ladder across attempts. The
   initial try and early re-dispatches run **quick** — Pi thinking `off` and a

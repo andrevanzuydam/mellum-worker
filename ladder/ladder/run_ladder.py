@@ -46,7 +46,7 @@ MODE_EXT = REPO_ROOT / "extensions" / "mellum-mode.ts"
 GUARDS_EXT = REPO_ROOT / "extensions" / "mellum-guards.ts"
 MODEL = "omlx/Mellum2.1-12B-A2.5B-Thinking-6bit"
 MODEL_ID = MODEL.split("/", 1)[1]
-TOOLS = "read,grep,find,ls,bash,edit,write"
+TOOLS = "read,ls,bash,edit,write"
 
 
 def prompt_version(prompt: Path) -> str:
@@ -443,7 +443,7 @@ def redispatch_message(test_rel: str, test_output: str) -> str:
     return (
         f"The acceptance test {test_rel} still fails:\n{detail}\n"
         f"Fix the code and make {test_rel} pass. "
-        "Test command: uv run --offline python -m pytest tests"
+        f"Test command: uv run --offline python -m pytest {test_rel}"
     )
 
 
@@ -541,7 +541,7 @@ def run_once(
             sentence=f"Make tests/{acceptance_test.name} pass. "
             "Verify only with the test command; do not run the app or start "
             "servers — they block. "
-            "Test command: uv run --offline python -m pytest tests",
+            f"Test command: uv run --offline python -m pytest tests/{acceptance_test.name}",
         )
     scratch = Path(tempfile.mkdtemp(prefix="ladder-"))
     ws = prepare_workspace(
@@ -1103,6 +1103,7 @@ def main(argv: list[str] | None = None) -> None:
                 if (
                     args.mode == "direct"
                     and not args.model_spec
+                    and not args.effort_ramp
                     and record["score"]["effective_params"]
                 ):
                     check_effective_params(

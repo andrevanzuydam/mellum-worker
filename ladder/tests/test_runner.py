@@ -40,7 +40,7 @@ def test_direct_args_are_the_clean_profile():
         "--no-session",
     ):
         assert flag in args
-    assert args[args.index("--tools") + 1] == "read,grep,find,ls,bash,edit,write"
+    assert args[args.index("--tools") + 1] == "read,ls,bash,edit,write"
     assert args[args.index("--append-system-prompt") + 1] == str(PROMPT_FILE)
     assert args[-1] == "fix it"
 
