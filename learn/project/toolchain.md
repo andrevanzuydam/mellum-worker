@@ -41,6 +41,11 @@ tests in and scores them. Runs are kept, including failures, and `--dry-run`
 prints the child's argv. The harness's own tests run under `uvx pytest` from
 `tests/harness.test.mjs`.
 
+`suite all` runs every fixture and totals the passes; `--grade` adds
+`uvx ruff check`, `uvx pyrefly check` (with a generated `pyrefly.toml`) and
+`uvx complexipy --max-complexity-allowed 10` on the model's files, before the
+tests are copied in. A grader's failure never changes a task's score.
+
 ## Checks
 
 ```bash

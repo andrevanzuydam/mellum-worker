@@ -16,6 +16,7 @@ const PAGES = [
   "getting-started/index.md",
   "getting-started/base-pi-on-llamacpp.md",
   "getting-started/harness.md",
+  "getting-started/suite.md",
   "paul/index.md",
   "andre/index.md",
   "lesson-template.md",
@@ -108,6 +109,15 @@ test("lesson 2 explains isolation and the one command", () => {
   for (const text of ["hidden", "score line", "trace.jsonl"])
     assert.ok(l.toLowerCase().includes(text), `lesson 2 lacks ${text}`);
   assert.match(page("getting-started/index.md"), /harness\.md/);
+});
+
+test("lesson 3 runs the suite, grading and the trace", () => {
+  const l = page("getting-started/suite.md");
+  assert.match(l, /^track: getting-started$/m);
+  for (const text of ["suite all --grade", "ruff", "pyrefly", "complexipy",
+    "trace.jsonl", "three", "graders"])
+    assert.ok(l.toLowerCase().includes(text), `lesson 3 lacks ${text}`);
+  assert.match(page("getting-started/index.md"), /suite\.md/);
 });
 
 test("learn/ never says tutorial or case study", () => {

@@ -5,6 +5,11 @@ Versions match git tags; pin one in both install lines.
 ## [Unreleased]
 
 ### Added
+- Getting started lesson 3, "A suite and the telemetry": `suite all --grade`
+  runs the easy, medium and hard fixtures, prints each run's turns, tool calls
+  and tool errors, and grades the model's files with `ruff`, `pyrefly` and
+  `complexipy` beside the score.
+
 - Getting started lesson 2, "Make a mini harness": `learn/code/harness.py`
   runs a task in a fresh directory through a child Pi with a private profile,
   copies the task's tests in only after it exits, and prints one score line;
