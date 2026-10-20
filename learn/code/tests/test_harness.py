@@ -58,3 +58,26 @@ def test_missing_pi_is_a_message(tmp_path):
         harness.run_task(task, runs_dir=tmp_path / "runs", profile=PROFILE,
                          pi_binary="/nonexistent/pi")
     assert "pi" in str(exc.value)
+
+
+def _scored(tmp_path, binary):
+    run_dir = run(tmp_path, binary)
+    return harness.score(run_dir, harness.load_task(TASKS, "add"))
+
+
+def test_score_passes_a_working_workspace(tmp_path):
+    passed, tail = _scored(tmp_path, "fake-pi.sh")
+    assert passed, tail
+
+
+def test_score_keeps_the_run_and_copies_the_tests(tmp_path):
+    run_dir = run(tmp_path, "fake-pi-empty.sh")
+    passed, tail = harness.score(run_dir, harness.load_task(TASKS, "add"))
+    assert not passed
+    assert (run_dir / "workspace" / "tests" / "test_add.py").exists()
+    assert tail
+
+
+def test_score_fails_a_wrong_solution(tmp_path):
+    passed, _ = _scored(tmp_path, "fake-pi-wrong.sh")
+    assert not passed

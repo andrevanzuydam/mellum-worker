@@ -100,3 +100,19 @@ def run_task(
     except FileNotFoundError:
         raise SystemExit(f"pi not found: {pi_binary}; install Pi before running a task")
     return run
+
+
+def score(run: Path, task: Task) -> tuple[bool, str]:
+    workspace = Path(run) / "workspace"
+    target = workspace / "tests"
+    if target.exists():
+        shutil.rmtree(target)
+    shutil.copytree(task.tests, target)
+    result = subprocess.run(
+        ["uvx", "pytest", "-q", "tests"],
+        cwd=workspace, capture_output=True, text=True, check=False,
+        env={**os.environ, "PYTHONPATH": str(workspace)},
+    )
+    output = (result.stdout + result.stderr).strip()
+    tail = "\n".join(output.splitlines()[-20:])
+    return result.returncode == 0, tail
