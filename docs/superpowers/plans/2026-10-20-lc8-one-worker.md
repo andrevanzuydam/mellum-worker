@@ -33,10 +33,17 @@ Mellum Worker, and `/mellum` behaves as before.
 
 ### Task 2: Delete the subagent and its records
 
-**Files:** delete `templates/pi/mellum-worker.agent.md`, the skill phase,
-the intercom references, the guard writer and the `learn`/`last` reader
-branches; delete `tests/fixtures/worker/`, `tests/mellum-record.test.mjs`
-and the worker cases in `mellum-learn`/`mellum-last`; update `build.mjs`.
+**Files:** delete `templates/pi/mellum-worker.agent.md`, `build.mjs`,
+`scripts/render-agent.mjs`, the skill's phase 5 and its `05-worker-*`
+references, the intercom references, the guard writer and the `learn`/`last`
+reader branches; delete `tests/fixtures/worker/`,
+`tests/mellum-record.test.mjs`, `tests/templates.test.mjs` and the worker
+cases in `mellum-learn`/`mellum-last`/`skill`.
+
+A first pass showed the cascade: `render-agent.mjs` imports `build.mjs`, the
+skill's phase table names `05-worker-pi.md`, and the record writer's types
+reach `mellum-record.ts`, `learn` and `last`. Remove them together, or the
+skill test, the record tests and the link check fail at once.
 
 - [ ] Add a test that the subagent template, the skill phase and the
       `kind: "worker"` branch are absent.
