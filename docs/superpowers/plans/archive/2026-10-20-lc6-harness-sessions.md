@@ -1,7 +1,7 @@
 ---
 phase: LC.6
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # LC.6 Harness sessions and repeats implementation plan
@@ -92,3 +92,16 @@ lifecycle: active
 
 - `npm test` passes; the suite's n lines match the sessions run.
 - A live session (`uv run learn/code/harness.py run --task easy --repeat 2`) needs llama.cpp and is not part of the suite; I will ask before starting it.
+
+## Result
+
+2026-10-20. Shipped on `lc6`, unreleased: a task holds one prompt (`task.md`)
+or several (`prompts/*.md`, filename order); `run_task` sends them in one Pi
+session (`--session-id`, `--session-dir` under the run) in one workspace with
+one trace; scoring and grading happen once, after the last prompt.
+`--repeat N` repeats the session, every single-run line says `n=1`, multi-run
+lines are `[i/n]` with a `k/n sessions passed` summary, and `suite` ends with
+`a/b tasks passed (c/d sessions)`.
+
+Verified: `npm test` 350/350, docs caps, `uvx zensical build` clean. No live
+session was run: it needs llama.cpp, and the plan asks first.

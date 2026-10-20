@@ -29,6 +29,11 @@ Three things make a score mean something:
   the child has exited. Until then the model cannot read what it will be
   graded on.
 
+A task holds one prompt (`task.md`) or several (`prompts/01-*.md`, sorted by
+name). Several prompts run in **one session**: one workspace, one trace and
+one Pi session id, with the prompts sent in order. Scoring happens once, at
+the finish, never between prompts.
+
 ## Run it
 
 ```bash

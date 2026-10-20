@@ -5,6 +5,11 @@ Versions match git tags; pin one in both install lines.
 ## [Unreleased]
 
 ### Added
+- The lesson harness runs a session: a task may hold one prompt or several
+  (`prompts/`), all sent in one Pi session in one workspace and scored once at
+  the finish. `--repeat N` repeats the session, every score line states its n,
+  and summaries count sessions rather than rates.
+
 - Paul's findings track is planned as ten lessons, each its own phase, from a
   digest of M.1–M.7 and the A-series; the track index lists them in a
   recommended order, from the primary-agent baseline to the one-file roadmap

@@ -80,8 +80,9 @@ tool calls wrote nothing. The counts on the score line are these rows, summed.
 
 A suite is a handful of sessions, and each session is one observation. The
 same task can pass next time: the model varies, and this harness runs a task
-once by default. Run it again before believing a difference, and still treat
-two or three sessions as a lead, not a rate. Rates come from the ladder with
+once by default; `--repeat 2` runs the whole session again and states its n.
+Run it again before believing a difference, and still treat two or three
+sessions as a lead, not a rate. Rates come from the ladder with
 a preregistered arm, which is why findings lessons cite `docs/ladder/` and
 not these sessions.
 
