@@ -134,9 +134,12 @@ watches it happen:
   **opened on that tab** (`show_pane` terminal, `tab_id`). Prefer verbose
   (`uv run python -m pytest -v`, per-test names; `npm test`).
 - **A ladder run** (`run_ladder`) prints only its final row, so it is not
-  watchable on its own: also **follow its live trace**
-  (`ladder-*/trace.jsonl`, the newest by mtime) in a Terminal tab and open the
-  pane on it, so each worker turn streams in front of the user.
+  watchable on its own. **Default, every run, no exceptions:** start
+  `python scripts/watch_ladder.py` in a Terminal tab and `show_pane` it
+  *before* launching the run. It follows the newest per-rung `trace.jsonl` and
+  prints each worker turn (thinking + tool calls) live, switching to the next
+  rung's trace automatically — so **every rung**, not just the first, streams in
+  front of the user. A ladder run without this follower on screen is a bug.
 - A tab the user cannot see is the same as no visibility — always
   `show_pane` the live tab. If a run is long, say where to look and keep it on
   screen.
