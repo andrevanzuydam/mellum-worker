@@ -15,6 +15,7 @@ const PAGES = [
   "credits.md",
   "getting-started/index.md",
   "getting-started/base-pi-on-llamacpp.md",
+  "getting-started/harness.md",
   "paul/index.md",
   "andre/index.md",
   "lesson-template.md",
@@ -91,6 +92,22 @@ test("the project pages orient a maintainer and name the checks", () => {
     "uv run scripts/backend.py", "PI_CODING_AGENT_DIR", "npm test",
     "uv run pytest", "uvx zensical build"])
     assert.ok(toolchain.includes(text), `toolchain lacks ${text}`);
+});
+
+test("lesson 2 explains isolation and the one command", () => {
+  const l = page("getting-started/harness.md");
+  assert.match(l, /^track: getting-started$/m);
+  const order = ["fresh directory", "harness.py run --task easy",
+    "learn/code/.runs"];
+  let at = -1;
+  for (const step of order) {
+    const next = l.toLowerCase().indexOf(step.toLowerCase());
+    assert.ok(next > at, `${step} missing or out of order`);
+    at = next;
+  }
+  for (const text of ["hidden", "score line", "trace.jsonl"])
+    assert.ok(l.toLowerCase().includes(text), `lesson 2 lacks ${text}`);
+  assert.match(page("getting-started/index.md"), /harness\.md/);
 });
 
 test("learn/ never says tutorial or case study", () => {

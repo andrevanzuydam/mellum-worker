@@ -5,6 +5,12 @@ Versions match git tags; pin one in both install lines.
 ## [Unreleased]
 
 ### Added
+- Getting started lesson 2, "Make a mini harness": `learn/code/harness.py`
+  runs a task in a fresh directory through a child Pi with a private profile,
+  copies the task's tests in only after it exits, and prints one score line;
+  `learn/code/record-pi.mjs` records each run's requests, tool calls and
+  errors for the next lesson.
+
 - A Project section in `learn/` for maintainers: what the repository
   contains, where its records live, the `uv`/`pyproject.toml` toolchain, the
   backend commands, the checks and the release steps.
