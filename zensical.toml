@@ -1,0 +1,10 @@
+[project]
+site_name = "Andre/Paul Learning Center"
+site_description = "Small coding models, measured: problems, fixes, evidence."
+repo_url = "https://github.com/pauleveritt/mellum-worker"
+docs_dir = "learn"
+site_dir = "site"
+exclude_docs = "code/"
+nav = [
+  { "Home" = "index.md" },
+]
