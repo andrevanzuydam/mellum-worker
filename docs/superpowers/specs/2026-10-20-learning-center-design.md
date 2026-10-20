@@ -34,7 +34,9 @@ later phases make and record in `docs/ladder/`.
 - Turn this repo's history (Paul's phases M.1–M.7 and the A-series
   ablations) and Andre's PRs into lessons without overstating either.
 - Credit the work as a collaboration and keep it portable: a later move to
-  Satyrn Education should be a copy of `learn/`, not a rewrite.
+  Satyrn Education should be a copy of the learner pages, not a rewrite.
+  2026-10-20: originally "a copy of `learn/`"; the maintainer pages in
+  `learn/project/` and the lesson code in `learn/code/` stay with this repo.
 
 Non-goals: a reference manual for the worker (the README stays that), new
 measured claims made by the site itself, PyCharm content (backlog), and
@@ -68,27 +70,49 @@ names for these units.
   `reference-run`, `cited`, `screen` or `conjecture` (section 6).
 - **Reference run**: a preregistered ladder run on llama.cpp, recorded in
   `docs/ladder/`, made for a lesson.
-- **Mini harness**: the small eval harness learners build in Getting
-  started lesson 2, kept in `learn/code/`. It is not the ladder.
+- **Mini harness**: the small eval harness learners write in Getting
+  started lesson 2, kept in `learn/code/`. It runs each task in an isolated
+  directory through a private Pi profile and scores it with the task's
+  tests. It is not the ladder.
+- **Private profile**: a lesson-local Pi agent directory that
+  `PI_CODING_AGENT_DIR` points at, holding the generated `models.json` and
+  only the extensions that lesson needs. A run uses it from a temporary
+  copy, so `~/.pi` is untouched and one run cannot inherit another's setup.
+- **Lesson bundle**: the files a lesson needs under `learn/code/`: the
+  shared profile directory, the lesson's overlay, task fixtures and any
+  recorder.
 
 ## 4. Tracks
 
 ### Getting started (fixed order)
 
-1. **Base Pi on llama.cpp.** Install the toolchain lesson 1 needs — `uv`,
-   `uvx`, `ruff` and `pyrefly`, so later grading is not a setup tangent —
-   then the llama.cpp server, the Mellum GGUF and the repo's `just` recipes
-   from [`docs/backends/llamacpp.md`](../../backends/llamacpp.md), chat with
-   the model, then connect Pi through a provider template and get an answer.
-   Temperature, `top_p`, `top_k` and context come from a checked-in project
-   file rather than the recipe (section 12). Phase LC.2, which also does the
-   port checklist (GGUF, serve recipe, tool-call check, provider templates).
-2. **A mini harness and a suite.** Build a small harness in `learn/code/`
-   that runs Pi on a task and scores it; write an easy, a medium and a hard
-   task; watch base Pi pass easy and struggle on hard; read the run's
-   telemetry (turns, tool calls, tool errors, the final reply) to see why.
-   Validation steps grade through `uvx` from here (section 12). Phase LC.3,
-   which also records a llama.cpp reference ladder run.
+The learner clones `mellum-worker` and works in the checkout: the profile,
+harness and fixtures are repo files, and every command is `uv run` from the
+repo root.
+
+2026-10-20: the first plan assumed a learner installed a backend by hand and
+the site stood alone. The harness, the private profile and the settings file
+are repo code, so the lessons are taught from a clone; a hosted learner
+would revisit this, not LC.2.
+
+1. **Base Pi on llama.cpp.** Install `uv`; the root `pyproject.toml`'s
+   `requires-python` is what makes `uv` fetch an interpreter on a machine
+   that has none, and lesson 1 explains that file. Install llama.cpp for the
+   platform, then `uv run scripts/backend.py start`, which reads
+   `[tool.mellum]` and pulls `Q4_K_M` through llama.cpp's `-hf`; `chat`
+   proves the server. Then point `PI_CODING_AGENT_DIR` at
+   `learn/code/profile/` and run `pi` with `--no-extensions --no-skills
+   --no-context-files --no-approve`, so the learner's own `~/.pi` is neither
+   read nor written, and get an answer. Phase LC.2, which also does the port
+   checklist (GGUF, serve command, tool-call check, provider profile).
+2. **Make a mini harness.** Write `learn/code/harness.py`: each task is
+   copied into a fresh directory, handed to a child `pi -p` with the private
+   profile, scored by the task's tests, and its telemetry kept. Run it on one
+   easy task and read the score line. Phase LC.3.
+3. **A suite and the telemetry.** Add the medium and hard tasks, watch base
+   Pi pass easy and struggle on hard, and read the runs: turns, tool calls,
+   tool errors and the final reply. Validation grades through `uvx` from
+   here. Phase LC.3, which also records a llama.cpp reference ladder run.
 
 Each lesson lists what it produces, so lesson 2 can start from lesson 1's
 result.
@@ -200,7 +224,11 @@ learn/
   getting-started/index.md    # + lesson pages from LC.2, LC.3
   paul/index.md               # + lessons from LC.4
   andre/index.md              # + lessons from LC.5
-  code/                       # mini harness (LC.3), not published as pages
+  code/                       # lesson code, not published as pages
+    profile/models.json       # generated from [tool.mellum]
+    record-pi.mjs             # lesson recorder (LC.3)
+    tasks/                    # easy/medium/hard fixtures (LC.3)
+  project/                    # maintainer docs: how this project works
 ```
 
 - `zensical.toml` sits at the repo root with `docs_dir = "learn"`
@@ -208,6 +236,9 @@ learn/
   Git.
 - `learn/code/` is excluded from pages with `exclude_docs`; lessons show
   its files with snippets.
+- `learn/project/` is maintainer documentation, not a learner track; the
+  Satyrn copy takes the learner pages only. `learn/code/profile/models.json`
+  is generated from `[tool.mellum]`, and a test fails when the two disagree.
 - Lessons link to `docs/ladder/` records, research notes and code through
   GitHub URLs on `main`, so SDD records stay unpublished and still render
   on GitHub (`docs/sdd.md`, "Docs are a presentation layer").
@@ -252,8 +283,8 @@ LC.1, before any lesson, and kept current as the center grows.
 | phase | ships |
 | --- | --- |
 | LC.1 | `zensical.toml`, home, About pages, glossary, credits, track index pages, lesson template, badge convention; local build — shipped 2026-10-20 |
-| LC.2 | Getting started lesson 1: the llama.cpp port, lesson 1's toolchain, the project settings file |
-| LC.3 | Getting started lesson 2, the mini harness, validation grading, a llama.cpp reference ladder run |
+| LC.2 | Getting started lesson 1, lesson 1's toolchain, the root `pyproject.toml` and `scripts/backend.py` replacing the Justfile, the private profile, and the maintainer pages |
+| LC.3 | Getting started lessons 2–3: the mini harness, the easy/medium/hard suite, telemetry, validation grading, a llama.cpp reference ladder run |
 | LC.4 | A digest of Paul's phases, then Paul's findings lessons |
 | LC.5 | Andre's findings lessons, gated on consent |
 
@@ -274,19 +305,35 @@ M.11; LC.5 tells its story and does not decide M.11.
   else changes.
 - **The mini harness drifts from the ladder.** It is a teaching tool;
   findings lessons cite the ladder only.
+- **The learner's Pi setup leaks into a run.** Every lesson passes its own
+  `PI_CODING_AGENT_DIR` and `--no-*` flags; the harness assembles a profile
+  per run and prints where, so a run differs by task, not by install.
 - **Zensical is young.** Pages are plain Markdown with front matter, so a
-  move to another generator or to Satyrn Education is a copy.
+  move to another generator is cheap, and the learner pages are a copy.
 
-## 12. Model settings and validation
+## 12. Model settings, lesson profiles and validation
 
-**Settings live in the project, not in a recipe or a GUI.** Temperature,
-`top_p`, `top_k` and context come from one checked-in project file at the
-repo root that the `just` serve/chat recipes and the mini harness read.
-Today `just chat` hardcodes temperature 1 and `top_p` 0.95; that is a
-commitment, not current behaviour: LC.2 moves those values into the file
-and has the recipes read it. The point is an eval arm that is "the same run
-with one value changed", so a lesson can show the setting beside its
-result. Nobody edits a running server's sampling in an admin page.
+**Settings live in the project.** Temperature, `top_p`, `top_k`, `max_tokens`
+and context live under `[tool.mellum]` in the root `pyproject.toml`, and
+`scripts/backend.py` and the mini harness read them with `tomllib`. An eval
+arm is the same run with one value changed, so a lesson can show the setting
+beside its result. The Justfile that shipped on `main` on 2026-10-20
+hardcoded temperature 1 and `top_p` 0.95; LC.2 retires it before either
+reaches a release, and `docs/backends/llamacpp.md` records that.
+
+**One generated profile.** `learn/code/profile/models.json` is written from
+`[tool.mellum]` — provider, model, context, `max_tokens` and sampling
+params — and a test fails when the committed file and the generator
+disagree, so the server, `chat` and Pi read the same numbers. Nobody
+hand-edits sampling in two places.
+
+**Each lesson owns its Pi setup.** A lesson never reads or writes `~/.pi`:
+it names a profile directory through `PI_CODING_AGENT_DIR` and launches Pi
+with `--no-extensions --no-skills --no-prompt-templates --no-themes
+--no-context-files --no-session --no-approve`, adding back only what the
+lesson teaches. The harness assembles the profile in a fresh temporary
+directory for every run, so runs differ by task, not by what the learner
+installed.
 
 **Validation grading, from LC.3.** A lesson's Validation step runs the test
 suite, then static analysis through `uvx`: `ruff`, `pyrefly`, and one
