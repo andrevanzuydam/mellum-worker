@@ -222,7 +222,7 @@ the file is append-only across upgrades, so lines without a `schema`
 field are schema 1.
 In the probe this took the parent's next request from 18 messages to 3.
 
-Measured in the ladder ([A14](ladder/ablation-a14-mellum-worker/README.md),
+Measured in the ladder ([A14](ladder/ablation-a14-mellum-mode/README.md),
 before project facts existed), same profile and sampling as "Mellum as the primary agent" above: 10/15
 becomes 14/15, rung 5 from 0/3 to 3/3, the model reads 606 characters of
 prompt instead of 17k, and the wall time is the same (prefill is cached;
@@ -230,7 +230,7 @@ the time is generation). What you give up against delegation is the
 parent's independent test run afterwards; run the tests yourself.
 
 Where the cost goes, measured per task at the same sampling
-([A10](ladder/ablation-a10-delegated-v5/README.md) vs [A14](ladder/ablation-a14-mellum-worker/README.md)):
+([A10](ladder/ablation-a10-delegated-v5/README.md) vs [A14](ladder/ablation-a14-mellum-mode/README.md)):
 
 | per task | Mellum Worker | Mellum Worker |
 | --- | --- | --- |
