@@ -204,3 +204,11 @@ counts seven of these from run records; the page adds the ladder's and links
 `docs/ladder/`, so a lesson links one pathology instead of restating it.
 *Reopens when* the ditch lesson names more than the page covers, or a second
 lesson needs the same explanation.
+
+**Glossary of the eval terms.** One page that fixes the measurement vocabulary —
+session, prompt, turn, suite, rung, arm, screen, reference run — so lessons,
+records and the harness use the same words. `learn/glossary.md` already defines
+the Learning Center's terms; this one covers the eval terms and links back.
+Session is the unit: one isolated Pi context and workspace, fed one or more
+prompts, with one trace. *Reopens when* a record or lesson uses an eval term the
+glossary lacks, or two documents use one word for different things.
