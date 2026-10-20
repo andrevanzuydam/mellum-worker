@@ -11,7 +11,12 @@ import argparse
 import json
 import os
 import shlex
+import shutil
+import signal
+import subprocess
 import sys
+import tempfile
+import time
 import tomllib
 import urllib.error
 import urllib.request
@@ -22,6 +27,8 @@ PROFILE = ROOT / "learn" / "code" / "profile" / "models.json"
 HOST = "127.0.0.1"
 PORT = 8002
 ALIAS = "Mellum2.1-12B-A2.5B-Thinking"
+PIDFILE = Path(tempfile.gettempdir()) / "llamacpp-mellum.pid"
+LOGFILE = Path(tempfile.gettempdir()) / "llamacpp-mellum.log"
 MISSING = "llama-server not found on PATH; install it: docs/backends/llamacpp.md"
 
 
@@ -53,6 +60,86 @@ def chat_body(settings: dict, prompt: str) -> dict:
         "top_p": settings["top_p"],
         "top_k": settings["top_k"],
     }
+
+
+def _get_json(url: str, timeout: float = 2) -> dict | None:
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as response:
+            return json.load(response)
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
+        return None
+
+
+def health(host: str = HOST, port: int = PORT) -> dict | None:
+    return _get_json(f"http://{host}:{port}/health")
+
+
+def _read_pid(path: Path) -> int | None:
+    try:
+        return int(path.read_text().strip())
+    except (FileNotFoundError, ValueError):
+        return None
+
+
+def status(host: str, port: int) -> int:
+    if health(host, port) is None:
+        print(f"down on {host}:{port}")
+        return 0
+    print(f"up on {host}:{port}")
+    props = _get_json(f"http://{host}:{port}/props") or {}
+    n_ctx = (props.get("default_generation_settings") or {}).get("n_ctx")
+    if n_ctx is not None:
+        print(f"  n_ctx {n_ctx}")
+    return 0
+
+
+def start(settings: dict, host: str, port: int, pidfile: Path, logfile: Path,
+          binary: str) -> int:
+    pid = _read_pid(pidfile)
+    if health(host, port) is not None:
+        suffix = f" (pid {pid})" if pid else ""
+        print(f"already up on {host}:{port}{suffix}")
+        return 0
+    if shutil.which(binary) is None:
+        print(MISSING, file=sys.stderr)
+        return 2
+    logfile.parent.mkdir(parents=True, exist_ok=True)
+    with logfile.open("ab") as log:
+        process = subprocess.Popen(
+            serve_argv(settings, host, port, binary),
+            stdout=log, stderr=subprocess.STDOUT, start_new_session=True,
+        )
+    pidfile.write_text(str(process.pid))
+    for _ in range(900):
+        if health(host, port) is not None:
+            print(f"up on {host}:{port} (pid {process.pid})")
+            print(f"log {logfile}", file=sys.stderr)
+            return 0
+        if process.poll() is not None:
+            pidfile.unlink(missing_ok=True)
+            print(f"llama-server exited; see {logfile}", file=sys.stderr)
+            return 1
+        time.sleep(1)
+    pidfile.unlink(missing_ok=True)
+    print(f"no health response after 900s; see {logfile}", file=sys.stderr)
+    return 1
+
+
+def stop(pidfile: Path) -> int:
+    pid = _read_pid(pidfile)
+    if pid is None:
+        print("not running")
+        return 0
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        pidfile.unlink(missing_ok=True)
+        print("not running")
+        return 0
+    os.kill(pid, signal.SIGTERM)
+    pidfile.unlink(missing_ok=True)
+    print(f"stopped pid {pid}")
+    return 0
 
 
 def profile_models(settings: dict) -> dict:
@@ -130,6 +217,19 @@ def main(argv: list[str] | None = None) -> int:
     serve.add_argument("--port", type=int, default=PORT)
     serve.add_argument("--server-binary", default="llama-server")
 
+    for name, help_text in (
+        ("start", "run llama-server in the background and wait for health"),
+        ("stop", "stop the background server"),
+        ("status", "report whether the server answers"),
+    ):
+        cmd = sub.add_parser(name, help=help_text)
+        cmd.add_argument("--host", default=HOST)
+        cmd.add_argument("--port", type=int, default=PORT)
+        cmd.add_argument("--pidfile", type=Path, default=PIDFILE)
+        cmd.add_argument("--logfile", type=Path, default=LOGFILE)
+        if name == "start":
+            cmd.add_argument("--server-binary", default="llama-server")
+
     profile = sub.add_parser("profile", help="write the private Pi profile")
     profile.add_argument("--dry-run", action="store_true")
 
@@ -141,6 +241,14 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
     settings = load_settings()
+
+    if args.command == "status":
+        return status(args.host, args.port)
+    if args.command == "stop":
+        return stop(args.pidfile)
+    if args.command == "start":
+        return start(settings, args.host, args.port, args.pidfile, args.logfile,
+                     args.server_binary)
 
     if args.command == "profile":
         rendered = render_profile(settings)
