@@ -111,6 +111,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The worker-extension lesson now states the model split plainly: the main
+  agent is the larger model Pi started with, and `/mellum` temporarily
+  switches the session to Mellum, then restores the main model with a
+  handoff. The README says the same.
+
 - Hard's schema changes are now generated migrations: a `migrations.py` in
   the `agentclinic` set, applied with `sqlite-utils migrate data.db` and
   recorded in `_sqlite_migrations`, so a re-run is a no-op. The ad-hoc

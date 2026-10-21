@@ -7,9 +7,9 @@ a 12B-A2.5B thinking model, as a local, bounded coding worker for
 [Pi](https://pi.dev). It takes a precise brief, edits code, runs the tests
 until they pass, and reports. Your main model stays in charge.
 
-- **Mellum Worker**: `/mellum <task>` runs Mellum inside your session with
-  the worker prompt and seven file tools, then hands the session back. No
-  extra packages. 15/15 on the ladder with project facts. The pi-subagents
+- **Mellum Worker**: `/mellum <task>` temporarily switches your session to
+  Mellum, with the worker prompt and seven file tools, then restores your main
+  model and hands it a compact report. No extra packages. 15/15 on the ladder with project facts. The pi-subagents
   child and the OpenCode port were retired on 2026-10-20; their ladder
   records remain, and the table below marks them as history.
 
