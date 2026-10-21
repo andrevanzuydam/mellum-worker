@@ -1,9 +1,8 @@
 {
   "name": "mellum-worker",
   "version": "0.1.8",
-  "description": "Mellum 2.1 as a bounded coding worker for OpenCode and Pi, with a guided setup skill",
+  "description": "Mellum 2.1 as a bounded coding worker for Pi, with a guided setup skill",
   "type": "module",
-  "main": "./opencode/plugin.js",
   "license": "MIT",
   "engines": {
     "node": ">=24"
@@ -11,7 +10,6 @@
   "repository": "github:pauleveritt/mellum-worker",
   "keywords": [
     "pi-package",
-    "opencode-plugin",
     "mellum",
     "local-llm"
   ],

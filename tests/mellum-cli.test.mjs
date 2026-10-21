@@ -31,7 +31,6 @@ function fixtures(adminModels) {
 function home() {
 	const dir = temp("mellum-cli-home-");
 	copy(join(FIX, "pi-models.json"), join(dir, ".pi/agent/models.json"));
-	copy(join(FIX, "opencode.jsonc"), join(dir, ".config/opencode/opencode.jsonc"));
 	return dir;
 }
 
@@ -68,14 +67,6 @@ test("check without --json prints the findings as text, fails first", () => {
 	assert.match(r.stdout, /checks ok\n?$/);
 });
 
-test("check --host opencode reads the OpenCode config", () => {
-	const r = run(["check", "--host", "opencode", "--json"]);
-	assert.equal(r.status, 0, r.stderr);
-	const out = JSON.parse(r.stdout);
-	assert.equal(out.host, "opencode");
-	assert.notEqual(out.findings.find((f) => f.id === "provider").level, "fail");
-});
-
 test("a missing fixture file reads as an unreachable server", () => {
 	const dir = temp("mellum-cli-empty-");
 	const r = run(["check", "--json"], { env: { MELLUM_CHECK_FIXTURES: dir } });
@@ -93,14 +84,13 @@ test("usage errors exit 2: no command, an unknown command, an unknown host", () 
 	}
 });
 
-test("installed under node_modules (as OpenCode installs it), the CLI runs from a mirror in the temp dir", () => {
+test("installed under node_modules, the CLI runs from a mirror in the temp dir", () => {
 	const pkg = join(temp("mellum-cli-nm-"), "node_modules", "mellum-worker");
 	const files = [
 		"package.json",
 		"scripts/mellum.mjs",
 		"templates/omlx-model-settings.json",
 		"templates/pi/models.omlx.json",
-		"templates/opencode/provider.omlx.json",
 		...readdirSync(join(ROOT, "extensions")).filter((f) => f.endsWith(".ts")).map((f) => `extensions/${f}`),
 	];
 	for (const f of files) copy(join(ROOT, f), join(pkg, f));

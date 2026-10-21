@@ -107,6 +107,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Removed
 
+- The OpenCode port: `opencode/plugin.js`, the OpenCode templates and provider
+  fragment, the setup skill's OpenCode provider phase, the `--host opencode`
+  check, the package's `main` and OpenCode keyword, and their tests and
+  fixtures. The package is Pi-only; the measured OpenCode rows stay as
+  history.
 - The pi-subagents Worker: its agent template, the setup skill's worker
   phase, the intercom option, the `kind: "worker"` run-record writer and the
   `learn`/`last` readers, their fixtures and tests, and the ladder's

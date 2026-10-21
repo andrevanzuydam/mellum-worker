@@ -12,7 +12,6 @@ const model = { ...data.model.serverOnly, ...data.model.overridden };
 const server = read("skills/mellum-setup/reference/03-server.md");
 const readme = read("README.md");
 const pi = JSON.parse(read("templates/pi/models.omlx.json")).providers.omlx.models[0];
-const oc = JSON.parse(read("templates/opencode/provider.omlx.json")).provider.omlx.models[data.modelId];
 
 test("the data file splits the model values into server-only and request-overridden keys", () => {
 	assert.deepEqual(Object.keys(data.model).sort(), ["forcedSampling", "overridden", "serverOnly"]);
@@ -22,13 +21,11 @@ test("the data file splits the model values into server-only and request-overrid
 	}
 });
 
-test("the advised overridden values are the ones the host provider templates send per request", () => {
+test("the advised overridden values are the ones Pi's template sends per request", () => {
 	assert.equal(data.model.overridden.max_tokens, pi.maxTokens);
-	assert.equal(data.model.overridden.max_tokens, oc.limit.output);
 	assert.equal(data.model.overridden.presence_penalty, pi.samplingParams.presence_penalty);
 	assert.equal(data.model.overridden.repetition_penalty, pi.samplingParams.repetition_penalty);
 	assert.equal(data.model.serverOnly.max_context_window, pi.contextWindow);
-	assert.equal(data.model.serverOnly.max_context_window, oc.limit.context);
 	const { temperature, top_p, top_k } = pi.samplingParams;
 	assert.deepEqual(data.model.forcedSampling, { temperature, top_p, top_k }, "forced sampling is checked against what Pi sends");
 });
@@ -53,9 +50,9 @@ test("03-server.md table rows carry the data file's model values", () => {
 	}
 });
 
-test("03-server.md says Pi and OpenCode send max_tokens per request, only Pi sends thinking, and forcing beats the request", () => {
+test("03-server.md says Pi sends max_tokens per request and thinking, and forcing beats the request", () => {
 	const row = (k) => server.split("\n").find((l) => l.startsWith(`| \`${k}\` |`));
-	assert.match(row("max_tokens"), /Pi and OpenCode send/);
+	assert.match(row("max_tokens"), /Pi sends/);
 	assert.match(row("forced_ct_kwargs"), /Pi sends/);
 	assert.doesNotMatch(row("forced_ct_kwargs"), /OpenCode send/);
 	assert.match(row("forced_ct_kwargs"), /over any request/);

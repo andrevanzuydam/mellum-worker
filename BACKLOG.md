@@ -110,7 +110,7 @@ not arise there. The fix is a new baseline at each new user prompt, with
 the dedupe key per prompt. *Reopens when* a host re-uses a Worker child
 across prompts, or `learn` reports from `-e` sessions start to matter.
 
-**OpenCode port: measure it and record its runs (was M.3).** The OpenCode
+** The OpenCode
 port ships a step-capped Worker subagent, installed through the plugin array,
 with no Mode, guards or run records; the README says it is unmeasured.
 Measuring it needs a `--harness opencode` runner in `ladder/` and a record

@@ -36,7 +36,7 @@ export interface Expected {
 
 export type Fetched<T> = { ok: true; value: T } | { ok: false; status?: number; error: string };
 
-export type Host = "pi" | "opencode";
+export type Host = "pi";
 
 export interface CheckInputs {
 	baseUrl: string;
@@ -145,12 +145,12 @@ const getPath = (root: unknown, path: string): unknown =>
 // ---- host provider entries -------------------------------------------------------------
 
 /**
- * The `omlx` provider object of a host config: Pi `providers.omlx`, OpenCode `provider.omlx`.
- * Works on the user's config and on the shipped templates, so both sides compare alike.
+ * The `omlx` provider object of Pi's config (`providers.omlx`).
+ * Works on the user's config and on the shipped template, so both sides compare alike.
  */
 export function providerEntry(host: Host, config: unknown): Obj | undefined {
 	if (!isObj(config)) return undefined;
-	const providers = host === "pi" ? config.providers : config.provider;
+	const providers = config.providers;
 	const entry = isObj(providers) ? providers.omlx : undefined;
 	return isObj(entry) ? entry : undefined;
 }
@@ -165,24 +165,16 @@ export function providerEntry(host: Host, config: unknown): Obj | undefined {
  * Returns null when the provider has no entry for the model.
  */
 function providerFields(host: Host, entry: Obj, modelId: string): Obj | null {
-	if (host === "pi") {
-		const models = Array.isArray(entry.models) ? entry.models : [];
-		const m = models.find((x) => isObj(x) && x.id === modelId);
-		if (!isObj(m)) return null;
-		return { baseUrl: entry.baseUrl, contextWindow: m.contextWindow, maxTokens: m.maxTokens, samplingParams: m.samplingParams, compat: m.compat };
-	}
-	const models = isObj(entry.models) ? entry.models : {};
-	const m = models[modelId];
+	const models = Array.isArray(entry.models) ? entry.models : [];
+	const m = models.find((x) => isObj(x) && x.id === modelId);
 	if (!isObj(m)) return null;
-	const limit = isObj(m.limit) ? m.limit : {};
-	const options = isObj(entry.options) ? entry.options : {};
-	return { baseUrl: options.baseURL, contextWindow: limit.context, maxTokens: limit.output };
+	return { baseUrl: entry.baseUrl, contextWindow: m.contextWindow, maxTokens: m.maxTokens, samplingParams: m.samplingParams, compat: m.compat };
 }
 
 function providerFinding(p: CheckInputs["provider"], template: Obj, expected: Expected): Finding {
-	const fix = `setup step 4: skills/mellum-setup/reference/04-provider-${p.host}.md`;
+	const fix = "setup step 4: skills/mellum-setup/reference/04-provider-pi.md";
 	if (p.error || !p.entry) {
-		return { id: "provider", level: "fail", message: p.error ?? `no omlx provider in the ${p.host} config`, fix };
+		return { id: "provider", level: "fail", message: p.error ?? "no omlx provider in the Pi config", fix };
 	}
 	const have = providerFields(p.host, p.entry, expected.modelId);
 	if (!have) {
@@ -195,9 +187,9 @@ function providerFinding(p: CheckInputs["provider"], template: Obj, expected: Ex
 			? diffs(x.expected, (k) => (x.actual as Obj)[k]).map((y) => ({ ...y, key: `${x.key}.${y.key}` }))
 			: [x],
 	);
-	if (d.length === 0) return { id: "provider", level: "ok", message: `${p.host} provider entry matches the template` };
+	if (d.length === 0) return { id: "provider", level: "ok", message: "Pi provider entry matches the template" };
 	const binds = d.some((x) => x.key === "maxTokens" || x.key.startsWith("samplingParams"));
-	return { id: "provider", level: binds ? "fail" : "warn", message: `${p.host} provider entry differs from the template:\n${lines(d).join("\n")}`, fix };
+	return { id: "provider", level: binds ? "fail" : "warn", message: `Pi provider entry differs from the template:\n${lines(d).join("\n")}`, fix };
 }
 
 // ---- the check -----------------------------------------------------------------------
@@ -256,12 +248,8 @@ export function checkSetup(inputs: CheckInputs, expected: Expected): Finding[] {
 		// A key already in the fail (enable_thinking forced off) is not repeated as info.
 		const o = (settingsDiffs(inputs.adminModels.value, expected, "overridden") ?? []).filter((x) => !(d ?? []).some((y) => y.key === x.key));
 		if (o.length > 0) {
-			// Pi's template sends the cap, sampling and thinking flag; OpenCode's only the cap.
-			const why =
-				inputs.provider.host === "opencode"
-					? "OpenCode's template sends only max_tokens, so the server's other values apply"
-					: "overridden by the client's request values";
-			out.push({ id: "settings", level: "info", message: `server values differ from the advised ones, ${why}:\n${lines(o, "advised").join("\n")}` });
+			// Pi's template sends the cap, sampling and thinking flag.
+			out.push({ id: "settings", level: "info", message: `server values differ from the advised ones, overridden by the client's request values:\n${lines(o, "advised").join("\n")}` });
 		}
 	}
 
@@ -340,7 +328,7 @@ export function readProvider(
 	home: string,
 	read: (p: string) => string | undefined,
 ): { baseUrl: string; entry?: Obj; error?: string } {
-	const paths = host === "pi" ? [join(home, ".pi/agent/models.json")] : [join(home, ".config/opencode/opencode.jsonc"), join(home, ".config/opencode/opencode.json")];
+	const paths = [join(home, ".pi/agent/models.json")];
 	let path: string | undefined;
 	let text: string | undefined;
 	for (const p of paths) {
@@ -418,7 +406,7 @@ export async function serverCheck(adminBase: string, opts: { timeoutMs: number; 
 
 /** The host's `omlx` provider object from the shipped template. */
 export function loadTemplate(host: Host, read: (p: string) => string = (p) => readFileSync(p, "utf8")): Obj {
-	const file = host === "pi" ? "../templates/pi/models.omlx.json" : "../templates/opencode/provider.omlx.json";
+	const file = "../templates/pi/models.omlx.json";
 	return providerEntry(host, JSON.parse(read(fileURLToPath(new URL(file, import.meta.url))))) ?? {};
 }
 

@@ -7,10 +7,6 @@ import test from "node:test";
 const ROOT = resolve(import.meta.dirname, "..");
 const pkg = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf8"));
 
-test("main points at an existing file", () => {
-	assert.ok(existsSync(resolve(ROOT, pkg.main)), `${pkg.main} missing`);
-});
-
 test("every pi extension and skills path exists", () => {
 	for (const p of [...pkg.pi.extensions, ...pkg.pi.skills]) {
 		assert.ok(existsSync(resolve(ROOT, p)), `${p} missing`);

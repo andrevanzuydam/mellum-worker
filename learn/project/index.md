@@ -1,7 +1,7 @@
 # How this project works
 
 `mellum-worker` ships Mellum 2.1 as a bounded coding worker for Pi and
-OpenCode, and keeps the ladder that measures it and the Learning Center that
+and keeps the ladder that measures it and the Learning Center that
 teaches it. This section is for people working on the repository. Learners
 start at [Getting started](../getting-started/index.md).
 
@@ -10,7 +10,6 @@ start at [Getting started](../getting-started/index.md).
 - **The Pi package**: `extensions/mellum-mode.ts` (the `/mellum` command and
   its guards), `skills/mellum-setup/`, the agent templates under `templates/`
   and the prompt under `prompts/`.
-- **The OpenCode plugin**: `opencode/`, which shares the templates.
 - **The ladder**: `ladder/`, the instrument that reruns rungs 1–9 against a
   fixture workspace. Its records are evidence, not documentation.
 
@@ -20,7 +19,7 @@ start at [Getting started](../getting-started/index.md).
 | --- | --- |
 | `extensions/` | Pi extension: `/mellum`, `/mellum check`, `/mellum learn`, `/mellum last`, the guards |
 | `prompts/` | `mellum-worker.md`, the single source for the agent templates |
-| `templates/` | Rendered Pi and OpenCode agent files, model fragments, `build.mjs` output |
+| `templates/` | Pi model fragments |
 | `skills/` | The `mellum-setup` skill and its phases |
 | `scripts/` | Command-line counterparts: `scripts/mellum.mjs` for the worker, `scripts/backend.py` for the local model |
 | `ladder/` | The harness, fixtures and scoring that produce `docs/ladder/` |

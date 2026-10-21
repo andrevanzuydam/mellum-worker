@@ -140,25 +140,21 @@ leave context files on so it sees `AGENTS.md`.
 | hot cache | off | server only |
 
 Pi sends the first three from its provider entry per request, and oMLX
-honours them over the server's own values; OpenCode's template sets only
-the output limit, so for OpenCode the server's thinking and sampling apply.
-With `force_sampling` on in oMLX, the server's sampling wins over any
+honours them over the server's own values. With `force_sampling` on in
+oMLX, the server's sampling wins over any
 request, so `/mellum check` fails unless it is 1 / 0.95 / 20. The
 server-only values bind every client, and other clients of the same oMLX
 model can change them.
 
-**Check your setup.** In Pi Mode, `/mellum check`. From the terminal,
-`--host pi` checks the setup Pi Mode and Pi Worker share, and
-`--host opencode` checks OpenCode's (`--json` for JSON):
+**Check your setup.** In Pi, `/mellum check`. From the terminal
+(`--json` for JSON):
 
 ```bash
 node <package dir>/scripts/mellum.mjs check --host pi
-node <package dir>/scripts/mellum.mjs check --host opencode
 ```
 
-`<package dir>` is `~/.pi/agent/git/github.com/pauleveritt/mellum-worker`
-(Pi) or `~/.cache/opencode/packages/*/node_modules/mellum-worker`
-(OpenCode). It checks that the server answers and lists the model, that the
+`<package dir>` is `~/.pi/agent/git/github.com/pauleveritt/mellum-worker`.
+It checks that the server answers and lists the model, that the
 settings no request can undo match (the server-only rows above, thinking
 not forced off, and forced sampling at 1 / 0.95 / 20), and that your
 provider entry matches the template, `maxTokens` and sampling included; a
@@ -199,11 +195,9 @@ node <package dir>/scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]
 ```
 
 Records come from `MELLUM_MODE_RUNS` (default
-`~/.pi/agent/mellum-mode-runs.jsonl`) and `MELLUM_WORKER_RUNS` (default
-`~/.pi/agent/mellum-worker-runs.jsonl`; `0` or empty turns it off); `--file` reads
-one file instead. Pi Mode and Pi Worker write records, and `learn` reports
-both. The OpenCode port writes no records and measuring it is on the
-backlog, so `learn` in an OpenCode project finds 0 runs.
+`~/.pi/agent/mellum-mode-runs.jsonl`; `0` or empty turns it off); `--file`
+reads one file instead. Mellum Worker writes records, and `learn` reports
+them.
 
 **See the last run.** `/mellum last` shows the newest run at or under the
 current directory, Mode or Worker, as a table, with no model call. It goes into the
@@ -360,13 +354,11 @@ deferred is a [backlog entry](BACKLOG.md) with a reopen condition.
 - **The mediated test:** a rung 9 screen first, then a preregistered run on
   rungs 6–9, then the `/mellum` command that writes the test with your main
   model, shows it, runs it red and dispatches. PR #1 is a candidate.
-- **One worker:** retire the pi-subagents Worker and rename Mellum Worker to
-  mellum-worker. `/mellum` stays.
-- **Also parked:** measuring the OpenCode port, an Ollama backend, execution
-  bounds, versioned assessments.
+- **Also parked:** an Ollama backend, execution bounds, versioned
+  assessments.
 
 ## Releases
 
-Pin a tag in both install lines; OpenCode treats an unpinned git spec as
-"latest" and may refresh it. Tags follow semver and match the package
-version (a test checks it).
+Pin a tag in the install line; an unpinned git spec is treated as
+"latest" and may refresh. Tags follow semver and match the package version
+(a test checks it).
