@@ -6,6 +6,22 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `extensions/mellum-override.ts` — edit the system prompt the worker is fed,
+  live, from a file (`$MELLUM_PROMPT_OVERRIDE`): `system` replaces it, `append`
+  adds to it, applied at the next turn boundary. The dashboard writes the file,
+  so you can change the prompt while a run is in flight. Self-contained; pure
+  core unit-tested.
+
+- Dashboard upgrades (`dashboard/`): click a rung to drill into its **past runs
+  and summaries** (verdict, the task sentence, the diff, wall time); an
+  **intelligence centre** panel that shows the told-vs-truth contradictions
+  `mellum-rethink` finds; a **system-prompt editor** that saves an override the
+  worker picks up next turn (via `mellum-override`); the prompt panel now shows
+  the **full context** being fed, not a teaser; and the rung grid is
+  data-driven over rungs 1–12, so a rung is shown as idle rather than hidden
+  when it has no result. `serve.py` gains `/rung`, `/override` (GET + POST)
+  endpoints and an `intel` feed, all dependency-free stdlib.
+
 - `extensions/mellum-vision.ts` — let the worker see: describe images and
   screenshots, or read the text out of them, with a small local vision model
   (JetBrains ships none — Mellum is code and text only). Default

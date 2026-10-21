@@ -67,7 +67,8 @@ export function promptFields(messages: unknown): { system: string; task: string 
 		return role === "user" || role === "custom";
 	});
 	const last = userish[userish.length - 1];
-	return { system: textOf(system).slice(0, 600), task: textOf(last).slice(0, 600) };
+	// Wide enough for the dashboard to show the full context being fed, not a teaser.
+	return { system: textOf(system).slice(0, 8000), task: textOf(last).slice(0, 8000) };
 }
 
 function feedPath(): string {

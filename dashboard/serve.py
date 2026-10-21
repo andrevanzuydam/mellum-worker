@@ -17,6 +17,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_OUT = "/private/tmp/claude-501/-Users-mac-projects/8aed2d08-ac9d-4f56-9569-c4d3ba627b18/scratchpad/sweep-6bit"
 OUT = os.environ.get("DASH_OUT", DEFAULT_OUT)
 FEED = os.path.expanduser(os.environ.get("MELLUM_FEED", "~/.pi/agent/mellum-feed.ndjson"))
+OVERRIDE = os.path.expanduser(
+    os.environ.get("MELLUM_PROMPT_OVERRIDE", "~/.pi/agent/mellum-prompt-override.json")
+)
 TRACE_GLOBS = [
     "/private/var/folders/*/*/T/ladder-*/trace.jsonl",
     "/tmp/ladder-*/trace.jsonl",
@@ -136,6 +139,69 @@ def latest_prompt():
     return None
 
 
+def intel_events(limit=20):
+    """Told-vs-truth contradictions the skeptical gate found (mellum-rethink)."""
+    try:
+        lines = open(FEED).read().splitlines()
+    except Exception:
+        return []
+    out = []
+    for line in lines[-400:]:
+        try:
+            e = json.loads(line)
+        except Exception:
+            continue
+        if e.get("kind") == "rethink":
+            out.append({"claim": e.get("claim", ""), "observed": e.get("observed", ""), "t": e.get("t")})
+    return out[-limit:]
+
+
+def rung_detail(n):
+    """Every past run of one rung, newest first, with a short summary of each."""
+    runs = []
+    for f in glob.glob(os.path.join(OUT, f"rung{n}", "*", "run.json")):
+        try:
+            r = json.load(open(f))
+        except Exception:
+            continue
+        chk = r.get("check", {})
+        runs.append(
+            {
+                "run": os.path.basename(os.path.dirname(f)),
+                "passed": bool(chk.get("passed")),
+                "wall": round(r.get("wall_seconds_untrusted") or 0),
+                "stop": r.get("stop_reason"),
+                "deadline": bool(r.get("deadline_hit")),
+                "sentence": r.get("sentence", ""),
+                "diff": (r.get("diff_stat") or "").strip(),
+                "details": chk.get("details", {}),
+                "mtime": os.path.getmtime(f),
+            }
+        )
+    runs.sort(key=lambda x: x["mtime"], reverse=True)
+    for x in runs:
+        del x["mtime"]
+    return {"rung": n, "runs": runs}
+
+
+def read_override():
+    try:
+        return json.loads(open(OVERRIDE).read())
+    except Exception:
+        return {"system": "", "append": ""}
+
+
+def write_override(data):
+    os.makedirs(os.path.dirname(OVERRIDE), exist_ok=True)
+    clean = {
+        "system": str(data.get("system", "") or ""),
+        "append": str(data.get("append", "") or ""),
+    }
+    with open(OVERRIDE, "w") as fh:
+        json.dump(clean, fh)
+    return clean
+
+
 def payload():
     # Prefer the agnostic feed (mellum-feed.ts); fall back to scraping the
     # newest trace for runs that don't load the feed extension (e.g. the sweep).
@@ -145,6 +211,7 @@ def payload():
         "sweep": sweep_rows(),
         "active": active,
         "prompt": latest_prompt(),
+        "intel": intel_events(),
     }
 
 
@@ -179,12 +246,34 @@ class Handler(BaseHTTPRequestHandler):
                 return
         elif self.path.startswith("/data.json"):
             self._send(json.dumps(payload()).encode(), "application/json")
+        elif self.path.startswith("/rung"):
+            from urllib.parse import urlparse, parse_qs
+
+            q = parse_qs(urlparse(self.path).query)
+            try:
+                n = int(q.get("n", ["0"])[0])
+            except ValueError:
+                n = 0
+            self._send(json.dumps(rung_detail(n)).encode(), "application/json")
+        elif self.path.startswith("/override"):
+            self._send(json.dumps(read_override()).encode(), "application/json")
         else:
             try:
                 body = open(os.path.join(HERE, "index.html"), "rb").read()
             except Exception:
                 body = b"<h1>index.html missing</h1>"
             self._send(body, "text/html; charset=utf-8")
+
+    def do_POST(self):
+        if self.path.startswith("/override"):
+            try:
+                length = int(self.headers.get("content-length", "0"))
+                data = json.loads(self.rfile.read(length) or b"{}")
+            except Exception:
+                data = {}
+            self._send(json.dumps(write_override(data)).encode(), "application/json")
+        else:
+            self._send(b'{"error":"not found"}', "application/json")
 
 
 if __name__ == "__main__":
