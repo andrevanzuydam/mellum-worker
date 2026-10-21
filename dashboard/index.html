@@ -53,6 +53,8 @@
   .chip { background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:999px; padding:5px 14px; font-family:var(--mono); font-size:.85rem; cursor:pointer; }
   .chip:hover { border-color:var(--accent); color:var(--accent); }
   .chip.on { background:var(--run); color:#2b2b2b; border-color:var(--run); font-weight:700; }
+  .chip.play.on { background:var(--pass); border-color:var(--pass); }
+  .chip.pause.on { background:var(--fail); border-color:var(--fail); }
   .runbar .msg { color:var(--mut); font-size:.82rem; margin-left:4px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/tina4js@1.5.2/dist/tina4js.min.js"></script>
@@ -109,21 +111,29 @@
       .catch(() => (runMsg.value = "could not reach the server"));
   };
 
-  // Load the current prompt override, and save edits back to the server.
+  // The prompt editor is UNCONTROLLED: load fills the textareas via the DOM and
+  // save reads them back, so typing is never fought by a reactive value binding.
+  const el = (id) => document.getElementById(id);
   const loadOverride = () => {
-    fetch("/override").then((r) => r.json()).then((o) => { ovSystem.value = o.system || ""; ovAppend.value = o.append || ""; }).catch(() => {});
+    fetch("/override").then((r) => r.json()).then((o) => {
+      if (el("ov-system")) el("ov-system").value = o.system || "";
+      if (el("ov-append")) el("ov-append").value = o.append || "";
+    }).catch(() => {});
   };
   const saveOverride = () => {
-    fetch("/override", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ system: ovSystem.value, append: ovAppend.value }),
-    }).then((r) => r.json()).then(() => {
-      saveMsg.value = "saved — applies on the worker's next turn";
-      setTimeout(() => (saveMsg.value = ""), 4000);
-    }).catch(() => (saveMsg.value = "save failed"));
+    const body = { system: el("ov-system") ? el("ov-system").value : "", append: el("ov-append") ? el("ov-append").value : "" };
+    saveMsg.value = "saving…";
+    fetch("/override", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) })
+      .then((r) => r.json())
+      .then(() => { saveMsg.value = "saved — applies on the worker's next turn"; setTimeout(() => (saveMsg.value = ""), 4000); })
+      .catch(() => (saveMsg.value = "save failed"));
   };
-  loadOverride();
+
+  // Play / pause the worker between turns (writes the mellum-control file).
+  const setControl = (state) => {
+    fetch("/control", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ state }) })
+      .then((r) => r.json()).then((d) => (data.value = { ...data.value, control: d.state })).catch(() => {});
+  };
 
   const cell = (n) => {
     const s = (data.value.sweep || []).find((x) => x.rung === n);
@@ -141,8 +151,12 @@
       <span class="ts">updated ${() => data.value.updatedAt}</span>
     </header>
     <main>
-      <h2>Rungs</h2>
-      <div class="grid">${() => rungsToShow().map(cell)}</div>
+      <h2>Worker controls</h2>
+      <div class="runbar">
+        <button class=${() => "chip play" + (data.value.control !== "pause" ? " on" : "")} @click=${() => setControl("play")}>▶ Play</button>
+        <button class=${() => "chip pause" + (data.value.control === "pause" ? " on" : "")} @click=${() => setControl("pause")}>⏸ Pause</button>
+        <span class="msg">${() => "worker is " + (data.value.control === "pause" ? "paused" : "running") + " (needs mellum-control loaded)"}</span>
+      </div>
       <h2>Start a run — ${() => data.value.model || "the configured model"}</h2>
       <div class="runbar">
         ${() => [6, 7, 8, 9, 10, 11, 12].map((n) => {
@@ -151,6 +165,8 @@
         })}
         <span class="msg">${() => runMsg.value}</span>
       </div>
+      <h2>Rungs</h2>
+      <div class="grid">${() => rungsToShow().map(cell)}</div>
       ${() => {
         const d = selected.value;
         if (!d) return html`<div class="empty" style="margin-top:6px">click a rung to see its past runs</div>`;
@@ -185,9 +201,9 @@
       <h2>Edit the system prompt</h2>
       <div class="editor">
         <label>replace system prompt (blank = leave as-is)</label>
-        <textarea .value=${ovSystem} @input=${(e) => (ovSystem.value = e.target.value)} placeholder="e.g. You are a careful worker. Stream large files; never load them whole."></textarea>
+        <textarea id="ov-system" placeholder="e.g. You are a careful worker. Stream large files; never load them whole."></textarea>
         <label>append to system prompt</label>
-        <textarea .value=${ovAppend} @input=${(e) => (ovAppend.value = e.target.value)} placeholder="e.g. Always re-run the acceptance test before you finish."></textarea>
+        <textarea id="ov-append" placeholder="e.g. Always re-run the acceptance test before you finish."></textarea>
         <div class="bar"><button @click=${saveOverride}>Save override</button><span class="msg">${() => saveMsg.value}</span></div>
       </div>
       <h2>Live worker feed</h2>
@@ -202,6 +218,7 @@
     </main>
   `;
   document.getElementById("app").appendChild(app);
+  loadOverride(); // fill the editor now that the textareas exist in the DOM
 </script>
 </body>
 </html>

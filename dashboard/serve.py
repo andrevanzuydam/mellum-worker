@@ -24,6 +24,9 @@ FEED = os.path.expanduser(os.environ.get("MELLUM_FEED", "~/.pi/agent/mellum-feed
 OVERRIDE = os.path.expanduser(
     os.environ.get("MELLUM_PROMPT_OVERRIDE", "~/.pi/agent/mellum-prompt-override.json")
 )
+CONTROL = os.path.expanduser(
+    os.environ.get("MELLUM_CONTROL", "~/.pi/agent/mellum-control.json")
+)
 TRACE_GLOBS = [
     "/private/var/folders/*/*/T/ladder-*/trace.jsonl",
     "/tmp/ladder-*/trace.jsonl",
@@ -192,6 +195,21 @@ def rung_detail(n):
     return {"rung": n, "runs": runs}
 
 
+def read_control():
+    try:
+        return "pause" if json.loads(open(CONTROL).read()).get("state") == "pause" else "play"
+    except Exception:
+        return "play"
+
+
+def write_control(state):
+    state = "pause" if state == "pause" else "play"
+    os.makedirs(os.path.dirname(CONTROL), exist_ok=True)
+    with open(CONTROL, "w") as fh:
+        json.dump({"state": state}, fh)
+    return {"state": state}
+
+
 def read_override():
     try:
         return json.loads(open(OVERRIDE).read())
@@ -269,6 +287,7 @@ def payload():
         "intel": intel_events(),
         "running": running_status(),
         "model": DEFAULT_MODEL,
+        "control": read_control(),
     }
 
 
@@ -329,6 +348,8 @@ class Handler(BaseHTTPRequestHandler):
             data = {}
         if self.path.startswith("/override"):
             self._send(json.dumps(write_override(data)).encode(), "application/json")
+        elif self.path.startswith("/control"):
+            self._send(json.dumps(write_control(data.get("state"))).encode(), "application/json")
         elif self.path.startswith("/run"):
             self._send(json.dumps(launch_run(data.get("rung"), data.get("model"))).encode(), "application/json")
         else:
