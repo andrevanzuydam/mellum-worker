@@ -116,6 +116,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The harness lesson now explains `n=1` and how to run more sessions with
+  `--repeat`, including the `3/3 sessions passed` summary. It also points at
+  `learn/code/suites/easy/` instead of the retired task directory.
+
 - The worker-extension lesson now states the model split plainly: the main
   agent is the larger model Pi started with, and `/mellum` temporarily
   switches the session to Mellum, then restores the main model with a

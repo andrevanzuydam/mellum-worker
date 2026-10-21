@@ -45,12 +45,25 @@ The first line is only needed once. The second prints the child's argv if you
 add `--dry-run`; otherwise it runs one task and prints a score line:
 
 ```text
-easy: PASS (run learn/code/.runs/20261020T191642Z-easy-7d0bde)
+easy: PASS (n=1; run /var/folders/...; 1 request, 3 tool calls, 0 tool errors)
 ```
 
-The task is `learn/code/tasks/easy/`: a prompt asking for `fizz.py` and the
-tests that check it. The prompt goes to `pi -p` as the request; nothing else
-about the task is shown to the model.
+`n=1` is one session: one workspace, one trace, one score. That is the
+default, and it is an observation, not a rate. To run more sessions, add
+`--repeat`:
+
+```bash
+uv run learn/code/harness.py run --suite easy --repeat 3
+```
+
+Each repeat starts from a fresh workspace; the lines are tagged `[1/3]` and
+the summary is `easy: 3/3 sessions passed`. Two or three sessions are still a
+lead, not a rate; lesson 4 explains why, and the ladder is the measuring
+instrument.
+
+The suite is `learn/code/suites/easy/`: a base AgentClinic project, one
+prompt asking for phase 1, and the tests that check it. The prompt goes to
+`pi -p` as the request; nothing else about the suite is shown to the model.
 
 ## Read the run
 

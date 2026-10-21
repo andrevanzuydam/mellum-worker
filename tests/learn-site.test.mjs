@@ -100,14 +100,15 @@ test("lesson 2 explains isolation and the one command", () => {
   const l = page("getting-started/harness.md");
   assert.match(l, /^track: getting-started$/m);
   const order = ["fresh directory", "harness.py run --suite easy",
-    "learn/code/.runs"];
+    "n=1", "--repeat 3"];
   let at = -1;
   for (const step of order) {
     const next = l.toLowerCase().indexOf(step.toLowerCase());
     assert.ok(next > at, `${step} missing or out of order`);
     at = next;
   }
-  for (const text of ["hidden", "score line", "trace.jsonl"])
+  for (const text of ["hidden", "score line", "trace.jsonl",
+    "sessions passed", "not a rate"])
     assert.ok(l.toLowerCase().includes(text), `lesson 2 lacks ${text}`);
   assert.match(page("getting-started/index.md"), /harness\.md/);
 });
