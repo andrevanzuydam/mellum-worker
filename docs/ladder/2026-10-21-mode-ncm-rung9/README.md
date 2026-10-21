@@ -1,23 +1,22 @@
-# 2026-10-21: the mediation reaches the shipped worker — Mode rung 9, 0/3 → 3/3
+# 2026-10-21: `--acceptance-test` in Mode cracks rung 9 — 0/3 → 3/3
 
-**What is measured.** 6-bit Mellum in **Mellum Mode** (the shipped worker —
-guards + facts + 7 tools), rung 9, n=3, with the mediation now delivered through
-*extensions*: the frozen `test_phase4.py` placed in the Mode workspace
-(`--acceptance-test`, now allowed in Mode) and the **NCM verify gate**
-(`extensions/mellum-ncm.ts`) loaded via `--pi-extension` (the mode runner now
-passes extra extensions). Result (`table.md`): **3/3** (110/145/108s), up from
-the un-mediated shipped Mode's **0/3**.
+**What is measured.** 6-bit Mellum in **Mellum Mode** (`mellum-mode.ts` +
+`mellum-guards.ts` + `mellum-facts.ts`, as shipped), rung 9, n=3, with two named
+mechanisms added — not lumped as "mediation":
 
-**Why this matters.** Earlier the 12/12 win lived only in direct mode; the
-shipped worker (Mode) was 0/3 because the mediation (verify/re-dispatch) was
-direct-only in the ladder and reached nothing the product runs. This closes that
-gap: the mediation is now reachable from Mode.
+- **`--acceptance-test`** (a `run_ladder` flag, now allowed in `--mode mode`):
+  places the frozen `test_phase4.py` in the Mode workspace.
+- **`mellum-ncm.ts`** (the NCM verify gate, loaded via `--pi-extension`, which
+  the mode runner now forwards): re-runs the named test at settle and, while
+  red, sends the worker back on the unmet concepts.
 
-**Honest attribution.** The NCM gate fired **0 times** — the 6-bit passes the
-frozen test first-try, so the active lever is the **frozen-test placement**
-(gives v7 its target). The gate is the **safety net** for a self-exit-on-
-incomplete (the phase-4 miss); it is proven to fire (on the 3-bit,
-`docs/ladder/2026-10-21-halving-3bit`) and proven not to regress the 6-bit here.
+Result (`table.md`): **3/3** (110/145/108s), up from the shipped Mode's **0/3**
+with neither mechanism.
 
-Note: [`research/2026-10-21-mediation-reaches-mode.md`](../../superpowers/research/2026-10-21-mediation-reaches-mode.md).
+**Credit by name.** **`--acceptance-test` is the lever** — placing the frozen
+test gives v7 its named target. **`mellum-ncm.ts` fired 0 times** (the 6-bit
+passes first-try), so it is a non-regressing safety net here, not the driver;
+`mellum-mode.ts`/`guards`/`facts` were on in both the 0/3 and 3/3 runs.
+
+Note: [`research/2026-10-21-acceptance-test-in-mode.md`](../../superpowers/research/2026-10-21-acceptance-test-in-mode.md).
 Raw stripped per `AGENTS.md`.
