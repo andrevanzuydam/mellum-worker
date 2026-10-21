@@ -6,6 +6,18 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `extensions/mellum-vision.ts` — let the worker see: describe images and
+  screenshots, or read the text out of them, with a small local vision model
+  (JetBrains ships none — Mellum is code and text only). Default
+  `empero-ai/Qwen3.8-2B-Distill` (~2 B, a Qwen3.5 VLM) served through MLX; the
+  model id is a Hugging Face repo id, so `mlx_vlm` downloads it automatically on
+  first use when missing (set `MELLUM_VISION_MODEL` to a local 4-bit copy for a
+  smaller, faster load). Its partner is `mellum-files`: a
+  scanned/image-only page routes here. Descriptions are indexed into
+  `mellum-context`. Command `/see <image> [question]` and a `describe_image`
+  tool. Config: `MELLUM_VISION_MODEL`, `MELLUM_VISION_PYTHON`. Pure core
+  unit-tested; verified end-to-end against the local model.
+
 - `extensions/mellum-files.ts` — document understanding for PDF, Word (.docx)
   and Excel (.xlsx), plus plain text. Office files are read with a small
   pure-Node zip reader (the central directory, so Office's streamed files work)
