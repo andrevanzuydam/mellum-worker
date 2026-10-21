@@ -57,8 +57,8 @@ These terms are fixed, and the site, this spec and the roadmap use no other
 names for these units.
 
 - **Learning Center**: the whole Zensical site under `learn/`.
-- **Track**: a group of lessons with a recommended order. There are three:
-  Getting started, Paul's findings, Andre's findings.
+- **Track**: a group of lessons with a recommended order. There are two:
+  Getting started and Lessons.
 - **Lesson**: one page that teaches one thing. Getting started lessons
   build on each other; a findings lesson stands alone and lists its
   prerequisites.
@@ -145,20 +145,18 @@ times (default 1), every line states its n, and the suite counts sessions
 rather than estimating a rate. The suite lesson says so: one session is one
 observation, and rates come from the ladder.
 
-### Paul's findings
+### Lessons
 
-Lessons from M.1–M.7 and the A-series ablations, one idea per lesson.
-Candidate ideas are mined from the phase rows and research notes in a
-digest like the PR digest, written in phase LC.4 before any lesson. The
-track index gives a recommended order; every lesson lists Getting started
-as its prerequisite plus any findings lesson it builds on.
+One track for every findings lesson, from Paul's phases and ablations and
+from Andre's pull requests, one idea per lesson. Every lesson stands alone;
+the track index gives a recommended order, and each lesson lists Getting
+started as its prerequisite plus any lesson it builds on.
 
-### Andre's findings
-
-Lessons from the ten ideas in the [PR digest](../research/2026-10-20-pr-digest.md),
-phase LC.5. Proposed order, for Andre to review: idea 9 (a clean negative
-result), then 1, 2, 6, 3, 4, 5, 7, 8, 10. Gated on Andre's consent
-(section 9).
+Paul's ten are mined from M.1–M.7 and the A-series in a digest like the PR
+digest, written in phase LC.4 before any lesson. Andre's ten come from the
+[PR digest](../research/2026-10-20-pr-digest.md) in phase LC.5, in the
+proposed order for him to review: idea 9 (a clean negative result), then
+1, 2, 6, 3, 4, 5, 7, 8, 10. They are gated on his consent (section 9).
 
 ## 5. Lesson template
 
@@ -169,7 +167,7 @@ Every lesson page starts with:
 ```yaml
 ---
 title: The worker decides when it is done
-track: andre            # getting-started | paul | andre
+track: lessons          # getting-started | lessons
 position: 2             # recommended order within the track
 prerequisites: [getting-started/harness]
 authors: [Andre van Zuydam, Paul Everitt]
@@ -250,8 +248,7 @@ learn/
   credits.md
   lesson-template.md          # the six-step template, copyable
   getting-started/index.md    # + lesson pages from LC.2, LC.3
-  paul/index.md               # + one page per lesson phase (LC.6+)
-  andre/index.md              # + one page per approved lesson
+  lessons/index.md            # all findings lessons, one page each
   code/                       # lesson code, not published as pages
     profile/models.json       # generated from [tool.mellum]
     record-pi.mjs             # lesson recorder (LC.3)

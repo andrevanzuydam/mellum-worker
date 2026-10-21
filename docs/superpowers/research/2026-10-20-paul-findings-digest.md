@@ -1,6 +1,6 @@
 # Paul's findings digest: ten lessons from M.1–M.7 and the A-series
 
-Date: 2026-10-20. The source for the lessons in Paul's findings track. Each
+Date: 2026-10-20. The source for Paul's lessons in the Lessons track. Each
 entry is one idea in the six-step form, with a badge on steps 1–5 and a
 draft Interpretation. It cites existing records only: no run was made for
 this digest, and everything measured here ran on oMLX. Nothing in it is a

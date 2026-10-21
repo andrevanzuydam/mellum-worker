@@ -305,7 +305,7 @@ harness, with every claim labelled by the evidence behind it:
 5. [The worker extension](learn/getting-started/worker-extension.md) — what a
    Pi extension is, and `/mellum` as the vehicle the remedies improve.
 
-Run the harness with `uv run learn/code/harness.py suite all --grade`; build
+All findings lessons are in [Lessons](learn/lessons/index.md). Run the harness with `uv run learn/code/harness.py suite all --grade`; build
 the site with `uvx zensical build` (output in `site/`).
 
 ## Requirements

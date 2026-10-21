@@ -1,6 +1,6 @@
 ---
 title: A short prompt, not a procedure
-track: paul
+track: lessons
 position: 2
 prerequisites: [getting-started/worker-extension]
 authors: [Paul Everitt]

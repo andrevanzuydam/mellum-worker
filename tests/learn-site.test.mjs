@@ -19,8 +19,7 @@ const PAGES = [
   "getting-started/harness.md",
   "getting-started/suite.md",
   "getting-started/worker-extension.md",
-  "paul/index.md",
-  "andre/index.md",
+  "lessons/index.md",
   "lesson-template.md",
   "project/index.md",
   "project/toolchain.md",
@@ -123,18 +122,18 @@ test("lesson 3 runs the suite, grading and the trace", () => {
 });
 
 test("the first findings lesson follows the six steps and names its badge", () => {
-  const l = page("paul/primary-agent.md");
+  const l = page("lessons/primary-agent.md");
   const heads = [...l.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
   assert.deepEqual(heads, ["Problem", "Eval case", "Evidence of the problem",
     "Solution", "Validation", "Interpretation"]);
   const sections = l.split(/^## /m).slice(1);
   sections.forEach((s, i) => assert.equal(/\*\*Badge:\*\* `cited`/.test(s), i < 5, `step ${i + 1}`));
   assert.match(l, /weakest badge here is `cited`/);
-  assert.match(page("paul/index.md"), /primary-agent\.md/);
+  assert.match(page("lessons/index.md"), /primary-agent\.md/);
 });
 
-test("Paul's track lists ten lessons, one phase each", () => {
-  const index = page("paul/index.md");
+test("the Lessons index lists Paul's ten lessons, one phase each", () => {
+  const index = page("lessons/index.md");
   const items = index.match(/^\d+\. \*\*/gm) ?? [];
   assert.equal(items.length, 10);
   assert.match(index, /LC\.10/);
@@ -158,14 +157,14 @@ test("the worker-extension lesson names the vehicle and the shallow test", () =>
 });
 
 test("the second findings lesson follows the six steps and names its badge", () => {
-  const l = page("paul/short-prompt.md");
+  const l = page("lessons/short-prompt.md");
   const heads = [...l.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
   assert.deepEqual(heads, ["Problem", "Eval case", "Evidence of the problem",
     "Solution", "Validation", "Interpretation"]);
   const sections = l.split(/^## /m).slice(1);
   sections.forEach((s, i) => assert.equal(/\*\*Badge:\*\* `cited`/.test(s), i < 5, `step ${i + 1}`));
   assert.match(l, /weakest badge is `cited`/);
-  assert.match(page("paul/index.md"), /short-prompt\.md/);
+  assert.match(page("lessons/index.md"), /short-prompt\.md/);
 });
 
 test("learn/ never says tutorial or case study", () => {

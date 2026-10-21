@@ -1,6 +1,6 @@
 ---
 title: The primary agent is the wrong worker
-track: paul
+track: lessons
 position: 1
 prerequisites: [getting-started/worker-extension]
 authors: [Paul Everitt]

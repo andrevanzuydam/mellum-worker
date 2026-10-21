@@ -86,6 +86,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The site has two tracks instead of three: **Getting started** and
+  **Lessons**. Paul's findings and Andre's findings are one Lessons track
+  under `learn/lessons/`, each lesson still standalone with its own authors
+  and prerequisites; the old `paul/` and `andre/` index pages are gone.
+
 - The suite lesson says plainly that one session is one observation: the
   harness runs a task once by default, and a rate comes from the ladder, not
   from a handful of sessions.

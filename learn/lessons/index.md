@@ -1,9 +1,9 @@
-# Paul's findings
+# Lessons
 
-Lessons from the mellum-worker phases M.1–M.7 and the A-series ablations.
-Each is one idea from the [digest](https://github.com/pauleveritt/mellum-worker/blob/main/docs/superpowers/research/2026-10-20-paul-findings-digest.md),
-follows the six steps, and is its own phase. They are independent: each
-lesson lists its prerequisites, [Getting started](../getting-started/index.md)
+Every findings lesson in one place: Paul's from the mellum-worker phases
+and ablations, Andre's from his pull requests, as they are approved. Each is
+one idea, follows the six steps, and is its own phase. They are independent:
+each lists its prerequisites, [Getting started](../getting-started/index.md)
 is the only one unless a lesson says otherwise, and you can read them in any
 order.
 
@@ -20,6 +20,8 @@ order.
 9. **The intercom block is a prefill tax** (LC.18) — Off: the child prompt halves and prefill drops 20%, with the same passes.
 10. **One spec file per phase** (LC.19) — A one-file roadmap misses the last phase's id in 5 of 6 runs; n = 3.
 
-The order above is a recommendation, not a dependency chain: the baseline
-first, then the prompt, then the behaviours, then the shapes that make more
-sense once those are known.
+Paul's ten are listed first, from the [digest](https://github.com/pauleveritt/mellum-worker/blob/main/docs/superpowers/research/2026-10-20-paul-findings-digest.md);
+Andre's follow as they pass the consent gate (LC.5). The order is a
+recommendation, not a dependency chain: the baseline first, then the prompt,
+then the behaviours, then the shapes that make more sense once those are
+known.

@@ -1,6 +1,6 @@
 # How to read a lesson
 
-The center has three [tracks](../glossary.md). The **Getting started** track is a course in a fixed order; the findings tracks (Paul's and Andre's) are lessons that stand alone: each lists its prerequisites, and you can read them in any order.
+The center has two [tracks](../glossary.md). The **Getting started** track is a course in a fixed order; **Lessons** are findings that stand alone: each lists its prerequisites, and you can read them in any order.
 
 ## Getting started lessons
 

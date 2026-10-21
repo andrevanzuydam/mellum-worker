@@ -3,7 +3,7 @@
 ```yaml
 ---
 title: The worker decides when it is done
-track: andre            # getting-started | paul | andre
+track: lessons          # getting-started | lessons
 position: 2             # recommended order within the track
 prerequisites: [getting-started/harness]
 authors: [Andre van Zuydam, Paul Everitt]

@@ -9,5 +9,4 @@ Each step of a lesson carries an [evidence badge](about/evidence.md) — from me
 ## Tracks
 
 - [Getting started](getting-started/index.md) — Set up a local model and build an eval harness. Fixed order.
-- [Paul's findings](paul/index.md) — Lessons from the mellum-worker phases and ablations.
-- [Andre's findings](andre/index.md) — Lessons from Andre van Zuydam's pull requests.
+- [Lessons](lessons/index.md) — findings from the mellum-worker phases, its ablations, and Andre van Zuydam's pull requests. Each stands alone.
