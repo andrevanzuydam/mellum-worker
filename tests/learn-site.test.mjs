@@ -122,6 +122,17 @@ test("lesson 3 runs the suite, grading and the trace", () => {
   assert.match(page("getting-started/index.md"), /suite\.md/);
 });
 
+test("the first findings lesson follows the six steps and names its badge", () => {
+  const l = page("paul/primary-agent.md");
+  const heads = [...l.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
+  assert.deepEqual(heads, ["Problem", "Eval case", "Evidence of the problem",
+    "Solution", "Validation", "Interpretation"]);
+  const sections = l.split(/^## /m).slice(1);
+  sections.forEach((s, i) => assert.equal(/\*\*Badge:\*\* `cited`/.test(s), i < 5, `step ${i + 1}`));
+  assert.match(l, /weakest badge here is `cited`/);
+  assert.match(page("paul/index.md"), /primary-agent\.md/);
+});
+
 test("Paul's track lists ten lessons, one phase each", () => {
   const index = page("paul/index.md");
   const items = index.match(/^\d+\. \*\*/gm) ?? [];

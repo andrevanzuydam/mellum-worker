@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- The first findings lesson, "The primary agent is the wrong worker": the
+  primary-agent baselines (8/15 bare, 10/15 with the operator profile) against
+  the bounded worker (15/15), with the prefill and wall costs, on cited oMLX
+  records and an Interpretation that says so.
+
 - Getting started lesson 5, "The worker extension": what a Pi extension is,
   `/mellum` as the vehicle, and a live session on the ditch's prompts. The
   worker produces a package whose tests include `assert True` and a CLI of

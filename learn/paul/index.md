@@ -9,7 +9,7 @@ order.
 
 ## Lessons
 
-1. **The primary agent is the wrong worker** (LC.10) — Bare Pi passes 8 of 15 rungs; the same model as a bounded worker passes 15.
+1. **[The primary agent is the wrong worker](primary-agent.md)** (LC.10) — Bare Pi passes 8 of 15 rungs; the same model as a bounded worker passes 15.
 2. **A short prompt, not a procedure** (LC.11) — Prompt v5 is 643 characters, and each line it lost had a run behind it.
 3. **Thinking is working memory** (LC.12) — Stripping earlier thinking cuts prefill 57% and makes the run slower.
 4. **Guards for empty turns and loops** (LC.13) — Without the nudge and the breaker, two of fifteen runs end with nothing.
