@@ -250,29 +250,40 @@ def running_status():
 
 
 def launch_run(n, model):
-    """Start a mediated screen for rung n (the run standard), writing into OUT."""
+    """Start a run for rung n, writing into OUT. Rungs 6-12 run the mediated
+    screen (frozen test); rungs 1-5 are standalone coding rungs with no frozen
+    phase test, so they run un-mediated via the ladder directly."""
     try:
         n = int(n)
     except (TypeError, ValueError):
         return {"ok": False, "error": "rung must be a number"}
-    acc = acc_for(n)
-    if not acc:
-        return {"ok": False, "error": f"rung {n} is not an AgentClinic rung (6-12)"}
-    if not os.path.isfile(os.path.join(REPO, acc)):
-        return {"ok": False, "error": f"acceptance test missing: {acc}"}
+    if not (1 <= n <= 12):
+        return {"ok": False, "error": f"rung {n} is out of range (1-12)"}
     if n in RUNNING and RUNNING[n].poll() is None:
         return {"ok": False, "error": f"rung {n} is already running"}
     relout = os.path.relpath(OUT, REPO)
     model = model or DEFAULT_MODEL
     log = open(os.path.join(OUT, f"dash-run-rung{n}.log"), "w") if os.path.isdir(OUT) else subprocess.DEVNULL
-    proc = subprocess.Popen(
-        ["scripts/screen.sh", str(n), model, acc, relout],
-        cwd=REPO,
-        stdout=log,
-        stderr=subprocess.STDOUT,
-    )
+    if n <= 5:
+        # coding rungs 1-5: no frozen phase test; run un-mediated via the ladder.
+        proc = subprocess.Popen(
+            ["uv", "run", "python", "-m", "ladder.run_ladder", "--mode", "direct",
+             "--profile", "tuned", "--repeat", "1", "--thinking", "off", "--guards",
+             "--rung", str(n), "--model-id", model, "--out", "../" + relout],
+            cwd=os.path.join(REPO, "ladder"), stdout=log, stderr=subprocess.STDOUT,
+        )
+        mediated = False
+    else:
+        acc = acc_for(n)
+        if not os.path.isfile(os.path.join(REPO, acc)):
+            return {"ok": False, "error": f"acceptance test missing: {acc}"}
+        proc = subprocess.Popen(
+            ["scripts/screen.sh", str(n), model, acc, relout],
+            cwd=REPO, stdout=log, stderr=subprocess.STDOUT,
+        )
+        mediated = True
     RUNNING[n] = proc
-    return {"ok": True, "rung": n, "model": model, "out": relout}
+    return {"ok": True, "rung": n, "model": model, "out": relout, "mediated": mediated}
 
 
 def payload():

@@ -159,9 +159,9 @@
       </div>
       <h2>Start a run — ${() => data.value.model || "the configured model"}</h2>
       <div class="runbar">
-        ${() => [6, 7, 8, 9, 10, 11, 12].map((n) => {
+        ${() => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((n) => {
           const on = (data.value.running || []).includes(n);
-          return html`<button class=${"chip" + (on ? " on" : "")} @click=${() => startRun(n)}>${on ? "running " : "run "}${n}${on ? "…" : ""}</button>`;
+          return html`<button class=${"chip" + (on ? " on" : "")} @click=${() => startRun(n)} title=${n <= 5 ? "coding rung (un-mediated)" : "AgentClinic rung (mediated)"}>${on ? "running " : "run "}${n}${on ? "…" : ""}</button>`;
         })}
         <span class="msg">${() => runMsg.value}</span>
       </div>
