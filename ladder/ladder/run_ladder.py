@@ -223,16 +223,18 @@ def build_pi_primary_args(sentence: str, plain: bool = False) -> list[str]:
     ]
 
 
-def build_pi_mode_args(sentence: str) -> list[str]:
+def build_pi_mode_args(sentence: str, extra_extensions: tuple[Path, ...] = ()) -> list[str]:
     """Mellum mode: the operator's own profile with the mode extension forced on.
 
     Superpowers, pi-subagents and the skills catalog load as they do for the
     operator; the mode's before_provider_request hook then sends Mellum the
     worker prompt and only the messages since the mode began. The shipped mode
     runs the guard set itself, so no guards file is passed; the recorder loads
-    after the mode so the trace shows what was sent.
+    after the mode so the trace shows what was sent. `extra_extensions`
+    (--pi-extension) load alongside — e.g. the NCM verify gate, so the mediation
+    reaches Mode.
     """
-    return [
+    args = [
         "pi",
         "-p",
         "--mode",
@@ -244,8 +246,10 @@ def build_pi_mode_args(sentence: str) -> list[str]:
         str(MODE_EXT),
         "-e",
         str(RECORD_EXT),
-        sentence,
     ]
+    for ext in extra_extensions:
+        args += ["-e", str(ext)]
+    return [*args, sentence]
 
 
 def parse_parent_json(stdout: str) -> dict:
@@ -580,7 +584,7 @@ def run_once(
         env = mode_env(
             dict(os.environ), trace, agent_dir, scratch, facts=mode_facts == "on"
         )
-        args = build_pi_mode_args(rung.sentence)
+        args = build_pi_mode_args(rung.sentence, extra_extensions=extra_extensions)
         guards = True  # the mode always loads the guard extension
     else:
         mid = model_id or MODEL_ID

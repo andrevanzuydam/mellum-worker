@@ -120,6 +120,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- `run_ladder --pi-extension` now loads in `--mode mode` too (the mode runner
+  forwards extra extensions), so an extension like the NCM verify gate
+  (`extensions/mellum-ncm.ts`) runs inside Mellum Mode. Together with
+  `--acceptance-test` in Mode, this is how the mediation reaches the shipped
+  worker: rung 9 goes **0/3 → 3/3** (`docs/ladder/2026-10-21-mode-ncm-rung9`).
+
 - `run_ladder --acceptance-test` now also works with `--mode mode`, not only
   `--mode direct`: the frozen test is placed in the Mellum Mode workspace so the
   shipped worker can be measured against it. The verify-and-re-dispatch loop

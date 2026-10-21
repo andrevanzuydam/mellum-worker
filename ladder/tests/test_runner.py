@@ -1419,3 +1419,15 @@ def test_redispatch_is_rejected_in_mode(capsys):
     with pytest.raises(SystemExit):
         validate_args(args, parser)
     assert "redispatch" in capsys.readouterr().err.lower()
+
+
+def test_mode_args_load_extra_extensions_and_keep_sentence_last():
+    """Mellum Mode must be able to load an extra extension (e.g. the NCM gate) via --pi-extension."""
+    from pathlib import Path
+
+    from ladder.run_ladder import build_pi_mode_args
+
+    args = build_pi_mode_args("do it", extra_extensions=(Path("/x/mellum-ncm.ts"),))
+    assert args[-1] == "do it"
+    assert "/x/mellum-ncm.ts" in args
+    assert args.index("/x/mellum-ncm.ts") < args.index("do it")
