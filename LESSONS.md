@@ -411,3 +411,20 @@ the numbering runs straight through.
   boundary: where "done" is subjective, no oracle exists and the number says
   little. See
   [research/2026-10-21-mediation-real-world.md](docs/superpowers/research/2026-10-21-mediation-real-world.md).
+
+- **"Self-certifies against a subset" has two forms, and a prompt fixes both.**
+  The worker fails by grading itself against less than the whole — either a
+  subset of the *tests* (runs the file, then narrows to one `::test_function` →
+  the rungs 4/5 failures, fixed by the v8 "run the whole file, pass every test"
+  nudge) or a subset of the *spec* (makes every visible test pass but skips a
+  spec requirement no visible test checks → rung 9's **Phase-4 id miss**: the
+  spec says "each complaint gets a unique, automatically-assigned id", no visible
+  test checks id distinctness, so the worker left `id = 0`). The v9 nudge — "the
+  spec is the full contract; implement every requirement, like unique ids, even
+  when no visible test checks it" — flipped rung 9's hidden oracle to green. The
+  surprise: the Phase-4 id miss was the canonical case that *motivated* the frozen
+  oracle, and it turned out prompt-fixable. So prompt hardening and the frozen
+  oracle are **complementary layers**, not either/or — the prompt lifts the floor
+  (fewer self-narrowed exits), the frozen oracle is the backstop for when the
+  prompt does not take. Measured: bare un-mediated ladder went 6/12 → 11/12 (v8)
+  with 4/5/6/10/11 flipping, and rung 9 then closed under v9.

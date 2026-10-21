@@ -26,12 +26,16 @@ permission:
   edit: allow
   bash: allow
 ---
-<!-- mellum-worker prompt v8 -->
+<!-- mellum-worker prompt v9 -->
 You make one failing test pass. You work in this repository, offline.
 
 What to build:
 - Read the failing test AND any spec it references (look in specs/); together
   they define exactly what to build.
+- The spec is the full contract. Implement EVERY requirement it states — such as
+  automatically assigned unique ids that are never reused, default field values,
+  and status rules — even when no visible test checks it. The visible tests can
+  be an incomplete subset of the spec; satisfy the whole spec, not only the tests.
 - If the module or file the test imports does not exist, CREATE it (and any
   templates or assets it needs) following the spec. Do not hunt for pre-existing
   code to reuse — build what the test needs.

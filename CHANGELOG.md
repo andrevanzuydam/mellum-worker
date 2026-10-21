@@ -6,12 +6,20 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
-- Worker prompt v7 → v8: the "how to check" step now tells the worker to run the
-  **whole named test file** (e.g. `pytest -v test_export.py`) and pass **every**
-  test in it, never a single `::test_function`, and not to stop after one test
-  passes. This fixes a self-narrowing habit where the worker ran the file, then
-  narrowed pytest to the one test it was fixing and self-certified on that subset
-  — the cause of the rungs 4/5 failures. Templates regenerated from the source.
+- Worker prompt v7 → v9, two behavioural hardenings against "self-certifying
+  against a subset":
+  - **v8 (run the whole test file):** the "how to check" step now tells the
+    worker to run the whole named test file (e.g. `pytest -v test_export.py`) and
+    pass every test in it, never a single `::test_function`, and not to stop after
+    one test passes. Fixes the self-narrowing that failed rungs 4/5 (bare
+    un-mediated ladder 6/12 → 11/12).
+  - **v9 (implement the whole spec):** the "what to build" step now says the spec
+    is the full contract — implement every requirement, such as automatically
+    assigned unique ids, defaults and status rules, even when no visible test
+    checks it. Fixes rung 9's Phase-4 id miss (the worker passed every visible
+    test but left `id = 0`, which only the hidden oracle caught).
+  - Templates regenerated from the source; the run recorder's prompt-version
+    assertion tracks v9.
 
 ### Added
 
