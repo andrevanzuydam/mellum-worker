@@ -386,18 +386,22 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 			return;
 		}
 		const { provider, id } = DEFAULT_MODEL;
-		const model = ctx.modelRegistry.find(provider, id);
+		// The shipped model when the registry has it; otherwise a session model that
+		// is itself Mellum, which is what a llama.cpp profile configures.
+		const sessionModel = /mellum/i.test(String(ctx.model?.id ?? "")) ? ctx.model : undefined;
+		const model = ctx.modelRegistry.find(provider, id) ?? sessionModel;
 		if (!model) {
-			warn(ctx, `mellum-worker: model ${provider}/${id} not found; mode stays off`, "error");
+			warn(ctx, `mellum-worker: model ${provider}/${id} not found and the session model is not Mellum; mode stays off`, "error");
 			return;
 		}
+		const label = `${model.provider}/${model.id}`;
 		const previous = { model: ctx.model, tools: pi.getActiveTools() };
 		prompt = loadPrompt();
 		// Runs while the model switches; awaited below, so it adds at most its own timeout.
 		const pendingServer = checkServer();
 		const switched = await pi.setModel(model);
 		if (!switched) {
-			warn(ctx, `mellum-worker: could not select ${provider}/${id} (auth or provider error); mode stays off`, "error");
+			warn(ctx, `mellum-worker: could not select ${label} (auth or provider error); mode stays off`, "error");
 			return;
 		}
 		saved = previous;
@@ -405,7 +409,7 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 		active = true;
 		guards = createGuardSet();
 		span = { startedAt: Date.now(), requests: 0, toolCalls: 0, outputTokens: 0 };
-		activeModel = `${provider}/${id}`;
+		activeModel = label;
 		lastContext = [];
 		turnsSinceContext = [];
 		host = typeof ctx.mode === "string" ? ctx.mode : "unknown";
@@ -421,7 +425,7 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 		server = await pendingServer;
 		if (server.match === false) warn(ctx, serverWarning(server.diffs), "warning");
 		if (notify) pi.sendMessage({ customType: "mellum-worker", content: `${MARK_ON} facts: ${spanFacts.source}`, display: true }, { deliverAs: "nextTurn" });
-		if (notify) ctx.ui?.notify?.(`mellum-worker on: ${provider}/${id}, tools ${WORKER_TOOLS.join(",")}`, "info");
+		if (notify) ctx.ui?.notify?.(`mellum-worker on: ${label}, tools ${WORKER_TOOLS.join(",")}`, "info");
 	}
 
 	async function deactivate(ctx: any) {

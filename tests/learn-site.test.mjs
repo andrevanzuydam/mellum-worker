@@ -18,6 +18,7 @@ const PAGES = [
   "getting-started/ditch.md",
   "getting-started/harness.md",
   "getting-started/suite.md",
+  "getting-started/worker-extension.md",
   "paul/index.md",
   "andre/index.md",
   "lesson-template.md",
@@ -135,6 +136,14 @@ test("the ditch shows a claim that did not survive a check", () => {
     "unrecognized arguments", "n = 1", "Before fixing, get evidence"])
     assert.ok(l.includes(text), `the ditch lacks ${text}`);
   assert.match(page("getting-started/index.md"), /ditch\.md/);
+});
+
+test("the worker-extension lesson names the vehicle and the shallow test", () => {
+  const l = page("getting-started/worker-extension.md");
+  for (const text of ["A Pi extension", "/mellum", "assert True", "n = 1",
+    "the vehicle"])
+    assert.ok(l.toLowerCase().includes(text.toLowerCase()), `worker lesson lacks ${text}`);
+  assert.match(page("getting-started/index.md"), /worker-extension\.md/);
 });
 
 test("learn/ never says tutorial or case study", () => {

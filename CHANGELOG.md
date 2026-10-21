@@ -5,6 +5,13 @@ Versions match git tags; pin one in both install lines.
 ## [Unreleased]
 
 ### Added
+
+- Getting started lesson 5, "The worker extension": what a Pi extension is,
+  `/mellum` as the vehicle, and a live session on the ditch's prompts. The
+  worker produces a package whose tests include `assert True` and a CLI of
+  seeded demo data, so the vehicle is not yet the remedy. The extension also
+  falls back to the session's Mellum model when the oMLX one is absent, which
+  is what makes it usable on llama.cpp.
 - Getting started lesson 2, "The ditch": one open-ended AgentClinic session
   whose final report claims a working app and a passing test run; checking
   both shows four failing tests and a missing date filter. The harness gains

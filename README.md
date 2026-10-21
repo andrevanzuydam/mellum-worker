@@ -302,6 +302,8 @@ harness, with every claim labelled by the evidence behind it:
 4. [A suite and the telemetry](learn/getting-started/suite.md) — three tasks
    scored, graded with `ruff`, `pyrefly` and `complexipy`, and read from the
    run's trace.
+5. [The worker extension](learn/getting-started/worker-extension.md) — what a
+   Pi extension is, and `/mellum` as the vehicle the remedies improve.
 
 Run the harness with `uv run learn/code/harness.py suite all --grade`; build
 the site with `uvx zensical build` (output in `site/`).

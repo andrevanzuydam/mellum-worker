@@ -39,6 +39,16 @@ function fakePi({ registryHasModel = true } = {}) {
 const read = { toolName: "read", input: { path: "x" } };
 const emptyTurn = { message: { role: "assistant", content: [{ type: "thinking", thinking: "." }] } };
 
+test("falls back to the session's model when the oMLX one is absent", async () => {
+	const { ctx, mellum } = fakePi({ registryHasModel: false });
+	ctx.model = { provider: "llamacpp", id: "Mellum2.1-12B-A2.5B-Thinking" };
+	const notes = [];
+	ctx.ui = { notify: (m) => notes.push(m) };
+	await mellum("on");
+	assert.ok(notes.some((m) => m.startsWith("mellum-worker on: llamacpp/Mellum2.1-12B-A2.5B-Thinking")), JSON.stringify(notes));
+	assert.ok(!notes.some((m) => m.includes("not found")), JSON.stringify(notes));
+});
+
 test("guard hooks are inert while mode is off", () => {
 	const { handlers } = fakePi();
 	for (let i = 0; i < 8; i++) assert.equal(handlers.tool_call(read), undefined);

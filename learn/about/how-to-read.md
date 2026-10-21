@@ -10,6 +10,7 @@ Three lessons, done in order, from a clone of this repo:
 2. [The ditch](../getting-started/ditch.md) — one AgentClinic session, and a report that does not survive a check.
 3. [Make a mini harness](../getting-started/harness.md) — one task in a fresh directory, scored.
 4. [A suite and the telemetry](../getting-started/suite.md) — three tasks, three graders, and the trace that explains a failure.
+5. [The worker extension](../getting-started/worker-extension.md) — the vehicle, `/mellum`, before any remedy.
 
 Every command is `uv run` from the repository root. Each page ends with
 **What you have**, which is what the next lesson starts from, so you know a
