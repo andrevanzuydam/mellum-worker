@@ -6,6 +6,17 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `extensions/mellum-context.ts` — context intelligence over a local SQLite
+  FTS5 index (built-in `node:sqlite`, no npm dep). It chunks files into
+  overlapping line windows, ranks passages by BM25 with a recency boost
+  (temporal ranking), and can return them in chronological order (temporal
+  sequencing) so the worker applies context in the order it happened. Large
+  code and large data are leaned on through the index — the worker searches for
+  the few relevant lines instead of loading the whole file into the prompt.
+  Commands `/index <path>` and `/context <query>`, plus a model-callable
+  `context_search` tool where Pi supports it. Config: `MELLUM_CONTEXT_DB`,
+  `MELLUM_CONTEXT_HALFLIFE_MS`. Self-contained (Node + Pi hooks); pure core unit-tested.
+
 - A live worker observability + control set (agnostic Pi extensions, loaded via
   `--pi-extension`, each self-contained — Node + Pi hooks, no framework coupling):
   `extensions/mellum-feed.ts` emits an NDJSON feed of the worker's turns, tool
