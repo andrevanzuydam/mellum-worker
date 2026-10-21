@@ -146,6 +146,16 @@ Versions match git tags; pin one in both install lines.
 - `README.md` gains a "This session — 2026-10-18" summary of the M.11 harness
   work and its screens, flagged as ladder capability and findings (on
   `mlx_lm.server`), not a measured claim.
+- `extensions/content-tool-call-assist/` — a Pi extension that lets a small open
+  model drive the loop when it emits its tool call in the message content (a
+  fenced JSON `{"tool","args"}`/`{"name","arguments"}` block, or a Hermes/Qwen
+  `<function=…>` XML block) instead of the structured `tool_calls` field. It
+  promotes the content call into a real one, gated on the real tool names and a
+  present arguments key so model data (e.g. a cart item `{"name":"Widget A"}`)
+  is never mistaken for a call. `ASSIST_FORCE_TOOLS=1` adds a nudge and a
+  seed/temperature retry; `ASSIST_BASE_URL`/`ASSIST_MODEL_ID` point it at any
+  OpenAI-compatible server. `scripts/patch-pi.sh [PI_DIR]` installs it into a Pi
+  checkout (its imports resolve only there).
 
 - Ladder records for a rung 9 screen that ran A21's two changes alone: the
   AgentClinic phase 4 id miss follows the one-file roadmap (5 of 6 runs,
