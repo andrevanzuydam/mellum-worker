@@ -109,7 +109,7 @@ function tokensOf(r: Record<string, unknown>): string {
 }
 
 function factsOf(r: Record<string, unknown>): string {
-	if (r.facts === null) return r.kind === "worker" ? "not forwarded (Worker)" : "off";
+	if (r.facts === null) return "off";
 	if (!isObject(r.facts)) return DASH;
 	const chars = num(r.facts.chars);
 	return `${str(r.facts.source) ?? "unknown"}${chars ? `, ${chars} chars` : ""}`;
@@ -126,7 +126,7 @@ function serverOf(r: Record<string, unknown>): string {
 /** The record as Markdown: a header line, a Metric/Value table, a Command/Result table, the final reply quoted. */
 export function formatLast(record: RunLine): string {
 	const r = record as unknown as Record<string, unknown>;
-	const who = record.kind === "worker" ? "Worker" : `Mode (${str(r.activation) ?? "unknown"})`;
+	const who = `Mellum Worker (${str(r.activation) ?? "unknown"})`;
 	// The full directory: the run may be in a subdirectory of the one asked about.
 	const dir = (str(r.cwd) ?? "").replace(/(.)\/+$/, "$1") || DASH;
 	const rows: Array<[string, string]> = [

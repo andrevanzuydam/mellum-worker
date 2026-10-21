@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import test from "node:test";
 import { readProjectFacts } from "../extensions/mellum-facts.ts";
-import { formatMerge, formatReport, learn, learnFromTexts, mergeSuggestion, modeRunsFile, readRecords, recordFiles, workerRunsFile } from "../extensions/mellum-learn.ts";
+import { formatMerge, formatReport, learn, learnFromTexts, mergeSuggestion, modeRunsFile, readRecords, recordFiles } from "../extensions/mellum-learn.ts";
 
 const FIX = join(resolve(import.meta.dirname, ".."), "tests/fixtures/learn");
 const text = (name) => readFileSync(join(FIX, name), "utf8");
@@ -154,19 +154,12 @@ test("cwd keeps records at or under it, path-segment aware", () => {
 	assert.equal(learn(records, { cwd: "/home/user", n: 10 }).runs, 4);
 });
 
-test("a Worker record (kind worker) is read and counted", () => {
-	const { records } = readRecords(text("patterns/worker.jsonl"));
-	assert.deepEqual(records.map((r) => r.kind), ["worker", "mode"]);
-	const r = learn(records, { cwd: "/home/user/proj", n: 10 });
-	assert.equal(r.runs, 2);
-});
-
 test("no pattern: formatReport says the run count and nothing to fix", () => {
-	const { records } = readRecords(text("patterns/worker.jsonl"));
+	const { records } = readRecords(text("patterns/clean.jsonl"));
 	const r = learn(records, { cwd: "/home/user/proj", n: 10 });
 	assert.deepEqual(r.patterns, []);
 	const out = formatReport(r, "/home/user/proj");
-	assert.match(out, /2 runs/);
+	assert.match(out, /1 run/);
 	assert.match(out, /nothing to fix/);
 });
 
@@ -295,12 +288,11 @@ test("formatMerge: conflicts, what is missing, or nothing to add", () => {
 	assert.equal(formatMerge({ added: [], conflicts: [] }, []), "");
 });
 
-test("recordFiles: MELLUM_MODE_RUNS (0 or empty: none, ~ expanded) or the default, plus the Worker file", () => {
-	const w = "/h/.pi/agent/mellum-worker-runs.jsonl";
-	assert.deepEqual(recordFiles({}, "/h"), ["/h/.pi/agent/mellum-mode-runs.jsonl", w]);
-	assert.deepEqual(recordFiles({ MELLUM_MODE_RUNS: "0" }, "/h"), [w]);
-	assert.deepEqual(recordFiles({ MELLUM_MODE_RUNS: "" }, "/h"), [w]);
-	assert.deepEqual(recordFiles({ MELLUM_MODE_RUNS: "~/r.jsonl" }, "/h"), ["/h/r.jsonl", w]);
+test("recordFiles: MELLUM_MODE_RUNS (0 or empty: none, ~ expanded) or the default", () => {
+	assert.deepEqual(recordFiles({}, "/h"), ["/h/.pi/agent/mellum-mode-runs.jsonl"]);
+	assert.deepEqual(recordFiles({ MELLUM_MODE_RUNS: "0" }, "/h"), []);
+	assert.deepEqual(recordFiles({ MELLUM_MODE_RUNS: "" }, "/h"), []);
+	assert.deepEqual(recordFiles({ MELLUM_MODE_RUNS: "~/r.jsonl" }, "/h"), ["/h/r.jsonl"]);
 	assert.equal(modeRunsFile({ MELLUM_MODE_RUNS: "/x/r.jsonl" }, "/h"), "/x/r.jsonl");
 });
 
@@ -428,15 +420,4 @@ test("the README's learn example is the real output on its fixture", () => {
 	const r = learnFromTexts([text("patterns/bent-project.jsonl")], { cwd: "/home/user/proj", n: 10 });
 	const m = mergeSuggestion(undefined, r.suggestion);
 	assert.equal(shown, formatReport(r, "/home/user/proj", m.added) + formatMerge(m, r.suggestion) + "\n");
-});
-
-test("workerRunsFile: MELLUM_WORKER_RUNS (0 disables) or the default under home; recordFiles follows it", () => {
-	assert.equal(workerRunsFile({ MELLUM_WORKER_RUNS: "0" }, "/h"), undefined);
-	assert.equal(workerRunsFile({ MELLUM_WORKER_RUNS: "/x/w.jsonl" }, "/h"), "/x/w.jsonl");
-	assert.equal(workerRunsFile({}, "/h"), "/h/.pi/agent/mellum-worker-runs.jsonl");
-	assert.equal(workerRunsFile({ MELLUM_WORKER_RUNS: "" }, "/h"), undefined, "empty turns recording off, like MELLUM_MODE_RUNS");
-	assert.equal(workerRunsFile({ MELLUM_WORKER_RUNS: "~/w.jsonl" }, "/h"), "/h/w.jsonl");
-	assert.equal(workerRunsFile({ MELLUM_WORKER_RUNS: "~" }, "/h"), "/h");
-	assert.deepEqual(recordFiles({ MELLUM_WORKER_RUNS: "0" }, "/h"), ["/h/.pi/agent/mellum-mode-runs.jsonl"]);
-	assert.deepEqual(recordFiles({ MELLUM_WORKER_RUNS: "/x/w.jsonl", MELLUM_MODE_RUNS: "0" }, "/h"), ["/x/w.jsonl"]);
 });

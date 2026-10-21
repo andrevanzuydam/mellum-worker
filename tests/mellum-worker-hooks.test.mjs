@@ -978,19 +978,6 @@ test("/mellum learn near the 600-character facts cap says so and never asks", as
 	});
 });
 
-test("/mellum learn reads the Worker records file in HOME too, and counts skipped lines over both files", async () => {
-	await withLearn(
-		"damaged",
-		async (cwd) => {
-			const { calls, mellum } = learnPi(cwd);
-			await mellum("learn");
-			assert.match(calls.notify[0][0], /^mellum learn: 4 runs in /);
-			assert.match(calls.notify[0][0], /Skipped 2 old and 4 bad lines\./);
-		},
-		{ workerPattern: "damaged" },
-	);
-});
-
 test("/mellum learn 0 warns and reads nothing; a failed write warns and does not throw", async () => {
 	await withLearn("servers", async (cwd) => {
 		const { calls, mellum } = learnPi(cwd);
@@ -1090,7 +1077,7 @@ test("/mellum last with a UI and Mode off: one mellum-last message, displayed, t
 		const sent = calls.sendMessage.filter((m) => m.customType === "mellum-last");
 		assert.equal(sent.length, 1, JSON.stringify(calls.sendMessage));
 		assert.equal(sent[0].display, true);
-		assert.match(sent[0].content, /^\*\*mellum last\*\*: Mode/);
+		assert.match(sent[0].content, /^\*\*mellum last\*\*: Mellum Worker/);
 		assert.match(sent[0].content, /\| Metric \| Value \|/);
 		assert.deepEqual(calls.lastOptions, [{ triggerTurn: false }]);
 		assert.deepEqual(calls.notify, []);
@@ -1106,7 +1093,7 @@ test("/mellum last while Mode is on notifies instead, so the table stays out of 
 		const before = calls.sendMessage.length;
 		await mellum("last");
 		assert.equal(calls.sendMessage.length, before);
-		assert.ok(calls.notify.some(([m, l]) => m.startsWith("**mellum last**: Mode") && l === "info"), JSON.stringify(calls.notify));
+		assert.ok(calls.notify.some(([m, l]) => m.startsWith("**mellum last**: Mellum Worker") && l === "info"), JSON.stringify(calls.notify));
 	});
 });
 
@@ -1135,22 +1122,14 @@ test("/mellum last with no runs under the directory says so and names the files 
 		assert.ok(note, JSON.stringify(calls.notify));
 		assert.ok(note[0].includes(`no Mellum runs recorded under ${cwd}`), note[0]);
 		assert.ok(note[0].includes(process.env.MELLUM_MODE_RUNS), note[0]);
-		assert.ok(note[0].includes("mellum-worker-runs.jsonl"), note[0]);
 	});
 });
 
-test("/mellum last with both records files off says recording is off", async () => {
+test("/mellum last with recording off says recording is off", async () => {
 	await withLearn(undefined, async (cwd) => {
 		process.env.MELLUM_MODE_RUNS = "0";
-		const saved = process.env.MELLUM_WORKER_RUNS;
-		process.env.MELLUM_WORKER_RUNS = "0";
-		try {
-			const { calls, mellum } = learnPi(cwd);
-			await mellum("last");
-			assert.ok(calls.notify.some(([m]) => m.includes("run records are off (MELLUM_MODE_RUNS=0, MELLUM_WORKER_RUNS=0)")), JSON.stringify(calls.notify));
-		} finally {
-			if (saved === undefined) delete process.env.MELLUM_WORKER_RUNS;
-			else process.env.MELLUM_WORKER_RUNS = saved;
-		}
+		const { calls, mellum } = learnPi(cwd);
+		await mellum("last");
+		assert.ok(calls.notify.some(([m]) => m.includes("run records are off (MELLUM_MODE_RUNS=0)")), JSON.stringify(calls.notify));
 	});
 });

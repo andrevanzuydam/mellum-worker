@@ -1,0 +1,1 @@
+{"schema":2,"kind":"mode","version":"0.1.8","promptVersion":"v5","host":"json","activation":"command","endedAt":"2026-10-12T12:00:00.000Z","cwd":"/home/user/proj","model":"omlx/Mellum2.1-12B-A2.5B-Thinking-6bit","task":"trivial","requests":1,"commands":[],"finalTurn":"ok","finalText":"Done."}

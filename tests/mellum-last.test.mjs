@@ -38,7 +38,7 @@ const row = (md, name) => md.split("\n").find((l) => l.startsWith(`| ${name} |`)
 
 test("formatLast renders the header, the metric table, the command table and the reply", () => {
 	const md = formatLast(NEW);
-	assert.match(md.split("\n")[0], /^\*\*mellum last\*\*: Mode \(one-shot\), 2026-10-12 \d\d:\d\d, \/Users\/p\/ac-demo$/);
+	assert.match(md.split("\n")[0], /^\*\*mellum last\*\*: Mellum Worker \(one-shot\), 2026-10-12 \d\d:\d\d, \/Users\/p\/ac-demo$/);
 	assert.ok(md.includes("| Metric | Value |\n|---|---|"));
 	assert.equal(row(md, "Task"), "| Task | Implement Phase 1 of specs/roadmap.md |");
 	assert.equal(row(md, "Time"), "| Time | 62 s; first write at 31 s (50%) |");
@@ -67,35 +67,6 @@ test("formatLast shows dashes for an older record without the newer fields", () 
 	assert.equal(row(md, "Tokens"), "| Tokens | — |");
 	assert.equal(row(md, "Facts"), "| Facts | — |");
 	assert.equal(row(md, "Server"), "| Server | — |");
-});
-
-test("formatLast for a Worker run with no write, no commands, a failed server check and an empty reply", () => {
-	const md = formatLast({
-		...NEW,
-		kind: "worker",
-		activation: "worker",
-		facts: null,
-		files: [],
-		commands: [],
-		lastCommand: "none",
-		toolCalls: { read: 3 },
-		firstWriteSeconds: undefined,
-		server: { match: false, diffs: [{ key: "max_context_window" }, { key: "turboquant" }] },
-		finalReply: "",
-		finalTurn: { stopReason: "stop", hadText: false, hadToolCall: false },
-		nudges: 1,
-		guardBlocks: 2,
-	});
-	assert.match(md.split("\n")[0], /^\*\*mellum last\*\*: Worker, 2026-10-12 \d\d:\d\d, \/Users\/p\/ac-demo$/);
-	assert.equal(row(md, "Time"), "| Time | 62 s; no edit or write |");
-	assert.equal(row(md, "Turns"), "| Turns | 14; ended with no text (stop) |");
-	assert.equal(row(md, "Commands"), "| Commands | none |");
-	assert.equal(row(md, "Files"), "| Files | none |");
-	assert.equal(row(md, "Facts"), "| Facts | not forwarded (Worker) |");
-	assert.equal(row(md, "Server"), "| Server | differs: max_context_window, turboquant |");
-	assert.equal(row(md, "Guards"), "| Guards | 1 nudge, 2 blocks |");
-	assert.ok(!md.includes("| Command | Result |"));
-	assert.ok(md.trimEnd().endsWith("> (no final reply)"));
 });
 
 test("formatLast escapes pipes and newlines in cells, marks file-changing commands, and adds Missing", () => {
@@ -136,10 +107,9 @@ test("pickLast takes the newest record at or under the directory, from every fil
 		"not json",
 		line({ ...NEW, cwd: "/Users/p/other", endedAt: "2026-10-12T18:00:00.000Z", task: "elsewhere" }),
 	].join("\n");
-	const worker = [line({ ...NEW, kind: "worker", cwd: "/Users/p/ac-demo/sub", endedAt: "2026-10-12T16:00:00.000Z", task: "newest" }), '{"task":"no schema"}'].join("\n");
-	const r = pickLast([mode, undefined, worker], "/Users/p/ac-demo");
+	const newest = [line({ ...NEW, cwd: "/Users/p/ac-demo/sub", endedAt: "2026-10-12T16:00:00.000Z", task: "newest" }), '{"task":"no schema"}'].join("\n");
+	const r = pickLast([mode, undefined, newest], "/Users/p/ac-demo");
 	assert.equal(r.record.task, "newest");
-	assert.equal(r.record.kind, "worker");
 	assert.deepEqual(r.skipped, { bad: 1, old: 1 });
 });
 
@@ -175,6 +145,6 @@ test("pickLast compares endedAt as times, and on a tie the later line or file wi
 	const b = line({ ...NEW, endedAt: "2026-10-12T15:00:00Z", task: "earlier" });
 	assert.equal(pickLast([`${b}\n${a}`], "/Users/p/ac-demo").record.task, "later by half a second");
 	const m = line({ ...NEW, task: "mode" });
-	const w = line({ ...NEW, kind: "worker", task: "worker" });
-	assert.equal(pickLast([m, w], "/Users/p/ac-demo").record.task, "worker");
+	const later = line({ ...NEW, task: "later" });
+	assert.equal(pickLast([m, later], "/Users/p/ac-demo").record.task, "later");
 });

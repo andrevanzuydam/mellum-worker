@@ -123,7 +123,7 @@ async function last(opts) {
 		console.error(`mellum last: ${why}`);
 		process.exitCode = 1;
 	};
-	if (files.length === 0) return none("run records are off (MELLUM_MODE_RUNS=0, MELLUM_WORKER_RUNS=0)");
+	if (files.length === 0) return none("run records are off (MELLUM_MODE_RUNS=0)");
 	const { record } = m.pickLast(files.map((p) => (existsSync(p) ? readFileSync(p, "utf8") : undefined)), cwd);
 	if (!record) return none(`no Mellum runs recorded under ${cwd} (read ${files.join(", ")})`);
 	console.log(opts.json ? JSON.stringify(record, null, 2) : m.formatLast(record));

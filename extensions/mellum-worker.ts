@@ -366,7 +366,7 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 		const cwd: string = typeof ctx?.cwd === "string" ? ctx.cwd : process.cwd();
 		try {
 			const files = recordFiles(process.env, home());
-			if (files.length === 0) return say(ctx, "mellum last: run records are off (MELLUM_MODE_RUNS=0, MELLUM_WORKER_RUNS=0)", "warning");
+			if (files.length === 0) return say(ctx, "mellum last: run records are off (MELLUM_MODE_RUNS=0)", "warning");
 			const { record } = pickLast(files.map(readIfExists), cwd);
 			if (!record) return say(ctx, `mellum last: no Mellum runs recorded under ${cwd} (read ${files.join(", ")})`, "warning");
 			const text = formatLast(record);

@@ -153,23 +153,23 @@ export interface RecordMeta {
 	model: string;
 	exists?: (path: string) => boolean;
 	host?: string;
-	activation?: Activation | "worker";
+	activation?: Activation;
 	promptVersion?: string;
 	nudges?: number;
 	guardBlocks?: number;
 	facts?: { source: string; testCommand: string | null; chars: number } | null;
 	server?: ServerCheck;
 	/** Who wrote the record; Mode when omitted. */
-	kind?: "mode" | "worker";
+	kind?: "mode";
 }
 
 export interface RunRecord {
 	schema: 2;
-	kind: "mode" | "worker";
+	kind: "mode";
 	version: string;
 	promptVersion: string;
 	host: string;
-	activation: Activation | "worker" | "unknown";
+	activation: Activation | "unknown";
 	startedAt?: string;
 	endedAt: string;
 	wallSeconds?: number;

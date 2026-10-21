@@ -9,7 +9,7 @@ import { bulletOf, FACTS_CAP, findMellumSection, total } from "./mellum-facts.ts
 import type { RunRecord } from "./mellum-record.ts";
 
 /** One parsed schema-2 line. Every field but `schema` and `kind` may be missing in a hand-edited or partial record. */
-export type RunLine = Partial<Omit<RunRecord, "schema">> & { schema: number; kind: "mode" | "worker" };
+export type RunLine = Partial<Omit<RunRecord, "schema">> & { schema: number; kind: "mode" };
 
 export interface Pattern {
 	id: "test-thrash" | "bent-project" | "false-success" | "long-run" | "servers" | "drift" | "announce-stop";
@@ -36,7 +36,7 @@ const isObject = (v: unknown): v is Record<string, unknown> => typeof v === "obj
  * `lastCommand`, `finalTurn` and `server` are dropped when of the wrong type.
  */
 function normalise(rec: Record<string, unknown>): RunLine {
-	const out: Record<string, unknown> = { ...rec, schema: rec.schema, kind: rec.kind === "worker" ? "worker" : "mode" };
+	const out: Record<string, unknown> = { ...rec, schema: rec.schema, kind: "mode" };
 	out.commands = (Array.isArray(rec.commands) ? rec.commands : [])
 		.filter((c): c is Record<string, unknown> => isObject(c) && typeof c.command === "string")
 		.map((c) => ({ ...c, command: c.command, failed: c.failed === true, mutates: c.mutates === true }));
@@ -320,16 +320,10 @@ export function modeRunsFile(env: Record<string, string | undefined>, home: stri
 	return runsFile(env.MELLUM_MODE_RUNS, home, "mellum-mode-runs.jsonl");
 }
 
-/** The Worker's records file: `MELLUM_WORKER_RUNS`, read exactly like `MELLUM_MODE_RUNS`. */
-export function workerRunsFile(env: Record<string, string | undefined>, home: string): string | undefined {
-	return runsFile(env.MELLUM_WORKER_RUNS, home, "mellum-worker-runs.jsonl");
-}
-
-/** The files `learn` reads by default: Mode's records, then the Worker's (M.7B). */
+/** The files `learn` reads by default: the worker's records. */
 export function recordFiles(env: Record<string, string | undefined>, home: string): string[] {
 	const mode = modeRunsFile(env, home);
-	const worker = workerRunsFile(env, home);
-	return [...(mode ? [mode] : []), ...(worker ? [worker] : [])];
+	return mode ? [mode] : [];
 }
 
 /** `learn` over several files' text (undefined: a missing file, no records), skipped lines summed. */
