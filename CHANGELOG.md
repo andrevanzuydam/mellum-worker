@@ -107,6 +107,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Removed
 
+- The pi-subagents Worker: its agent template, the setup skill's worker
+  phase, the intercom option, the `kind: "worker"` run-record writer and the
+  `learn`/`last` readers, their fixtures and tests, and the ladder's
+  `delegated` mode. Old record files on disk are untouched; the code stops
+  writing and reading them.
 - The ladder's rejected research modes and hooks: `--mode chunked` and
   `--mode brief` with `ladder/ladder/briefs/` (A15/A16, not adopted),
   `--strip-thinking` (A12, reverted) and `--budget-hook` (A13, inert), and

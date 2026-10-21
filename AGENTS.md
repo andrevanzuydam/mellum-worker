@@ -44,8 +44,7 @@ and evidence with dated corrections; never edit archived plans.
   `uv run python -m ladder.run_ladder --help` for runs. Never commit
   `trace.jsonl`, `stdout.txt` or `diff.patch`; raw evidence goes in a
   `research-YYYY-MM-DD` release.
-- `node build.mjs` regenerates the agent templates after a prompt change, and
-  a test fails on drift. `prompts/mellum-worker.md` is the only prompt source.
+- `prompts/mellum-worker.md` is the only prompt source.
 - Never add a `build`, `prepare`, `prepack`, or `install` npm script; OpenCode
   installs from Git through pacote and that breaks the install.
 - A release is a tag that matches `package.json` and both README install

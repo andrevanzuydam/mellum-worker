@@ -16,10 +16,9 @@ test("the README links all three Getting started lessons", () => {
     "README lacks the harness command");
 });
 
-test("README carries both pinned install lines and the status table", () => {
+test("README carries the pinned install line and the status table", () => {
 	const readme = read("README.md");
 	const version = JSON.parse(read("package.json")).version;
-	assert.ok(readme.includes(`mellum-worker@git+https://github.com/pauleveritt/mellum-worker.git#v${version}`));
 	assert.ok(readme.includes(`pi install git:github.com/pauleveritt/mellum-worker@v${version}`));
 	assert.match(readme, /15\/15/);
 	assert.match(readme, /unmeasured/i);

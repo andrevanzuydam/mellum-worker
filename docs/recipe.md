@@ -1,6 +1,6 @@
 # Mellum Worker and Mellum Worker: Mellum 2.1 as a coding worker under Pi
 
-**Status: shipped 2026-10-09; two ways to use the worker (§4 delegated, §4b in-session), both measured. What remains is in [`ROADMAP.md`](../ROADMAP.md) (M.11, M.12) and [`BACKLOG.md`](../BACKLOG.md); the [2026-10-09 table](superpowers/research/2026-10-09-future-work.md) is history. Every number links to its record under `docs/ladder/`; the lean-down that produced the shipped worker is summarised in [ablation-summary.md](ladder/ablation-summary.md).**
+**Status: shipped 2026-10-09; two ways to use the worker (§4 delegated, §4b in-session), both measured. 2026-10-20: the delegated Worker and the OpenCode port were retired; §4 is history, and §4b is the shipped shape. What remains is in [`ROADMAP.md`](../ROADMAP.md) (M.11, M.12) and [`BACKLOG.md`](../BACKLOG.md); the [2026-10-09 table](superpowers/research/2026-10-09-future-work.md) is history. Every number links to its record under `docs/ladder/`; the lean-down that produced the shipped worker is summarised in [ablation-summary.md](ladder/ablation-summary.md).**
 
 Installed from this repo; measured by the ladder (`ladder/`), whose fixtures and phase records (`docs/ladder/`) live here too.
 

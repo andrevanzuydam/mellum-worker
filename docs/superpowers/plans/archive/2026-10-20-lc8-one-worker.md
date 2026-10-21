@@ -1,7 +1,7 @@
 ---
 phase: LC.8
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # LC.8 One Pi worker implementation plan
@@ -25,11 +25,11 @@ Mellum Worker, and `/mellum` behaves as before.
 **Files:** `extensions/mellum-mode.ts` → `mellum-worker.ts`; `package.json`;
 `extensions/*.ts` prose; `templates/pi/*`; `tests/*.test.mjs`; `CHANGELOG.md`.
 
-- [ ] Rename the file and the `pi.extensions` path; replace "Mellum Mode"
+- [x] Rename the file and the `pi.extensions` path; replace "Mellum Mode"
       with "Mellum Worker" in code comments, tests and templates, keeping
       `/mellum` and every env var.
-- [ ] Run `npm test`; the extension and hooks tests pass with the new name.
-- [ ] Commit `refactor(lc8): Mellum Mode becomes Mellum Worker`.
+- [x] Run `npm test`; the extension and hooks tests pass with the new name.
+- [x] Commit `refactor(lc8): Mellum Mode becomes Mellum Worker`.
 
 ### Task 2: Delete the subagent and its records
 
@@ -45,27 +45,39 @@ skill's phase table names `05-worker-pi.md`, and the record writer's types
 reach `mellum-record.ts`, `learn` and `last`. Remove them together, or the
 skill test, the record tests and the link check fail at once.
 
-- [ ] Add a test that the subagent template, the skill phase and the
+- [x] Add a test that the subagent template, the skill phase and the
       `kind: "worker"` branch are absent.
-- [ ] Delete the surface and the writer; keep the extension's own records.
-- [ ] Commit `refactor(lc8): one worker, no subagent`.
+- [x] Delete the surface and the writer; keep the extension's own records.
+- [x] Commit `refactor(lc8): one worker, no subagent`.
 
 ### Task 3: Delete the ladder's delegated mode
 
 **Files:** `ladder/ladder/run_ladder.py`, `summarize.py`, `pi_profile.py`,
 `ladder/tests/*`, `docs/recipe.md` where it describes delegated mode.
 
-- [ ] Remove `delegated` from the mode choices, the mirror-profile path, the
+- [x] Remove `delegated` from the mode choices, the mirror-profile path, the
       subagents config and revision, and the summarize columns; keep direct,
       primary and mode.
-- [ ] `cd ladder && uv run pytest -q` passes.
-- [ ] Commit `refactor(lc8): remove the ladder's delegated mode`.
+- [x] `cd ladder && uv run pytest -q` passes.
+- [x] Commit `refactor(lc8): remove the ladder's delegated mode`.
 
 ### Task 4: Docs and close
 
-- [ ] README: one host, one worker; remove the Worker/OpenCode rows and the
+- [x] README: one host, one worker; remove the Worker/OpenCode rows and the
       subagent instructions; keep the measured tables.
-- [ ] Skill: remove the agent-file and intercom phases.
-- [ ] Changelog under `[Unreleased]` and the version decision recorded.
-- [ ] `npm test`, docs caps, `uvx zensical build`; `## Result`, archive,
+- [x] Skill: remove the agent-file and intercom phases.
+- [x] Changelog under `[Unreleased]` and the version decision recorded.
+- [x] `npm test`, docs caps, `uvx zensical build`; `## Result`, archive,
       `## Now` → LC.8A.
+
+## Result
+
+2026-10-20. Shipped on `lc8`, unreleased: Mode is renamed Mellum Worker, and
+the pi-subagents Worker is gone — template, setup phase, intercom, record
+writer and readers, fixtures, tests, and the ladder's `delegated` mode. The
+README, recipe, AGENTS and skill describe one Pi worker; the measured
+Worker/OpenCode rows stay as history.
+
+Verified: `npm test` 323/323, `ladder/` pytest 172/172, docs caps,
+`uvx zensical build`. OpenCode's plugin and templates remain until LC.8A,
+and the README no longer advertises them.
