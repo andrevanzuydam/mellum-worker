@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- Added `learn/code/clinic` and `learn/code/clinic.ps1` wrappers for the
+  worker-extension lesson. Each sets the profile, session, model, isolation
+  flags and extension, and takes the task as its only argument, so the Bash
+  and PowerShell examples are one line.
+
 - The hard eval suite, `learn/code/suites/hard`: the whole AgentClinic build
   from phase 1, with a user-story roadmap, seven phases (archive/audit, a
   database report, and a visits report with filtering, grouping and sorting)

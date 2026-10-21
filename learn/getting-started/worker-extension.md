@@ -47,23 +47,24 @@ mind: it is the same session temporarily running a different model.
 
 ## Run it on the ditch
 
-The same three prompts, in one session, now through `/mellum`:
+The same three prompts, in one session, now through `/mellum`. The wrappers
+set the profile, session, model, isolation flags and extension; the task is
+the only argument.
 
 ```bash
-export PI_CODING_AGENT_DIR=$PWD/learn/code/profile
-pi -p --session-id clinic --session-dir /tmp/clinic-session \
-  --provider llamacpp --model Mellum2.1-12B-A2.5B-Thinking \
-  --no-approve --no-extensions --no-skills --no-prompt-templates \
-  --no-themes --no-context-files -e $PWD/extensions/mellum-worker.ts \
-  "/mellum Build AgentClinic: a small clinic appointment app. Patients book appointments with doctors, and a doctor can see their day. Make it work."
+learn/code/clinic "/mellum Build AgentClinic: a small clinic appointment app. Patients book appointments with doctors, and a doctor can see their day. Make it work."
 ```
 
-Run the same command with "Now add tests and make them pass." and "Add a
+```powershell
+.\learn\code\clinic.ps1 "/mellum Build AgentClinic: a small clinic appointment app. Patients book appointments with doctors, and a doctor can see their day. Make it work."
+```
+
+Run the same wrapper with "Now add tests and make them pass." and "Add a
 command-line tool that lists a doctor's appointments for a given date."
 
-This command starts Pi on the llama.cpp Mellum model, so the main model is
-already Mellum: `/mellum` changes the prompt and tools, not the model. To see
-the switch from a larger main model to Mellum, start Pi on that model with the
+This starts Pi on the llama.cpp Mellum model, so the main model is already
+Mellum: `/mellum` changes the prompt and tools, not the model. To see the
+switch from a larger main model to Mellum, start Pi on that model with the
 oMLX Mellum model available. The extension uses the shipped oMLX model when it
 is in the registry; on a llama.cpp profile it keeps the session's own Mellum
 model.
