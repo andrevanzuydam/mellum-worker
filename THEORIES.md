@@ -23,6 +23,7 @@ Rules:
 | T5 | A skeptical "rethink" extension that pushes back on human claims contradicting ground truth lowers the wrong-answer rate | plant a false premise in a rung's user sentence; compare pass/escalation with and without `mellum-rethink` | untested |
 | T6 | A small vision model lets the worker act on pdf / excel / word / screenshots it otherwise cannot read | a rung whose spec ships a requirement only inside a pdf/xlsx; pass needs `mellum-files` + `mellum-vision` | untested |
 | T7 | The NCM verify gate cannot supply capability a model lacks — it only converts a near-miss into a pass | already hinted by 3-bit 3/8 and 1.5B 0/8; needs a preregistered gate×size run to confirm | screening |
+| T8 | A mediated acceptance test rescues rungs 4 and 5 for the 6-bit: it self-exits on an incomplete multi-file refactor when nothing re-dispatches it | re-run rungs 4-5 with `scripts/screen.sh` mediated (frozen test + redispatch) vs the un-mediated 0/3 baseline | untested |
 
 ## T1 — Chronological context ordering
 Relevance ranking can hand the worker the right passages in the wrong order. For
@@ -60,6 +61,19 @@ JetBrains ships no vision model (Mellum is code and text only), so document and
 image understanding needs a separate small vision model plus file extractors.
 The theory is that this genuinely extends what the worker can do; the test is a
 rung whose requirement lives only inside a pdf or a spreadsheet.
+
+## T8 — Mediation rescues rungs 4 and 5
+In the 6-bit sweep, rungs 4 and 5 fail 0/3 while the harder AgentClinic rungs
+6-9 pass 3/3. Evidence (re-running both preserved workspaces): 2 failed, 2
+passed each. The worker edits one file (totals.py or export.py), leaves the
+coordinated change across export.py / totals.py / render.py unimplemented
+(`render_rows()` never gets `mark_last`; `totals.py` crashes on a text cell),
+and self-exits on the incomplete fix — `test_export.py` untouched, the rung-5
+decoy untouched, so not cheating, just wrong. These runs had no acceptance test
+(`acceptance_test: None`), so nothing re-dispatched the worker. The theory: a
+mediated run (external frozen test + verify + redispatch) finishes the refactor
+and flips 4 and 5 green. This is the "don't trust its self-exit" lead, seen in
+the wild on the two simplest-looking rungs.
 
 ## T7 — The gate cannot supply capability
 The mediated verify gate turns a near-miss into a pass on a capable model, but it
