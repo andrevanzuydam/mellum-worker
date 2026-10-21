@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- The medium eval suite, `learn/code/suites/medium`: AgentClinic's four phases
+  as four requests, with a user-story roadmap, hidden phase graders 1–4,
+  expected test IDs, a canary, and known-good/known-broken fixtures.
+  `qualify --suite medium` passes.
+
 - The first eval suite, `learn/code/suites/easy`: AgentClinic's mission, tech
   stack and hinted four-phase roadmap, one prompt for phase 1, a hidden
   per-phase grader with expected test IDs, and known-good/known-broken
