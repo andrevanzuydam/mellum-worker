@@ -30,7 +30,7 @@ const PKG = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const USAGE = "usage: node scripts/mellum.mjs check [--host pi] [--json]\n       node scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]\n       node scripts/mellum.mjs last [--file <jsonl>] [--json]";
 
 /**
- * Node refuses to strip types from .ts files under node_modules, where OpenCode installs this
+ * Node refuses to strip types from .ts files under node_modules, where a git install puts this
  * package. There, copy the extensions and the templates they read to a mirror in the temp dir
  * (same layout) and import from that. Each file is written whole, then renamed into place.
  */

@@ -156,12 +156,10 @@ export function providerEntry(host: Host, config: unknown): Obj | undefined {
 }
 
 /**
- * The fields compared, mapped to one vocabulary per host. Pi: provider `baseUrl`; the model in
- * `models[]` with `contextWindow`, `maxTokens`, `samplingParams`, `compat`. OpenCode: provider
- * `options.baseURL`; the model in `models{}` with `limit.context` and `limit.output` (it has no
- * sampling block, so none is compared). A host entry is always compared with its own host's
- * template. `maxTokens` and sampling are what each request sends, so they bind (fail); the
- * other fields warn.
+ * The fields compared for Pi: provider `baseUrl`; the model in `models[]` with
+ * `contextWindow`, `maxTokens`, `samplingParams`, `compat`. The template is the
+ * shipped one. `maxTokens` and sampling are what each request sends, so they
+ * bind (fail); the other fields warn.
  * Returns null when the provider has no entry for the model.
  */
 function providerFields(host: Host, entry: Obj, modelId: string): Obj | null {

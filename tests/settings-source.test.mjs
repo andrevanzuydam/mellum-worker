@@ -54,7 +54,6 @@ test("03-server.md says Pi sends max_tokens per request and thinking, and forcin
 	const row = (k) => server.split("\n").find((l) => l.startsWith(`| \`${k}\` |`));
 	assert.match(row("max_tokens"), /Pi sends/);
 	assert.match(row("forced_ct_kwargs"), /Pi sends/);
-	assert.doesNotMatch(row("forced_ct_kwargs"), /OpenCode send/);
 	assert.match(row("forced_ct_kwargs"), /over any request/);
 });
 

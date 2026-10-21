@@ -5,7 +5,7 @@
  *   node scripts/merge-json.mjs ~/.pi/agent/models.json templates/pi/models.omlx.json --write  # apply
  *
  * --write copies the target to <target>.bak-mellum-<timestamp> first.
- * Only for plain JSON files. JSONC (OpenCode's config) is not supported; it has comments and
+ * Only for plain JSON files. JSONC is not supported; it has comments and
  * trailing commas that JSON.parse rejects, so edit that by hand.
  */
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
