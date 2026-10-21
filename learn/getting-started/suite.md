@@ -44,9 +44,30 @@ fails because of that, not because the harness withheld something.
 | **medium** | an empty AgentClinic project, with a user-story roadmap | four: one per phase | phases 1–4 |
 | **hard** | an empty AgentClinic project, with a user-story roadmap, `data.db` and `numbers.txt` | thirteen: eight phases, five migrations | phases 1–8, the reports and the migrations |
 
-The hard suite is the one that punishes assumptions: the database schema has
-to be discovered, `archived_at IS NOT NULL` is not the same as
+The hard suite is the one that punishes assumptions: the same four phases as
+medium, then four more, with five migrations interleaved. The database schema
+has to be discovered, `archived_at IS NOT NULL` is not the same as
 `status = 'archived'`, and `numbers.txt` is larger than the context window.
+
+### What hard adds
+
+The first four requests are medium's. The rest are:
+
+| Request | What it asks for |
+| --- | --- |
+| phase 5 | Archive only resolved complaints (open is a 400), hide them from the board but keep the rows, record every transition in `models.audit`, and return open counts from `/stats`. |
+| phase 6 | A `/report` over the `tickets` table: open, archived and all-time cents as integers. Archived means `archived_at IS NOT NULL`; every value is a bound parameter. |
+| phase 7 | `/sum` over `numbers.txt`: two integer column sums, streamed rather than loaded whole. |
+| phase 8 | `/visits`: filter `visits` by an inclusive `from`/`to` range and `min_minutes`, group by agent, and return count, total minutes and average minutes. Sort by total descending, then agent name, and apply `limit`. Counts and totals are integers; averages are floats. |
+
+The migrations run against `data.db` between phases: the
+`tickets(status, archived_at)` index, a backfilled `resolved_at`, an
+`open_tickets` view, a `schema_version` table, and a `note` column. They are
+ad-hoc requests, not phases: no later prompt is visible until it is sent.
+
+Complaints stay in memory; the database holds `tickets` and `visits`. That
+keeps phases 1–4 unchanged while still making the worker discover a schema,
+write migrations and test database behaviour.
 
 ## Run and qualify
 
@@ -58,9 +79,9 @@ uv run learn/code/harness.py run --suite all --grade
 One line per suite, then a total:
 
 ```text
-easy: PASS (n=1; run /var/folders/...; 4 requests, 3 tool calls, 0 tool errors)
-medium: PASS (n=1; run /var/folders/...; 8 requests, 7 tool calls, 1 tool errors)
-hard: FAIL (n=1; run /var/folders/...; 12 requests, 10 tool calls, 2 tool errors)
+easy: PASS (n=1; run /var/folders/...; 1 request, 3 tool calls, 0 tool errors)
+medium: PASS (n=1; run /var/folders/...; 4 requests, 7 tool calls, 1 tool error)
+hard: FAIL (n=1; run /var/folders/...; 13 requests, 10 tool calls, 2 tool errors)
 2/3 suites passed
 ```
 
@@ -121,7 +142,7 @@ Every run writes `trace.jsonl` beside its workspace. The rows to read first:
 - `message_end` — a message, including the final reply's text;
 - `agent_settled` — the run ended.
 
-A hard run that fails with 12 requests and 2 tool errors kept going and kept
+A hard run that fails with 13 requests and 2 tool errors kept going and kept
 hitting errors; a run that fails with 1 request and no tool calls wrote
 nothing. The counts on the score line are these rows, summed.
 

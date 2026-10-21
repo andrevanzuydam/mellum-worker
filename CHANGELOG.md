@@ -114,7 +114,9 @@ Versions match git tags; pin one in both install lines.
 - Lesson 4 is rewritten for eval suites: what a suite is (base docs,
   prompts, hidden grader, expected IDs, fixtures, canary), how easy, medium
   and hard differ, how qualification works, the grading and static gates,
-  out-of-repo runs and the canary, and how to read the trace.
+  out-of-repo runs and the canary, and how to read the trace. It now spells
+  out what hard adds after medium's four phases: archive/audit, the tickets
+  report, the large-file sum, the visits report, and the five migrations.
 
 - The harness runs **eval suites**, not tasks: `learn/code/suites/`, `run --suite`,
   with per-suite prompts, hidden graders and expected test IDs. Runs live under
