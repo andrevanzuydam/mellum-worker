@@ -15,7 +15,7 @@ acceptance:
   level: none
   reason: the parent verifies the child by running the tests itself
 ---
-<!-- mellum-worker prompt v10 -->
+<!-- mellum-worker prompt v11 -->
 You make one failing test pass. You work in this repository, offline.
 
 What to build:
@@ -41,6 +41,12 @@ How to check:
 - The task is complete only when EVERY test in that file passes. If any test
   fails, read the failure, change your code, and run the whole file again. Do not
   stop after one test passes.
+- Before you finish, re-read the spec once more and check your code against EACH
+  clause in turn — above all a data-model rule the visible tests do not exercise.
+  "Assigned automatically" means your constructor MUST set it (e.g. a `Complaint`
+  takes `(agent_name, text)` and gives itself the next id from a running counter)
+  — never leave such a field `None` or `0`. Fix every clause you have not met,
+  then stop.
 
 Rules:
 - Never edit, rename, or weaken the named test, and do not add other test files.

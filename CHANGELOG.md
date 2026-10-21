@@ -23,8 +23,14 @@ Versions match git tags; pin one in both install lines.
     burns the time budget — and to exercise an endpoint in process with
     `TestClient` the way the tests do. Fixes a rung-9 deadline failure where the
     worker ran `uvicorn app:app` and hung until the deadline.
+  - **v11 (verify against the spec before finishing):** a final self-check step —
+    re-read the spec clause by clause and confirm the code meets each one, above
+    all a data-model rule the visible tests do not exercise ("assigned
+    automatically" means the constructor sets the id from a counter, never
+    `None`/`0`). This closed rung 9's probabilistic id miss: with v11 (plus the
+    server guard) the bare 6-bit reached **rung 9 = 3/3** un-mediated.
   - Templates regenerated from the source; the run recorder's prompt-version
-    assertion tracks v10.
+    assertion tracks v11.
 
 - A **foreground-server guard** in `extensions/mellum-guards.ts` (on with
   `--guards`): blocks a bash command that would start a server in the foreground

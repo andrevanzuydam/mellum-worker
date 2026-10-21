@@ -421,10 +421,23 @@ the numbering runs straight through.
   spec says "each complaint gets a unique, automatically-assigned id", no visible
   test checks id distinctness, so the worker left `id = 0`). The v9 nudge — "the
   spec is the full contract; implement every requirement, like unique ids, even
-  when no visible test checks it" — flipped rung 9's hidden oracle to green. The
-  surprise: the Phase-4 id miss was the canonical case that *motivated* the frozen
-  oracle, and it turned out prompt-fixable. So prompt hardening and the frozen
-  oracle are **complementary layers**, not either/or — the prompt lifts the floor
-  (fewer self-narrowed exits), the frozen oracle is the backstop for when the
-  prompt does not take. Measured: bare un-mediated ladder went 6/12 → 11/12 (v8)
-  with 4/5/6/10/11 flipping, and rung 9 then closed under v9.
+  when no visible test checks it" lifted rung 9 from 0 to 2/3. The surprise: the
+  Phase-4 id miss was the canonical case that *motivated* the frozen oracle, and
+  it turned out prompt-fixable.
+
+- **Telling the model a requirement is not enough; make it VERIFY its work
+  against the spec before finishing.** Rung 9 stuck at 2/3 under the "implement
+  every requirement" instruction — the model knew the rule yet still left the id
+  `None` on ~1 run in 3 (a probabilistic slip, not a knowledge gap). Two more
+  layers closed it: a **foreground-server guard** (and a prompt line) killed the
+  other failure mode, where the worker ran `uvicorn` in the foreground and hung
+  to the deadline — never start a server, exercise endpoints in process with
+  `TestClient`, or start it detached (`nohup … & echo $!`) so it returns a pid to
+  kill later; and a **self-check step** — "before you finish, re-read the spec
+  clause by clause and confirm each is met, above all a data-model rule the
+  visible tests do not exercise" — which took rung 9 to a clean **3/3
+  un-mediated**. The lesson: an instruction raises the hit rate, a self-imposed
+  verification pass against the source of truth is what closes a probabilistic
+  miss. That pass is the worker mediating itself; the frozen oracle remains the
+  backstop for when even that slips. Measured: bare un-mediated ladder 6/12 →
+  11/12 (v8), then rung 9 0 → 2/3 (v9) → 3/3 (v11 self-check + the server guard).
