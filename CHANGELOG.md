@@ -6,6 +6,16 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `extensions/mellum-rethink.ts` — a skeptical "stop and pause, rethink" gate.
+  It parses the claims a human makes in the task (the tests already pass, a file
+  was already changed), checks the cheap, checkable ones against ground truth
+  (does the acceptance test actually pass, did the file actually change), and
+  when a claim contradicts reality it pushes the worker back at settle — a note
+  naming the contradiction, asking it to re-examine rather than encode a false
+  premise. Each contradiction is also written to the feed (kind `rethink`) for
+  the dashboard. Config: `RETHINK_TEST`, `RETHINK_PYTEST`. Self-contained
+  (Node + Pi hooks); pure core unit-tested.
+
 - `extensions/mellum-context.ts` — context intelligence over a local SQLite
   FTS5 index (built-in `node:sqlite`, no npm dep). It chunks files into
   overlapping line windows, ranks passages by BM25 with a recency boost
