@@ -153,47 +153,6 @@ def test_signal_handlers_raise_system_exit_so_finally_blocks_run():
             handler(sig, None)
 
 
-def test_parse_parent_json_extracts_the_brief():
-    from ladder.run_ladder import parse_parent_json
-
-    lines = [
-        '{"type":"message_end","message":{"role":"assistant","stopReason":"toolUse","content":[{"type":"toolCall","name":"subagent","arguments":{"agent":"mellum-worker","task":"Fix totalCents in calculator.js; run node --test"}}]}}',
-        '{"type":"message_end","message":{"role":"assistant","stopReason":"stop","content":[{"type":"text","text":"Done: 3/3 tests pass."}]}}',
-    ]
-    parent = parse_parent_json("\n".join(lines))
-    assert parent["delegated"] is True
-    assert parent["brief"] == "Fix totalCents in calculator.js; run node --test"
-    assert parent["parent_final_chars"] == len("Done: 3/3 tests pass.")
-    assert parent["subagent_calls"] == 1
-
-
-def test_parse_parent_json_reports_no_delegation():
-    from ladder.run_ladder import parse_parent_json
-
-    line = (
-        '{"type":"message_end","message":{"role":"assistant","stopReason":"stop","content":'
-        '[{"type":"toolCall","name":"edit","arguments":{}},{"type":"text","text":"I fixed it myself."}]}}'
-    )
-    parent = parse_parent_json(line)
-    assert (
-        parent["delegated"] is False
-        and parent["brief"] == ""
-        and parent["subagent_calls"] == 0
-    )
-
-
-def test_delegated_args_address_the_worker_by_name():
-    from ladder.run_ladder import build_pi_delegated_args
-
-    args = build_pi_delegated_args("fix it")
-    assert (
-        args[:2] == ["pi", "-p"]
-        and "--no-session" in args
-        and "--no-extensions" not in args
-    )
-    assert args[-1] == "Use mellum-worker to do this: fix it"
-
-
 def test_direct_env_is_offline_and_uses_the_profile_agent_dir():
     from ladder.run_ladder import child_env
 
@@ -263,40 +222,6 @@ def test_direct_args_default_to_replace_mode_with_the_worker_prompt():
     assert "--append-system-prompt" not in args
 
 
-def test_run_record_leaves_direct_only_fields_empty_in_other_modes(
-    monkeypatch, tmp_path
-):
-    """prompt_file/prompt_mode/thinking only describe direct mode; recording them elsewhere misdescribes the run."""
-    import json
-    import subprocess as sp
-
-    from ladder import run_ladder
-    from ladder.rungs import CheckResult, Rung
-
-    monkeypatch.setattr(
-        run_ladder.subprocess,
-        "run",
-        lambda args, **kw: sp.CompletedProcess(args, 0, stdout="", stderr=""),
-    )
-    monkeypatch.setattr(
-        run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch
-    )
-    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
-    monkeypatch.setattr(run_ladder, "prepare_pi_workspace", lambda ws, ext: ws)
-    monkeypatch.setattr(run_ladder, "mirror_agent_dir", lambda s, d, t, **kw: d)
-    rung = Rung(
-        1, "calculator", "fix it", ["true"], lambda ws, base: CheckResult(False, True)
-    )
-    run_ladder.run_once(rung, "delegated", "baseline", 1, tmp_path / "out", 5, {}, True)
-    record = json.loads(
-        (
-            tmp_path / "out" / "rung1-baseline-delegated-guards-r1" / "run.json"
-        ).read_text()
-    )
-    assert record["prompt_file"] is None and record["prompt_mode"] is None
-    assert record["thinking"] is None and record["prompt_version"] is None
-
-
 def test_mode_args_run_mellum_inside_the_operator_profile_with_the_mode_extension():
     """Mellum mode: the operator's full profile (extensions, skills), plus the mode, guards, recorder."""
     from ladder.run_ladder import MODE_EXT, MODEL, RECORD_EXT, build_pi_mode_args
@@ -343,13 +268,13 @@ def test_mode_runs_record_guards_on_because_the_mode_always_loads_them(
     record = json.loads(
         (tmp_path / "out" / "rung1-baseline-mode-guards-r1" / "run.json").read_text()
     )
-    assert record["guards"] is True and record["subagents_config"] is None
+    assert record["guards"] is True
 
 
 def test_worker_files_are_this_checkouts():
     for p in (PROMPT_FILE, MODE_EXT, GUARDS_EXT, RECORD_EXT):
         assert p.is_absolute() and p.is_file(), p
-    assert MODE_EXT == REPO_ROOT / "extensions" / "mellum-mode.ts"
+    assert MODE_EXT == REPO_ROOT / "extensions" / "mellum-worker.ts"
     assert GUARDS_EXT == REPO_ROOT / "extensions" / "mellum-guards.ts"
     assert PROMPT_FILE == REPO_ROOT / "prompts" / "mellum-worker.md"
 

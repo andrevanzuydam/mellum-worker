@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from ladder.pi_profile import REPO_ROOT, mirror_agent_dir, prepare_pi_workspace
+from ladder.pi_profile import REPO_ROOT, mirror_agent_dir
 
 
 def fake_agent_dir(root: Path) -> Path:
@@ -50,34 +50,6 @@ def test_direct_agent_dir_carries_the_profiles_request_params(tmp_path):
     )
 
 
-def test_mirror_agent_dir_can_override_the_pi_subagents_config(tmp_path):
-    """pi-subagents reads only ~/.pi/agent/extensions/subagent/config.json; the mirror gets its own copy
-    so a run can switch the intercom bridge off without touching the operator's file."""
-    import json
-
-    from ladder.pi_profile import mirror_agent_dir
-
-    src = tmp_path / "src"
-    (src / "extensions" / "subagent").mkdir(parents=True)
-    (src / "extensions" / "subagent" / "config.json").write_text(
-        '{"intercomBridge": {"mode": "always"}}'
-    )
-    dest = mirror_agent_dir(
-        src,
-        tmp_path / "dest",
-        [tmp_path / "ws"],
-        subagents_config={"intercomBridge": {"mode": "off"}},
-    )
-    written = json.loads((dest / "extensions" / "subagent" / "config.json").read_text())
-    assert written == {"intercomBridge": {"mode": "off"}}
-    assert (
-        json.loads((src / "extensions" / "subagent" / "config.json").read_text())[
-            "intercomBridge"
-        ]["mode"]
-        == "always"
-    )
-
-
 def test_mirror_excludes_matching_packages_in_order(tmp_path):
     src = fake_agent_dir(tmp_path)
     pkgs = [
@@ -93,25 +65,6 @@ def test_mirror_excludes_matching_packages_in_order(tmp_path):
     got = json.loads((dest / "settings.json").read_text())
     assert got == {"packages": [pkgs[0], pkgs[2]], "theme": "dark"}
     assert json.loads((src / "settings.json").read_text())["packages"] == pkgs
-
-
-def test_workspace_agent_file_is_rendered_from_the_template(tmp_path):
-    pi = prepare_pi_workspace(tmp_path, Path("/abs/record-pi.js"))
-    text = (pi / "agents" / "mellum-worker.md").read_text()
-    body = text.split("---", 2)[2].strip()
-    assert body == (REPO_ROOT / "prompts" / "mellum-worker.md").read_text().strip()
-    assert (
-        f"subagentOnlyExtensions: {REPO_ROOT}/extensions/mellum-guards.ts, /abs/record-pi.js\n"
-        in text
-    )
-    assert "{{MELLUM_WORKER_ROOT}}" not in text and not (pi / "mellum").exists()
-
-
-def test_workspace_without_recorder_keeps_the_template_line(tmp_path):
-    text = (
-        prepare_pi_workspace(tmp_path, None) / "agents" / "mellum-worker.md"
-    ).read_text()
-    assert f"subagentOnlyExtensions: {REPO_ROOT}/extensions/mellum-guards.ts\n" in text
 
 
 def test_direct_agent_dir_takes_a_provider_and_model(tmp_path):

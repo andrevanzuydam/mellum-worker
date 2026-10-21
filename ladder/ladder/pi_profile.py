@@ -22,22 +22,16 @@ REPO_ROOT = LADDER_ROOT.parent
 MODEL_ID = "Mellum2.1-12B-A2.5B-Thinking-6bit"
 COPIED_FILES = ("settings.json", "models.json", "auth.json", "AGENTS.md")
 LINKED_DIRS = ("git", "npm")
-AGENT_TEMPLATE = REPO_ROOT / "templates" / "pi" / "mellum-worker.agent.md"
-PLACEHOLDER = "{{MELLUM_WORKER_ROOT}}"
 
 
 def mirror_agent_dir(
     source: Path,
     dest: Path,
     trusted: list[Path],
-    subagents_config: dict | None = None,
     exclude_packages: tuple[str, ...] = (),
 ) -> Path:
     """Copy the parent's configuration, link its packages, trust the given workspaces.
 
-    `subagents_config` replaces pi-subagents' config.json in the mirror only
-    (it reads just ~/.pi/agent/extensions/subagent/config.json), so a run can
-    change e.g. the intercom bridge without touching the operator's file.
     `exclude_packages` drops settings.json `packages` entries naming any of the
     given substrings from the mirror's copy, so an installed copy of this
     package does not load beside the checkout under test.
@@ -57,10 +51,6 @@ def mirror_agent_dir(
             if not any(needle in json.dumps(p) for needle in exclude_packages)
         ]
         settings.write_text(json.dumps(data, indent=2))
-    if subagents_config is not None:
-        target = dest / "extensions" / "subagent" / "config.json"
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(json.dumps(subagents_config, indent=2))
     for name in LINKED_DIRS:
         if (source / name).exists():
             os.symlink(source / name, dest / name, target_is_directory=True)
@@ -68,30 +58,6 @@ def mirror_agent_dir(
         json.dumps({str(p): True for p in trusted}, indent=2)
     )
     return dest
-
-
-def prepare_pi_workspace(ws: Path, record_ext: Path | None) -> Path:
-    """Render the worker definition from this checkout's template into a scratch workspace.
-
-    With `record_ext`, the ladder recorder is appended to the template's
-    `subagentOnlyExtensions:` line. Nothing else is copied.
-    """
-    pi = ws / ".pi"
-    (pi / "agents").mkdir(parents=True, exist_ok=True)
-    lines = (
-        AGENT_TEMPLATE.read_text()
-        .replace(PLACEHOLDER, str(REPO_ROOT))
-        .splitlines(keepends=True)
-    )
-    if record_ext is not None:
-        lines = [
-            f"{line.rstrip()}, {record_ext}\n"
-            if line.startswith("subagentOnlyExtensions:")
-            else line
-            for line in lines
-        ]
-    (pi / "agents" / "mellum-worker.md").write_text("".join(lines))
-    return pi
 
 
 def direct_agent_dir(

@@ -138,39 +138,6 @@ def test_preflight_failure_never_launches_pi(monkeypatch, tmp_path):
     assert not list(tmp_path.rglob("*.launched"))
 
 
-def test_delegated_runtime_override_is_selected_pi(monkeypatch, tmp_path):
-    launch_module()
-    pi = fake_pi(tmp_path)
-    ws, rung = runner_setup(monkeypatch, tmp_path)
-    monkeypatch.setenv("PI_SUBAGENT_PI_BINARY", "/other/pi")
-    monkeypatch.setattr(
-        run_ladder, "mirror_agent_dir", lambda source, dest, *a, **kw: dest
-    )
-    monkeypatch.setattr(run_ladder, "prepare_pi_workspace", lambda *a: ws)
-    observed = {}
-    original = run_ladder.subprocess.run
-
-    def observe(argv, **kw):
-        if argv[0] == str(pi) and "--version" not in argv:
-            observed.update(kw["env"])
-        return original(argv, **kw)
-
-    monkeypatch.setattr(run_ladder.subprocess, "run", observe)
-    record = run_ladder.run_once(
-        rung,
-        "delegated",
-        "baseline",
-        1,
-        tmp_path / "out",
-        5,
-        {},
-        True,
-        pi_executable=str(pi),
-    )
-    assert observed["PI_SUBAGENT_PI_BINARY"] == str(pi)
-    assert "pi_subagents_revision" in record["launch"]
-
-
 def test_multicall_executable_keeps_invocation_name(tmp_path):
     module = launch_module()
     shim = executable(

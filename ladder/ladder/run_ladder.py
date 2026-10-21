@@ -25,13 +25,12 @@ from pathlib import Path
 from uuid import uuid4
 
 from .omlx_profiles import PROFILES, AdminClient, check_effective_params, profile
-from .pi_launch import resolve_pi, subagents_revision, workspace_preflight
+from .pi_launch import resolve_pi, workspace_preflight
 from .pi_profile import (
     LADDER_ROOT,
     REPO_ROOT,
     direct_agent_dir,
     mirror_agent_dir,
-    prepare_pi_workspace,
 )
 from .pi_trace import load_trace, stdout_settlement, summarize_trace
 from .leftovers import stop_leftovers
@@ -41,7 +40,7 @@ from .score import score
 log = logging.getLogger(__name__)
 PROMPT_FILE = REPO_ROOT / "prompts" / "mellum-worker.md"
 RECORD_EXT = LADDER_ROOT / "ladder" / "record-pi.js"
-MODE_EXT = REPO_ROOT / "extensions" / "mellum-mode.ts"
+MODE_EXT = REPO_ROOT / "extensions" / "mellum-worker.ts"
 GUARDS_EXT = REPO_ROOT / "extensions" / "mellum-guards.ts"
 MODEL = "omlx/Mellum2.1-12B-A2.5B-Thinking-6bit"
 MODEL_ID = MODEL.split("/", 1)[1]
@@ -55,7 +54,6 @@ def prompt_version(prompt: Path) -> str:
     return found.group(1) if found else prompt.stem
 
 
-PARENT_PROMPT = "Use mellum-worker to do this: {sentence}"
 
 HEADER = (
     "| rung | profile | mode | rep | result | tests_unchanged | requests | tool_errors | anchor_fail | "
@@ -169,20 +167,6 @@ def worker_provenance(root: Path = REPO_ROOT) -> dict:
     except OSError, subprocess.CalledProcessError:
         described = None
     return {"worker_version": version, "worker_git": described or None}
-
-
-def build_pi_delegated_args(sentence: str) -> list[str]:
-    """The parent: its normal profile (model, Superpowers, pi-subagents), addressed to the worker."""
-    return [
-        "pi",
-        "-p",
-        "--mode",
-        "json",
-        "--no-session",
-        "--thinking",
-        "high",
-        PARENT_PROMPT.format(sentence=sentence),
-    ]
 
 
 def build_pi_primary_args(sentence: str, plain: bool = False) -> list[str]:
@@ -434,7 +418,6 @@ def run_once(
     prompt: Path = PROMPT_FILE,
     prompt_mode: str = "replace",
     thinking: str = "high",
-    subagents_config: dict | None = None,
     mode_facts: str = "on",
     strip_facts_section: bool = False,
     pi_executable: str = "pi",
@@ -456,17 +439,7 @@ def run_once(
     )
     paths, lines = baseline_index(ws)
     trace = scratch / "trace.jsonl"
-    if mode == "delegated":
-        prepare_pi_workspace(ws, RECORD_EXT)
-        agent_dir = mirror_agent_dir(
-            Path.home() / ".pi" / "agent",
-            scratch / "pi-agent",
-            [ws],
-            subagents_config=subagents_config,
-        )
-        env = child_env(dict(os.environ), str(trace), agent_dir)
-        args = build_pi_delegated_args(rung.sentence)
-    elif mode == "primary":
+    if mode == "primary":
         agent_dir = mirror_agent_dir(
             Path.home() / ".pi" / "agent", scratch / "pi-agent", [ws]
         )
@@ -496,11 +469,7 @@ def run_once(
                                     thinking, model)
     selected_pi = versions.get("pi_launch") or resolve_pi(pi_executable)
     env, environment = workspace_preflight(ws, rung.fixture, env)
-    if mode == "delegated":
-        env["PI_SUBAGENT_PI_BINARY"] = selected_pi["executable"]
     launch = {"cwd": str(ws), "pi": selected_pi, **environment}
-    if mode == "delegated":
-        launch["pi_subagents_revision"] = subagents_revision(agent_dir)
     env["MELLUM_TRACE_RUN_ID"] = str(uuid4())
     argv = [selected_pi["executable"], *args[1:]]
     launch["argv"] = argv
@@ -567,7 +536,6 @@ def run_once(
         "harness": "pi",
         "plain": plain,
         "guards": guards,
-        "subagents_config": subagents_config if mode == "delegated" else None,
         "mode_facts": mode_facts if mode == "mode" else None,
         "strip_facts_section": strip_facts_section,
         "facts_section": facts_section,
@@ -607,8 +575,8 @@ def run_once(
         "stop_reason": stop_reason,
         "final_text_chars": len(final_text),
         "thinking_reentries": thinking_reentries,
-        "final_text_is": "parent" if mode == "delegated" else "worker",
-        "parent": parse_parent_json(stdout) if mode == "delegated" else None,
+        "final_text_is": "worker",
+        "parent": None,
         "baseline_lines": lines,
         "check": asdict(rung.check(ws, FIXTURES / rung.fixture)),
         "score": score(events, paths, lines).as_row(),
@@ -632,8 +600,6 @@ def run_once(
     (run_dir / "stdout.txt").write_text(stdout)
     (run_dir / "final.md").write_text(final_text)
     (run_dir / "diff.patch").write_text(git(ws, "diff", "--cached"))
-    if record["parent"]:
-        (run_dir / "brief.md").write_text(record["parent"]["brief"])
     return record
 
 
@@ -683,7 +649,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--mode",
-        choices=["direct", "delegated", "primary", "mode"],
+        choices=["direct", "primary", "mode"],
         default="direct",
     )
     parser.add_argument("--profile", choices=sorted(PROFILES), required=True)
@@ -710,12 +676,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--thinking", default="high", help="direct mode: Pi thinking level"
-    )
-    parser.add_argument(
-        "--subagents-config",
-        type=json.loads,
-        default=None,
-        help="delegated mode: JSON that replaces pi-subagents' config.json in the mirrored agent dir",
     )
     parser.add_argument(
         "--mode-facts",
@@ -804,7 +764,6 @@ def main(argv: list[str] | None = None) -> None:
                     args.prompt,
                     args.prompt_mode,
                     args.thinking,
-                    args.subagents_config,
                     args.mode_facts,
                     args.strip_facts_section,
                     pi_executable=selected_pi["executable"],
