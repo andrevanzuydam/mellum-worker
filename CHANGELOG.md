@@ -6,6 +6,14 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- Ladder rungs 10–12 (AgentClinic phases 5–7): rung 10 Archive & Audit (with a
+  destructive-archive decoy off the write-list), rung 11 reporting over a
+  pre-filled database (with an archived-but-open trap row), rung 12 summing two
+  columns of a file far larger than the context window (must be streamed). Each
+  is scored by the hidden cumulative oracle plus a committed frozen acceptance
+  test. The 6-bit clears all three 3/3 mediated — recorded in
+  `docs/ladder/2026-10-21-rungs-10-12-6bit/`.
+
 - Start a run from the dashboard: a rung picker (AgentClinic rungs 6–12) that
   launches the mediated screen for that rung with the configured model, via a
   new `POST /run` endpoint; a chip shows which rungs are currently running. The
