@@ -187,6 +187,12 @@ Versions match git tags; pin one in both install lines.
   Pi's (`--prompt-mode replace`), which is what the shipped agent file does;
   `--prompt-mode append` is still there for comparing with phases 0–2.
 
+### Fixed
+
+- The Lessons sidebar now lists the two completed findings lessons instead of
+  only the index; a test requires every published lesson page to be in the
+  nav.
+
 ### Removed
 
 - The OpenCode port: `opencode/plugin.js`, the OpenCode templates and provider

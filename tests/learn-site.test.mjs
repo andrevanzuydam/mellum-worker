@@ -20,6 +20,8 @@ const PAGES = [
   "getting-started/suite.md",
   "getting-started/worker-extension.md",
   "lessons/index.md",
+  "lessons/primary-agent.md",
+  "lessons/short-prompt.md",
   "lesson-template.md",
   "project/index.md",
   "project/toolchain.md",
