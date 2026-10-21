@@ -6,6 +6,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- Start a run from the dashboard: a rung picker (AgentClinic rungs 6–12) that
+  launches the mediated screen for that rung with the configured model, via a
+  new `POST /run` endpoint; a chip shows which rungs are currently running. The
+  dashboard's sweep and drill-down now read `run.json` recursively, so they show
+  `screen.sh`'s one-level run layout (`rungN-profile-rX/run.json`), not only the
+  two-level sweep layout — a run started from the dashboard appears as it lands.
+
 - `extensions/mellum-override.ts` — edit the system prompt the worker is fed,
   live, from a file (`$MELLUM_PROMPT_OVERRIDE`): `system` replaces it, `append`
   adds to it, applied at the next turn boundary. The dashboard writes the file,

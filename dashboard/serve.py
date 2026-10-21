@@ -10,10 +10,14 @@ results from a sweep's out dir, plus the newest worker trace's recent turns.
 import glob
 import json
 import os
+import subprocess
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(HERE)
+DEFAULT_MODEL = os.environ.get("DASH_MODEL", "Mellum2.1-12B-A2.5B-Thinking-6bit")
+RUNNING = {}  # rung -> subprocess.Popen, the runs this dashboard launched
 DEFAULT_OUT = "/private/tmp/claude-501/-Users-mac-projects/8aed2d08-ac9d-4f56-9569-c4d3ba627b18/scratchpad/sweep-6bit"
 OUT = os.environ.get("DASH_OUT", DEFAULT_OUT)
 FEED = os.path.expanduser(os.environ.get("MELLUM_FEED", "~/.pi/agent/mellum-feed.ndjson"))
@@ -45,7 +49,9 @@ def feed_events(limit=12):
 
 def sweep_rows():
     rungs = {}
-    for f in glob.glob(os.path.join(OUT, "rung*", "*", "run.json")):
+    # Recursive: matches both the two-level sweep layout (rungN/<run>/run.json)
+    # and the screen.sh one-level layout (rungN-profile-rX/run.json).
+    for f in glob.glob(os.path.join(OUT, "**", "run.json"), recursive=True):
         try:
             r = json.load(open(f))
         except Exception:
@@ -159,10 +165,12 @@ def intel_events(limit=20):
 def rung_detail(n):
     """Every past run of one rung, newest first, with a short summary of each."""
     runs = []
-    for f in glob.glob(os.path.join(OUT, f"rung{n}", "*", "run.json")):
+    for f in glob.glob(os.path.join(OUT, "**", "run.json"), recursive=True):
         try:
             r = json.load(open(f))
         except Exception:
+            continue
+        if r.get("rung") != n:
             continue
         chk = r.get("check", {})
         runs.append(
@@ -202,6 +210,53 @@ def write_override(data):
     return clean
 
 
+def acc_for(n):
+    """The committed frozen acceptance test for an AgentClinic rung (6-12)."""
+    p = n - 5
+    if 6 <= n <= 9:
+        return f"docs/ladder/2026-10-20-v7-ablation/acceptance/test_phase{p}.py"
+    if 10 <= n <= 12:
+        return f"ladder/fixtures/acceptance/test_phase{p}.py"
+    return None
+
+
+def running_status():
+    """Which dashboard-launched runs are still going."""
+    live = []
+    for n, proc in list(RUNNING.items()):
+        if proc.poll() is None:
+            live.append(n)
+        else:
+            RUNNING.pop(n, None)
+    return sorted(live)
+
+
+def launch_run(n, model):
+    """Start a mediated screen for rung n (the run standard), writing into OUT."""
+    try:
+        n = int(n)
+    except (TypeError, ValueError):
+        return {"ok": False, "error": "rung must be a number"}
+    acc = acc_for(n)
+    if not acc:
+        return {"ok": False, "error": f"rung {n} is not an AgentClinic rung (6-12)"}
+    if not os.path.isfile(os.path.join(REPO, acc)):
+        return {"ok": False, "error": f"acceptance test missing: {acc}"}
+    if n in RUNNING and RUNNING[n].poll() is None:
+        return {"ok": False, "error": f"rung {n} is already running"}
+    relout = os.path.relpath(OUT, REPO)
+    model = model or DEFAULT_MODEL
+    log = open(os.path.join(OUT, f"dash-run-rung{n}.log"), "w") if os.path.isdir(OUT) else subprocess.DEVNULL
+    proc = subprocess.Popen(
+        ["scripts/screen.sh", str(n), model, acc, relout],
+        cwd=REPO,
+        stdout=log,
+        stderr=subprocess.STDOUT,
+    )
+    RUNNING[n] = proc
+    return {"ok": True, "rung": n, "model": model, "out": relout}
+
+
 def payload():
     # Prefer the agnostic feed (mellum-feed.ts); fall back to scraping the
     # newest trace for runs that don't load the feed extension (e.g. the sweep).
@@ -212,6 +267,8 @@ def payload():
         "active": active,
         "prompt": latest_prompt(),
         "intel": intel_events(),
+        "running": running_status(),
+        "model": DEFAULT_MODEL,
     }
 
 
@@ -265,13 +322,15 @@ class Handler(BaseHTTPRequestHandler):
             self._send(body, "text/html; charset=utf-8")
 
     def do_POST(self):
+        try:
+            length = int(self.headers.get("content-length", "0"))
+            data = json.loads(self.rfile.read(length) or b"{}")
+        except Exception:
+            data = {}
         if self.path.startswith("/override"):
-            try:
-                length = int(self.headers.get("content-length", "0"))
-                data = json.loads(self.rfile.read(length) or b"{}")
-            except Exception:
-                data = {}
             self._send(json.dumps(write_override(data)).encode(), "application/json")
+        elif self.path.startswith("/run"):
+            self._send(json.dumps(launch_run(data.get("rung"), data.get("model"))).encode(), "application/json")
         else:
             self._send(b'{"error":"not found"}', "application/json")
 

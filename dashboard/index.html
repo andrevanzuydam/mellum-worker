@@ -49,6 +49,11 @@
   .editor .bar { display:flex; gap:10px; align-items:center; }
   .editor button { background:var(--accent); color:#2b2b2b; border:none; border-radius:6px; padding:5px 14px; font-family:var(--mono); font-weight:700; cursor:pointer; }
   .editor .msg { color:var(--pass); font-size:.82rem; }
+  .runbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .chip { background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:999px; padding:5px 14px; font-family:var(--mono); font-size:.85rem; cursor:pointer; }
+  .chip:hover { border-color:var(--accent); color:var(--accent); }
+  .chip.on { background:var(--run); color:#2b2b2b; border-color:var(--run); font-weight:700; }
+  .runbar .msg { color:var(--mut); font-size:.82rem; margin-left:4px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/tina4js@1.5.2/dist/tina4js.min.js"></script>
 </head>
@@ -61,6 +66,7 @@
   const ovSystem = signal("");     // system-prompt override being edited
   const ovAppend = signal("");     // text appended to the system prompt
   const saveMsg = signal("");
+  const runMsg = signal("");       // feedback from starting a run
   // The known ladder (1-12), unioned with any rung the sweep actually reports,
   // so a rung is never hidden: one with no result shows as idle ("—"), never dropped.
   const BASE_RUNGS = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -92,6 +98,15 @@
   // Click a rung to load its past runs and summaries.
   const selectRung = (n) => {
     fetch("/rung?n=" + n).then((r) => r.json()).then((d) => (selected.value = d)).catch(() => {});
+  };
+
+  // Start a mediated run for a rung from the dashboard (AgentClinic rungs 6-12).
+  const startRun = (n) => {
+    runMsg.value = "starting rung " + n + "…";
+    fetch("/run", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ rung: n }) })
+      .then((r) => r.json())
+      .then((d) => { runMsg.value = d.ok ? ("rung " + d.rung + " running — " + d.model) : ("could not start: " + d.error); })
+      .catch(() => (runMsg.value = "could not reach the server"));
   };
 
   // Load the current prompt override, and save edits back to the server.
@@ -128,6 +143,14 @@
     <main>
       <h2>Rungs</h2>
       <div class="grid">${() => rungsToShow().map(cell)}</div>
+      <h2>Start a run — ${() => data.value.model || "the configured model"}</h2>
+      <div class="runbar">
+        ${() => [6, 7, 8, 9, 10, 11, 12].map((n) => {
+          const on = (data.value.running || []).includes(n);
+          return html`<button class=${"chip" + (on ? " on" : "")} @click=${() => startRun(n)}>${on ? "running " : "run "}${n}${on ? "…" : ""}</button>`;
+        })}
+        <span class="msg">${() => runMsg.value}</span>
+      </div>
       ${() => {
         const d = selected.value;
         if (!d) return html`<div class="empty" style="margin-top:6px">click a rung to see its past runs</div>`;
