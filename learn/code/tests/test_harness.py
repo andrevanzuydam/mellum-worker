@@ -13,26 +13,26 @@ import harness
 
 HERE = Path(__file__).resolve().parent
 FIX = HERE / "fixtures"
-TASKS = FIX / "tasks"
+SUITES = FIX / "suites"
 PROFILE = HERE.parent / "profile"
 
 
 def run(tmp_path, binary="fake-pi.sh", task="add"):
-    return harness.run_task(
-        harness.load_task(TASKS, task),
+    return harness.run_suite(
+        harness.load_suite(SUITES, task),
         runs_dir=tmp_path / "runs", profile=PROFILE,
         pi_binary=str(FIX / binary),
     )
 
 
 def test_load_task_reads_prompt_and_tests():
-    task = harness.load_task(TASKS, "add")
+    task = harness.load_suite(SUITES, "add")
     assert "add(a, b)" in task.prompt
     assert (task.tests / "test_add.py").exists()
 
 
 def test_a_task_can_hold_prompts_in_order():
-    task = harness.load_task(TASKS, "steps")
+    task = harness.load_suite(SUITES, "steps")
     assert task.prompts == [
         "First: write a file named one.txt.",
         "Second: write a file named two.txt.",
@@ -45,12 +45,12 @@ def test_an_empty_prompt_is_named(tmp_path):
     task_dir.mkdir(parents=True)
     (task_dir / "task.md").write_text("   \n")
     with pytest.raises(SystemExit) as exc:
-        harness.load_task(tmp_path / "tasks", "blank")
+        harness.load_suite(tmp_path / "tasks", "blank")
     assert "blank" in str(exc.value)
 
 
 def test_pi_argv_isolates_the_child():
-    task = harness.load_task(TASKS, "add")
+    task = harness.load_suite(SUITES, "add")
     argv = harness.pi_argv("pi", PROFILE, Path("rec.mjs"), "llamacpp", "model-x",
                            task.prompt)
     for flag in ("-p", "--no-approve", "--no-context-files",
@@ -63,8 +63,8 @@ def test_pi_argv_isolates_the_child():
 
 
 def test_two_prompts_share_one_session(tmp_path):
-    task = harness.load_task(TASKS, "steps")
-    run_dir = harness.run_task(
+    task = harness.load_suite(SUITES, "steps")
+    run_dir = harness.run_suite(
         task, runs_dir=tmp_path / "runs", profile=PROFILE,
         pi_binary=str(FIX / "fake-pi-session.sh"),
     )
@@ -97,16 +97,16 @@ def test_runs_are_fresh_and_tests_are_hidden(tmp_path):
 
 
 def test_missing_pi_is_a_message(tmp_path):
-    task = harness.load_task(TASKS, "add")
+    task = harness.load_suite(SUITES, "add")
     with pytest.raises(SystemExit) as exc:
-        harness.run_task(task, runs_dir=tmp_path / "runs", profile=PROFILE,
+        harness.run_suite(task, runs_dir=tmp_path / "runs", profile=PROFILE,
                          pi_binary="/nonexistent/pi")
     assert "pi" in str(exc.value)
 
 
 def _scored(tmp_path, binary):
     run_dir = run(tmp_path, binary)
-    return harness.score(run_dir, harness.load_task(TASKS, "add"))
+    return harness.score(run_dir, harness.load_suite(SUITES, "add"))
 
 
 def test_score_passes_a_working_workspace(tmp_path):
@@ -116,7 +116,7 @@ def test_score_passes_a_working_workspace(tmp_path):
 
 def test_score_keeps_the_run_and_copies_the_tests(tmp_path):
     run_dir = run(tmp_path, "fake-pi-empty.sh")
-    passed, tail = harness.score(run_dir, harness.load_task(TASKS, "add"))
+    passed, tail = harness.score(run_dir, harness.load_suite(SUITES, "add"))
     assert not passed
     assert (run_dir / "workspace" / "tests" / "test_add.py").exists()
     assert tail
@@ -127,7 +127,7 @@ def test_score_fails_a_wrong_solution(tmp_path):
     assert not passed
 
 
-EASY = HERE.parent / "tasks" / "easy"
+EASY = HERE.parent / "suites" / "easy"
 
 
 def _task_tests_pass(cwd, tests):
@@ -181,16 +181,16 @@ def test_report_without_text(tmp_path):
 
 
 def test_suite_runs_every_named_task(tmp_path):
-    passed, total = harness.suite(
-        ["all"], tasks_dir=TASKS, runs_dir=tmp_path / "runs",
+    passed, total = harness.run_suites(
+        ["all"], suites_dir=SUITES, runs_dir=tmp_path / "runs",
         pi_binary=str(FIX / "fake-pi.sh"),
     )
     assert (passed, total) == (2, 2)
 
 
 def test_suite_counts_a_failure(tmp_path):
-    passed, total = harness.suite(
-        ["add"], tasks_dir=TASKS, runs_dir=tmp_path / "runs",
+    passed, total = harness.run_suites(
+        ["add"], suites_dir=SUITES, runs_dir=tmp_path / "runs",
         pi_binary=str(FIX / "fake-pi-empty.sh"),
     )
     assert (passed, total) == (0, 1)
@@ -198,7 +198,7 @@ def test_suite_counts_a_failure(tmp_path):
 
 def test_suite_rejects_an_unknown_name(tmp_path):
     with pytest.raises(SystemExit) as exc:
-        harness.suite(["nope"], tasks_dir=TASKS, runs_dir=tmp_path / "runs")
+        harness.run_suites(["nope"], suites_dir=SUITES, runs_dir=tmp_path / "runs")
     assert "nope" in str(exc.value)
 
 
@@ -252,7 +252,7 @@ def test_grade_ignores_a_copied_tests_dir(tmp_path):
 
 @pytest.mark.parametrize("name", ["medium", "hard"])
 def test_each_task_can_fail_and_pass(tmp_path, name):
-    task_dir = HERE.parent / "tasks" / name
+    task_dir = HERE.parent / "suites" / name
     empty = tmp_path / f"{name}-empty"
     empty.mkdir()
     assert not _task_tests_pass(empty, task_dir / "tests")
@@ -266,7 +266,7 @@ def test_each_task_can_fail_and_pass(tmp_path, name):
 def test_each_solution_passes_the_graders(tmp_path, name):
     solved = tmp_path / name
     solved.mkdir()
-    shutil.copytree(HERE.parent / "tasks" / name / "solution", solved,
+    shutil.copytree(HERE.parent / "suites" / name / "solution", solved,
                     dirs_exist_ok=True)
     results = harness.grade(solved)
     assert all(ok for _, ok, _ in results), results
@@ -275,11 +275,43 @@ def test_each_solution_passes_the_graders(tmp_path, name):
 def test_a_session_can_be_bounded(tmp_path):
     import time as clock
 
-    task = harness.load_task(TASKS, "add")
+    task = harness.load_suite(SUITES, "add")
     started = clock.monotonic()
-    run_dir = harness.run_task(
+    run_dir = harness.run_suite(
         task, runs_dir=tmp_path / "runs", profile=PROFILE,
         pi_binary=str(FIX / "fake-pi-slow.sh"), deadline=1,
     )
     assert clock.monotonic() - started < 5
     assert (run_dir / "deadline").exists()
+
+
+def test_runs_default_outside_the_repo():
+    import tempfile
+
+    assert str(harness.RUNS).startswith(tempfile.gettempdir())
+    assert not str(harness.RUNS).startswith(str(harness.CODE))
+
+
+def test_a_canary_in_the_trace_marks_the_run(tmp_path):
+    suite = harness.Suite(
+        name="x", prompts=["p"], tests=tmp_path / "g", start=None,
+        canary="CANARY-TOKEN")
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    (run_dir / "trace.jsonl").write_text('{"type":"tool_call","input":"CANARY-TOKEN"}')
+    assert harness.grader_touched(run_dir, suite) is True
+    (run_dir / "trace.jsonl").write_text('{"type":"tool_call","input":"ls"}')
+    assert harness.grader_touched(run_dir, suite) is False
+
+
+def test_a_missing_expected_test_fails(tmp_path):
+    base = harness.load_suite(SUITES, "add")
+    suite = harness.Suite(
+        name=base.name, prompts=base.prompts, tests=base.tests,
+        start=base.start, expected=("tests/test_add.py::test_nope",))
+    run_dir = harness.run_suite(
+        suite, runs_dir=tmp_path / "runs", profile=PROFILE,
+        pi_binary=str(FIX / "fake-pi.sh"))
+    passed, tail = harness.score(run_dir, suite)
+    assert not passed
+    assert "missing expected tests" in tail

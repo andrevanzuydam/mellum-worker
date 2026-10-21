@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Run one task through base Pi in a fresh directory and score it.
+"""Run one eval suite through base Pi in a fresh directory and score it.
 
-The ladder measures; this teaches. A task's tests stay out of the workspace
-until the child has exited, and the private profile is copied per run, so a
-run cannot see another run or the learner's own `~/.pi`.
+The ladder measures; this teaches. A suite is a project with a mission,
+tech stack and roadmap; its hidden graders stay out of the workspace until
+the child has exited, and the run lives outside the repo.
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ import shlex
 import shutil
 import signal
 import subprocess
+import tempfile
 import time
 import sys
 import uuid
@@ -23,8 +24,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 CODE = Path(__file__).resolve().parent
-RUNS = CODE / ".runs"
-TASKS = CODE / "tasks"
+RUNS = Path(tempfile.gettempdir()) / "mellum-eval-runs"
+SUITES = CODE / "suites"
 RECORDER = CODE / "record-pi.mjs"
 PROFILE = CODE / "profile"
 FLAGS = [
@@ -34,11 +35,13 @@ FLAGS = [
 
 
 @dataclass(frozen=True)
-class Task:
+class Suite:
     name: str
     prompts: list[str]
     tests: Path
     start: Path | None
+    expected: tuple[str, ...] = ()
+    canary: str | None = None
 
     @property
     def prompt(self) -> str:
@@ -52,8 +55,8 @@ def _read_prompt(path: Path) -> str:
     return text
 
 
-def load_task(tasks_dir: Path, name: str) -> Task:
-    base = Path(tasks_dir) / name
+def load_suite(suites_dir: Path, name: str) -> Suite:
+    base = Path(suites_dir) / name
     prompts_dir = base / "prompts"
     if prompts_dir.is_dir():
         files = sorted(prompts_dir.glob("*.md"))
@@ -62,12 +65,21 @@ def load_task(tasks_dir: Path, name: str) -> Task:
         prompts = [_read_prompt(path) for path in files]
     else:
         prompts = [_read_prompt(base / "task.md")]
+    grader = base / "grader"
+    expected = ()
+    if (base / "expected.json").is_file():
+        expected = tuple(json.loads((base / "expected.json").read_text()))
+    canary = None
+    if (grader / "canary").is_file():
+        canary = (grader / "canary").read_text().strip() or None
     start = base / "start"
-    return Task(
+    return Suite(
         name=name,
         prompts=prompts,
-        tests=base / "tests",
+        tests=grader if grader.is_dir() else base / "tests",
         start=start if start.is_dir() else None,
+        expected=expected,
+        canary=canary,
     )
 
 
@@ -106,21 +118,23 @@ def pi_argv(
     ]
 
 
-def run_task(
-    task: Task,
+def run_suite(
+    suite: Suite,
     *,
     runs_dir: Path,
     profile: Path = PROFILE,
     pi_binary: str = "pi",
     deadline: float | None = None,
 ) -> Path:
-    run = new_run(runs_dir, task.name)
+    run = new_run(runs_dir, suite.name)
     workspace = run / "workspace"
     workspace.mkdir()
     shutil.copytree(profile, run / "profile")
-    if task.start is not None:
-        shutil.copytree(task.start, workspace, dirs_exist_ok=True)
-    (run / "prompt.txt").write_text("\n\n".join(task.prompts) + "\n")
+    recorder = run / "record-pi.mjs"
+    shutil.copy2(RECORDER, recorder)
+    if suite.start is not None:
+        shutil.copytree(suite.start, workspace, dirs_exist_ok=True)
+    (run / "prompt.txt").write_text("\n\n".join(suite.prompts) + "\n")
     trace = run / "trace.jsonl"
     trace.touch()
     sessions = run / "sessions"
@@ -133,20 +147,20 @@ def run_task(
         "MELLUM_TRACE_FILE": str(trace),
     }
     started = time.monotonic()
-    for prompt in task.prompts:
+    for prompt in suite.prompts:
         remaining = None if deadline is None else deadline - (time.monotonic() - started)
         if remaining is not None and remaining <= 0:
             (run / "deadline").write_text("hit\n")
             break
         argv = pi_argv(
-            pi_binary, run / "profile", RECORDER, provider, model, prompt,
+            pi_binary, run / "profile", recorder, provider, model, prompt,
             session_id=session_id, session_dir=sessions,
         )
         try:
             child = subprocess.Popen(argv, cwd=workspace, env=env,
                                      start_new_session=True)
         except FileNotFoundError:
-            raise SystemExit(f"pi not found: {pi_binary}; install Pi before running a task")
+            raise SystemExit(f"pi not found: {pi_binary}; install Pi before running a suite")
         try:
             child.wait(timeout=remaining)
         except subprocess.TimeoutExpired:
@@ -154,7 +168,39 @@ def run_task(
             child.wait()
             (run / "deadline").write_text("hit\n")
             break
+    if grader_touched(run, suite):
+        (run / "contaminated").write_text("grader touched\n")
     return run
+
+
+def grader_touched(run: Path, suite: Suite) -> bool:
+    if suite.canary is None:
+        return False
+    text = (Path(run) / "trace.jsonl").read_text(errors="ignore")
+    return suite.canary in text or f"suites/{suite.name}" in text
+
+
+def grade(workspace: Path) -> list[tuple[str, bool, str]]:
+    workspace = Path(workspace)
+    (workspace / "pyrefly.toml").write_text(
+        'project-includes = [\n    "**/*.py",\n]\n'
+        'project-excludes = [\n    "tests/**",\n]\n')
+    commands = (
+        ("ruff", ["uvx", "ruff", "check", "--select", "F,E9", "--exclude", "tests", "."]),
+        ("pyrefly", ["uvx", "pyrefly", "check", "."]),
+        ("complexipy", ["uvx", "complexipy", "--max-complexity-allowed", "10",
+                        "--exclude", "tests", "."]),
+    )
+    results = []
+    for name, command in commands:
+        result = subprocess.run(
+            command, cwd=workspace, capture_output=True, text=True, check=False,
+            env={**os.environ, "PYTHONPATH": str(workspace)},
+        )
+        output = [line for line in (result.stdout + result.stderr).splitlines()
+                  if line.strip()]
+        results.append((name, result.returncode == 0, output[0] if output else ""))
+    return results
 
 
 def grade(workspace: Path) -> list[tuple[str, bool, str]]:
@@ -208,59 +254,74 @@ def report(run: Path) -> dict:
     }
 
 
-def score(run: Path, task: Task) -> tuple[bool, str]:
+def score(run: Path, suite: Suite) -> tuple[bool, str]:
     workspace = Path(run) / "workspace"
     target = workspace / "tests"
     if target.exists():
         shutil.rmtree(target)
-    shutil.copytree(task.tests, target)
+    shutil.copytree(suite.tests, target)
+    command = (
+        ["uv", "run", "--with", "pytest", "pytest", "-q", "-rA", "tests"]
+        if (workspace / "pyproject.toml").is_file()
+        else ["uvx", "pytest", "-q", "-rA", "tests"]
+    )
     result = subprocess.run(
-        ["uvx", "pytest", "-q", "tests"],
-        cwd=workspace, capture_output=True, text=True, check=False,
+        command, cwd=workspace, capture_output=True, text=True, check=False,
         env={**os.environ, "PYTHONPATH": str(workspace)},
     )
     output = (result.stdout + result.stderr).strip()
-    tail = "\n".join(output.splitlines()[-20:])
-    return result.returncode == 0, tail
+    missing = [test for test in suite.expected if f"PASSED {test}" not in output]
+    lines = output.splitlines()[-20:]
+    if missing:
+        lines.append("missing expected tests: " + ", ".join(missing))
+    return result.returncode == 0 and not missing, "\n".join(lines)
 
 
 def _run_sessions(
-    task: Task,
+    suite: Suite,
     *,
     runs_dir: Path,
     pi_binary: str,
     repeat: int,
     grade_run: bool,
     deadline: float | None,
-) -> list[tuple[Path, bool, str, list, dict]]:
+) -> list[tuple]:
     results = []
     for _ in range(repeat):
-        run_dir = run_task(task, runs_dir=runs_dir, pi_binary=pi_binary,
-                           deadline=deadline)
+        run_dir = run_suite(suite, runs_dir=runs_dir, pi_binary=pi_binary,
+                            deadline=deadline)
         grades = grade(run_dir / "workspace") if grade_run else []
-        passed, tail = score(run_dir, task)
-        results.append((run_dir, passed, tail, grades, report(run_dir)))
+        tests_passed, tail = score(run_dir, suite)
+        quality_ok = all(
+            ok for name, ok, _ in grades if name in {"ruff", "complexipy"}
+        ) if grades else True
+        contaminated = (run_dir / "contaminated").exists()
+        passed = tests_passed and quality_ok and not contaminated
+        results.append((run_dir, passed, tail, grades, report(run_dir),
+                        tests_passed, quality_ok, contaminated))
     return results
 
 
 def _print_task(
-    task: Task, results: list[tuple], repeat: int
+    suite: Suite, results: list[tuple], repeat: int
 ) -> int:
-    for index, (run_dir, passed, tail, grades, counts) in enumerate(results, 1):
-        print(_line(task, run_dir, passed, counts, repeat, index))
+    for index, (run_dir, passed, tail, grades, counts, tests_passed,
+                quality_ok, contaminated) in enumerate(results, 1):
+        print(_line(suite, run_dir, passed, counts, repeat, index,
+                    tests_passed, quality_ok, contaminated))
         _print_grades(grades)
         if not passed:
             print(tail, file=sys.stderr)
     ok = sum(1 for result in results if result[1])
     if repeat > 1:
-        print(f"{task.name}: {ok}/{repeat} sessions passed")
+        print(f"{suite.name}: {ok}/{repeat} sessions passed")
     return ok
 
 
-def suite(
+def run_suites(
     names: list[str],
     *,
-    tasks_dir: Path = TASKS,
+    suites_dir: Path = SUITES,
     runs_dir: Path = RUNS,
     pi_binary: str = "pi",
     grade_run: bool = False,
@@ -268,97 +329,97 @@ def suite(
     deadline: float | None = 600,
 ) -> tuple[int, int]:
     available = sorted(
-        path.name for path in Path(tasks_dir).iterdir()
-        if (path / "tests").is_dir()
+        path.name for path in Path(suites_dir).iterdir()
+        if ((path / "grader").is_dir() or (path / "tests").is_dir())
         and ((path / "task.md").exists() or (path / "prompts").is_dir())
     )
     if "all" in names:
         names = available
     missing = [name for name in names if name not in available]
     if missing:
-        raise SystemExit(f"no task named {', '.join(missing)} in {tasks_dir}; "
+        raise SystemExit(f"no suite named {', '.join(missing)} in {suites_dir}; "
                          f"available: {', '.join(available)}")
-    tasks_passed = sessions_passed = sessions_total = 0
+    suites_passed = sessions_passed = sessions_total = 0
     for name in names:
-        task = load_task(tasks_dir, name)
+        suite = load_suite(suites_dir, name)
         results = _run_sessions(
-            task, runs_dir=runs_dir, pi_binary=pi_binary,
+            suite, runs_dir=runs_dir, pi_binary=pi_binary,
             repeat=repeat, grade_run=grade_run, deadline=deadline,
         )
-        sessions_passed += _print_task(task, results, repeat)
+        sessions_passed += _print_task(suite, results, repeat)
         sessions_total += len(results)
         if all(result[1] for result in results):
-            tasks_passed += 1
-    print(f"{tasks_passed}/{len(names)} tasks passed "
+            suites_passed += 1
+    print(f"{suites_passed}/{len(names)} suites passed "
           f"({sessions_passed}/{sessions_total} sessions)")
-    return tasks_passed, len(names)
+    return suites_passed, len(names)
 
 
 def _line(
-    task: Task,
+    suite: Suite,
     run_dir: Path,
     passed: bool,
     counts: dict,
     repeat: int = 1,
     index: int = 1,
+    tests_passed: bool = True,
+    quality_ok: bool = True,
+    contaminated: bool = False,
 ) -> str:
-    tag = task.name + (f" [{index}/{repeat}]" if repeat > 1 else "")
+    tag = suite.name + (f" [{index}/{repeat}]" if repeat > 1 else "")
     n_text = f"n={repeat}; " if repeat == 1 else ""
     deadline = " deadline" if (Path(run_dir) / "deadline").exists() else ""
-    return (f"{tag}: {'PASS' if passed else 'FAIL'} ({n_text}run {run_dir}; "
+    label = "CONTAMINATED" if contaminated else ("PASS" if passed else "FAIL")
+    notes = []
+    if not quality_ok:
+        notes.append("quality FAIL")
+    if contaminated:
+        notes.append("grader touched")
+    note = ("; " + ", ".join(notes)) if notes else ""
+    return (f"{tag}: {label} ({n_text}run {run_dir}; "
             f"{counts['requests']} requests, {counts['tool_calls']} tool calls, "
-            f"{counts['tool_errors']} tool errors{deadline})")
+            f"{counts['tool_errors']} tool errors{deadline}{note})")
 
 
 def _print_grades(grades: list[tuple[str, bool, str]]) -> None:
     for name, ok, detail in grades:
-        print(f"{name}: {'PASS' if ok else 'FAIL'}" + (f" ({detail})" if not ok else ""))
+        label = "pyrefly (advisory)" if name == "pyrefly" else name
+        print(f"{label}: {'PASS' if ok else 'FAIL'}" + (f" ({detail})" if not ok else ""))
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
-    run = sub.add_parser("run", help="run one task and score it")
-    run.add_argument("--task", required=True)
-    run.add_argument("--tasks-dir", type=Path, default=TASKS)
+    run = sub.add_parser("run", help="run one eval suite or all of them")
+    run.add_argument("--suite", required=True, help="a suite name, or all")
+    run.add_argument("--suites-dir", type=Path, default=SUITES)
     run.add_argument("--runs-dir", type=Path, default=RUNS)
     run.add_argument("--pi-binary", default="pi")
     run.add_argument("--dry-run", action="store_true")
     run.add_argument("--grade", action="store_true")
     run.add_argument("--repeat", type=int, default=1)
     run.add_argument("--deadline", type=float, default=600)
-
-    many = sub.add_parser("suite", help="run several tasks and total them")
-    many.add_argument("names", nargs="+", help="easy, medium, hard, all, or several")
-    many.add_argument("--tasks-dir", type=Path, default=TASKS)
-    many.add_argument("--runs-dir", type=Path, default=RUNS)
-    many.add_argument("--pi-binary", default="pi")
-    many.add_argument("--grade", action="store_true")
-    many.add_argument("--repeat", type=int, default=1)
-    many.add_argument("--deadline", type=float, default=600)
     args = parser.parse_args(argv)
 
     if args.repeat < 1:
         parser.error("--repeat must be at least 1")
-
-    if args.command == "suite":
-        suite(args.names, tasks_dir=args.tasks_dir, runs_dir=args.runs_dir,
-              pi_binary=args.pi_binary, grade_run=args.grade,
-              repeat=args.repeat, deadline=args.deadline)
+    if args.suite == "all":
+        run_suites(["all"], suites_dir=args.suites_dir, runs_dir=args.runs_dir,
+                   pi_binary=args.pi_binary, grade_run=args.grade,
+                   repeat=args.repeat, deadline=args.deadline)
         return 0
 
-
-    task = load_task(args.tasks_dir, args.task)
+    suite = load_suite(args.suites_dir, args.suite)
     provider, model = profile_pin(PROFILE)
     if args.dry_run:
         print(shlex.join(pi_argv(args.pi_binary, PROFILE, RECORDER, provider,
-                                 model, task.prompt)))
+                                 model, suite.prompt)))
         return 0
     results = _run_sessions(
-        task, runs_dir=args.runs_dir, pi_binary=args.pi_binary,
+        suite, runs_dir=args.runs_dir, pi_binary=args.pi_binary,
         repeat=args.repeat, grade_run=args.grade, deadline=args.deadline,
     )
-    _print_task(task, results, args.repeat)
+    _print_task(suite, results, args.repeat)
     return 0
 
 

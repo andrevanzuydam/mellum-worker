@@ -99,7 +99,7 @@ test("the project pages orient a maintainer and name the checks", () => {
 test("lesson 2 explains isolation and the one command", () => {
   const l = page("getting-started/harness.md");
   assert.match(l, /^track: getting-started$/m);
-  const order = ["fresh directory", "harness.py run --task easy",
+  const order = ["fresh directory", "harness.py run --suite easy",
     "learn/code/.runs"];
   let at = -1;
   for (const step of order) {
@@ -115,7 +115,7 @@ test("lesson 2 explains isolation and the one command", () => {
 test("lesson 3 runs the suite, grading and the trace", () => {
   const l = page("getting-started/suite.md");
   assert.match(l, /^track: getting-started$/m);
-  for (const text of ["suite all --grade", "ruff", "pyrefly", "complexipy",
+  for (const text of ["run --suite all --grade", "ruff", "pyrefly", "complexipy",
     "trace.jsonl", "three", "graders", "one observation"])
     assert.ok(l.toLowerCase().includes(text), `lesson 3 lacks ${text}`);
   assert.match(page("getting-started/index.md"), /suite\.md/);

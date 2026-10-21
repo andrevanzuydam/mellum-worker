@@ -16,7 +16,7 @@ model wrote, and reads the trace to see why a task failed.
 
 ```bash
 uv run scripts/backend.py start
-uv run learn/code/harness.py suite all --grade
+uv run learn/code/harness.py run --suite all --grade
 ```
 
 `all` expands to the three tasks in `learn/code/tasks/`: `easy` asks for a

@@ -12,7 +12,7 @@ test("the README links all three Getting started lessons", () => {
   for (const page of ["base-pi-on-llamacpp", "harness", "suite"])
     assert.ok(readme.includes(`learn/getting-started/${page}.md`),
       `README lacks the ${page} lesson`);
-  assert.ok(readme.includes("learn/code/harness.py suite all --grade"),
+  assert.ok(readme.includes("learn/code/harness.py run --suite all --grade"),
     "README lacks the harness command");
 });
 

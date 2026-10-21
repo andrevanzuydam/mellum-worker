@@ -95,6 +95,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The harness runs **eval suites**, not tasks: `learn/code/suites/`, `run --suite`,
+  with per-suite prompts, hidden graders and expected test IDs. Runs live under
+  the system temp directory, outside the repo, and a canary in a suite's grader
+  marks a session `CONTAMINATED` if the model touches it. Static analysis is
+  ruff `F,E9` and complexipy as gates, pyrefly as an advisory.
+
 - The site has two tracks instead of three: **Getting started** and
   **Lessons**. Paul's findings and Andre's findings are one Lessons track
   under `learn/lessons/`, each lesson still standalone with its own authors

@@ -38,7 +38,7 @@ the finish, never between prompts.
 
 ```bash
 uv run scripts/backend.py start      # the server from lesson 1
-uv run learn/code/harness.py run --task easy
+uv run learn/code/harness.py run --suite easy
 ```
 
 The first line is only needed once. The second prints the child's argv if you

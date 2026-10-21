@@ -34,7 +34,7 @@ The profile lives at `learn/code/profile/`. Lessons point Pi at it with
 
 ## The lesson harness
 
-`uv run learn/code/harness.py run --task easy` copies the task into
+`uv run learn/code/harness.py run --suite easy` copies the task into
 `learn/code/.runs/<id>/workspace`, starts a child `pi` with the private
 profile and the recorder in `learn/code/record-pi.mjs`, sends every prompt in
 `prompts/` (or `task.md`) in one session, then copies the task's tests in and
@@ -42,7 +42,7 @@ scores once. `--repeat N` repeats the session and every line states n. Runs are 
 prints the child's argv. The harness's own tests run under `uvx pytest` from
 `tests/harness.test.mjs`.
 
-`suite all` runs every fixture and totals the passes; `--grade` adds
+`run --suite all` runs every suite and totals the passes; `--grade` adds
 `uvx ruff check`, `uvx pyrefly check` (with a generated `pyrefly.toml`) and
 `uvx complexipy --max-complexity-allowed 10` on the model's files, before the
 tests are copied in. A grader's failure never changes a task's score.

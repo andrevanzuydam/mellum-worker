@@ -7,11 +7,11 @@ import assert from "node:assert/strict";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const FIX = resolve(ROOT, "learn/code/tests/fixtures");
-const TASKS = resolve(FIX, "tasks");
+const SUITES = resolve(FIX, "suites");
 
 const run = (runs, binary, ...extra) => spawnSync("uv", [
-  "run", "learn/code/harness.py", "run", "--task", "add",
-  "--tasks-dir", TASKS, "--runs-dir", runs, "--pi-binary", resolve(FIX, binary),
+  "run", "learn/code/harness.py", "run", "--suite", "add",
+  "--suites-dir", SUITES, "--runs-dir", runs, "--pi-binary", resolve(FIX, binary),
   ...extra,
 ], { cwd: ROOT, encoding: "utf8" });
 
@@ -38,14 +38,14 @@ test("--dry-run prints the child's argv", () => {
 
 test("suite all prints every task and a total", () => {
   const runs = mkdtempSync(join(tmpdir(), "mellum-runs-"));
-  const r = spawnSync("uv", ["run", "learn/code/harness.py", "suite", "all",
-    "--tasks-dir", TASKS, "--runs-dir", runs,
+  const r = spawnSync("uv", ["run", "learn/code/harness.py", "run", "--suite", "all",
+    "--suites-dir", SUITES, "--runs-dir", runs,
     "--pi-binary", resolve(FIX, "fake-pi.sh"),
   ], { cwd: ROOT, encoding: "utf8" });
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /^add: PASS/m);
   assert.match(r.stdout, /^mul: PASS/m);
-  assert.match(r.stdout, /^2\/2 tasks passed \(2\/2 sessions\)$/m);
+  assert.match(r.stdout, /^2\/2 suites passed \(2\/2 sessions\)$/m);
 });
 
 test("--grade prints one line per grader beside the score", () => {
@@ -53,17 +53,18 @@ test("--grade prints one line per grader beside the score", () => {
   const r = run(runs, "fake-pi.sh", "--grade");
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /^add: PASS/m);
-  for (const tool of ["ruff", "pyrefly", "complexipy"])
+  for (const tool of ["ruff", "complexipy"])
     assert.match(r.stdout, new RegExp(`^${tool}: PASS$`, "m"));
+  assert.match(r.stdout, /^pyrefly \(advisory\): PASS$/m);
 });
 
-test("a lint failure does not change the score", () => {
+test("a lint failure fails the session", () => {
   const runs = mkdtempSync(join(tmpdir(), "mellum-runs-"));
   const r = run(runs, "fake-pi-unused-import.sh", "--grade");
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /^add: PASS/m);
+  assert.match(r.stdout, /^add: FAIL/m);
   assert.match(r.stdout, /^ruff: FAIL/m);
-  assert.match(r.stdout, /^pyrefly: PASS/m);
+  assert.match(r.stdout, /^pyrefly \(advisory\): PASS$/m);
 });
 
 test("without --grade there are no grader lines", () => {
@@ -90,12 +91,12 @@ test("--repeat reports a failure per session", () => {
 
 test("suite counts tasks and sessions", () => {
   const runs = mkdtempSync(join(tmpdir(), "mellum-runs-"));
-  const r = spawnSync("uv", ["run", "learn/code/harness.py", "suite", "all",
-    "--tasks-dir", TASKS, "--runs-dir", runs, "--pi-binary", resolve(FIX, "fake-pi.sh"),
+  const r = spawnSync("uv", ["run", "learn/code/harness.py", "run", "--suite", "all",
+    "--suites-dir", SUITES, "--runs-dir", runs, "--pi-binary", resolve(FIX, "fake-pi.sh"),
     "--repeat", "2",
   ], { cwd: ROOT, encoding: "utf8" });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /^2\/2 tasks passed \(4\/4 sessions\)$/m);
+  assert.match(r.stdout, /^2\/2 suites passed \(4\/4 sessions\)$/m);
 });
 
 test("--deadline stops a session and says so", () => {
