@@ -6,6 +6,15 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `extensions/mellum-ncm.ts` — a next-concept-modelling verify gate, loaded
+  with `--pi-extension` (not shipped by default). At settle it re-runs the named
+  acceptance test and, while it is red, sends the worker back naming the **unmet
+  concepts** (the failing test functions), up to `NCM_MAX`. It brings the
+  ladder's direct-only verify/re-dispatch into any Pi session — Mellum Mode
+  included — at the concept grain, reusing the `agent_before_settle -> continue`
+  pattern from the empty-final nudge; self-contained (Node + Pi hooks, no
+  Pi-internal imports). Config: `NCM_TEST`, `NCM_MAX` (default 5), `NCM_PYTEST`.
+
 - **The run standard**: `scripts/screen.sh <rung> <model-id>` (the measurement
   rig — direct, mediated, `tuned`/repeat 3/redispatch 5/effort-ramp/thinking
   off/**guards on**, default prompt and tools) and `scripts/product.sh <rung>`
