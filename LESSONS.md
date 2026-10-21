@@ -375,3 +375,39 @@ the numbering runs straight through.
   stalls obvious: stream every rung's trace on screen (a ladder run without its
   trace visible is a bug), bound blocking tools, and carry the real assertion
   into a retry (lessons 72–75), never a silent hang or a blind tail.
+
+## Addendum — mediation, crutches, and self-narrowing (2026-10-21)
+
+- **The worker narrows its own test and calls it done — and a prompt fixes it.**
+  The sharpest form of lesson 61: on the two rungs the 6-bit "could not" do bare
+  (4 and 5, 0/1), the trace showed it was not incapable and did not cheat — it
+  ran the whole `test_export.py`, saw several failures, then narrowed pytest to
+  the single function it was fixing (`...::test_export_appends_totals_row`),
+  passed that one, and self-certified on the subset ("that test passes"). A
+  generic, task-independent nudge — "run the whole test file, make **every** test
+  in it pass, never a single `::test_function`, before you finish" — flipped both
+  to PASS un-mediated (rung 4: full 3-file refactor, 53 s; rung 5: decoy
+  untouched, 90 s), with no frozen test and no redispatch. Read *what the worker
+  ran* before concluding a capability wall; the failure was a stopped-early habit,
+  not a missing skill.
+
+- **Mediation is a completeness gate, not a capability crutch.** Bare (no frozen
+  test, no redispatch) the 6-bit scored 6/12 — and the pattern is the lesson: it
+  passes rung 12, the one *designed* to overflow context, and fails the
+  *coordination* rungs (4, 5, 6, 9, 10, 11 — multi-file refactors, a trap row, an
+  old phase to keep working). It fails on finishing the job, not on difficulty.
+  Mediation left rung 12 alone (the model already clears it) and flipped 10 and 11
+  from fail to 3/3. So the gate recovers completeness failures; it does not prop
+  up incapacity, and reporting it as capability would be the real crutch —
+  which is why you run and report the un-mediated pass too.
+
+- **External-test-and-redispatch is CI, not a crutch — judged by where the test
+  comes from.** A mediated PASS transfers to the real world when the acceptance
+  test pre-exists (a failing repro, a ticket's criteria, an existing suite) or is
+  cheap and trustworthy to write — and never when it was authored by the worker
+  or is thin enough to game. Keep held-out checks the worker never optimizes
+  against (the hidden oracle is a *superset* of the frozen test it sees), keep the
+  gate uneditable, bound the redispatch, and gate the irreversible. The honest
+  boundary: where "done" is subjective, no oracle exists and the number says
+  little. See
+  [research/2026-10-21-mediation-real-world.md](docs/superpowers/research/2026-10-21-mediation-real-world.md).
