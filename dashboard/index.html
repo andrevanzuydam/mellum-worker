@@ -55,6 +55,9 @@
   .chip.on { background:var(--run); color:#2b2b2b; border-color:var(--run); font-weight:700; }
   .chip.play.on { background:var(--pass); border-color:var(--pass); }
   .chip.pause.on { background:var(--fail); border-color:var(--fail); }
+  .chip.stop.on { background:var(--fail); border-color:var(--fail); color:#2b2b2b; }
+  .live { font-size:.8rem; font-weight:700; letter-spacing:.02em; }
+  .live.on { color:var(--pass); } .live.off { color:var(--mut); font-weight:400; }
   .runbar .msg { color:var(--mut); font-size:.82rem; margin-left:4px; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/tina4js@1.5.2/dist/tina4js.min.js"></script>
@@ -102,12 +105,24 @@
     fetch("/rung?n=" + n).then((r) => r.json()).then((d) => (selected.value = d)).catch(() => {});
   };
 
+  // A run is active if the dashboard launched a sweep, or a worker is live
+  // (feed/trace fresh — catches runs started from a terminal too).
+  const isRunning = () => data.value.runningAll || (data.value.activity && data.value.activity.active);
+
   // Start one full pass of the whole ladder (1-12) from the dashboard.
   const startAll = () => {
     runMsg.value = "starting the full ladder…";
     fetch("/run-all", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })
       .then((r) => r.json())
       .then((d) => { runMsg.value = d.ok ? ("running the full ladder (1-12) — " + d.model) : ("could not start: " + d.error); })
+      .catch(() => (runMsg.value = "could not reach the server"));
+  };
+  // Stop whatever is running.
+  const stopRun = () => {
+    runMsg.value = "stopping…";
+    fetch("/stop", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })
+      .then((r) => r.json())
+      .then((d) => { runMsg.value = d.stopped && d.stopped.length ? ("stopped: " + d.stopped.join(", ")) : "nothing was running"; })
       .catch(() => (runMsg.value = "could not reach the server"));
   };
 
@@ -148,6 +163,13 @@
   const app = html`
     <header>
       <h1>Ladder Monitor</h1>
+      <span class=${() => "live " + (isRunning() ? "on" : "off")}>${() => {
+        const a = data.value.activity || {};
+        if (!isRunning()) return "○ idle";
+        const done = (data.value.sweep || []).map((r) => r.rung);
+        const rung = a.rung || (done.length ? Math.max(...done) + 1 : null);
+        return "● RUNNING" + (rung ? " — rung " + rung : "") + (a.ageSec != null ? " · " + a.ageSec + "s ago" : "");
+      }}</span>
       <span class="ts">updated ${() => data.value.updatedAt}</span>
     </header>
     <main>
@@ -159,7 +181,7 @@
       </div>
       <h2>Start a run — ${() => data.value.model || "the configured model"}</h2>
       <div class="runbar">
-        <button class=${() => "chip" + (data.value.runningAll ? " on" : "")} @click=${() => { if (!data.value.runningAll) startAll(); }}>${() => data.value.runningAll ? "running the full ladder…" : "▶ Start full ladder run (1-12)"}</button>
+        <button class=${() => "chip" + (isRunning() ? " stop on" : "")} @click=${() => (isRunning() ? stopRun() : startAll())}>${() => isRunning() ? "■ Stop run" : "▶ Start full ladder run (1-12)"}</button>
         <span class="msg">${() => runMsg.value}</span>
       </div>
       <h2>Rungs</h2>

@@ -10,7 +10,9 @@ results from a sweep's out dir, plus the newest worker trace's recent turns.
 import glob
 import json
 import os
+import re
 import shlex
+import signal
 import subprocess
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -305,6 +307,7 @@ def launch_all(model):
     proc = subprocess.Popen(
         ["bash", "-c", inner], cwd=os.path.join(REPO, "ladder"),
         stdout=log, stderr=subprocess.STDOUT, env=os.environ.copy(),
+        start_new_session=True,  # own process group, so Stop can kill the whole sweep
     )
     RUNNING["all"] = proc
     return {"ok": True, "model": model, "out": relout, "rungs": "1-12"}
@@ -313,6 +316,59 @@ def launch_all(model):
 def full_run_active():
     p = RUNNING.get("all")
     return bool(p and p.poll() is None)
+
+
+def stop_run():
+    """Stop the active run: the dashboard's own sweep (whole process group) and,
+    best-effort, any ladder worker running (e.g. one started from a terminal)."""
+    stopped = []
+    p = RUNNING.get("all")
+    if p and p.poll() is None:
+        try:
+            os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+        except Exception:
+            p.terminate()
+        stopped.append("dashboard sweep")
+    try:
+        if subprocess.run(["pkill", "-f", "run_ladder"], timeout=5).returncode == 0:
+            stopped.append("ladder worker")
+    except Exception:
+        pass
+    return {"ok": True, "stopped": stopped}
+
+
+def activity():
+    """Whether a worker is active right now, launch-agnostic: based on how fresh
+    the feed and the newest trace are. A run started from a terminal shows too."""
+    now_ms = time.time() * 1000
+    fresh_ms = 120_000
+    last_age = None
+    try:
+        for ln in reversed(open(FEED).read().splitlines()[-50:]):
+            try:
+                t = json.loads(ln).get("t")
+            except Exception:
+                continue
+            if t:
+                last_age = now_ms - t
+                break
+    except Exception:
+        pass
+    rung, trace_age_ms = None, None
+    traces = glob.glob(os.path.join(OUT, "**", "trace.jsonl"), recursive=True)
+    traces += [f for g in TRACE_GLOBS for f in glob.glob(g)]
+    traces = [f for f in traces if os.path.exists(f)]
+    if traces:
+        newest = max(traces, key=os.path.getmtime)
+        trace_age_ms = now_ms - os.path.getmtime(newest) * 1000
+        m = re.search(r"rung(\d+)", os.path.basename(os.path.dirname(newest)))
+        if m:
+            rung = int(m.group(1))
+    fresh = [a for a in (last_age, trace_age_ms) if a is not None and a < fresh_ms]
+    active = bool(fresh)
+    age_src = min([a for a in (last_age, trace_age_ms) if a is not None], default=None)
+    return {"active": active, "rung": rung if active else None,
+            "ageSec": round(age_src / 1000) if age_src is not None else None}
 
 
 def payload():
@@ -327,6 +383,7 @@ def payload():
         "intel": intel_events(),
         "running": running_status(),
         "runningAll": full_run_active(),
+        "activity": activity(),
         "model": DEFAULT_MODEL,
         "control": read_control(),
     }
@@ -393,6 +450,8 @@ class Handler(BaseHTTPRequestHandler):
             self._send(json.dumps(write_control(data.get("state"))).encode(), "application/json")
         elif self.path.startswith("/run-all"):
             self._send(json.dumps(launch_all(data.get("model"))).encode(), "application/json")
+        elif self.path.startswith("/stop"):
+            self._send(json.dumps(stop_run()).encode(), "application/json")
         elif self.path.startswith("/run"):
             self._send(json.dumps(launch_run(data.get("rung"), data.get("model"))).encode(), "application/json")
         else:
