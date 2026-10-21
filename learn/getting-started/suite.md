@@ -9,8 +9,10 @@ backends: [llamacpp]
 
 # A suite and the telemetry
 
-Lesson 2 made one isolated run. This one runs three tasks, grades the code the
-model wrote, and reads the trace to see why a task failed.
+Lesson 2 made one isolated run. This one runs an **eval suite**: a project
+with a mission, a tech stack and a roadmap, a sequence of prompts, and a
+hidden grader. The easy suite is AgentClinic phase 1; medium and hard join it
+next, with more phases and a database.
 
 ## Run the suite
 
@@ -19,22 +21,24 @@ uv run scripts/backend.py start
 uv run learn/code/harness.py run --suite all --grade
 ```
 
-`all` expands to the three tasks in `learn/code/tasks/`: `easy` asks for a
-FizzBuzz function, `medium` for a duration parser, and `hard` for a word-count
-CLI with a tie rule and a minimum length. Each task runs in its own directory,
-as lesson 2 described.
+`all` expands to the suites in `learn/code/suites/`. The easy suite ships
+`mission.md`, `tech-stack.md` and a four-phase `roadmap.md`, and one prompt:
+implement phase 1. Work through the phase. Its hidden grader is copied in
+only after the session ends.
 
-One line per task, then a total:
+One line per suite, then a total:
 
 ```text
-easy: PASS (run learn/code/.runs/...; 4 requests, 3 tool calls, 0 tool errors)
-medium: PASS (run learn/code/.runs/...; 7 requests, 6 tool calls, 1 tool errors)
-hard: FAIL (run learn/code/.runs/...; 12 requests, 11 tool calls, 2 tool errors)
-2/3 passed
+easy: PASS (n=1; run /var/folders/...; 4 requests, 3 tool calls, 0 tool errors)
+1/1 suites passed
 ```
 
-A `FAIL` does not stop the suite; the run stays on disk and its test tail is
-printed to stderr.
+A `FAIL` does not stop the run; the session stays on disk and its test tail is
+printed to stderr. A session whose trace touches the grader is
+`CONTAMINATED`, not a pass.
+
+`uv run learn/code/harness.py qualify --suite easy` proves the grader in both
+directions: known-good passes, known-broken fails.
 
 ## The three graders
 
@@ -42,11 +46,11 @@ printed to stderr.
 after the child exits and before the tests are copied in, so a test file can
 never change the result:
 
-- **`ruff`** — lint, default rules: unused imports, undefined names.
-- **`pyrefly`** — types, with a generated `pyrefly.toml` (`project-includes`
+- **`ruff`** — correctness rules `F,E9`: undefined names, unused imports. A finding fails the suite.
+- **`pyrefly`** — types, advisory, with a generated `pyrefly.toml` (`project-includes`
   for the workspace, `tests/**` excluded). A bare path reports no errors, so
   the config is not optional.
-- **`complexipy`** — cognitive complexity, failing above 10.
+- **`complexipy`** — cognitive complexity, failing above 10; a finding fails the suite.
 
 They print beside the score, not instead of it:
 

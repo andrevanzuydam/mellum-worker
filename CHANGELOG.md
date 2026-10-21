@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- The first eval suite, `learn/code/suites/easy`: AgentClinic's mission, tech
+  stack and hinted four-phase roadmap, one prompt for phase 1, a hidden
+  per-phase grader with expected test IDs, and known-good/known-broken
+  fixtures. `harness.py qualify --suite easy` proves the grader both ways.
+
 - A follow-up digest for Andre's PRs #3 and #4: ten potential lessons
   (goalposts, the mediated test, v9, mediation as a completeness gate, rungs
   10–12, context, rethink, documents and images, live control, next-concept

@@ -42,6 +42,7 @@ class Suite:
     start: Path | None
     expected: tuple[str, ...] = ()
     canary: str | None = None
+    root: Path | None = None
 
     @property
     def prompt(self) -> str:
@@ -80,6 +81,7 @@ def load_suite(suites_dir: Path, name: str) -> Suite:
         start=start if start.is_dir() else None,
         expected=expected,
         canary=canary,
+        root=base,
     )
 
 
@@ -185,11 +187,16 @@ def grade(workspace: Path) -> list[tuple[str, bool, str]]:
     (workspace / "pyrefly.toml").write_text(
         'project-includes = [\n    "**/*.py",\n]\n'
         'project-excludes = [\n    "tests/**",\n]\n')
+    def tool(name: str, *args: str) -> list[str]:
+        if (workspace / "pyproject.toml").is_file():
+            return ["uv", "run", "--with", name, name, *args]
+        return ["uvx", name, *args]
+
     commands = (
-        ("ruff", ["uvx", "ruff", "check", "--select", "F,E9", "--exclude", "tests", "."]),
-        ("pyrefly", ["uvx", "pyrefly", "check", "."]),
-        ("complexipy", ["uvx", "complexipy", "--max-complexity-allowed", "10",
-                        "--exclude", "tests", "."]),
+        ("ruff", tool("ruff", "check", "--select", "F,E9", "--exclude", "tests", "--exclude", "grader_tests", ".")),
+        ("pyrefly", tool("pyrefly", "check", ".")),
+        ("complexipy", tool("complexipy", "--max-complexity-allowed", "10",
+                            "--exclude", "tests", "--exclude", "grader_tests", ".")),
     )
     results = []
     for name, command in commands:
@@ -226,6 +233,25 @@ def grade(workspace: Path) -> list[tuple[str, bool, str]]:
     return results
 
 
+def qualify(suite: Suite) -> tuple[bool, dict[str, bool]]:
+    if suite.root is None:
+        raise SystemExit(f"suite {suite.name} has no root")
+    results: dict[str, bool] = {}
+    for name in ("known-good", "known-broken"):
+        fixture = Path(suite.root) / "fixtures" / name
+        if not fixture.is_dir():
+            raise SystemExit(f"missing fixture: {fixture}")
+        workspace = Path(tempfile.mkdtemp(prefix=f"mellum-{suite.name}-{name}-"))
+        try:
+            shutil.copytree(Path(suite.root) / "base", workspace, dirs_exist_ok=True)
+            shutil.copytree(fixture, workspace, dirs_exist_ok=True)
+            passed, _ = score_workspace(workspace, suite)
+            results[name] = passed
+        finally:
+            shutil.rmtree(workspace, ignore_errors=True)
+    return results["known-good"] and not results["known-broken"], results
+
+
 def report(run: Path) -> dict:
     rows = [
         json.loads(line)
@@ -255,15 +281,19 @@ def report(run: Path) -> dict:
 
 
 def score(run: Path, suite: Suite) -> tuple[bool, str]:
-    workspace = Path(run) / "workspace"
-    target = workspace / "tests"
+    return score_workspace(Path(run) / "workspace", suite)
+
+
+def score_workspace(workspace: Path, suite: Suite) -> tuple[bool, str]:
+    workspace = Path(workspace)
+    target = workspace / "grader_tests"
     if target.exists():
         shutil.rmtree(target)
     shutil.copytree(suite.tests, target)
     command = (
-        ["uv", "run", "--with", "pytest", "pytest", "-q", "-rA", "tests"]
+        ["uv", "run", "--with", "pytest", "pytest", "-q", "-rA", "grader_tests"]
         if (workspace / "pyproject.toml").is_file()
-        else ["uvx", "pytest", "-q", "-rA", "tests"]
+        else ["uvx", "pytest", "-q", "-rA", "grader_tests"]
     )
     result = subprocess.run(
         command, cwd=workspace, capture_output=True, text=True, check=False,
@@ -391,6 +421,9 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
     run = sub.add_parser("run", help="run one eval suite or all of them")
+    qualify_p = sub.add_parser("qualify", help="prove a suite's grader both ways")
+    qualify_p.add_argument("--suite", required=True)
+    qualify_p.add_argument("--suites-dir", type=Path, default=SUITES)
     run.add_argument("--suite", required=True, help="a suite name, or all")
     run.add_argument("--suites-dir", type=Path, default=SUITES)
     run.add_argument("--runs-dir", type=Path, default=RUNS)
@@ -400,6 +433,14 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--repeat", type=int, default=1)
     run.add_argument("--deadline", type=float, default=600)
     args = parser.parse_args(argv)
+
+    if args.command == "qualify":
+        suite = load_suite(args.suites_dir, args.suite)
+        ok, results = qualify(suite)
+        for name, passed in results.items():
+            print(f"{name}: {'PASS' if passed else 'FAIL'}")
+        print(f"{suite.name}: {'QUALIFIED' if ok else 'NOT QUALIFIED'}")
+        return 0 if ok else 1
 
     if args.repeat < 1:
         parser.error("--repeat must be at least 1")
