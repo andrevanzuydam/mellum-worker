@@ -10,6 +10,7 @@ results from a sweep's out dir, plus the newest worker trace's recent turns.
 import glob
 import json
 import os
+import shlex
 import subprocess
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -286,6 +287,34 @@ def launch_run(n, model):
     return {"ok": True, "rung": n, "model": model, "out": relout, "mediated": mediated}
 
 
+def launch_all(model):
+    """Run the whole ladder 1-12 (one pass each) as a single background sweep,
+    writing into OUT with the live feed loaded for the dashboard."""
+    if RUNNING.get("all") and RUNNING["all"].poll() is None:
+        return {"ok": False, "error": "a full ladder run is already going"}
+    relout = os.path.relpath(OUT, REPO)
+    model = model or DEFAULT_MODEL
+    feed_ext = os.path.join(REPO, "extensions", "mellum-feed.ts")
+    log = open(os.path.join(OUT, "dash-run-all.log"), "w") if os.path.isdir(OUT) else subprocess.DEVNULL
+    inner = (
+        "for rung in 1 2 3 4 5 6 7 8 9 10 11 12; do "
+        "uv run python -m ladder.run_ladder --mode direct --profile tuned --repeat 1 "
+        "--thinking off --guards --rung $rung --model-id {model} --pi-extension {feed} "
+        "--out ../{out} || true; done"
+    ).format(model=shlex.quote(model), feed=shlex.quote(feed_ext), out=shlex.quote(relout))
+    proc = subprocess.Popen(
+        ["bash", "-c", inner], cwd=os.path.join(REPO, "ladder"),
+        stdout=log, stderr=subprocess.STDOUT, env=os.environ.copy(),
+    )
+    RUNNING["all"] = proc
+    return {"ok": True, "model": model, "out": relout, "rungs": "1-12"}
+
+
+def full_run_active():
+    p = RUNNING.get("all")
+    return bool(p and p.poll() is None)
+
+
 def payload():
     # Prefer the agnostic feed (mellum-feed.ts); fall back to scraping the
     # newest trace for runs that don't load the feed extension (e.g. the sweep).
@@ -297,6 +326,7 @@ def payload():
         "prompt": latest_prompt(),
         "intel": intel_events(),
         "running": running_status(),
+        "runningAll": full_run_active(),
         "model": DEFAULT_MODEL,
         "control": read_control(),
     }
@@ -361,6 +391,8 @@ class Handler(BaseHTTPRequestHandler):
             self._send(json.dumps(write_override(data)).encode(), "application/json")
         elif self.path.startswith("/control"):
             self._send(json.dumps(write_control(data.get("state"))).encode(), "application/json")
+        elif self.path.startswith("/run-all"):
+            self._send(json.dumps(launch_all(data.get("model"))).encode(), "application/json")
         elif self.path.startswith("/run"):
             self._send(json.dumps(launch_run(data.get("rung"), data.get("model"))).encode(), "application/json")
         else:

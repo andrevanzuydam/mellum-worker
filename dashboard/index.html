@@ -102,12 +102,12 @@
     fetch("/rung?n=" + n).then((r) => r.json()).then((d) => (selected.value = d)).catch(() => {});
   };
 
-  // Start a mediated run for a rung from the dashboard (AgentClinic rungs 6-12).
-  const startRun = (n) => {
-    runMsg.value = "starting rung " + n + "…";
-    fetch("/run", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ rung: n }) })
+  // Start one full pass of the whole ladder (1-12) from the dashboard.
+  const startAll = () => {
+    runMsg.value = "starting the full ladder…";
+    fetch("/run-all", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })
       .then((r) => r.json())
-      .then((d) => { runMsg.value = d.ok ? ("rung " + d.rung + " running — " + d.model) : ("could not start: " + d.error); })
+      .then((d) => { runMsg.value = d.ok ? ("running the full ladder (1-12) — " + d.model) : ("could not start: " + d.error); })
       .catch(() => (runMsg.value = "could not reach the server"));
   };
 
@@ -159,10 +159,7 @@
       </div>
       <h2>Start a run — ${() => data.value.model || "the configured model"}</h2>
       <div class="runbar">
-        ${() => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((n) => {
-          const on = (data.value.running || []).includes(n);
-          return html`<button class=${"chip" + (on ? " on" : "")} @click=${() => startRun(n)} title=${n <= 5 ? "coding rung (un-mediated)" : "AgentClinic rung (mediated)"}>${on ? "running " : "run "}${n}${on ? "…" : ""}</button>`;
-        })}
+        <button class=${() => "chip" + (data.value.runningAll ? " on" : "")} @click=${() => { if (!data.value.runningAll) startAll(); }}>${() => data.value.runningAll ? "running the full ladder…" : "▶ Start full ladder run (1-12)"}</button>
         <span class="msg">${() => runMsg.value}</span>
       </div>
       <h2>Rungs</h2>
