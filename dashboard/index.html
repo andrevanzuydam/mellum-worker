@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ladder Monitor</title>
+<style>
+  :root { color-scheme: dark; --bg:#0f1115; --card:#1a1e26; --mut:#8b93a7; --line:#2a2f3a;
+          --pass:#1f7a3d; --fail:#8a2b2b; --run:#8a6d1f; --idle:#2a2f3a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:#e7e9ee; font:15px/1.5 -apple-system,system-ui,sans-serif; }
+  header { display:flex; align-items:baseline; gap:.75rem; padding:16px; border-bottom:1px solid var(--line); }
+  header h1 { font-size:1.1rem; margin:0; } .ts { color:var(--mut); font-variant-numeric:tabular-nums; }
+  main { padding:16px; max-width:1100px; margin:0 auto; }
+  h2 { font-size:.8rem; text-transform:uppercase; letter-spacing:.08em; color:var(--mut); margin:1.25rem 0 .5rem; }
+  .grid { display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); }
+  .cell { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--idle); border-radius:10px; padding:12px; }
+  .cell.pass { border-left-color:var(--pass); } .cell.fail { border-left-color:var(--fail); }
+  .cell.run { border-left-color:var(--run); }
+  .cell .r { color:var(--mut); font-size:.8rem; } .cell .p { font-size:1.4rem; font-weight:600; font-variant-numeric:tabular-nums; }
+  .cell .w { color:var(--mut); font-size:.8rem; }
+  .feed { display:flex; flex-direction:column; gap:8px; }
+  .turn { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
+  .turn code { color:#7fd1ff; font-size:.82rem; word-break:break-all; }
+  .turn p { margin:.35rem 0 0; color:var(--mut); font-size:.85rem; }
+  .empty { color:var(--mut); }
+  .prompt { display:flex; flex-direction:column; gap:8px; }
+  .pblock { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:8px 10px; }
+  .plabel { display:block; color:var(--mut); font-size:.72rem; text-transform:uppercase; letter-spacing:.06em; margin-bottom:.25rem; }
+  .pblock pre { margin:0; white-space:pre-wrap; word-break:break-word; font:12.5px/1.45 ui-monospace,monospace; color:#d7dbe4; }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/tina4js@1.5.2/dist/tina4js.min.js"></script>
+</head>
+<body>
+<div id="app"></div>
+<script>
+  const { signal, html, sse } = Tina4;
+  const data = signal({ updatedAt: "—", sweep: [], active: [] });
+  const RUNGS = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+  const apply = (raw) => {
+    try { data.value = typeof raw === "string" ? JSON.parse(raw) : raw; } catch (e) {}
+  };
+
+  // Subscribe to the live feed. Prefer the client's SSE module; fall back to
+  // the browser's EventSource if the IIFE build doesn't expose it.
+  try {
+    if (sse && typeof sse.connect === "function") {
+      const stream = sse.connect("/events");
+      if (typeof stream.pipe === "function") stream.pipe(data, (msg) => (typeof msg === "string" ? JSON.parse(msg) : msg));
+      else if (typeof stream.on === "function") stream.on("message", (m) => apply(m));
+      else new EventSource("/events").onmessage = (e) => apply(e.data);
+    } else {
+      new EventSource("/events").onmessage = (e) => apply(e.data);
+    }
+  } catch (e) {
+    new EventSource("/events").onmessage = (e) => apply(e.data);
+  }
+
+  const cell = (n) => {
+    const s = (data.value.sweep || []).find((x) => x.rung === n);
+    const status = !s ? "idle" : s.n < 3 ? "run" : s.pass === s.n ? "pass" : "fail";
+    const label = !s ? "—" : s.pass + "/" + s.n;
+    const wall = s && s.wall ? s.wall + "s" : "";
+    return html`<div class=${"cell " + status}>
+      <div class="r">rung ${n}</div><div class="p">${label}</div><div class="w">${wall}</div>
+    </div>`;
+  };
+
+  const app = html`
+    <header>
+      <h1>Ladder Monitor</h1>
+      <span class="ts">updated ${() => data.value.updatedAt}</span>
+    </header>
+    <main>
+      <h2>Rungs</h2>
+      <div class="grid">${() => RUNGS.map(cell)}</div>
+      <h2>Prompt</h2>
+      <div class="prompt">${() => {
+        const p = data.value.prompt;
+        if (!p) return html`<div class="empty">no prompt captured yet — run with the feed extension</div>`;
+        return html`
+          <div class="pblock"><span class="plabel">system</span><pre>${p.system}</pre></div>
+          <div class="pblock"><span class="plabel">task / injected</span><pre>${p.task}</pre></div>`;
+      }}</div>
+      <h2>Live worker feed</h2>
+      <div class="feed">${() => {
+        const turns = data.value.active || [];
+        if (!turns.length) return html`<div class="empty">waiting for a worker run with the feed extension…</div>`;
+        return turns.slice().reverse().map((t) => html`<div class="turn">
+          ${t.call ? html`<code>${t.call}</code>` : null}
+          ${t.think ? html`<p>${t.think}</p>` : null}
+        </div>`);
+      }}</div>
+    </main>
+  `;
+  document.getElementById("app").appendChild(app);
+</script>
+</body>
+</html>

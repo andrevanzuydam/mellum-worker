@@ -6,6 +6,17 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A live worker observability + control set (agnostic Pi extensions, loaded via
+  `--pi-extension`, each self-contained — Node + Pi hooks, no framework coupling):
+  `extensions/mellum-feed.ts` emits an NDJSON feed of the worker's turns, tool
+  calls and the prompts it was sent; `extensions/mellum-replay.ts` adds a
+  `/replay <adjustment>` that re-sends the last captured prompt to the model
+  with a slight system-prompt tweak; `extensions/mellum-control.ts` holds the
+  worker at the turn boundary while paused and resumes on play. A local
+  `dashboard/` (a dependency-free `serve.py` relay over SSE + a reactive page)
+  shows the rung grid, the prompts fed to the model, and the live feed. Pure
+  cores are unit-tested; the live Pi-driving is verified separately.
+
 - `extensions/mellum-ncm.ts` — a next-concept-modelling verify gate, loaded
   with `--pi-extension` (not shipped by default). At settle it re-runs the named
   acceptance test and, while it is red, sends the worker back naming the **unmet
