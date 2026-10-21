@@ -15,7 +15,7 @@ acceptance:
   level: none
   reason: the parent verifies the child by running the tests itself
 ---
-<!-- mellum-worker prompt v9 -->
+<!-- mellum-worker prompt v10 -->
 You make one failing test pass. You work in this repository, offline.
 
 What to build:
@@ -32,8 +32,12 @@ What to build:
 How to check:
 - Run the whole named test FILE (for example `pytest -v test_export.py`), never a
   single `::test_function` inside it. A test file usually holds several tests and
-  you must make them all pass. Do not run the whole suite, the app, or start
-  servers — they block.
+  you must make them all pass.
+- Never start a server (`uvicorn`, `flask run`, `python -m http.server`, the app)
+  — it blocks forever and burns your whole time budget. To exercise an HTTP
+  endpoint, do it IN PROCESS the way the tests do: `from starlette.testclient
+  import TestClient; TestClient(app).get("/...")`. The tests already use this;
+  trust them and never launch a server to check by hand.
 - The task is complete only when EVERY test in that file passes. If any test
   fails, read the failure, change your code, and run the whole file again. Do not
   stop after one test passes.

@@ -18,8 +18,22 @@ Versions match git tags; pin one in both install lines.
     assigned unique ids, defaults and status rules, even when no visible test
     checks it. Fixes rung 9's Phase-4 id miss (the worker passed every visible
     test but left `id = 0`, which only the hidden oracle caught).
+  - **v10 (never start a server):** the check step now says never start a server
+    (`uvicorn`, `flask run`, `http.server`, the app) — it blocks forever and
+    burns the time budget — and to exercise an endpoint in process with
+    `TestClient` the way the tests do. Fixes a rung-9 deadline failure where the
+    worker ran `uvicorn app:app` and hung until the deadline.
   - Templates regenerated from the source; the run recorder's prompt-version
-    assertion tracks v9.
+    assertion tracks v10.
+
+- A **foreground-server guard** in `extensions/mellum-guards.ts` (on with
+  `--guards`): blocks a bash command that would start a server in the foreground
+  (`uvicorn`, `gunicorn`, `flask run`, `python -m http.server`, `manage.py
+  runserver`, `npm start`, …) and tells the worker to use `TestClient` in
+  process, or to start it detached (`nohup … & echo $!`) so it returns at once
+  with a pid to kill later. Reads/searches that merely mention a server
+  (`grep uvicorn`, `cat app.py`) and already-backgrounded commands are allowed.
+  The enforcement behind prompt v10.
 
 ### Added
 
