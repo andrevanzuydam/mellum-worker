@@ -132,12 +132,13 @@ test("the first findings lesson follows the six steps and names its badge", () =
   assert.match(page("lessons/index.md"), /primary-agent\.md/);
 });
 
-test("the Lessons index lists Paul's ten lessons, one phase each", () => {
+test("the Lessons index is one list with author tags", () => {
   const index = page("lessons/index.md");
   const items = index.match(/^\d+\. \*\*/gm) ?? [];
-  assert.equal(items.length, 10);
-  assert.match(index, /LC\.10/);
-  assert.match(index, /LC\.19/);
+  assert.equal(items.length, 20);
+  assert.match(index, /\*\((Paul|Andre)\)\*$/m);
+  assert.equal((index.match(/\*\(Paul\)\*/g) ?? []).length, 10);
+  assert.equal((index.match(/\*\(Andre\)\*/g) ?? []).length, 10);
 });
 
 test("the ditch shows a claim that did not survive a check", () => {

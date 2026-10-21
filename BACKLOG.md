@@ -204,7 +204,7 @@ shows it and the guard, fact or spec shape that answers it. `learn` already
 counts seven of these from run records; the page adds the ladder's and links
 `docs/ladder/`, so a lesson links one pathology instead of restating it.
 *Reopens when* the ditch lesson names more than the page covers, or a second
-lesson needs the same explanation.
+lesson needs the same explanation. Taken as LC.7A on 2026-10-21; the entry stays until it lands.
 
 **Glossary of the eval terms.** One page that fixes the measurement vocabulary —
 session, prompt, turn, suite, rung, arm, screen, reference run — so lessons,

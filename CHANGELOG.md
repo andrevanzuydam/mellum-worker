@@ -6,6 +6,15 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A follow-up digest for Andre's PRs #3 and #4: ten potential lessons
+  (goalposts, the mediated test, v9, mediation as a completeness gate, rungs
+  10–12, context, rethink, documents and images, live control, next-concept
+  verify), each badged, with support items listed separately.
+- The Lessons index is one recommended list of twenty, each with a one-line
+  description and an italic author tag, *(Paul)* or *(Andre)*.
+- A GitHub Actions workflow builds the Zensical site on pull requests and
+  deploys it to Pages from `main`.
+
 - Paul's finding "A short prompt, not a procedure": prompt v5 at 643
   characters, with the A2/A3 removals and the A4 line that came back after a
   14/15, on cited oMLX records.
