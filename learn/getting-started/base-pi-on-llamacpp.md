@@ -13,14 +13,16 @@ By the end of this lesson, a machine that had no Python runs a local Mellum
 and answers a prompt through base Pi — Pi with no worker, no extensions and
 none of your own settings. It takes a few commands and one large download.
 
-Everything runs from a clone of `mellum-worker`, because the settings, the
-Pi profile and, in the next lesson, the harness are files in this repo.
+Everything runs from a clone of `mellum-worker`, because the settings and the
+Pi profile are files in this repo; later lessons add the harness.
 
 ## What you need
 
-- A terminal. The commands are written for macOS on Apple Silicon, where this
-  repo has smoke-tested the backend; Linux and Windows use llama.cpp's own
-  releases and the same commands.
+- A terminal. The commands below are for macOS on Apple Silicon, where this
+  repo has smoke-tested the backend. On Linux and Windows, install
+  `llama-server` from the llama.cpp releases and put it on `PATH`; the `uv`,
+  `uvx` and Pi commands are the same, with the PowerShell profile line in
+  step 7.
 - About 10 GB free: the `Q4_K_M` weights are 8.1 GB, and the server peaked at
   8.38 GB with a 50,000-token context.
 
@@ -69,8 +71,9 @@ llama-server --version
 ```
 
 Linux builds from source or uses a release binary; Windows uses a release
-binary. Whichever way, `llama-server` must be on `PATH` — the next command
-says so plainly if it is not.
+binary from the [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases).
+Whichever way, `llama-server` must be on `PATH` — the next command says so
+plainly if it is not.
 
 ## 4. Fetch the tools a later lesson grades with
 
@@ -126,9 +129,13 @@ PI_CODING_AGENT_DIR=$PWD/learn/code/profile pi -p \
 
 What those flags buy you: your own `~/.pi` is neither read nor written, the
 repo's `AGENTS.md` does not load, and no extension or skill is discovered.
-The run is base Pi on the model, which is what the next lesson measures.
+The run is base Pi on the model: the baseline the next lessons build on.
 `--no-approve` is there because the profile is the only configuration this
 run should trust.
+
+On Windows PowerShell, set the profile with
+`$env:PI_CODING_AGENT_DIR = "$PWD\learn\code\profile"` and keep the same
+`pi` arguments.
 
 ## 8. Stop it
 
@@ -139,5 +146,6 @@ uv run scripts/backend.py stop
 ## What you have
 
 A local Mellum on llama.cpp, a one-command chat, and base Pi answering
-through a profile that lives in the repo. Next, in phase LC.3: make a mini
-harness that runs base Pi on tasks and scores it.
+through a profile that lives in the repo. Next, [The ditch](ditch.md) gives
+base Pi an open-ended AgentClinic session and checks its final report; the
+harness that makes that repeatable comes after it.

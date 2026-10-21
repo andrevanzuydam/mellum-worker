@@ -116,6 +116,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- Lesson 1 now points to The ditch as the next lesson, gives Linux and Windows
+  install and PowerShell profile guidance instead of treating the macOS
+  commands as universal, and drops the internal phase id from its ending.
+
 - The harness lesson now explains `n=1` and how to run more sessions with
   `--repeat`, including the `3/3 sessions passed` summary. It also points at
   `learn/code/suites/easy/` instead of the retired task directory.
