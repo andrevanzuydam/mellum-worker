@@ -7,10 +7,10 @@ Versions match git tags; pin one in both install lines.
 ### Added
 
 - The hard eval suite, `learn/code/suites/hard`: the whole AgentClinic build
-  from phase 1, with a user-story roadmap, eight phases (archive/audit, a
-  database report, the large-file sum, and a visits report with filtering,
-  grouping and sorting) and five schema migrations. Hidden graders cover
-  phases 1–8 and the migrations; `qualify --suite hard` passes.
+  from phase 1, with a user-story roadmap, seven phases (archive/audit, a
+  database report, and a visits report with filtering, grouping and sorting)
+  and five schema migrations. Hidden graders cover phases 1–7 and the
+  migrations; `qualify --suite hard` passes.
 
 - The medium eval suite, `learn/code/suites/medium`: AgentClinic's four phases
   as four requests, with a user-story roadmap, hidden phase graders 1–4,
@@ -116,7 +116,7 @@ Versions match git tags; pin one in both install lines.
   and hard differ, how qualification works, the grading and static gates,
   out-of-repo runs and the canary, and how to read the trace. It now spells
   out what hard adds after medium's four phases: archive/audit, the tickets
-  report, the large-file sum, the visits report, and the five migrations.
+  report, the visits report, and the five migrations.
 
 - The harness runs **eval suites**, not tasks: `learn/code/suites/`, `run --suite`,
   with per-suite prompts, hidden graders and expected test IDs. Runs live under

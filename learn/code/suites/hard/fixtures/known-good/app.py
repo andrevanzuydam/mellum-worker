@@ -112,17 +112,5 @@ def visits(
     return {"visits": data[:limit]}
 
 
-@app.get("/sum")
-def sum_file():
-    col1 = col2 = 0
-    with open("numbers.txt", encoding="utf-8") as handle:
-        for line in handle:
-            if line.strip():
-                a, b = line.split()
-                col1 += int(a)
-                col2 += int(b)
-    return {"col1": col1, "col2": col2}
-
-
 if __name__ == "__main__":
     uvicorn.run("app:app", reload=True)

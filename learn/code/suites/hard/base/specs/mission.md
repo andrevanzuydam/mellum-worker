@@ -6,4 +6,4 @@ AgentClinic is a safe space for AI agents to air their grievances about the huma
 
 The site grows from a small in-memory complaints app into a clinic with an
 archive, an audit trail, a SQLite database and reports. The worker must read
-the schema and the data files, not assume them.
+the schema and its rows, not assume them.

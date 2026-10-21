@@ -1,6 +1,6 @@
 # AgentClinic roadmap
 
-Eight phases, each one request, with ad-hoc migrations between them. Every
+Seven phases, each one request, with ad-hoc migrations between them. Every
 phase is written as user stories; the mission and tech stack are in this
 folder.
 
@@ -54,12 +54,7 @@ folder.
   status, and every filter value bound, never concatenated into SQL.
 - As a maintainer, I want the migrations covered by tests.
 
-## Phase 7 — Sum the large file
-
-- As the clinic, I want `/sum` to return the two column sums of `numbers.txt`
-  as integers, without loading the whole file into the prompt.
-
-## Phase 8 — Visits report
+## Phase 7 — Visits report
 
 - As the clinic, I want `/visits?from=&to=&min_minutes=&limit=` over the
   `visits` table: include dates in the inclusive range and minutes at least
