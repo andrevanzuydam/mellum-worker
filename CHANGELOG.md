@@ -4,6 +4,15 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Changed
+
+- Worker prompt v7 → v8: the "how to check" step now tells the worker to run the
+  **whole named test file** (e.g. `pytest -v test_export.py`) and pass **every**
+  test in it, never a single `::test_function`, and not to stop after one test
+  passes. This fixes a self-narrowing habit where the worker ran the file, then
+  narrowed pytest to the one test it was fixing and self-certified on that subset
+  — the cause of the rungs 4/5 failures. Templates regenerated from the source.
+
 ### Added
 
 - Ladder rungs 10–12 (AgentClinic phases 5–7): rung 10 Archive & Audit (with a

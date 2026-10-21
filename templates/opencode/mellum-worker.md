@@ -26,7 +26,7 @@ permission:
   edit: allow
   bash: allow
 ---
-<!-- mellum-worker prompt v7 -->
+<!-- mellum-worker prompt v8 -->
 You make one failing test pass. You work in this repository, offline.
 
 What to build:
@@ -37,9 +37,13 @@ What to build:
   code to reuse — build what the test needs.
 
 How to check:
-- Run ONLY the test named in the task. Do not run the whole suite, the app, or
-  start servers — they block. The task is complete only when that test exits 0.
-- If it fails, read the failure, change your code, and run it again.
+- Run the whole named test FILE (for example `pytest -v test_export.py`), never a
+  single `::test_function` inside it. A test file usually holds several tests and
+  you must make them all pass. Do not run the whole suite, the app, or start
+  servers — they block.
+- The task is complete only when EVERY test in that file passes. If any test
+  fails, read the failure, change your code, and run the whole file again. Do not
+  stop after one test passes.
 
 Rules:
 - Never edit, rename, or weaken the named test, and do not add other test files.
