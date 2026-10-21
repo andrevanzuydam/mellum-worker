@@ -11,9 +11,9 @@ backends: [llamacpp]
 
 Lesson 2 made one isolated run. This one runs an **eval suite**: a project
 with a mission, a tech stack and a roadmap, a sequence of prompts, and a
-hidden grader. The easy suite is one AgentClinic phase from a hinted
-roadmap; the medium suite is the four phases as four requests. Hard, with a
-database and migrations, is next.
+hidden grader. Easy is one AgentClinic phase from a hinted roadmap; medium
+is the four phases as four requests; hard adds the archive, a SQLite report,
+a large-file sum and five schema migrations.
 
 ## Run the suite
 
@@ -22,17 +22,17 @@ uv run scripts/backend.py start
 uv run learn/code/harness.py run --suite all --grade
 ```
 
-`all` expands to the suites in `learn/code/suites/`. Each suite ships
-`mission.md`, `tech-stack.md` and a four-phase `roadmap.md`. Easy gives one
-prompt for phase 1; medium gives four prompts, one per phase, and no later
-phase is visible until its request. The hidden graders are copied in only
-after the session ends.
+`all` expands to the suites in `learn/code/suites/`. Each ships `mission.md`,
+`tech-stack.md` and a `roadmap.md`. Easy gives one prompt for phase 1; medium
+gives four, one per phase; hard gives eight, interleaving three feature phases
+with five migrations against `data.db`. No later step is visible until its
+request, and the hidden graders are copied in only after the session ends.
 
 One line per suite, then a total:
 
 ```text
 easy: PASS (n=1; run /var/folders/...; 4 requests, 3 tool calls, 0 tool errors)
-2/2 suites passed
+3/3 suites passed
 ```
 
 A `FAIL` does not stop the run; the session stays on disk and its test tail is
