@@ -6,6 +6,16 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `extensions/mellum-files.ts` — document understanding for PDF, Word (.docx)
+  and Excel (.xlsx), plus plain text. Office files are read with a small
+  pure-Node zip reader (the central directory, so Office's streamed files work)
+  and `node:zlib`; PDF text is pulled best-effort from the page content streams
+  (FlateDecode inflated, text operators read). No npm dependency and no external
+  tool. Extracted text is indexed into the `mellum-context` store so a large
+  document becomes searchable context. A scanned, image-only PDF has no text to
+  pull — that routes to `mellum-vision`. Command `/read-file <path>` and a
+  model-callable `read_document` tool. Self-contained; pure core unit-tested.
+
 - `extensions/mellum-rethink.ts` — a skeptical "stop and pause, rethink" gate.
   It parses the claims a human makes in the task (the tests already pass, a file
   was already changed), checks the cheap, checkable ones against ground truth
