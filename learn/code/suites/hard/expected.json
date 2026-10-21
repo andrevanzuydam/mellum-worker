@@ -31,5 +31,6 @@
   "grader_tests/test_migrations.py::test_resolved_at_is_backfilled",
   "grader_tests/test_migrations.py::test_open_tickets_view",
   "grader_tests/test_migrations.py::test_note_column",
-  "grader_tests/test_migrations.py::test_schema_version"
+  "grader_tests/test_migrations.py::test_all_migrations_are_recorded",
+  "grader_tests/test_migrations.py::test_rerunning_migrations_is_a_noop"
 ]

@@ -61,3 +61,13 @@ folder.
   `min_minutes`; group by agent; report count, total minutes and average
   minutes; sort by total minutes descending, then agent name ascending; apply
   the limit. Counts and totals are integers; averages are floats.
+
+## Between the phases
+
+Four ad-hoc migration requests, each a function in `migrations.py` in the
+`agentclinic` set, applied with `sqlite-utils migrate data.db`:
+
+- `add_tickets_status_archived_index` — the `tickets(status, archived_at)` index;
+- `backfill_resolved_at` — a nullable `resolved_at`, backfilled for resolved rows;
+- `create_open_tickets_view` — the `open_tickets` view;
+- `add_tickets_note` — a nullable `note` column.
