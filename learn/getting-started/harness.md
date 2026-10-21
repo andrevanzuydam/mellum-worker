@@ -69,6 +69,6 @@ thing, or wrote something the tests could not import.
 ## What this does not measure
 
 The numbers here are for you while you learn. They are not preregistered, they
-run on one machine, and they do not replace `docs/ladder/`. Lesson 3 adds a
-medium and a hard task and reads the traces; the reference run on llama.cpp is
-a separate phase.
+run on one machine, and they do not replace `docs/ladder/`. Lesson 4 runs the eval
+suites and reads the traces; the reference run on llama.cpp is a separate
+phase.

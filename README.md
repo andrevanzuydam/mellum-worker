@@ -299,9 +299,9 @@ harness, with every claim labelled by the evidence behind it:
    session, and a final report that does not survive being checked.
 3. [Make a mini harness](learn/getting-started/harness.md) — one task, one
    fresh directory, one score line.
-4. [A suite and the telemetry](learn/getting-started/suite.md) — three tasks
-   scored, graded with `ruff`, `pyrefly` and `complexipy`, and read from the
-   run's trace.
+4. [Eval suites and the telemetry](learn/getting-started/suite.md) — three
+   AgentClinic suites with hidden graders and known-good/broken qualification,
+   graded with `ruff`, `pyrefly` and `complexipy`, and read from the trace.
 5. [The worker extension](learn/getting-started/worker-extension.md) — what a
    Pi extension is, and `/mellum` as the vehicle the remedies improve.
 

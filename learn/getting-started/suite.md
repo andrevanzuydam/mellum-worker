@@ -1,5 +1,5 @@
 ---
-title: A suite and the telemetry
+title: Eval suites and the telemetry
 track: getting-started
 position: 4
 prerequisites: [getting-started/harness]
@@ -7,70 +7,113 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# A suite and the telemetry
+# Eval suites and the telemetry
 
-Lesson 2 made one isolated run. This one runs an **eval suite**: a project
-with a mission, a tech stack and a roadmap, a sequence of prompts, and a
-hidden grader. Easy is one AgentClinic phase from a hinted roadmap; medium
-is the four phases as four requests; hard adds the archive, a SQLite report,
-a large-file sum and five schema migrations.
+Lesson 3 made one isolated run. This one runs **eval suites**: whole projects
+the model has to build, with a mission, a tech stack, a roadmap, a sequence of
+prompts, and a hidden grader. You run them, read the score, and read the trace
+to see why.
 
-## Run the suite
+## What an eval suite is
+
+A suite is a directory under `learn/code/suites/`:
+
+```text
+easy/
+  base/            the project the session starts from
+    specs/mission.md      what the app is for, and what it is not
+    specs/tech-stack.md   languages, libraries, database, conventions
+    specs/roadmap.md      the phases, or the requests, in order
+    AGENTS.md             the ## Mellum facts: test command, write list
+  prompts/         one file per request, sent in order
+  grader/          the hidden tests, copied in only after the session
+  expected.json    the test IDs the grader must report as PASSED
+  fixtures/        known-good and known-broken, for qualification
+  grader/canary    a marker that tells you the model touched the grader
+```
+
+The base is the **constitution**: mission, tech stack and roadmap. The prompts
+do not repeat those rules; a model that never reads the project's documents
+fails because of that, not because the harness withheld something.
+
+## The three suites
+
+| Suite | Starts from | Requests | Graded on |
+| --- | --- | --- | --- |
+| **easy** | an empty AgentClinic project, with a hinted four-phase roadmap | one: phase 1 | the phase-1 grader |
+| **medium** | an empty AgentClinic project, with a user-story roadmap | four: one per phase | phases 1–4 |
+| **hard** | AgentClinic phases 1–4 already solved, with `data.db` and `numbers.txt` | eight: archive, five migrations, the database report, the large-file sum | phases 5–7 and the migrations |
+
+The hard suite is the one that punishes assumptions: the database schema has
+to be discovered, `archived_at IS NOT NULL` is not the same as
+`status = 'archived'`, and `numbers.txt` is larger than the context window.
+
+## Run and qualify
 
 ```bash
 uv run scripts/backend.py start
 uv run learn/code/harness.py run --suite all --grade
 ```
 
-`all` expands to the suites in `learn/code/suites/`. Each ships `mission.md`,
-`tech-stack.md` and a `roadmap.md`. Easy gives one prompt for phase 1; medium
-gives four, one per phase; hard gives eight, interleaving three feature phases
-with five migrations against `data.db`. No later step is visible until its
-request, and the hidden graders are copied in only after the session ends.
-
 One line per suite, then a total:
 
 ```text
 easy: PASS (n=1; run /var/folders/...; 4 requests, 3 tool calls, 0 tool errors)
-3/3 suites passed
+medium: PASS (n=1; run /var/folders/...; 8 requests, 7 tool calls, 1 tool errors)
+hard: FAIL (n=1; run /var/folders/...; 12 requests, 10 tool calls, 2 tool errors)
+2/3 suites passed
 ```
 
 A `FAIL` does not stop the run; the session stays on disk and its test tail is
-printed to stderr. A session whose trace touches the grader is
-`CONTAMINATED`, not a pass.
+printed to stderr. `--repeat 2` runs a suite twice and states its n.
 
-`uv run learn/code/harness.py qualify --suite easy` proves the grader in both
-directions: known-good passes, known-broken fails.
+Before trusting a suite, prove its grader in both directions:
 
-## The three graders
-
-`--grade` runs the Validation step's static analysis on the model's files,
-after the child exits and before the tests are copied in, so a test file can
-never change the result:
-
-- **`ruff`** — correctness rules `F,E9`: undefined names, unused imports. A finding fails the suite.
-- **`pyrefly`** — types, advisory, with a generated `pyrefly.toml` (`project-includes`
-  for the workspace, `tests/**` excluded). A bare path reports no errors, so
-  the config is not optional.
-- **`complexipy`** — cognitive complexity, failing above 10; a finding fails the suite.
-
-They print beside the score, not instead of it:
-
-```text
-medium: PASS (run ...; 7 requests, 6 tool calls, 1 tool errors)
-ruff: PASS
-pyrefly: PASS
-complexipy: PASS
+```bash
+uv run learn/code/harness.py qualify --suite hard
+known-good: PASS
+known-broken: FAIL
+hard: QUALIFIED
 ```
 
-A `FAIL` here is a finding about the code, not about the tests: the model can
-produce something that passes its tests and still has an unused import, a type
-lie or a function too tangled to read.
+`known-good` is a reference solution; `known-broken` is the same project with
+one thing wrong. A grader that cannot tell them apart is not a grader.
+
+## How a session is graded
+
+1. The prompts are sent, in order, in one isolated session.
+2. The child exits; only then are the hidden graders copied into the run.
+3. pytest runs it. Every test ID in `expected.json` must appear as `PASSED`;
+   a missing test is a finding, not a silent pass.
+4. `--grade` adds static analysis on the model's files, before the tests are
+   copied in:
+   - **`ruff`** — correctness rules `F,E9` (undefined names, unused imports);
+     a finding fails the session.
+   - **`complexipy`** — cognitive complexity above 10; a finding fails the
+     session.
+   - **`pyrefly`** — types, advisory. It reports, it does not fail the session.
+5. The line prints the verdict and the counts; the grader lines print beside
+   it.
+
+A failure is a finding about the code, not necessarily about the tests: a
+project can pass its hidden tests and still carry an unused import, a type
+lie, or a function too tangled to read.
+
+## Isolation and the canary
+
+Runs live under the system temp directory, not inside the repo. The Pi
+profile and the recorder are copied into the run, so nothing in the child's
+argv or environment points back at the suite. The hidden grader is not in the
+workspace while the child is running.
+
+A canary in `grader/` is the tripwire. The trace is scanned after the run; if
+the model read the canary or walked into `learn/code/suites/`, the session is
+`CONTAMINATED`, never a pass. That is detection, not confinement: it tells you
+the result cannot be trusted.
 
 ## Read the trace
 
-Every run writes `trace.jsonl` beside its workspace. Each line is one row with
-a `type`; the ones to read first:
+Every run writes `trace.jsonl` beside its workspace. The rows to read first:
 
 - `provider_request` — one turn sent to the model;
 - `tool_call` and `tool_result` — what it reached for, and whether the call
@@ -78,24 +121,23 @@ a `type`; the ones to read first:
 - `message_end` — a message, including the final reply's text;
 - `agent_settled` — the run ended.
 
-So a hard task that fails with 12 requests and 2 tool errors is telling you it
-kept going and kept hitting errors; a task that fails with 1 request and no
-tool calls wrote nothing. The counts on the score line are these rows, summed.
+A hard run that fails with 12 requests and 2 tool errors kept going and kept
+hitting errors; a run that fails with 1 request and no tool calls wrote
+nothing. The counts on the score line are these rows, summed.
 
 ## One session is not a rate
 
 A suite is a handful of sessions, and each session is one observation. The
-same task can pass next time: the model varies, and this harness runs a task
-once by default; `--repeat 2` runs the whole session again and states its n.
-Run it again before believing a difference, and still treat two or three
-sessions as a lead, not a rate. Rates come from the ladder with
-a preregistered arm, which is why findings lessons cite `docs/ladder/` and
-not these sessions.
+same project can pass next time: the model varies, and this harness runs a
+suite once by default. Run it again before believing a difference, and still
+treat two or three sessions as a lead, not a rate. Rates come from the ladder
+with a preregistered arm, which is why findings lessons cite `docs/ladder/`
+and not these sessions.
 
 ## What this does and does not say
 
-Three runs on one machine are a lead, not a rate. If easy passes and hard
-fails, the harness has shown you *where* to look — a tool error, a missing
-file, a final reply that claims success — not how often a model fails. A
-preregistered reference run on llama.cpp is the next phase; findings lessons
-cite the ladder, never these three runs.
+These suites are a teaching harness: one machine, one model, one session per
+suite. They show you *where* to look — a tool error, a missing file, a final
+reply that claims success, a test that was never collected — not how often a
+model fails. The ladder is the measuring instrument; a preregistered reference
+run on llama.cpp is what findings lessons cite.
