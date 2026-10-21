@@ -157,6 +157,17 @@ test("the worker-extension lesson names the vehicle and the shallow test", () =>
   assert.match(page("getting-started/index.md"), /worker-extension\.md/);
 });
 
+test("the second findings lesson follows the six steps and names its badge", () => {
+  const l = page("paul/short-prompt.md");
+  const heads = [...l.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
+  assert.deepEqual(heads, ["Problem", "Eval case", "Evidence of the problem",
+    "Solution", "Validation", "Interpretation"]);
+  const sections = l.split(/^## /m).slice(1);
+  sections.forEach((s, i) => assert.equal(/\*\*Badge:\*\* `cited`/.test(s), i < 5, `step ${i + 1}`));
+  assert.match(l, /weakest badge is `cited`/);
+  assert.match(page("paul/index.md"), /short-prompt\.md/);
+});
+
 test("learn/ never says tutorial or case study", () => {
   for (const p of PAGES)
     assert.doesNotMatch(page(p), /tutorial|case stud/i, p);

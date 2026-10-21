@@ -6,6 +6,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- Paul's finding "A short prompt, not a procedure": prompt v5 at 643
+  characters, with the A2/A3 removals and the A4 line that came back after a
+  14/15, on cited oMLX records.
+
 - The first findings lesson, "The primary agent is the wrong worker": the
   primary-agent baselines (8/15 bare, 10/15 with the operator profile) against
   the bounded worker (15/15), with the prefill and wall costs, on cited oMLX
