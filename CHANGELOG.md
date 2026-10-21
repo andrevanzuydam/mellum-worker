@@ -6,11 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
-- The hard eval suite, `learn/code/suites/hard`: AgentClinic phases 1–4 already
-  solved, then archive/audit, five schema migrations against `data.db`, the
-  database report, the large-file sum, and a hidden grader for all of it.
-  Its known-good reference implements phases 5–7; `qualify --suite hard`
-  passes.
+- The hard eval suite, `learn/code/suites/hard`: the whole AgentClinic build
+  from phase 1, with a user-story roadmap, eight phases (archive/audit, a
+  database report, the large-file sum, and a visits report with filtering,
+  grouping and sorting) and five schema migrations. Hidden graders cover
+  phases 1–8 and the migrations; `qualify --suite hard` passes.
 
 - The medium eval suite, `learn/code/suites/medium`: AgentClinic's four phases
   as four requests, with a user-story roadmap, hidden phase graders 1–4,

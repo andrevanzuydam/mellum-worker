@@ -1,7 +1,7 @@
 import sqlite3
 
 import uvicorn
-from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi import FastAPI, Form, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -85,6 +85,31 @@ def report():
         "archived_total_cents": int(archived_total),
         "all_time_total_cents": int(all_time),
     }
+
+
+@app.get("/visits")
+def visits(
+    from_: str = Query(..., alias="from"),
+    to: str = Query(...),
+    min_minutes: int = 0,
+    limit: int = 10,
+):
+    con = sqlite3.connect("data.db")
+    try:
+        rows = con.execute(
+            "select agent, count(*), sum(minutes), avg(minutes) from visits "
+            "where date >= ? and date <= ? and minutes >= ? group by agent",
+            (from_, to, min_minutes),
+        ).fetchall()
+    finally:
+        con.close()
+    data = [
+        {"agent": agent, "count": int(count), "total_minutes": int(total),
+         "average_minutes": float(average)}
+        for agent, count, total, average in rows
+    ]
+    data.sort(key=lambda row: (-row["total_minutes"], row["agent"]))
+    return {"visits": data[:limit]}
 
 
 @app.get("/sum")

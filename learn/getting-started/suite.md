@@ -42,7 +42,7 @@ fails because of that, not because the harness withheld something.
 | --- | --- | --- | --- |
 | **easy** | an empty AgentClinic project, with a hinted four-phase roadmap | one: phase 1 | the phase-1 grader |
 | **medium** | an empty AgentClinic project, with a user-story roadmap | four: one per phase | phases 1–4 |
-| **hard** | AgentClinic phases 1–4 already solved, with `data.db` and `numbers.txt` | eight: archive, five migrations, the database report, the large-file sum | phases 5–7 and the migrations |
+| **hard** | an empty AgentClinic project, with a user-story roadmap, `data.db` and `numbers.txt` | thirteen: eight phases, five migrations | phases 1–8, the reports and the migrations |
 
 The hard suite is the one that punishes assumptions: the database schema has
 to be discovered, `archived_at IS NOT NULL` is not the same as
