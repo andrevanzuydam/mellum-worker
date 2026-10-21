@@ -292,6 +292,7 @@ RUNGS: dict[int, Rung] = {
                 "phase-2-board",
                 "phase-3-add",
                 "phase-4-resolve-reopen",
+                "phase-5-archive",
             ),
             start=1,
         )
