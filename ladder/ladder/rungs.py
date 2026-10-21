@@ -294,6 +294,7 @@ RUNGS: dict[int, Rung] = {
                 "phase-4-resolve-reopen",
                 "phase-5-archive",
                 "phase-6-report",
+                "phase-7-sum",
             ),
             start=1,
         )
