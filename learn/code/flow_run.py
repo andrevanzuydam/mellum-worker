@@ -102,17 +102,62 @@ def run_top(task: str, *, workspace: Path, profile: Path, recorder: Path, provid
             pass
 
 
-def split_phases(task: str) -> list[str]:
-    """Split a multi-phase task into per-phase units by `## Phase` headers.
+def decompose(task: str) -> list[str]:
+    """Split a task into small, ordered units for one-at-a-time implementation.
 
-    This model (Mellum via oMLX) cannot bound its reasoning — on a big multi-phase task it
-    reasons until exhausted and emits no clean output. Feeding it ONE phase at a time keeps
-    each unit small enough that it answers reliably, the way it does on the easy suite. A
-    task with no phase headers is a single unit.
+    The model cannot bound its reasoning (`supportsReasoningEffort: false`), so a big task
+    drowns it. Split on the structure the text already has — Phase/Step headers at ANY level
+    first (so `# Phase 5` groups with `## Phase 1`), then any markdown header — so each unit is
+    small. A task with no structure stays one unit (model-splitting an unstructured wall is the
+    parked backlog item). Returns the slices in order.
     """
-    parts = re.split(r"(?m)^(?=##\s*Phase\b)", task)
-    phases = [p.strip() for p in parts if p.strip()]
-    return phases if len(phases) > 1 else [task]
+    for pat in (r"(?m)^(?=#{1,6}\s*(?:Phase|Step)\b)", r"(?m)^(?=#{1,6}\s+\S)"):
+        parts = [p.strip() for p in re.split(pat, task) if p.strip()]
+        if len(parts) > 1:
+            return parts
+    return [task]
+
+
+def phase_title(slice_text: str) -> str:
+    """A one-line title for a phase slice (its first heading, hashes stripped)."""
+    first = slice_text.lstrip().splitlines()[0] if slice_text.strip() else "task"
+    return first.lstrip("#").strip()[:80]
+
+
+ORIENT = (
+    "You are ORIENTING a build, not doing it. You are given the list of phase titles for a task "
+    "(and specs/ may be present to read). In ONE short line, state the NORTH STAR — the overall "
+    "goal of the finished app, one sentence. Output ONLY that one line: no preamble, no list, no "
+    "code, no markdown."
+)
+
+
+def run_orient(titles: str, *, workspace: Path, profile: Path, recorder: Path, provider: str,
+               model: str, trace: Path, timeout: float) -> str:
+    """Ask the model for the one-line north star from the phase titles. Best-effort + fallback."""
+    argv = [
+        "pi", *harness.FLAGS, "--provider", provider, "--model", model,
+        "--thinking", "off", "--no-session", "--tools", "read,grep,find,ls",
+        "-e", str(recorder), "--system-prompt", ORIENT,
+        f"Phase titles, in order:\n{titles}\n\nState the north star in one line.",
+    ]
+    env = {**os.environ, "PI_CODING_AGENT_DIR": str(profile), "MELLUM_TRACE_FILE": str(trace)}
+    child = subprocess.Popen(argv, cwd=workspace, env=env, start_new_session=True)
+    try:
+        child.wait(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        os.killpg(child.pid, signal.SIGKILL)
+        child.wait()
+    finally:
+        try:
+            os.killpg(child.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    for line in lr.final_text(trace).splitlines():
+        line = line.strip().lstrip("#").strip()
+        if line:
+            return line[:200]
+    return "Build the complete application described across all the phases."
 
 
 def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, model_id: str,
@@ -133,21 +178,43 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
     task = "\n\n".join(suite.prompts)
 
     # Decompose into phases and drive ONE at a time over the shared workspace, so each
-    # orchestrator run gets a small, answerable task. Within a phase, the orchestrator runs
-    # in -p mode (one agent loop) and can stall on turn 1, so we re-invoke it (it resumes
-    # from the workspace) until that phase's tests pass or the attempt budget runs out.
-    phases = split_phases(task)
-    lr.emit(f"  decomposed task into {len(phases)} phase(s)")
+    # orchestrator run gets a small, answerable task. Each phase carries a small, constant
+    # FORWARD CONTEXT — a model-determined north star, a running summary of what is already
+    # built, and the last phase's context — so a decomposed step stays grounded without ever
+    # handing the model the whole task. Within a phase the orchestrator runs in -p mode and can
+    # stall on turn 1, so we re-invoke it (it resumes from the workspace) until that phase's
+    # tests pass or the attempt budget runs out.
+    phases = decompose(task)
+    titles = [phase_title(p) for p in phases]
+    lr.emit(f"  decomposed into {len(phases)} phase(s): " + " | ".join(titles))
+    if len(phases) > 1:
+        north_star = run_orient(
+            "\n".join(f"{i}. {t}" for i, t in enumerate(titles, 1)),
+            workspace=workspace, profile=run / "profile", recorder=recorder,
+            provider=provider, model=model, trace=run / "trace-orient.jsonl",
+            timeout=min(timeout, 150.0))
+    else:
+        north_star = titles[0]
+    lr.emit(f"  north star: {north_star}")
+
     passed = False
     phase_results: list[bool] = []
+    done: list[str] = []
     for pnum, ptext in enumerate(phases, start=1):
-        ctx = "" if pnum == 1 else (
-            "\n\nEarlier phases are ALREADY implemented in this workspace — build on the existing "
-            "app.py, models.py, templates/ and tests/, keep every existing route and test working, "
-            "and do not rewrite what already passes."
-        )
-        base_msg = f"Implement the following phase for the app:\n\n{ptext}{ctx}"
-        lr.emit(f"\n========== PHASE {pnum}/{len(phases)} ==========")
+        title = titles[pnum - 1]
+        if pnum == 1:
+            base_msg = (f"NORTH STAR: {north_star}\n\n"
+                        f"YOUR TASK — phase 1 of {len(phases)}:\n\n{ptext}")
+        else:
+            base_msg = (
+                f"NORTH STAR: {north_star}\n"
+                f"PROGRESS SO FAR: already implemented and passing — {'; '.join(done)}.\n"
+                f"LAST PHASE: {done[-1]} — built, its tests pass; build on it, do not break it.\n\n"
+                f"YOUR TASK — phase {pnum} of {len(phases)}:\n\n{ptext}\n\n"
+                "Build on the existing workspace (app.py, models.py, templates/, tests/); keep "
+                "every existing route and test working, and do not rewrite what already passes."
+            )
+        lr.emit(f"\n========== PHASE {pnum}/{len(phases)}: {title} ==========")
         passed = False
         for attempt in range(attempts):
             nudge = "" if attempt == 0 else (
@@ -165,12 +232,14 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
         else:
             lr.emit(f"  phase {pnum}: tests still FAIL after {attempts} attempts — continuing")
         phase_results.append(passed)
+        if passed:
+            done.append(title)
 
     graded, _ = harness.score_workspace(workspace, suite)
     todo = (workspace / "TODO.md").exists()
     result = {
         "suite": suite_name, "visible": passed, "graded": graded, "todo": todo,
-        "phases": len(phases), "phase_results": phase_results,
+        "phases": len(phases), "phase_results": phase_results, "north_star": north_star,
         "model": model_id, "thinking": thinking, "started": started,
         "finished": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }

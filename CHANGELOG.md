@@ -6,6 +6,15 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- Smart decomposition in `flow_run`: split a task on Phase/Step headers at ANY
+  level, then any markdown header, so a multi-level spec (the hard suite's
+  `# Phase 5`–`7` under `## Phase 1`–`4`) breaks into its real phases instead of
+  one wall. Each phase carries a small, constant forward context — a
+  model-determined **north star** (a one-line orient call over the phase
+  titles), a running summary of what is already built, and the last phase's
+  context — so a decomposed step stays grounded without the model ever seeing
+  the whole task.
+
 - A `mellum-flow` extension (`extensions/mellum-flow.ts`) and its runner
   (`learn/code/flow_run.py`): the **workflow as tools the model calls**, not an
   external loop. It registers the phases as tools — `plan`, `review_plan`,
