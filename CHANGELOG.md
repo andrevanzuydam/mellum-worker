@@ -127,6 +127,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The suite baseline now shows the actual TypeScript that activates the
+  Baseline Worker: `setActiveTools`, `createGuardSet`, the request hook and the
+  guard hooks, with a link to the full extension.
+
 - The README builds the site with `uvx --with zensical-glossary zensical
   build`; a bare `zensical build` now fails because the glossary extension is
   required.

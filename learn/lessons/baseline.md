@@ -51,11 +51,45 @@ guards and the project facts.
 
 ### The code
 
-The wrapper is the invocation:
+Reduced from `extensions/mellum-worker.ts`. Activation saves the parent’s
+model and tools, switches to the worker model, narrows the tool set and
+creates the guards:
 
-```bash
-learn/code/clinic "/mellum <task>"
+```ts
+const previous = { model: ctx.model, tools: pi.getActiveTools() };
+const switched = await pi.setModel(model);
+if (!switched) return;
+saved = previous;
+pi.setActiveTools(WORKER_TOOLS);
+active = true;
+guards = createGuardSet();
 ```
+
+The request hook installs the worker prompt and filters the messages; the
+guard hook keeps the call decisions in the same extension:
+
+```ts
+pi.on("before_provider_request", (event, ctx) => {
+  if (!active) return undefined;
+  return filterForMellum(event.payload, prompt, {
+    expectMarker: interactive,
+    facts: factsBlock(spanFacts),
+  });
+});
+
+pi.on("tool_call", (event) => {
+  if (!active || !guards) return undefined;
+  return guards.toolCall(event);
+});
+
+pi.on("agent_before_settle", () => {
+  if (!active || !guards) return undefined;
+  return guards.beforeSettle();
+});
+```
+
+The full file is [`extensions/mellum-worker.ts`](https://github.com/pauleveritt/mellum-worker/blob/main/extensions/mellum-worker.ts);
+the wrapper invokes it with `learn/code/clinic "/mellum <task>"`.
 
 This is the Baseline Worker. The parts were screened by removing them one
 at a time; the screen did not support lessons for them.

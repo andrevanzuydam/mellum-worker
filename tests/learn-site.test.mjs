@@ -156,6 +156,13 @@ test("the first findings lesson follows the six steps and names its badge", () =
   assert.match(page("lessons/index.md"), /primary-agent\.md/);
 });
 
+test("the baseline shows the actual worker code", () => {
+  const l = page("lessons/baseline.md");
+  for (const text of ["extensions/mellum-worker.ts", "setActiveTools",
+    "createGuardSet"])
+    assert.ok(l.includes(text), `baseline lacks ${text}`);
+});
+
 test("the Lessons index is grouped without Basic Remedies", () => {
   const index = page("lessons/index.md");
   const items = index.match(/^\d+\. \*\*/gm) ?? [];
