@@ -164,17 +164,25 @@ def test_report_counts_the_trace(tmp_path):
     run_dir = tmp_path / "r"
     run_dir.mkdir()
     _write_trace(run_dir, [
-        {"type": "instance_start"},
+        {"type": "instance_start", "timestamp": "2026-10-21T00:00:00+00:00"},
         {"type": "provider_request", "request": 1},
         {"type": "tool_call", "toolName": "bash"},
         {"type": "tool_result", "isError": True},
-        {"type": "message_end",
+        {"type": "message_end", "timestamp": "2026-10-21T00:00:01+00:00",
          "message": {"role": "assistant",
+                     "usage": {"input": 1000, "output": 10},
                      "content": [{"type": "text", "text": "ok"}]}},
-        {"type": "agent_settled"},
+        {"type": "provider_request", "request": 2},
+        {"type": "message_end", "timestamp": "2026-10-21T00:00:02+00:00",
+         "message": {"role": "assistant",
+                     "usage": {"input": 1500, "output": 20},
+                     "content": [{"type": "text", "text": "done"}]}},
+        {"type": "agent_settled", "timestamp": "2026-10-21T00:00:02+00:00"},
     ])
     assert harness.report(run_dir) == {
-        "requests": 1, "tool_calls": 1, "tool_errors": 1, "final_reply": "ok",
+        "requests": 2, "turns": 2, "tool_calls": 1, "tool_errors": 1,
+        "final_reply": "done", "context": 1500, "output_tokens": 30,
+        "wall": 2.0,
     }
 
 
@@ -183,8 +191,43 @@ def test_report_without_text(tmp_path):
     run_dir.mkdir()
     _write_trace(run_dir, [{"type": "instance_start"}])
     assert harness.report(run_dir) == {
-        "requests": 0, "tool_calls": 0, "tool_errors": 0, "final_reply": "",
+        "requests": 0, "turns": 0, "tool_calls": 0, "tool_errors": 0,
+        "final_reply": "", "context": None, "output_tokens": None, "wall": None,
     }
+
+
+def test_score_details_counts_expected_failures(tmp_path):
+    suite_dir = tmp_path / "suites" / "failcheck"
+    (suite_dir / "tests").mkdir(parents=True)
+    (suite_dir / "tests" / "test_add.py").write_text(
+        "from add import add\n\ndef test_add():\n    assert add(2, 3) == 5\n")
+    (suite_dir / "expected.json").write_text(
+        json.dumps(["grader_tests/test_add.py::test_add"]))
+    (suite_dir / "task.md").write_text("Write add.py.\n")
+    suite = harness.load_suite(tmp_path / "suites", "failcheck")
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "add.py").write_text("def add(a, b):\n    return 0\n")
+    passed, tail, failed = harness.score_workspace_details(workspace, suite)
+    assert not passed
+    assert failed == 1
+    assert "test_add" in tail
+
+
+def test_run_sessions_writes_metrics(tmp_path):
+    suite = harness.load_suite(SUITES, "add")
+    results = harness._run_sessions(
+        suite, runs_dir=tmp_path / "runs", pi_binary=str(FIX / "fake-pi.sh"),
+        repeat=1, grade_run=False, deadline=None,
+    )
+    run_dir = results[0][0]
+    record = json.loads((run_dir / "run.json").read_text())
+    assert record["suite"] == "add"
+    assert record["passed"] is True
+    assert record["failed_checks"] == 0
+    assert record["turns"] == 0
+    assert record["context"] is None
+    assert record["wall"] is None
 
 
 def test_suite_runs_every_named_task(tmp_path):

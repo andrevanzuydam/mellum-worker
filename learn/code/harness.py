@@ -254,6 +254,15 @@ def qualify(suite: Suite) -> tuple[bool, dict[str, bool]]:
     return results["known-good"] and not results["known-broken"], results
 
 
+def _trace_time(value):
+    if not isinstance(value, str):
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
 def report(run: Path) -> dict:
     rows = [
         json.loads(line)
@@ -261,24 +270,38 @@ def report(run: Path) -> dict:
         if line.strip()
     ]
     final = ""
-    for row in reversed(rows):
+    inputs = []
+    outputs = []
+    times = []
+    for row in rows:
+        if (when := _trace_time(row.get("timestamp"))) is not None:
+            times.append(when)
         if row.get("type") != "message_end":
             continue
         message = row.get("message") or {}
+        usage = message.get("usage") or {}
+        value = usage.get("input", usage.get("prompt_tokens"))
+        if isinstance(value, (int, float)):
+            inputs.append(value)
+        value = usage.get("output", usage.get("completion_tokens"))
+        if isinstance(value, (int, float)):
+            outputs.append(value)
         if message.get("role") != "assistant":
             continue
         for block in message.get("content") or []:
             if block.get("type") == "text" and block.get("text"):
                 final = block["text"]
                 break
-        if final:
-            break
     return {
         "requests": sum(row.get("type") == "provider_request" for row in rows),
+        "turns": sum(row.get("type") == "provider_request" for row in rows),
         "tool_calls": sum(row.get("type") == "tool_call" for row in rows),
         "tool_errors": sum(
             row.get("type") == "tool_result" and row.get("isError") for row in rows),
         "final_reply": final,
+        "context": max(inputs) if inputs else None,
+        "output_tokens": sum(outputs) if outputs else None,
+        "wall": round((times[-1] - times[0]).total_seconds(), 3) if len(times) > 1 else None,
     }
 
 
@@ -286,7 +309,11 @@ def score(run: Path, suite: Suite) -> tuple[bool, str]:
     return score_workspace(Path(run) / "workspace", suite)
 
 
-def score_workspace(workspace: Path, suite: Suite) -> tuple[bool, str]:
+def score_details(run: Path, suite: Suite) -> tuple[bool, str, int]:
+    return score_workspace_details(Path(run) / "workspace", suite)
+
+
+def score_workspace_details(workspace: Path, suite: Suite) -> tuple[bool, str, int]:
     workspace = Path(workspace)
     target = workspace / "grader_tests"
     if target.exists():
@@ -306,7 +333,12 @@ def score_workspace(workspace: Path, suite: Suite) -> tuple[bool, str]:
     lines = output.splitlines()[-20:]
     if missing:
         lines.append("missing expected tests: " + ", ".join(missing))
-    return result.returncode == 0 and not missing, "\n".join(lines)
+    return result.returncode == 0 and not missing, "\n".join(lines), len(missing)
+
+
+def score_workspace(workspace: Path, suite: Suite) -> tuple[bool, str]:
+    passed, tail, _ = score_workspace_details(workspace, suite)
+    return passed, tail
 
 
 def _run_sessions(
@@ -323,13 +355,25 @@ def _run_sessions(
         run_dir = run_suite(suite, runs_dir=runs_dir, pi_binary=pi_binary,
                             deadline=deadline)
         grades = grade(run_dir / "workspace") if grade_run else []
-        tests_passed, tail = score(run_dir, suite)
+        tests_passed, tail, failed_checks = score_details(run_dir, suite)
         quality_ok = all(
             ok for name, ok, _ in grades if name in {"ruff", "complexipy"}
         ) if grades else True
         contaminated = (run_dir / "contaminated").exists()
         passed = tests_passed and quality_ok and not contaminated
-        results.append((run_dir, passed, tail, grades, report(run_dir),
+        metrics = report(run_dir)
+        record = {
+            "suite": suite.name,
+            "passed": passed,
+            "tests_passed": tests_passed,
+            "quality_ok": quality_ok,
+            "contaminated": contaminated,
+            "failed_checks": failed_checks,
+            **{key: value for key, value in metrics.items()
+               if key != "final_reply"},
+        }
+        (run_dir / "run.json").write_text(json.dumps(record, indent=2) + "\n")
+        results.append((run_dir, passed, tail, grades, metrics,
                         tests_passed, quality_ok, contaminated))
     return results
 
