@@ -34,6 +34,28 @@ name). Several prompts run in **one session**: one workspace, one trace and
 one Pi session id, with the prompts sent in order. Scoring happens once, at
 the finish, never between prompts.
 
+## What the runner sends
+
+The runner does not start llama.cpp. `scripts/backend.py` owns the server;
+the runner copies `learn/code/profile` into the run and points the child Pi at
+that private copy. The copy is generated from `[tool.mellum]` in the root
+`pyproject.toml`, so these are the values a run actually sends:
+`temperature 1.0`, `top_p 0.95`, `top_k 20`, `max_tokens 16384`, with a
+`context 50000`.
+
+| Layer | Setting | Value |
+| --- | --- | --- |
+| Server | context | 50000 (`n_ctx 50176` when measured) |
+| Pi request | temperature | 1.0 |
+| Pi request | top_p | 0.95 |
+| Pi request | top_k | 20 |
+| Pi request | max_tokens | 16384 |
+| Pi request | context window | 50000 |
+
+These are Pi's out-of-the-box sampled settings, not greedy decoding. The
+llama.cpp reference run used a different, greedy block; the suite runs are
+not that run.
+
 ## Run it
 
 ```bash
