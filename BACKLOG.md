@@ -10,27 +10,19 @@ line number.
 
 Reopen conditions, not promises.
 
-**Generalized task decomposition for `flow_run`.** `flow_run.split_phases`
-only splits on `## Phase` headers, so it decomposes the suite prompts but not
-an arbitrary large command — a wall of spec text, an issue dump, a file to
-refactor — which this model drowns on, since it cannot bound its reasoning
-(`supportsReasoningEffort: false`) and emits no clean output on a big input.
-Planned layers, cheapest first: (1) structural split on any markdown header
-level, top-level numbered/bulleted items, or "Phase/Step N"; (2) size gate
-(small input stays one unit); (3) a cheap splitter sub-agent that emits a
-numbered list of small, ordered, independently-buildable steps from an
-unstructured wall (small output over large input — the job this model can
-still finish); (4) a paragraph size-chunk fallback so nothing ever drowns.
-A terse model-generated step loses context a self-contained spec phase has,
-but that is recoverable by threading a small, constant **forward context**
-through the phases rather than the whole wall: each sub-task is given the
-**north star** (the overall goal), a running **summary** of what is already
-built, and the **last phase's context** (what it just did and the state it
-left), plus its own slice. Only the current slice changes per phase, so each
-call stays small yet grounded — this is what makes wall decomposition viable
-instead of lossy. *Reopens when* a non-phase-structured task is measured on
-the tool-based harness (`flow_run`), or the harness is pointed at real-world,
-non-suite commands.
+**Generalized task decomposition for `flow_run`.** `split_phases` only splits
+on `## Phase`, so it chunks the suite prompts but not an arbitrary large
+command (a spec wall, an issue dump, a file to refactor) — which this model
+drowns on, as it cannot bound its reasoning (`supportsReasoningEffort: false`).
+Planned layers, cheapest first: structural split (any header level, top-level
+numbered/bulleted items, `#{1,2} Phase/Step N`); a size gate (small stays one
+unit); a splitter sub-agent that emits a numbered step list from an
+unstructured wall (small output over large input); a paragraph size-chunk
+fallback. A terse step stays grounded by threading a small, constant forward
+context — north star, a running summary of what is built, the last phase's
+context — plus its own slice, not the whole wall. *Reopens when* a
+non-phase-structured task is measured on `flow_run`, or the harness is pointed
+at real-world, non-suite commands.
 
 **Discovery/output policy beyond M.7E.** Seven tools do not prevent shell
 dependency scans. Throwaway discovery interception blocked scans, but its
