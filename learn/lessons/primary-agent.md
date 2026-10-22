@@ -28,7 +28,7 @@ that the work is finished.
 Ladder rungs 1–5: five small coding tasks, fifteen runs per setup, on oMLX
 ([summary](https://github.com/pauleveritt/mellum-worker/blob/main/docs/ladder/ablation-summary.md)).
 The two primary baselines are
-[bare Pi](https://github.com/pauleveritt/mellum-worker/blob/main/docs/ladder/phase0c-primary-plain/README.md)
+[Baseline Pi](https://github.com/pauleveritt/mellum-worker/blob/main/docs/ladder/phase0c-primary-plain/README.md)
 and [the operator profile](https://github.com/pauleveritt/mellum-worker/blob/main/docs/ladder/phase0c-primary-operator/README.md);
 the worker arm is
 [A3](https://github.com/pauleveritt/mellum-worker/blob/main/docs/ladder/ablation-a3-v4b/README.md).
@@ -39,13 +39,13 @@ the worker arm is
 
 | Setup | Passes | Wall, mean | Prefill per run |
 | --- | --- | --- | --- |
-| Bare Pi, Mellum as the main model | 8/15 | 51 s | 297k chars |
+| Baseline Pi, Mellum as the main model | 8/15 | 51 s | 297k chars |
 | Operator profile, Mellum as the main model | 10/15 | 72 s | 1,055k chars |
 | The worker, bounded | 15/15 | 54 s | 308k chars |
 
 The operator profile is the slowest setup on every easy rung, three to four
-times bare Pi on rungs 1–3: its 17k-character system prompt and skills load
-on every request. The worker costs about what bare Pi costs and passes
+times Baseline Pi on rungs 1–3: its 17k-character system prompt and skills load
+on every request. The worker costs about what Baseline Pi costs and passes
 everything.
 
 ## Solution
