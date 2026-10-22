@@ -135,7 +135,7 @@ def pi_argv(
     extra = ["-e", str(extension)] if extension is not None else []
     return [
         pi_binary, *FLAGS, "--provider", provider, "--model", model,
-        *session, "-e", str(recorder), *extra, prompt,
+        *session, *extra, "-e", str(recorder), prompt,
     ]
 
 

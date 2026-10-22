@@ -57,7 +57,7 @@ def test_pi_argv_isolates_the_child():
                  "--no-extensions", "--no-skills"):
         assert flag in argv
     assert "--no-session" not in argv
-    assert argv[argv.index("-e") + 1].endswith("rec.mjs")
+    assert str(Path("rec.mjs")) in argv
     assert argv[argv.index("--provider") + 1] == "llamacpp"
     assert argv[-1] == task.prompt
 
