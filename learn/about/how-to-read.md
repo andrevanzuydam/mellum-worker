@@ -25,7 +25,7 @@ Every findings lesson follows the same structure:
 2. **Eval case** — the rung or task that reproduces the problem, and how it is scored.
 3. **Evidence of the problem** — the runs that show the problem, with sample size and backend.
 4. **Solution** — the change that was tried, with a link to the commit or file.
-5. **Validation** — the test suite and static analysis that show the change holds, with the command and what it said.
+5. **Validation** — the before/after evidence table, then the test suite and static analysis that show the change holds, with the command and what it said.
 6. **Interpretation** — a short narrative: what the evidence means, how far its badges let you trust it, and what is still open.
 
 Steps 1–5 each carry an [evidence badge](./evidence.md#badges). The Interpretation does not — it is commentary, not evidence.
