@@ -441,3 +441,41 @@ the numbering runs straight through.
   miss. That pass is the worker mediating itself; the frozen oracle remains the
   backstop for when even that slips. Measured: bare un-mediated ladder 6/12 →
   11/12 (v8), then rung 9 0 → 2/3 (v9) → 3/3 (v11 self-check + the server guard).
+
+## Addendum — the harness as a habit formula, and its ceiling (2026-10-22)
+
+- **The premise: a harness is a habit-building formula that lets a weaker model
+  solve problems beyond its bare ability.** Andre's framing, and our own numbers
+  back it. The harness does not teach the model new facts; it instils the
+  practices a stronger engineer applies without thinking — decompose the task, run
+  the *whole* suite not one function, verify the result against the spec clause by
+  clause, never stop a turn half-done, retry on a clean signal. Give a weak model
+  those habits and it will clear work it fails raw. Measured, same model, habits
+  the only change: the bare 6-bit scored 6/12 on the ladder; the worker prompt
+  alone took it to 11/12, and the self-check habit took rung 9 from 0 to 3/3. That
+  lift is not recovered knowledge — it is the model reaching solutions it never
+  reached unaided, because the formula held it to good practice. So the harness
+  genuinely raises *effective* capability.
+
+- **The ceiling: habits raise the bar they do not remove it, and a hard-enough
+  suite sits above the raised bar.** Paul reckons his new hard suite (the full
+  home → board → report build, many phases over one growing app) will not pass even
+  under the complete harness — extensions, guards and mediation all on. Both things
+  hold at once: good habits push the ceiling up a long way, and some problems still
+  live above it. A habit cannot invent a skill the model does not have; when the
+  wall is holding a multi-phase, multi-file application correct across phases, the
+  formula organises the attempt but does not supply the missing capability. The
+  same shape showed in mediation: it flipped the completeness rungs and left rung
+  12, the capability rung, exactly where it found it.
+
+- **How we test where the line falls, floor then ceiling.** The no-magic baseline
+  running now is the floor: bare Pi, base 6-bit, no prompt, no guards, no
+  mediation. The full harness run is the ceiling-with-habits. The gap between them
+  is what the formula buys; Paul's claim is that his suite's bar sits above even
+  that ceiling. If it holds, the honest report reads "N passed; the habits moved
+  the floor up to the ceiling and the bar still sat above it" — a capability probe,
+  not a harness failure, and a measurement of exactly how far good practice carries
+  a weak model. Early floor evidence (ladder, bare, repeat 1, partial): coding
+  rungs 1-3 pass and 4-5 fail (3/5); AgentClinic phase-1 (rung 6) fails while
+  phase-2 (rung 7) passes — the bare model is capable but inconsistent, which is
+  the exact gap a habit formula is built to close.
