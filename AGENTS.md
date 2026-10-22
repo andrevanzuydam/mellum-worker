@@ -50,6 +50,21 @@ and evidence with dated corrections; never edit archived plans.
 - A release is a tag that matches `package.json` and both README install
   lines, with a `CHANGELOG.md` section.
 
+## Glossary
+
+`learn/glossary.md` is the single source of terminology. It uses `###`
+entries parsed by `zensical-glossary`; every page’s first prose occurrence of
+a term is linked automatically. Do not hand-link a term.
+
+- When a page introduces a concept, add or update one `###` entry in the
+  glossary before finishing the page.
+- Check the page’s first occurrences after a build; the extension skips code,
+  headings and links by design.
+- Build with `uvx --with zensical-glossary zensical build`; CI does the same.
+- Borrow shared terms from `../satyrn-evals/_engine/glossary.md` when they
+  mean the same thing (`guard`, `finish nudge`), but define the local meaning
+  rather than copying a Satyrn-specific contract.
+
 ## Keep the changelog current
 
 `CHANGELOG.md`'s `## [Unreleased]` section is kept up to date as work lands,

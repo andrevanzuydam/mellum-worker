@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - run: uvx zensical build
+      - run: uvx --with zensical-glossary zensical build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

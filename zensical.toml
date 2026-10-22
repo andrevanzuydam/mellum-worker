@@ -22,3 +22,9 @@ nav = [
   { "Lesson template" = "lesson-template.md" },
   { "Credits" = "credits.md" },
 ]
+
+[project.markdown_extensions.zensical_glossary]
+glossary_file = "glossary.md"
+heading_level = 3
+first_only = true
+base_url = "/mellum-worker/glossary/"

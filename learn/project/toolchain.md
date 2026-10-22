@@ -53,8 +53,11 @@ tests are copied in. A grader's failure never changes a task's score.
 npm test                      # the Node suite, including the ladder's recorder tests
 uv run pytest                 # from ladder/, the ladder's own tests
 node build.mjs                # regenerate the agent templates
-uvx zensical build            # build the Learning Center into site/
+uvx --with zensical-glossary zensical build   # build the Learning Center into site/
 ```
+
+The glossary extension is not installed into the repo; `--with` supplies it
+to the build, and the same command runs in CI.
 
 `npm test` includes tests that spawn `uv run scripts/backend.py`, so `uv` is
 a development prerequisite even though most of the suite is Node.
