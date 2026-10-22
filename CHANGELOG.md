@@ -223,6 +223,11 @@ Versions match git tags; pin one in both install lines.
   only the index; a test requires every published lesson page to be in the
   nav.
 
+### Fixed
+
+- Fenced code blocks render again: adding the glossary extension had replaced
+  Zensical’s default `pymdownx.superfences`; it is now enabled explicitly.
+
 ### Removed
 
 - The OpenCode port: `opencode/plugin.js`, the OpenCode templates and provider

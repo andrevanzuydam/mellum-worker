@@ -23,6 +23,9 @@ nav = [
   { "Credits" = "credits.md" },
 ]
 
+[project.markdown_extensions]
+pymdownx.superfences = {}
+
 [project.markdown_extensions.zensical_glossary]
 glossary_file = "glossary.md"
 heading_level = 3

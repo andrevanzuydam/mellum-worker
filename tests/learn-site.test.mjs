@@ -48,6 +48,7 @@ test("the glossary is parsed by zensical-glossary", () => {
   assert.match(toml, /glossary_file = "glossary\.md"/);
   assert.match(toml, /heading_level = 3/);
   assert.match(toml, /first_only = true/);
+  assert.match(toml, /pymdownx\.superfences = \{\}/);
   const glossary = page("glossary.md");
   for (const term of ["screen", "nudge", "empty-final nudge", "no-nudge",
     "Baseline Worker", "Baseline Pi"])
