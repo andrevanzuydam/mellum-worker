@@ -127,6 +127,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The README builds the site with `uvx --with zensical-glossary zensical
+  build`; a bare `zensical build` now fails because the glossary extension is
+  required.
+
 - Basic Remedies is dropped as a lesson module after its 45-session screen:
   the prompt and loop were null, the nudge was a lead, and hard floored every
   arm. The shipped full worker is now the **Baseline Worker**, with **Baseline

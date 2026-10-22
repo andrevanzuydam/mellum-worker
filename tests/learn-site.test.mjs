@@ -54,6 +54,12 @@ test("the glossary is parsed by zensical-glossary", () => {
     assert.match(glossary, new RegExp(`^### ${term}$`, "m"));
 });
 
+test("the README builds with the glossary extension", () => {
+  const readme = readFileSync(resolve(ROOT, "README.md"), "utf8");
+  assert.match(readme, /uvx --with zensical-glossary zensical build/);
+  assert.doesNotMatch(readme, /uvx zensical build/);
+});
+
 test("credits name both authors and Tina4", () => {
   const c = page("credits.md");
   assert.match(c, /a collaboration between Andre van Zuydam and Paul Everitt/);

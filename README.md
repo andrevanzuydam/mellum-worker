@@ -308,7 +308,9 @@ harness, with every claim labelled by the evidence behind it:
 All findings lessons are in [Lessons](learn/lessons/index.md). The site builds on
 pull requests and deploys to GitHub Pages from `main`
 (`.github/workflows/docs.yml`). Run the harness with `uv run learn/code/harness.py run --suite all --grade`; build
-the site with `uvx zensical build` (output in `site/`).
+the site with `uvx --with zensical-glossary zensical build` (output in
+`site/`). The glossary extension is required; a bare `zensical build`
+fails without it.
 
 ## Requirements
 
