@@ -220,7 +220,7 @@ def grade(workspace: Path) -> list[tuple[str, bool, str]]:
         return ["uvx", name, *args]
 
     commands = (
-        ("ruff", tool("ruff", "check", "--select", "F,E9", "--exclude", "tests", "--exclude", "grader_tests", ".")),
+        ("ruff", tool("ruff", "check", "--select", "F,E9", "--extend-exclude", "tests", "--extend-exclude", "grader_tests", ".")),
         ("pyrefly", tool("pyrefly", "check", ".")),
         ("complexipy", tool("complexipy", "--max-complexity-allowed", "10",
                             "--exclude", "tests", "--exclude", "grader_tests", ".")),

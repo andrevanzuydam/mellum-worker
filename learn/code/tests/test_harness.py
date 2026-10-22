@@ -312,6 +312,19 @@ def test_grade_ignores_a_copied_tests_dir(tmp_path):
     assert results["ruff"] is True
 
 
+def test_grade_ignores_a_dot_venv(tmp_path):
+    # The worker runs `uv` during its task, so a .venv exists at grade time.
+    # ruff's --exclude REPLACES its built-in excludes (which include .venv), so
+    # grade() was linting installed packages (F403 in PyYAML) and failing every
+    # working solution. It must lint the worker's code, not site-packages.
+    workspace = _workspace(tmp_path, "def fizz(n: int) -> str:\n    return str(n)\n")
+    pkg = workspace / ".venv" / "lib" / "site-packages" / "pkg"
+    pkg.mkdir(parents=True)
+    (pkg / "__init__.py").write_text("from os import *\n")  # F403, must not fail the worker
+    results = {name: ok for name, ok, _ in harness.grade(workspace)}
+    assert results["ruff"] is True
+
+
 def test_grade_tolerates_style_not_real_errors(tmp_path):
     # An unused `# noqa` is RUF100 — a style nit, not a real error. The grader
     # is meant to gate on real errors only (ruff --select F,E9), so it must

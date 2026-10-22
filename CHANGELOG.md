@@ -257,6 +257,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- The lesson-suite grader (`learn/code/harness.py`) no longer lints the
+  workspace's `.venv`. ruff's `--exclude` REPLACES its built-in excludes (which
+  include `.venv`), so `grade()` was linting installed packages and failing
+  every working solution on `F403` inside PyYAML. It now uses `--extend-exclude`,
+  keeping ruff's default `.venv`/`__pycache__` exclusions and linting only the
+  worker's own code.
+
 - The Lessons sidebar now lists the two completed findings lessons instead of
   only the index; a test requires every published lesson page to be in the
   nav.
