@@ -134,6 +134,8 @@ def run_suite(
     shutil.copytree(profile, run / "profile")
     recorder = run / "record-pi.mjs"
     shutil.copy2(RECORDER, recorder)
+    if suite.root is not None and (suite.root / "base").is_dir():
+        shutil.copytree(suite.root / "base", workspace, dirs_exist_ok=True)
     if suite.start is not None:
         shutil.copytree(suite.start, workspace, dirs_exist_ok=True)
     (run / "prompt.txt").write_text("\n\n".join(suite.prompts) + "\n")

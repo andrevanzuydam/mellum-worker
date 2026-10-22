@@ -96,6 +96,23 @@ def test_runs_are_fresh_and_tests_are_hidden(tmp_path):
     assert not (second / "workspace" / "stray.txt").exists()
 
 
+def test_run_suite_copies_the_base_project(tmp_path):
+    suite_dir = tmp_path / "suites" / "seeded"
+    (suite_dir / "base").mkdir(parents=True)
+    (suite_dir / "base" / "seed.txt").write_text("from the base\n")
+    (suite_dir / "prompts").mkdir()
+    (suite_dir / "prompts" / "01.md").write_text("Write add.py.\n")
+    (suite_dir / "tests").mkdir()
+    (suite_dir / "tests" / "test_add.py").write_text(
+        "from add import add\n\ndef test_add():\n    assert add(2, 3) == 5\n")
+    suite = harness.load_suite(tmp_path / "suites", "seeded")
+    run_dir = harness.run_suite(
+        suite, runs_dir=tmp_path / "runs", profile=PROFILE,
+        pi_binary=str(FIX / "fake-pi.sh"),
+    )
+    assert (run_dir / "workspace" / "seed.txt").read_text() == "from the base\n"
+
+
 def test_missing_pi_is_a_message(tmp_path):
     task = harness.load_suite(SUITES, "add")
     with pytest.raises(SystemExit) as exc:
