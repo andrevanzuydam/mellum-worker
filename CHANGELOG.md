@@ -6,6 +6,31 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A `mellum-flow` extension (`extensions/mellum-flow.ts`) and its runner
+  (`learn/code/flow_run.py`): the **workflow as tools the model calls**, not an
+  external loop. It registers the phases as tools — `plan`, `review_plan`,
+  `code`, `review_code`, `test` — and the top agent orchestrates them from a
+  workflow prompt, iterating on REDO / test failure. Each phase (except `test`)
+  runs as an isolated `pi` sub-agent with its own system prompt and tool
+  allowlist over one shared workspace: only the coder writes or runs commands,
+  the reviewers are read-only, and the planner's reply is saved as `TODO.md` by
+  the tool, so a plan is always persisted. Light prerequisite guards require a
+  `TODO.md` before `review_plan`/`code`. For a multi-phase task the runner
+  drives one phase at a time — this model cannot bound its own reasoning
+  (`supportsReasoningEffort: false`), so a small per-phase task keeps each call
+  finishing — with a retry wrapper that re-invokes a stalled orchestrator from
+  the shared workspace, and a live feed of each sub-agent's steps. It reuses the
+  feed and scoring helpers from `learn/code/loop_run.py`, the external-loop
+  runner. Measured: the easy and medium suites pass (visible and hidden grader),
+  fully model-driven.
+
+- A `mellum-nonblock` extension (`extensions/mellum-nonblock.ts`): a bash
+  command that starts a server (uvicorn, `app.py`, `flask run`, a dev server …)
+  blocks forever and would hang a workflow stage until its timeout. The
+  extension rewrites such a command to run threaded in the background, captures
+  its output and feeds it back, so the stage keeps moving. Loaded only on the
+  coder — the one phase that runs commands.
+
 - A `mellum-loop` orchestration core (`extensions/mellum-loop.ts`): the state
   machine for a variable-extension **workflow** loop with two review gates —
   **planning → plan_review → coding → code_review → testing**. A too-complicated
