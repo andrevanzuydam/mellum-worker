@@ -6,6 +6,15 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A `mellum-quality` extension (`extensions/mellum-quality.ts`): at
+  `agent_before_settle` it runs `ruff --select F,E9` over the worker's own
+  changes and, when a real error remains — a shadowed redefinition (F811), an
+  undefined name (F821), an unused import (F401) or a syntax error — hands it
+  back with one bounded nudge to fix before finishing. Real-error classes only,
+  never style, so a working solution is never failed on cosmetics; it degrades
+  to silence when ruff cannot run. Load it with `-e extensions/mellum-quality.ts`
+  and tune it with `MELLUM_QUALITY` (JSON, e.g. `{"max":1,"select":"F"}`).
+
 - A `zensical-glossary` build for `learn/glossary.md`: the page now has
   `###` entries for `screen`, `nudge`, `empty-final nudge`, `no-nudge`,
   `Baseline Worker`, `Baseline Pi`, `arm`, `ablation`, the telemetry columns
