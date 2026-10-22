@@ -6,6 +6,15 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A `mellum-contract` extension (`extensions/mellum-contract.ts`): Tier-1
+  dynamic mediation. It derives a structural acceptance test straight from the
+  task spec — the app module and every route the spec names — and writes a
+  pytest the `mellum-ncm` gate can enforce (`NCM_TEST`), with no per-task
+  authoring. It checks the app boots and that each named route is registered
+  (path params normalised). It catches the early failures (nothing built, a
+  missing route, the wrong module); deep contracts (exact aggregation keys, a
+  migration schema) are Tier-2 (an examiner model), not structurally inferable.
+
 - A `mellum-surgical` extension (`extensions/mellum-surgical.ts`): block a
   `write` that would clobber an existing file. On a write onto a file that
   already exists it measures churn (the fraction of lines changed — the clobber
@@ -157,6 +166,10 @@ Versions match git tags; pin one in both install lines.
   against 1 of 6 with one spec file per phase). Exploratory, n = 3 per arm.
 
 ### Changed
+
+- The eval harness runs suites easiest-first (`easy`, `medium`, `hard`) rather
+  than alphabetical, so a slow hard suite never blocks the quicker ones;
+  unknown suites keep alphabetical order after the known tiers.
 
 - `mellum-ncm` gains a whole-suite verify mode: set `NCM_ALL=1` to run the
   entire visible test suite at settle and refuse "done" until it is green — the

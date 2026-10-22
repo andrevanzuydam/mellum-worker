@@ -409,10 +409,17 @@ def run_suites(
     deadline: float | None = 600,
     arm: str = "bare",
 ) -> tuple[int, int]:
+    # Run easiest first and hardest last, so a slow hard suite never blocks the
+    # quicker ones; unknown suites keep alphabetical order after the known tiers.
+    order = {"easy": 0, "medium": 1, "hard": 2}
     available = sorted(
-        path.name for path in Path(suites_dir).iterdir()
-        if ((path / "grader").is_dir() or (path / "tests").is_dir())
-        and ((path / "task.md").exists() or (path / "prompts").is_dir())
+        (
+            path.name
+            for path in Path(suites_dir).iterdir()
+            if ((path / "grader").is_dir() or (path / "tests").is_dir())
+            and ((path / "task.md").exists() or (path / "prompts").is_dir())
+        ),
+        key=lambda name: (order.get(name, len(order)), name),
     )
     if "all" in names:
         names = available
