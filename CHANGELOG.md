@@ -7,14 +7,17 @@ Versions match git tags; pin one in both install lines.
 ### Added
 
 - A `mellum-loop` orchestration core (`extensions/mellum-loop.ts`): the state
-  machine for a variable-extension **workflow** loop — planning → coding →
-  review → testing, re-planning until green or a round budget, with a
-  **rubber-duck** step on a repeated failure (reason the problem through aloud,
-  amend `TODO.md`, then code again). Each workflow is a separate Pi invocation
-  (`pi -p --no-extensions -e …`) with its own minimal extension set — only
-  coding carries the guards — so the orchestrator replaces the plan and verify
-  gates (fewer extensions, order enforced by the runner, not a block the model
-  can wait out). Pure core; the Pi-invoking runner builds on it.
+  machine for a variable-extension **workflow** loop with two review gates —
+  **planning → plan_review → coding → code_review → testing**. A too-complicated
+  plan routes back to planning (stabilise the plan early); a failing code review
+  or a broken test routes back to **coding** (iterate the code, don't re-plan
+  every failure); a repeated broken test runs a **rubber-duck** step (reason it
+  out, amend `TODO.md`) before coding again; all bounded by a round budget.
+  Each workflow is a separate Pi invocation (`pi -p --no-extensions -e … --thinking
+  <level>`) with its own minimal extension set and thinking budget — only coding
+  carries the guards, planning/review think light — so the orchestrator replaces
+  the plan and verify gates (fewer extensions, order enforced by the runner, not
+  a block the model can wait out). Pure core; the Pi-invoking runner builds on it.
 
 - A `mellum-contract` extension (`extensions/mellum-contract.ts`): Tier-1
   dynamic mediation. It derives a structural acceptance test straight from the
