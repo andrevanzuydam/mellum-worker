@@ -9,103 +9,88 @@ backends: [llamacpp]
 
 # The worker extension
 
-A Pi extension is a file that registers a command and hooks into the session.
-`extensions/mellum-worker.ts` lets the **main agent** — the larger model you
-started Pi with — hand a bounded task to **Mellum**, the small local model.
-`/mellum <task>` switches the active model to Mellum, swaps in the worker
-prompt and seven file tools, runs the task, then restores your main model and
-hands it a compact report. `/mellum on` and `/mellum off` keep that worker
-mode on or off across turns.
+A Pi extension is a TypeScript module that exports a default factory. Pi calls
+that factory with an `ExtensionAPI`; the extension registers commands, tools,
+or event handlers. It runs inside the Pi process with the same permissions, so
+load only extensions you trust.
 
-The point is the division of labour: the main agent decides what to delegate
-and keeps the session; Mellum gets the task and only the seven file tools.
-`/mellum` is not a separate subagent process. It is the same session running a
-different model, prompt and tool set for the span.
+The worker is `extensions/mellum-worker.ts`. This lesson is about the
+mechanism: the hooks, events and callbacks that let one extension change the
+prompt, the tool set and the guards. What each change buys is measured in the
+Lessons track.
 
-This is the vehicle the rest of the findings track improves. It changes how
-the model works; it does not yet add the remedies.
+## A minimal extension
 
-## Two models, one session
+```ts
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-Start Pi normally and the model you chose is the main agent. It can read the
-whole conversation and use every tool. When you type `/mellum <task>`, the
-extension:
+export default function (pi: ExtensionAPI) {
+  pi.registerCommand("hello", {
+    description: "Show a greeting",
+    handler: async (name, ctx) => {
+      ctx.ui.notify(`Hello, ${name || "world"}!`, "info");
+    },
+  });
 
-1. switches the active model to the shipped Mellum model, or leaves the
-   session's model alone when it is already Mellum on llama.cpp;
-2. replaces the system prompt with the worker prompt and narrows the tools to
-   seven file tools;
-3. hides the messages from before the command, so Mellum sees the task and the
-   project facts, not the main agent's whole conversation;
-4. runs the task; and
-5. restores the previous model and tools, and gives the main agent one handoff
-   block instead of every read, edit and test run.
+  pi.on("tool_call", (event) => {
+    if (event.toolName === "bash" && String(event.input.command).includes("rm -rf")) {
+      return { block: true, reason: "Refusing a recursive delete." };
+    }
+  });
+}
+```
 
-That is how a large main model can use a small worker without handing over the
-whole session. It is also why `/mellum` is not the main agent changing its
-mind: it is the same session temporarily running a different model.
+`registerCommand` adds a `/hello` command. `pi.on` registers a **callback** for
+a named **event**. Some callbacks only observe; others transform data, block a
+call, or ask Pi for one more model request. The return value is part of the
+contract, not decoration.
 
-## Run it on the ditch
+## The worker's hooks
 
-The same three prompts, in one session, now through `/mellum`. The wrappers
-set the profile, session, model, isolation flags and extension; the task is
-the only argument.
+| Lever | Hook or event | What the callback does |
+| --- | --- | --- |
+| Command | `registerCommand("mellum")` | One-shot `/mellum <task>`, or `/mellum on` / `off`. |
+| Prompt | `before_provider_request` | Replaces the system message with the worker prompt and filters the messages the model sees. |
+| Tools | `setActiveTools` | Selects the tools the model may call. |
+| Guards | `tool_call` | Returns `{ block: true, reason }` to stop a call. |
+| Guards | `turn_end` and `agent_before_settle` | Recognise an empty final turn and return `continue: true` with a nudge. |
+| Context | `context` | Collapses the worker span into one handoff block for the parent. |
+| Restore | `agent_settled` | Notification-only boundary: the span has ended, so the extension restores the previous model and tools. |
+
+Pi runs handlers in registration order and awaits them. `pi.on` returns an
+unsubscribe function. A handler may be async; an error in a `tool_call`
+handler blocks the tool as a fail-safe, while an ordinary event error is
+reported and Pi continues.
+
+The worker uses these hooks together. `/mellum` registers the command,
+`setModel` switches the active model, `setActiveTools` narrows the tool set,
+`before_provider_request` installs the worker prompt, `tool_call` guards the
+calls, and `agent_before_settle` handles the empty turn. The same session runs
+the worker and then returns to the main model with a handoff.
+
+## Prompts, tools and guards are mechanisms
+
+Those are three separate levers, even though the shipped worker pulls all
+three:
+
+- the **prompt** is text the extension installs;
+- the **tool set** is the active list Pi exposes to the model;
+- the **guards** are functions that inspect a call or a turn and decide whether
+  to block or continue.
+
+Tool control is not a measured remedy here. The worker's seven tools are
+Pi's seven built-in tools, so Baseline Pi and the Baseline Worker offer the same set; the
+restriction matters when another extension or MCP server has added tools.
+Project facts are another prompt-side remedy, added later.
+
+## See it run
+
+The wrappers set the profile, session, model, isolation flags and extension.
+This is a smoke, not evidence:
 
 ```bash
-learn/code/clinic "/mellum Build AgentClinic: a small clinic appointment app. Patients book appointments with doctors, and a doctor can see their day. Make it work."
+learn/code/clinic "/mellum Reply with the single word: ready."
 ```
 
-```powershell
-.\learn\code\clinic.ps1 "/mellum Build AgentClinic: a small clinic appointment app. Patients book appointments with doctors, and a doctor can see their day. Make it work."
-```
-
-Run the same wrapper with "Now add tests and make them pass." and "Add a
-command-line tool that lists a doctor's appointments for a given date."
-
-This starts Pi on the llama.cpp Mellum model, so the main model is already
-Mellum: `/mellum` changes the prompt and tools, not the model. To see the
-switch from a larger main model to Mellum, start Pi on that model with the
-oMLX Mellum model available. The extension uses the shipped oMLX model when it
-is in the registry; on a llama.cpp profile it keeps the session's own Mellum
-model.
-
-## What it did
-
-It produced a Python package, a `pyproject.toml`, and tests, and it reported:
-
-> AgentClinic has been successfully built and tested … Tests pass with
-> `uv run --offline pytest -q`.
-
-That is true: three tests pass. Look inside them, though:
-
-```python
-def test_see_doctor_day():
-    clinic = Clinic()
-    ...
-    clinic.see_doctor_day("d1", "2024-01-01")
-    assert True  # If we reach here, no error
-```
-
-`assert True` cannot fail. And the command line tool has no way to book an
-appointment: it seeds Alice, Bob and Dr. Smith as demo data, prints their day,
-and exits. There is no saved state, so a second run can never see a booking
-from the first.
-
-## What this means
-
-The extension moved the ditch. Base Pi wrote two files and took the host
-down; the worker wrote a package with passing tests. But the tests do not
-check the thing the prompt asked for, and the CLI is a demo. The failure is
-quieter, not gone: **the worker can make a shape that passes without being
-the thing you asked for.**
-
-That is why the remedies come next: a prompt that asks for what the project
-must do, facts that name the layout and the test command, guards for empty
-turns and loops. Each is a lesson that changes this extension, and each is
-measured before it ships.
-
-## One session, one machine
-
-n = 1, one llama.cpp profile, one session. It shows what this extension can
-do, not how often. The reference record for rungs 1–5 is
-[here](../../../docs/ladder/reference-llamacpp-rungs1-5/README.md).
+The command returns when the span settles. The next lessons measure what the
+prompt, the empty-final nudge and the loop breaker actually change.
