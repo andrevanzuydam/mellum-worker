@@ -67,7 +67,7 @@ function withFacts(m: Msg, facts: string): Msg {
 	return { ...m, content: parts };
 }
 
-export function filterForMellum(payload: any, systemPrompt: string, opts: { expectMarker?: boolean; facts?: string } = {}) {
+export function filterForMellum(payload: any, systemPrompt: string, opts: { expectMarker?: boolean; facts?: string; keepSystem?: boolean } = {}) {
 	if (!payload || !Array.isArray(payload.messages)) return payload;
 	const msgs: Msg[] = payload.messages;
 	const isMarker = (m: Msg) => m.role === "user" && (textOf(m).includes(MARK_ON) || textOf(m).includes(MARK_OFF));
@@ -108,7 +108,10 @@ export function filterForMellum(payload: any, systemPrompt: string, opts: { expe
 		.slice(start)
 		.filter((m) => !INSTRUCTION_ROLES.has(m.role ?? "") && !isMarker(m) && !isBootstrap(m))
 		.map((m) => (facts && m.role === "user" ? withFacts(m, facts) : m));
-	const out: any = { ...payload, messages: [{ role: "system", content: systemPrompt }, ...kept] };
+	const system = opts.keepSystem
+		? (msgs.find((m) => m.role === "system") ?? { role: "system", content: "" })
+		: { role: "system", content: systemPrompt };
+	const out: any = { ...payload, messages: [system, ...kept] };
 	if (Array.isArray(payload.tools)) {
 		// pi-subagents re-adds its own tools after setActiveTools; the worker gets only its seven.
 		const tools = payload.tools.filter((t: any) => WORKER_TOOLS.includes(t?.function?.name ?? t?.name));
@@ -574,7 +577,11 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 	pi.on("before_provider_request", (event: any, ctx: any) => {
 		if (!active) return undefined;
 		span.requests += 1;
-		const out = filterForMellum(event.payload, prompt, { expectMarker: interactive, facts: factsBlock(spanFacts) });
+		const out = filterForMellum(event.payload, prompt, {
+			expectMarker: interactive,
+			facts: factsBlock(spanFacts),
+			keepSystem: process.env.MELLUM_WORKER_PROMPT === "pi",
+		});
 		if (out?.mellumModeMarkerMissing) {
 			delete out.mellumModeMarkerMissing;
 			if (!warnedMissing) {

@@ -62,6 +62,18 @@ def test_pi_argv_isolates_the_child():
     assert argv[-1] == task.prompt
 
 
+def test_arms_select_the_extension_and_guards():
+    worker = harness.arm_settings("worker")
+    assert worker["extension"].name == "mellum-worker.ts"
+    no_prompt = harness.arm_settings("no-prompt")
+    assert no_prompt["env"]["MELLUM_WORKER_PROMPT"] == "pi"
+    no_nudge = harness.arm_settings("no-nudge")
+    assert json.loads(no_nudge["env"]["MELLUM_GUARDS"]) == {"loopBreaker": True}
+    no_loop = harness.arm_settings("no-loop")
+    assert json.loads(no_loop["env"]["MELLUM_GUARDS"]) == {"emptyFinalNudge": 3}
+    assert harness.arm_settings("bare")["extension"] is None
+
+
 def test_two_prompts_share_one_session(tmp_path):
     task = harness.load_suite(SUITES, "steps")
     run_dir = harness.run_suite(

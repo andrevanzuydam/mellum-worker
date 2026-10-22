@@ -28,6 +28,8 @@ RUNS = Path(tempfile.gettempdir()) / "mellum-eval-runs"
 SUITES = CODE / "suites"
 RECORDER = CODE / "record-pi.mjs"
 PROFILE = CODE / "profile"
+EXTENSION = CODE.parents[1] / "extensions" / "mellum-worker.ts"
+ARMS = ("bare", "worker", "no-prompt", "no-nudge", "no-loop")
 FLAGS = [
     "-p", "--no-approve", "--no-extensions", "--no-skills",
     "--no-prompt-templates", "--no-themes", "--no-context-files",
@@ -98,6 +100,21 @@ def new_run(runs_dir: Path, name: str) -> Path:
     return run
 
 
+def arm_settings(arm: str) -> dict:
+    if arm not in ARMS:
+        raise SystemExit(f"unknown arm {arm}; choose from {', '.join(ARMS)}")
+    if arm == "bare":
+        return {"extension": None, "env": {}}
+    env = {"MELLUM_MODE": "1"}
+    if arm == "no-prompt":
+        env["MELLUM_WORKER_PROMPT"] = "pi"
+    elif arm == "no-nudge":
+        env["MELLUM_GUARDS"] = json.dumps({"loopBreaker": True})
+    elif arm == "no-loop":
+        env["MELLUM_GUARDS"] = json.dumps({"emptyFinalNudge": 3})
+    return {"extension": EXTENSION, "env": env}
+
+
 def pi_argv(
     pi_binary: str,
     profile: Path,
@@ -106,6 +123,7 @@ def pi_argv(
     model: str,
     prompt: str,
     *,
+    extension: Path | None = None,
     session_id: str | None = None,
     session_dir: Path | None = None,
 ) -> list[str]:
@@ -114,9 +132,10 @@ def pi_argv(
         if session_id and session_dir
         else []
     )
+    extra = ["-e", str(extension)] if extension is not None else []
     return [
         pi_binary, *FLAGS, "--provider", provider, "--model", model,
-        *session, "-e", str(recorder), prompt,
+        *session, "-e", str(recorder), *extra, prompt,
     ]
 
 
@@ -124,6 +143,7 @@ def run_suite(
     suite: Suite,
     *,
     runs_dir: Path,
+    arm: str = "bare",
     profile: Path = PROFILE,
     pi_binary: str = "pi",
     deadline: float | None = None,
@@ -145,11 +165,15 @@ def run_suite(
     sessions.mkdir()
     provider, model = profile_pin(profile)
     session_id = str(uuid.uuid4())
+    settings = arm_settings(arm)
     env = {
         **os.environ,
         "PI_CODING_AGENT_DIR": str(run / "profile"),
         "MELLUM_TRACE_FILE": str(trace),
     }
+    for key in ("MELLUM_MODE", "MELLUM_GUARDS", "MELLUM_WORKER_PROMPT"):
+        env.pop(key, None)
+    env.update(settings["env"])
     started = time.monotonic()
     for prompt in suite.prompts:
         remaining = None if deadline is None else deadline - (time.monotonic() - started)
@@ -158,6 +182,7 @@ def run_suite(
             break
         argv = pi_argv(
             pi_binary, run / "profile", recorder, provider, model, prompt,
+            extension=settings["extension"],
             session_id=session_id, session_dir=sessions,
         )
         try:
@@ -349,11 +374,12 @@ def _run_sessions(
     repeat: int,
     grade_run: bool,
     deadline: float | None,
+    arm: str = "bare",
 ) -> list[tuple]:
     results = []
     for _ in range(repeat):
         run_dir = run_suite(suite, runs_dir=runs_dir, pi_binary=pi_binary,
-                            deadline=deadline)
+                            deadline=deadline, arm=arm)
         grades = grade(run_dir / "workspace") if grade_run else []
         tests_passed, tail, failed_checks = score_details(run_dir, suite)
         quality_ok = all(
@@ -364,6 +390,7 @@ def _run_sessions(
         metrics = report(run_dir)
         record = {
             "suite": suite.name,
+            "arm": arm,
             "passed": passed,
             "tests_passed": tests_passed,
             "quality_ok": quality_ok,
@@ -403,6 +430,7 @@ def run_suites(
     grade_run: bool = False,
     repeat: int = 1,
     deadline: float | None = 600,
+    arm: str = "bare",
 ) -> tuple[int, int]:
     available = sorted(
         path.name for path in Path(suites_dir).iterdir()
@@ -420,7 +448,7 @@ def run_suites(
         suite = load_suite(suites_dir, name)
         results = _run_sessions(
             suite, runs_dir=runs_dir, pi_binary=pi_binary,
-            repeat=repeat, grade_run=grade_run, deadline=deadline,
+            repeat=repeat, grade_run=grade_run, deadline=deadline, arm=arm,
         )
         sessions_passed += _print_task(suite, results, repeat)
         sessions_total += len(results)
@@ -478,6 +506,7 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--grade", action="store_true")
     run.add_argument("--repeat", type=int, default=1)
     run.add_argument("--deadline", type=float, default=600)
+    run.add_argument("--arm", choices=ARMS, default="bare")
     args = parser.parse_args(argv)
 
     if args.command == "qualify":
@@ -493,18 +522,21 @@ def main(argv: list[str] | None = None) -> int:
     if args.suite == "all":
         run_suites(["all"], suites_dir=args.suites_dir, runs_dir=args.runs_dir,
                    pi_binary=args.pi_binary, grade_run=args.grade,
-                   repeat=args.repeat, deadline=args.deadline)
+                   repeat=args.repeat, deadline=args.deadline, arm=args.arm)
         return 0
 
     suite = load_suite(args.suites_dir, args.suite)
     provider, model = profile_pin(PROFILE)
     if args.dry_run:
+        settings = arm_settings(args.arm)
         print(shlex.join(pi_argv(args.pi_binary, PROFILE, RECORDER, provider,
-                                 model, suite.prompt)))
+                                 model, suite.prompt,
+                                 extension=settings["extension"])))
         return 0
     results = _run_sessions(
         suite, runs_dir=args.runs_dir, pi_binary=args.pi_binary,
         repeat=args.repeat, grade_run=args.grade, deadline=args.deadline,
+        arm=args.arm,
     )
     _print_task(suite, results, args.repeat)
     return 0

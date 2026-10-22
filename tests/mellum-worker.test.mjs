@@ -28,6 +28,17 @@ test("after the on-marker: system replaced, earlier history and the bootstrap dr
 	assert.equal(payload.messages.length, 8, "input not mutated");
 });
 
+test("keepSystem leaves Pi's system message while still narrowing the tools", () => {
+	const payload = {
+		messages: [{ role: "system", content: "pi base prompt" }, text("user", "task")],
+		tools: [{ type: "function", function: { name: "read" } }, { type: "function", function: { name: "subagent" } }],
+	};
+	const out = filterForMellum(payload, "v5", { keepSystem: true });
+	assert.equal(out.messages[0].role, "system");
+	assert.equal(out.messages[0].content, "pi base prompt");
+	assert.deepEqual(out.tools.map((t) => t.function.name), ["read"]);
+});
+
 test("without an on-marker (headless activation) only the bootstrap is dropped", () => {
 	const payload = { messages: [{ role: "system", content: "base" }, text("user", `${BOOTSTRAP_MARKER} x`), text("user", "task")] };
 	const out = filterForMellum(payload, "v5");
