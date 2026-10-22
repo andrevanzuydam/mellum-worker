@@ -21,11 +21,16 @@ level, top-level numbered/bulleted items, or "Phase/Step N"; (2) size gate
 numbered list of small, ordered, independently-buildable steps from an
 unstructured wall (small output over large input — the job this model can
 still finish); (4) a paragraph size-chunk fallback so nothing ever drowns.
-Open tradeoff: model-generated steps are terser than self-contained spec
-phases, so each step carries the splitter's description plus targeted file
-reads, not the full context. *Reopens when* a non-phase-structured task is
-measured on the tool-based harness (`flow_run`), or the harness is pointed at
-real-world, non-suite commands.
+A terse model-generated step loses context a self-contained spec phase has,
+but that is recoverable by threading a small, constant **forward context**
+through the phases rather than the whole wall: each sub-task is given the
+**north star** (the overall goal), a running **summary** of what is already
+built, and the **last phase's context** (what it just did and the state it
+left), plus its own slice. Only the current slice changes per phase, so each
+call stays small yet grounded — this is what makes wall decomposition viable
+instead of lossy. *Reopens when* a non-phase-structured task is measured on
+the tool-based harness (`flow_run`), or the harness is pointed at real-world,
+non-suite commands.
 
 **Discovery/output policy beyond M.7E.** Seven tools do not prevent shell
 dependency scans. Throwaway discovery interception blocked scans, but its
