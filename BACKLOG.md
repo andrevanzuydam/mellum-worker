@@ -10,6 +10,21 @@ line number.
 
 Reopen conditions, not promises.
 
+**Grounded knowledge / docs lookup for the coder.** The model fails exact-API
+contracts it cannot know — FastAPI's `RedirectResponse` default (307, so a POST
+redirect loops; the spec needs 303), the sqlite-utils migration API, hard's
+phase 6/7 SQL semantics — and, decisively, anything past its training cutoff:
+the ladder runs on Python 3.15, which the model was never trained on. Reasoning
+cannot recover post-cutoff facts. Plan: give the coder a `lookup` tool grounded
+in the LIVE environment — installed-package signatures, docstrings, source,
+`--help`, changelogs — not a stale snapshot, so it reflects the exact versions
+running; prompt it to look an API up before guessing, especially when a failure
+is API-shaped (`TooManyRedirects` → redirect status). Fairness boundary: ground
+on library docs a developer would have, never the task solution or hidden
+grader. Local retrieval (offline, reproducible) over open-internet lookup, which
+breaks the ladder's reproducibility. *Reopens when* a grounded-knowledge trial
+is scheduled against the exact-contract phases (hard 3/6/7).
+
 **Generalized task decomposition for `flow_run`.** `split_phases` only splits
 on `## Phase`, so it chunks the suite prompts but not an arbitrary large
 command (a spec wall, an issue dump, a file to refactor) — which this model
