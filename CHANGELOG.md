@@ -6,6 +6,17 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A `zensical-glossary` build for `learn/glossary.md`: the page now has
+  `###` entries for `screen`, `nudge`, `empty-final nudge`, `no-nudge`,
+  `Baseline Worker`, `Baseline Pi`, `arm`, `ablation`, the telemetry columns
+  and the extension terms. The extension links each term on its first prose occurrence and
+  supplies hover definitions; the build uses `uvx --with zensical-glossary
+  zensical build` in CI and in the project checks.
+
+- The suite baseline lesson, `learn/lessons/baseline.md`: Baseline Pi versus
+  the Baseline Worker on easy, medium and hard, n = 3, from the 45-session
+  llama.cpp run, with the same telemetry as the template.
+
 - Added `learn/code/clinic` and `learn/code/clinic.ps1` wrappers for the
   worker-extension lesson. Each sets the profile, session, model, isolation
   flags and extension, and takes the task as its only argument, so the Bash
@@ -115,6 +126,21 @@ Versions match git tags; pin one in both install lines.
   against 1 of 6 with one spec file per phase). Exploratory, n = 3 per arm.
 
 ### Changed
+
+- Basic Remedies is dropped as a lesson module after its 45-session screen:
+  the prompt and loop were null, the nudge was a lead, and hard floored every
+  arm. The shipped full worker is now the **Baseline Worker**, with **Baseline
+  Pi** as its comparison; the baseline lesson and research record carry the
+  result.
+
+- The harness lesson states the settings a run sends to llama.cpp: server
+  context 50000, and Pi’s sampled `temperature 1.0`, `top_p 0.95`, `top_k 20`,
+  `max_tokens 16384`. These are the out-of-the-box values, not the greedy
+  reference block.
+
+- The lesson template now asks for a short “What the telemetry shows” narrative
+  under the before/after table and a minimal in-page code sample of the
+  remedy under Solution; a link alone is not enough.
 
 - Lesson 1 now points to The ditch as the next lesson, gives Linux and Windows
   install and PowerShell profile guidance instead of treating the macOS
