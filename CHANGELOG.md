@@ -17,8 +17,10 @@ Versions match git tags; pin one in both install lines.
   installed versions — the only way past the model's training cutoff, since the
   ladder runs on Python 3.15. The harness builds the index on the initial run
   and caches it; it grounds on library docs a developer would have, never the
-  task solution or the hidden grader. Offline, dependency-free (pure-Python
-  BM25). Loaded on the coder.
+  task solution or the hidden grader. The index auto-rebuilds when the installed
+  packages change (a newly-installed dependency becomes searchable), and the
+  tool takes a `rebuild` flag to force a re-index on demand. Offline,
+  dependency-free (pure-Python BM25). Loaded on the coder.
 
 - Smart decomposition in `flow_run`: split a task on Phase/Step headers at ANY
   level, then any markdown header, so a multi-level spec (the hard suite's

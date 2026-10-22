@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import json
 import math
 import re
@@ -118,18 +119,32 @@ class BM25:
         return sorted((x for x in scored if x[1] > 0), key=lambda x: x[1], reverse=True)[:k]
 
 
+def signature(site_packages: Path) -> str:
+    """A cheap fingerprint of the installed package set, so the index auto-rebuilds when the
+    model installs (or removes) a package mid-run — the lookup must not go blind to new deps."""
+    try:
+        names = sorted(p.name for p in site_packages.iterdir())
+    except OSError:
+        names = []
+    return hashlib.sha1("\n".join(names).encode()).hexdigest()
+
+
 def load_index(site_packages: Path, rebuild: bool = False) -> list[dict]:
     cache = site_packages.parent / CACHE_NAME
+    sig = signature(site_packages)
     if cache.exists() and not rebuild:
         try:
-            return json.loads(cache.read_text())
-        except ValueError:
+            data = json.loads(cache.read_text())
+            if isinstance(data, dict) and data.get("sig") == sig:
+                return data["chunks"]
+            # stale: the installed packages changed since this cache was built — rebuild.
+        except (ValueError, KeyError):
             pass
     chunks = build_corpus(site_packages)
     for c in chunks:
         c["tokens"] = tokenize(c["text"])
     try:
-        cache.write_text(json.dumps(chunks))
+        cache.write_text(json.dumps({"sig": sig, "chunks": chunks}))
     except OSError:
         pass
     return chunks

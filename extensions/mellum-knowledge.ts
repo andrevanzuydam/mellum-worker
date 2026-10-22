@@ -52,19 +52,22 @@ export default function (pi: any): void {
 			"signatures, DEFAULT values, and behavior for the exact versions running — including ones " +
 			"newer than your training. Use it BEFORE guessing an unfamiliar API, and whenever a failure " +
 			"looks API-shaped (e.g. `TooManyRedirects` -> look up the redirect status default). Returns " +
-			"the top matching class/function source and docstring.",
+			"the top matching class/function source and docstring. The index auto-rebuilds when the " +
+			"installed packages change; after you install a NEW package, pass `rebuild: true` to index " +
+			"it right away.",
 		parameters: {
 			type: "object",
 			properties: {
 				query: { type: "string", description: "the API/library question, e.g. 'RedirectResponse status code default 303'" },
 				k: { type: "number", description: "how many results to return (default 4)" },
+				rebuild: { type: "boolean", description: "force a re-index first (use after installing a new package)" },
 			},
 			required: ["query"],
 			additionalProperties: false,
 		},
 		async execute(_id: string, params: any) {
 			const k = Number(params?.k) > 0 ? Math.min(Number(params.k), 8) : 4;
-			const text = await runLookup(String(params?.query ?? ""), k, process.cwd());
+			const text = await runLookup(String(params?.query ?? ""), k, process.cwd(), params?.rebuild === true);
 			return { content: [{ type: "text", text }] };
 		},
 	});

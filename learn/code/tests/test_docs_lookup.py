@@ -42,3 +42,17 @@ def test_extract_chunks_captures_signature_with_default_value(tmp_path):
 def test_bm25_empty_corpus_is_safe():
     bm = docs_lookup.BM25([])
     assert bm.top(docs_lookup.tokenize("anything"), k=3) == []
+
+
+def test_index_auto_rebuilds_when_a_package_is_installed(tmp_path):
+    sp = tmp_path / "site-packages"
+    sp.mkdir()
+    (sp / "foo.py").write_text("def alpha():\n    pass\n")
+    first = docs_lookup.load_index(sp)
+    assert any("alpha" in c["id"] for c in first)
+    assert not any("beta" in c["id"] for c in first)
+    # the model installs a new package after the index was built
+    (sp / "bar.py").write_text("def beta():\n    pass\n")
+    assert docs_lookup.signature(sp) != docs_lookup.signature(tmp_path)  # sig tracks contents
+    second = docs_lookup.load_index(sp)  # stale cache -> auto-rebuild
+    assert any("beta" in c["id"] for c in second)  # the new package is now indexed
