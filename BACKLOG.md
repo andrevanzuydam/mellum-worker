@@ -10,6 +10,23 @@ line number.
 
 Reopen conditions, not promises.
 
+**Generalized task decomposition for `flow_run`.** `flow_run.split_phases`
+only splits on `## Phase` headers, so it decomposes the suite prompts but not
+an arbitrary large command — a wall of spec text, an issue dump, a file to
+refactor — which this model drowns on, since it cannot bound its reasoning
+(`supportsReasoningEffort: false`) and emits no clean output on a big input.
+Planned layers, cheapest first: (1) structural split on any markdown header
+level, top-level numbered/bulleted items, or "Phase/Step N"; (2) size gate
+(small input stays one unit); (3) a cheap splitter sub-agent that emits a
+numbered list of small, ordered, independently-buildable steps from an
+unstructured wall (small output over large input — the job this model can
+still finish); (4) a paragraph size-chunk fallback so nothing ever drowns.
+Open tradeoff: model-generated steps are terser than self-contained spec
+phases, so each step carries the splitter's description plus targeted file
+reads, not the full context. *Reopens when* a non-phase-structured task is
+measured on the tool-based harness (`flow_run`), or the harness is pointed at
+real-world, non-suite commands.
+
 **Discovery/output policy beyond M.7E.** Seven tools do not prevent shell
 dependency scans. Throwaway discovery interception blocked scans, but its
 compact-output branch had no model-run evidence and its heuristics can block
