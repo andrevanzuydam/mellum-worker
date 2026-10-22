@@ -6,6 +6,14 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A `mellum-plan` extension (`extensions/mellum-plan.ts`): plan before you
+  implement. It blocks the worker's first `edit`/`write` until it has stated a
+  plan (a substantive assistant text turn); reads, greps and shell commands are
+  never gated, and once a plan exists the gate never fires again. The block
+  reason asks for the files to change and a checklist of every spec requirement,
+  including data-model rules no visible test checks (the phase-4 id/status
+  miss). Structural, not a prompt line; load with `-e extensions/mellum-plan.ts`.
+
 - A `mellum-quality` extension (`extensions/mellum-quality.ts`): at
   `agent_before_settle` it runs `ruff --select F,E9` over the worker's own
   changes and, when a real error remains — a shadowed redefinition (F811), an
