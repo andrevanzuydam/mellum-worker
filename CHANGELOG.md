@@ -26,16 +26,18 @@ Versions match git tags; pin one in both install lines.
   Measured incidence on the current model is low (Pi's `edit` anchors reliably),
   so this is a cheap safety net, not a hot path.
 
-- A `mellum-plan` extension (`extensions/mellum-plan.ts`): plan before you
-  implement. It blocks the worker's first `edit`/`write` until it has stated a
-  plan (a substantive assistant text turn); reads, greps and shell commands are
-  never gated, and once a plan exists the gate never fires again. The block
-  reason asks for the files to change and a checklist of every spec requirement,
-  including data-model rules no visible test checks (the phase-4 id/status
-  miss). A BOUNDED nudge: it blocks at most `max` edits (default 2) then fails
-  open, so a model that never emits a plain-text plan turn still builds — a hard
-  gate deadlocked the worker in measurement. Load with `-e extensions/mellum-plan.ts`;
-  tune with `MELLUM_PLAN` (e.g. `{"max":1}`, or `{"max":0}` to disable).
+- A `mellum-plan` extension (`extensions/mellum-plan.ts`): plan before you code —
+  gather information, write a `TODO.md` of every step to satisfy the whole spec,
+  follow it checking each step off, and on a test failure amend the `TODO.md` and
+  go round again until green ("fail to plan, plan to fail"). It gates on the
+  concrete `TODO.md` **artifact**, not a flaky text turn: the first source
+  `edit`/`write` is blocked until a non-empty `TODO.md` exists (writing the
+  `TODO.md` itself is always allowed; reads/greps/shell never gated); once it
+  exists, the worker is free to implement and follow it. Applies even to simple
+  tasks — a plan curbs flailing. BOUNDED: it fails open after `max` blocks
+  (default 2) so it can never deadlock the build. Pairs with `mellum-ncm` for the
+  re-run-until-green pressure. Load with `-e extensions/mellum-plan.ts`; tune with
+  `MELLUM_PLAN` (e.g. `{"max":1}`, or `{"max":0}` to disable).
 
 - A `mellum-quality` extension (`extensions/mellum-quality.ts`): at
   `agent_before_settle` it runs `ruff --select F,E9` over the worker's own

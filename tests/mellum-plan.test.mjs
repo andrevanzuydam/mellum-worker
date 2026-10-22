@@ -1,59 +1,60 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { PLAN_REASON, createPlanGate, isPlanTurn, resolvePlanMax } from "../extensions/mellum-plan.ts";
+import { PLAN_REASON, createPlanGate, isTodoPath, resolvePlanMax } from "../extensions/mellum-plan.ts";
 
-const planText = { role: "assistant", content: [{ type: "text", text: "Plan: change app.py and models.py; checklist: id field, status default, resolve route." }] };
-const thinkingOnly = { role: "assistant", content: [{ type: "thinking", thinking: "hmm" }] };
-const callOnly = { role: "assistant", content: [{ type: "toolCall", name: "edit" }] };
-
-test("isPlanTurn: a substantive assistant text turn is a plan; thinking- or call-only is not", () => {
-	assert.equal(isPlanTurn(planText), true);
-	assert.equal(isPlanTurn(thinkingOnly), false);
-	assert.equal(isPlanTurn(callOnly), false);
-	assert.equal(isPlanTurn({ role: "user", content: "hi" }), false);
-	assert.equal(isPlanTurn({ role: "assistant", content: [{ type: "text", text: "  " }] }), false);
+test("isTodoPath recognises the plan file anywhere, not source files", () => {
+	assert.equal(isTodoPath("TODO.md"), true);
+	assert.equal(isTodoPath("./TODO.md"), true);
+	assert.equal(isTodoPath("sub/dir/TODO.md"), true);
+	assert.equal(isTodoPath("todo.md"), true);
+	assert.equal(isTodoPath("app.py"), false);
+	assert.equal(isTodoPath("models.py"), false);
 });
 
-test("read/grep/ls/bash/find are never gated — exploration before a plan is fine", () => {
-	const gate = createPlanGate();
+test("read/grep/ls/bash/find are never gated — exploration is fine", () => {
+	const gate = createPlanGate(2, () => false);
 	for (const toolName of ["read", "grep", "ls", "find", "bash"]) {
-		assert.equal(gate.toolCall({ toolName, input: {} }), undefined, toolName);
+		assert.equal(gate.toolCall({ toolName, input: { path: "app.py" } }), undefined, toolName);
 	}
 });
 
-test("the first edit/write is blocked until a plan turn has happened", () => {
-	const gate = createPlanGate();
-	const decision = gate.toolCall({ toolName: "edit", input: { path: "app.py" } });
-	assert.ok(decision?.block, "first edit with no plan is blocked");
-	assert.match(decision.reason, /plan/i);
-	assert.match(decision.reason, /checklist|every requirement/i);
+test("a source edit/write is blocked until a TODO.md exists", () => {
+	const gate = createPlanGate(2, () => false); // no TODO.md yet
+	const decision = gate.toolCall({ toolName: "write", input: { path: "app.py", content: "x" } });
+	assert.ok(decision?.block, "source write with no plan is blocked");
+	assert.match(decision.reason, /TODO\.md/);
 });
 
-test("after a plan turn, edit and write are allowed and stay allowed", () => {
-	const gate = createPlanGate();
-	gate.turnEnd({ message: planText });
-	assert.equal(gate.toolCall({ toolName: "edit", input: { path: "app.py" } }), undefined);
-	assert.equal(gate.toolCall({ toolName: "write", input: { path: "models.py" } }), undefined);
-	// still allowed later, no re-gating
-	gate.turnEnd({ message: callOnly });
-	assert.equal(gate.toolCall({ toolName: "write", input: { path: "x.py" } }), undefined);
+test("writing the TODO.md itself is always allowed (that is how the plan gets made)", () => {
+	const gate = createPlanGate(2, () => false);
+	assert.equal(gate.toolCall({ toolName: "write", input: { path: "TODO.md", content: "- [ ] step" } }), undefined);
+	assert.equal(gate.toolCall({ toolName: "edit", input: { path: "TODO.md" } }), undefined);
 });
 
-test("thinking-only / tool-call-only turns do not satisfy the gate", () => {
-	const gate = createPlanGate();
-	gate.turnEnd({ message: thinkingOnly });
-	gate.turnEnd({ message: callOnly });
-	assert.ok(gate.toolCall({ toolName: "write", input: { path: "app.py" } })?.block, "still blocked without a real plan");
+test("once a TODO.md exists, source edits are allowed (follow the plan)", () => {
+	let has = false;
+	const gate = createPlanGate(2, () => has);
+	assert.ok(gate.toolCall({ toolName: "write", input: { path: "app.py", content: "x" } })?.block, "blocked before plan");
+	has = true; // the worker wrote TODO.md
+	assert.equal(gate.toolCall({ toolName: "write", input: { path: "app.py", content: "x" } }), undefined, "allowed after plan");
 });
 
 test("the gate fails open after max blocks — it never deadlocks", () => {
-	// A model that works in thinking+tool-call never emits a plain-text plan turn;
-	// the gate must still let it build, or it blocks every edit forever (measured).
-	const gate = createPlanGate(2);
-	assert.ok(gate.toolCall({ toolName: "edit", input: { path: "a.py" } })?.block, "1st blocked");
+	const gate = createPlanGate(2, () => false);
+	assert.ok(gate.toolCall({ toolName: "write", input: { path: "a.py" } })?.block, "1st blocked");
 	assert.ok(gate.toolCall({ toolName: "write", input: { path: "b.py" } })?.block, "2nd blocked");
-	assert.equal(gate.toolCall({ toolName: "write", input: { path: "c.py" } }), undefined, "3rd allowed — fail open, no deadlock");
+	assert.equal(gate.toolCall({ toolName: "write", input: { path: "c.py" } }), undefined, "3rd allowed — fail open");
+});
+
+test("PLAN_REASON encodes the loop: gather -> plan -> follow+check off -> test -> on fail re-plan -> until pass", () => {
+	assert.match(PLAN_REASON, /gather|read the spec/i);
+	assert.match(PLAN_REASON, /TODO\.md/);
+	assert.match(PLAN_REASON, /follow/i);
+	assert.match(PLAN_REASON, /every requirement|checklist|each route/i);
+	assert.match(PLAN_REASON, /check(ed)? (it )?off/i);
+	assert.match(PLAN_REASON, /fail|still failing/i);
+	assert.match(PLAN_REASON, /until .*(pass|done|checked)/i);
 });
 
 test("resolvePlanMax reads MELLUM_PLAN, defaults, tolerates junk", () => {
@@ -62,19 +63,11 @@ test("resolvePlanMax reads MELLUM_PLAN, defaults, tolerates junk", () => {
 	assert.equal(resolvePlanMax("nope"), 2);
 });
 
-test("PLAN_REASON names the cumulative-contract trap (fields no visible test checks)", () => {
-	assert.match(PLAN_REASON, /data-model|id\b/i);
-	assert.match(PLAN_REASON, /no visible test|not checked by/i);
-});
-
-test("the default export wires tool_call and turn_end", async () => {
+test("the default export wires tool_call and gates on a TODO.md in cwd", async () => {
 	const { default: install } = await import("../extensions/mellum-plan.ts");
 	const handlers = {};
-	install({ on: (name, fn) => { handlers[name] = fn; } });
+	install({ on: (name, fn) => { handlers[name] = fn; } }, { hasTodo: () => false });
 	assert.ok(handlers.tool_call, "registers tool_call");
-	assert.ok(handlers.turn_end, "registers turn_end");
-	// edit before plan -> blocked; after a plan turn -> allowed
-	assert.ok(handlers.tool_call({ toolName: "edit", input: { path: "a.py" } })?.block);
-	handlers.turn_end({ message: planText });
-	assert.equal(handlers.tool_call({ toolName: "edit", input: { path: "a.py" } }), undefined);
+	assert.ok(handlers.tool_call({ toolName: "write", input: { path: "app.py" } })?.block);
+	assert.equal(handlers.tool_call({ toolName: "write", input: { path: "TODO.md" } }), undefined);
 });

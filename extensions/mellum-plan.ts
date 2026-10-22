@@ -1,23 +1,25 @@
 /**
- * mellum-plan: plan before you implement.
+ * mellum-plan: identify the problem, write a TODO.md, follow it, amend it on
+ * failures, repeat until done.
  *
  * The recorded pathology is "declares done without doing the work": on a
- * multi-phase build the worker reads the phase spec and edits straight away,
- * satisfying the visible page while dropping a data-model rule no visible test
- * checks (the phase-4 id/status miss). A developer plans first — lists the
- * files and the whole contract — so a later requirement is not forgotten.
+ * multi-phase build the worker reads the spec, edits straight away, satisfies
+ * the visible page and drops a requirement no visible test checks (the phase-4
+ * id/status miss, the phase-6 aggregation keys). A developer plans first — lists
+ * the whole contract as steps — then works the list, and when something fails it
+ * updates the list and goes round again.
  *
- * The FIRST edit/write is blocked until the worker has stated a plan (a
- * substantive assistant text turn). Reads, greps and shell commands are never
- * gated — exploration before a plan is fine. Once a plan exists the gate never
- * fires again, and the block reason carries the cumulative-contract lesson.
- *
- * It is a BOUNDED nudge, not a hard gate: it blocks at most `max` edits (default
- * 2) then fails open. A model that works in thinking+tool-call may never emit a
- * plain-text plan turn, and a gate that could block every edit forever would
- * deadlock the build (measured). So planning is encouraged, never enforced to
- * the point of producing no code.
+ * This gates on a concrete artifact, a `TODO.md`, not a flaky "text turn" that a
+ * thinking+tool-call model never emits (the earlier design deadlocked). Before
+ * the first source edit the gate blocks and asks for a `TODO.md` — a checklist
+ * of every step to satisfy the whole spec. Writing the `TODO.md` is always
+ * allowed; once it exists the worker is free to implement and FOLLOW it. The
+ * reason tells the worker to amend the TODO.md from the test failures and loop
+ * (the `mellum-ncm` gate supplies the re-run-until-green pressure). Bounded: it
+ * fails open after `max` blocks, so it can never deadlock the build.
  */
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 export interface ToolCall {
 	toolName: string;
@@ -29,33 +31,42 @@ export interface Block {
 	reason: string;
 }
 
-interface MessageLike {
-	role?: string;
-	content?: unknown;
-}
-
 export const PLAN_REASON =
-	"[mellum-plan] Plan before you edit. First, in a message (not a tool call), write your plan: " +
-	"(1) the files you will change, and (2) a checklist of EVERY requirement from the whole spec — " +
-	"including data-model rules that no visible test checks, such as a unique, automatically-assigned " +
-	"id, or a status that defaults to a specific value. Then make your edits. Keeping the whole " +
-	"contract in view is what stops a later requirement from being dropped.";
-
-const EDIT_TOOLS = new Set(["edit", "write"]);
-
-/** A plan is a substantive assistant text turn — not thinking-only, not a tool call, not whitespace. */
-export function isPlanTurn(message: MessageLike | undefined): boolean {
-	if (!message || message.role !== "assistant") return false;
-	const blocks = Array.isArray(message.content) ? (message.content as Record<string, unknown>[]) : [];
-	return blocks.some((b) => b && b.type === "text" && typeof b.text === "string" && b.text.trim() !== "");
-}
-
-export interface PlanGate {
-	toolCall(call: ToolCall): Block | undefined;
-	turnEnd(event: { message?: MessageLike }): void;
-}
+	"[mellum-plan] Fail to plan, plan to fail — even for a simple task a plan beats " +
+	"flailing. First gather information: read the spec and the code. Then write a " +
+	"TODO.md — a checklist of every step to satisfy the WHOLE spec (each route, each " +
+	"model field, each exact output key, each migration), not only what a visible test " +
+	"checks. Then follow TODO.md: do each step and check it off, run the tests; if " +
+	"anything is still failing, go back to TODO.md, update it with what failed, and run " +
+	"again — repeat until every step is checked off and the tests pass. (Writing TODO.md " +
+	"itself is allowed right now.)";
 
 const DEFAULT_MAX = 2;
+const EDIT_TOOLS = new Set(["edit", "write"]);
+
+function pathOf(input: unknown): string | undefined {
+	if (!input || typeof input !== "object") return undefined;
+	const record = input as Record<string, unknown>;
+	for (const key of ["path", "filePath", "file_path"]) {
+		if (typeof record[key] === "string") return record[key] as string;
+	}
+	return undefined;
+}
+
+/** The plan file, by basename, anywhere and case-insensitive. */
+export function isTodoPath(path: string): boolean {
+	const base = (path || "").split(/[\\/]/).pop() || "";
+	return base.toLowerCase() === "todo.md";
+}
+
+/** Whether a non-empty TODO.md exists under cwd. */
+export function todoExists(cwd: string): boolean {
+	try {
+		return readFileSync(resolve(cwd, "TODO.md"), "utf8").trim().length > 0;
+	} catch {
+		return false;
+	}
+}
 
 /** MELLUM_PLAN (JSON) overrides the block cap, e.g. {"max":1}; 0 disables the gate. */
 export function resolvePlanMax(env: string | undefined): number {
@@ -71,32 +82,37 @@ export function resolvePlanMax(env: string | undefined): number {
 	return DEFAULT_MAX;
 }
 
+export interface PlanGate {
+	toolCall(call: ToolCall): Block | undefined;
+}
+
 /**
- * Blocks the first edit/write until a plan turn, then stays out of the way — but
- * FAILS OPEN after `max` blocks. A model that works in thinking+tool-call may
- * never emit a plain-text plan turn; without the cap the gate blocks every edit
- * forever and the worker builds nothing (measured: wired hard, 0 of 34, 157
- * requests, 3790 blocks). A gate must never be able to deadlock the build, so it
- * degrades to a bounded nudge.
+ * Blocks the first source edit/write until a TODO.md exists, then stays out of
+ * the way (the worker follows and amends the plan). Writing the TODO.md is never
+ * blocked. Fails open after `max` blocks so a model that will not write a plan
+ * still builds.
  */
-export function createPlanGate(max: number = DEFAULT_MAX): PlanGate {
-	let planned = false;
+export function createPlanGate(max: number, hasTodo: () => boolean): PlanGate {
 	let blocks = 0;
 	return {
 		toolCall(call) {
-			if (!EDIT_TOOLS.has(call.toolName) || planned) return undefined;
+			if (!EDIT_TOOLS.has(call.toolName)) return undefined;
+			const path = pathOf(call.input);
+			if (path && isTodoPath(path)) return undefined; // making/updating the plan is always allowed
+			if (hasTodo()) return undefined; // the plan exists — follow it
 			if (blocks >= max) return undefined; // fail open: never deadlock the build
 			blocks += 1;
 			return { block: true, reason: PLAN_REASON };
 		},
-		turnEnd(event) {
-			if (isPlanTurn(event?.message)) planned = true;
-		},
 	};
 }
 
-export default function (pi: { on: (event: string, handler: (event: any) => unknown) => void }): void {
-	const gate = createPlanGate(resolvePlanMax(process.env.MELLUM_PLAN));
+export default function (
+	pi: { on: (event: string, handler: (event: any, ctx?: any) => unknown) => void },
+	options: { hasTodo?: () => boolean } = {},
+): void {
+	const max = resolvePlanMax(process.env.MELLUM_PLAN);
+	const hasTodo = options.hasTodo ?? (() => todoExists(process.cwd()));
+	const gate = createPlanGate(max, hasTodo);
 	pi.on("tool_call", (event) => gate.toolCall(event));
-	pi.on("turn_end", (event) => gate.turnEnd(event));
 }
