@@ -23,7 +23,10 @@ Versions match git tags; pin one in both install lines.
   never gated, and once a plan exists the gate never fires again. The block
   reason asks for the files to change and a checklist of every spec requirement,
   including data-model rules no visible test checks (the phase-4 id/status
-  miss). Structural, not a prompt line; load with `-e extensions/mellum-plan.ts`.
+  miss). A BOUNDED nudge: it blocks at most `max` edits (default 2) then fails
+  open, so a model that never emits a plain-text plan turn still builds — a hard
+  gate deadlocked the worker in measurement. Load with `-e extensions/mellum-plan.ts`;
+  tune with `MELLUM_PLAN` (e.g. `{"max":1}`, or `{"max":0}` to disable).
 
 - A `mellum-quality` extension (`extensions/mellum-quality.ts`): at
   `agent_before_settle` it runs `ruff --select F,E9` over the worker's own
@@ -154,6 +157,13 @@ Versions match git tags; pin one in both install lines.
   against 1 of 6 with one spec file per phase). Exploratory, n = 3 per arm.
 
 ### Changed
+
+- `mellum-ncm` gains a whole-suite verify mode: set `NCM_ALL=1` to run the
+  entire visible test suite at settle and refuse "done" until it is green — the
+  agnostic developer-loop gate (the worker isn't done until it has run the whole
+  thing and seen it pass), beside the existing named acceptance test (`NCM_TEST`,
+  mediation). Adds a `verifyCommand` helper; the gate is inert unless `NCM_TEST`
+  or `NCM_ALL` is set.
 
 - The README builds the site with `uvx --with zensical-glossary zensical
   build`; a bare `zensical build` now fails because the glossary extension is

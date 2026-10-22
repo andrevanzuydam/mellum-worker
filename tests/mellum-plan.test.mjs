@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { PLAN_REASON, createPlanGate, isPlanTurn } from "../extensions/mellum-plan.ts";
+import { PLAN_REASON, createPlanGate, isPlanTurn, resolvePlanMax } from "../extensions/mellum-plan.ts";
 
 const planText = { role: "assistant", content: [{ type: "text", text: "Plan: change app.py and models.py; checklist: id field, status default, resolve route." }] };
 const thinkingOnly = { role: "assistant", content: [{ type: "thinking", thinking: "hmm" }] };
@@ -45,6 +45,21 @@ test("thinking-only / tool-call-only turns do not satisfy the gate", () => {
 	gate.turnEnd({ message: thinkingOnly });
 	gate.turnEnd({ message: callOnly });
 	assert.ok(gate.toolCall({ toolName: "write", input: { path: "app.py" } })?.block, "still blocked without a real plan");
+});
+
+test("the gate fails open after max blocks — it never deadlocks", () => {
+	// A model that works in thinking+tool-call never emits a plain-text plan turn;
+	// the gate must still let it build, or it blocks every edit forever (measured).
+	const gate = createPlanGate(2);
+	assert.ok(gate.toolCall({ toolName: "edit", input: { path: "a.py" } })?.block, "1st blocked");
+	assert.ok(gate.toolCall({ toolName: "write", input: { path: "b.py" } })?.block, "2nd blocked");
+	assert.equal(gate.toolCall({ toolName: "write", input: { path: "c.py" } }), undefined, "3rd allowed — fail open, no deadlock");
+});
+
+test("resolvePlanMax reads MELLUM_PLAN, defaults, tolerates junk", () => {
+	assert.equal(resolvePlanMax(undefined), 2);
+	assert.equal(resolvePlanMax('{"max":1}'), 1);
+	assert.equal(resolvePlanMax("nope"), 2);
 });
 
 test("PLAN_REASON names the cumulative-contract trap (fields no visible test checks)", () => {

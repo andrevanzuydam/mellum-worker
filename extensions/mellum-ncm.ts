@@ -13,8 +13,11 @@
  * with `-e extensions/mellum-ncm.ts` directly — no patch into a Pi checkout.
  *
  * Config (env):
- *   NCM_TEST    the acceptance test to re-run (e.g. tests/test_phase4.py),
- *               relative to the worker's cwd. Required; inert without it.
+ *   NCM_TEST    a named acceptance test to re-run (e.g. tests/test_phase4.py),
+ *               relative to the worker's cwd — the mediation grain.
+ *   NCM_ALL     set (1/true/yes) to verify the WHOLE visible suite instead of a
+ *               named test — the agnostic developer-loop gate (run everything,
+ *               refuse to settle until green). Inert unless NCM_TEST or NCM_ALL.
  *   NCM_MAX     how many times to send the worker back (default 5).
  *   NCM_PYTEST  the pytest command (default: uv run --offline python -m pytest).
  */
@@ -38,17 +41,23 @@ export function gateMessage(v: Verdict): string {
 	const concepts = v.failures.length ? v.failures.join(", ") : "(see output below)";
 	const tail = v.output.slice(-1200);
 	return (
-		"[mellum-ncm] The acceptance test still fails, so you are not done. " +
+		"[mellum-ncm] The tests still fail, so you are not done. " +
 		`Unmet concepts (failing tests): ${concepts}. ` +
 		"Change the code so each of these passes — one concept at a time — then stop.\n\n" +
 		tail
 	);
 }
 
-/** Run the acceptance test in `cwd`; never throws. */
+/** The pytest command: a named test runs just that file; an empty test runs the whole visible suite. */
+export function verifyCommand(test: string, pytest: string): string {
+	const path = (test || "").trim();
+	return `${pytest}${path ? ` ${path}` : ""} -q -p no:warnings --tb=short`;
+}
+
+/** Run the verification (a named test, or the whole suite when `test` is empty) in `cwd`; never throws. */
 export function runTest(test: string, pytest: string, cwd: string): Verdict {
 	try {
-		const out = execSync(`${pytest} ${test} -q -p no:warnings --tb=short`, {
+		const out = execSync(verifyCommand(test, pytest), {
 			cwd,
 			encoding: "utf8",
 			stdio: ["ignore", "pipe", "pipe"],
@@ -61,12 +70,14 @@ export function runTest(test: string, pytest: string, cwd: string): Verdict {
 }
 
 export default function (pi: { on: (event: string, handler: (ev: any, ctx?: any) => unknown) => void }) {
-	const test = process.env.NCM_TEST;
+	const test = (process.env.NCM_TEST ?? "").trim();
+	const all = /^(1|true|yes)$/i.test(process.env.NCM_ALL ?? "");
 	const max = Number.parseInt(process.env.NCM_MAX ?? "5", 10);
 	const pytest = process.env.NCM_PYTEST ?? "uv run --offline python -m pytest";
 	let used = 0;
 	pi.on("agent_before_settle", (_event: any, ctx: any) => {
-		if (!test || !(used < max)) return undefined;
+		// Active when a named acceptance test is set (mediation) OR whole-suite verify is on (NCM_ALL).
+		if ((test === "" && !all) || !(used < max)) return undefined;
 		const cwd = ctx && typeof ctx.cwd === "string" ? ctx.cwd : process.cwd();
 		let v: Verdict;
 		try {

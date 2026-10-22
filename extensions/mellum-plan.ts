@@ -7,11 +7,16 @@
  * checks (the phase-4 id/status miss). A developer plans first — lists the
  * files and the whole contract — so a later requirement is not forgotten.
  *
- * This makes planning structural rather than a prompt line the model can reason
- * past: the FIRST edit/write is blocked until the worker has stated a plan (a
+ * The FIRST edit/write is blocked until the worker has stated a plan (a
  * substantive assistant text turn). Reads, greps and shell commands are never
  * gated — exploration before a plan is fine. Once a plan exists the gate never
- * fires again. The block reason carries the cumulative-contract lesson.
+ * fires again, and the block reason carries the cumulative-contract lesson.
+ *
+ * It is a BOUNDED nudge, not a hard gate: it blocks at most `max` edits (default
+ * 2) then fails open. A model that works in thinking+tool-call may never emit a
+ * plain-text plan turn, and a gate that could block every edit forever would
+ * deadlock the build (measured). So planning is encouraged, never enforced to
+ * the point of producing no code.
  */
 
 export interface ToolCall {
@@ -50,12 +55,38 @@ export interface PlanGate {
 	turnEnd(event: { message?: MessageLike }): void;
 }
 
-/** Blocks the first edit/write until a plan turn has happened; then stays out of the way. */
-export function createPlanGate(): PlanGate {
+const DEFAULT_MAX = 2;
+
+/** MELLUM_PLAN (JSON) overrides the block cap, e.g. {"max":1}; 0 disables the gate. */
+export function resolvePlanMax(env: string | undefined): number {
+	if (!env) return DEFAULT_MAX;
+	try {
+		const parsed = JSON.parse(env);
+		if (parsed && typeof parsed === "object" && Number.isInteger(parsed.max) && parsed.max >= 0) {
+			return parsed.max;
+		}
+	} catch {
+		// fall through to default
+	}
+	return DEFAULT_MAX;
+}
+
+/**
+ * Blocks the first edit/write until a plan turn, then stays out of the way — but
+ * FAILS OPEN after `max` blocks. A model that works in thinking+tool-call may
+ * never emit a plain-text plan turn; without the cap the gate blocks every edit
+ * forever and the worker builds nothing (measured: wired hard, 0 of 34, 157
+ * requests, 3790 blocks). A gate must never be able to deadlock the build, so it
+ * degrades to a bounded nudge.
+ */
+export function createPlanGate(max: number = DEFAULT_MAX): PlanGate {
 	let planned = false;
+	let blocks = 0;
 	return {
 		toolCall(call) {
 			if (!EDIT_TOOLS.has(call.toolName) || planned) return undefined;
+			if (blocks >= max) return undefined; // fail open: never deadlock the build
+			blocks += 1;
 			return { block: true, reason: PLAN_REASON };
 		},
 		turnEnd(event) {
@@ -65,7 +96,7 @@ export function createPlanGate(): PlanGate {
 }
 
 export default function (pi: { on: (event: string, handler: (event: any) => unknown) => void }): void {
-	const gate = createPlanGate();
+	const gate = createPlanGate(resolvePlanMax(process.env.MELLUM_PLAN));
 	pi.on("tool_call", (event) => gate.toolCall(event));
 	pi.on("turn_end", (event) => gate.turnEnd(event));
 }

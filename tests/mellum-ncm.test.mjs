@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { parsePytest, gateMessage } from "../extensions/mellum-ncm.ts";
+import { parsePytest, gateMessage, verifyCommand } from "../extensions/mellum-ncm.ts";
 
 test("parsePytest: exit 0 is passed, no unmet concepts", () => {
 	const v = parsePytest(0, "2 passed in 0.12s");
@@ -28,4 +28,15 @@ test("gateMessage: names the unmet concepts, says not done, carries the tail", (
 	assert.match(msg, /not done/i);
 	assert.match(msg, /test_a, test_b/);
 	assert.match(msg, /boom/);
+});
+
+test("verifyCommand: a named test runs just that file; empty runs the whole suite", () => {
+	const named = verifyCommand("tests/test_phase4.py", "uv run pytest");
+	assert.match(named, /uv run pytest/);
+	assert.match(named, /tests\/test_phase4\.py/);
+	const all = verifyCommand("", "uv run pytest");
+	assert.match(all, /uv run pytest/);
+	assert.doesNotMatch(all, /test_phase4/);
+	// the whole-suite command carries no file-path token between pytest and its flags
+	assert.ok(!/pytest\s+\S*\.py/.test(all), "no file path in the whole-suite command");
 });
