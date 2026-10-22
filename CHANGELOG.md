@@ -6,6 +6,17 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A `mellum-surgical` extension (`extensions/mellum-surgical.ts`): block a
+  `write` that would clobber an existing file. On a write onto a file that
+  already exists it measures churn (the fraction of lines changed — the clobber
+  signal) and growth (a duplicated copy) against the current content and blocks
+  a regeneration, steering the worker to `edit` the targeted change; a write to
+  a new file is always allowed. Churn is the detector; growth stays generous so
+  a legitimate addition (a new route or field) is never mistaken for a rewrite.
+  Caps tune with `MELLUM_SURGICAL`; load with `-e extensions/mellum-surgical.ts`.
+  Measured incidence on the current model is low (Pi's `edit` anchors reliably),
+  so this is a cheap safety net, not a hot path.
+
 - A `mellum-plan` extension (`extensions/mellum-plan.ts`): plan before you
   implement. It blocks the worker's first `edit`/`write` until it has stated a
   plan (a substantive assistant text turn); reads, greps and shell commands are
