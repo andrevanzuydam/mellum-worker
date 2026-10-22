@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Print the Basic Remedies table from scored run.json files."""
+"""Print the suite evidence table from scored run.json files."""
 
 from __future__ import annotations
 
