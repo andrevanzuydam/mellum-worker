@@ -20,6 +20,7 @@ const PAGES = [
   "getting-started/suite.md",
   "getting-started/worker-extension.md",
   "lessons/index.md",
+  "lessons/baseline.md",
   "lessons/primary-agent.md",
   "lessons/short-prompt.md",
   "lesson-template.md",
@@ -39,6 +40,18 @@ test("every required page exists and is in the nav", () => {
     assert.ok(existsSync(resolve(ROOT, "learn", p)), `learn/${p} missing`);
     assert.ok(toml.includes(`"${p}"`), `learn/${p} not in nav`);
   }
+});
+
+test("the glossary is parsed by zensical-glossary", () => {
+  const toml = readFileSync(resolve(ROOT, "zensical.toml"), "utf8");
+  assert.match(toml, /\[project\.markdown_extensions\.zensical_glossary\]/);
+  assert.match(toml, /glossary_file = "glossary\.md"/);
+  assert.match(toml, /heading_level = 3/);
+  assert.match(toml, /first_only = true/);
+  const glossary = page("glossary.md");
+  for (const term of ["screen", "nudge", "empty-final nudge", "no-nudge",
+    "Baseline Worker", "Baseline Pi"])
+    assert.match(glossary, new RegExp(`^### ${term}$`, "m"));
 });
 
 test("credits name both authors and Tina4", () => {
@@ -94,7 +107,7 @@ test("the project pages orient a maintainer and name the checks", () => {
   const toolchain = page("project/toolchain.md");
   for (const text of ["pyproject.toml", "[tool.mellum]",
     "uv run scripts/backend.py", "PI_CODING_AGENT_DIR", "npm test",
-    "uv run pytest", "uvx zensical build"])
+    "uv run pytest", "uvx --with zensical-glossary zensical build"])
     assert.ok(toolchain.includes(text), `toolchain lacks ${text}`);
 });
 
@@ -110,7 +123,8 @@ test("lesson 2 explains isolation and the one command", () => {
     at = next;
   }
   for (const text of ["hidden", "score line", "trace.jsonl",
-    "sessions passed", "not a rate"])
+    "sessions passed", "not a rate", "temperature 1.0", "top_p 0.95",
+    "top_k 20", "max_tokens 16384", "context 50000"])
     assert.ok(l.toLowerCase().includes(text), `lesson 2 lacks ${text}`);
   assert.match(page("getting-started/index.md"), /harness\.md/);
 });
@@ -135,13 +149,28 @@ test("the first findings lesson follows the six steps and names its badge", () =
   assert.match(page("lessons/index.md"), /primary-agent\.md/);
 });
 
-test("the Lessons index is one list with author tags", () => {
+test("the Lessons index is grouped without Basic Remedies", () => {
   const index = page("lessons/index.md");
   const items = index.match(/^\d+\. \*\*/gm) ?? [];
-  assert.equal(items.length, 20);
+  assert.equal(items.length, 19);
   assert.match(index, /\*\((Paul|Andre)\)\*$/m);
   assert.equal((index.match(/\*\(Paul\)\*/g) ?? []).length, 10);
   assert.equal((index.match(/\*\(Andre\)\*/g) ?? []).length, 10);
+  for (const text of ["Start here", "Prompt and project"])
+    assert.ok(index.includes(text), `index lacks ${text}`);
+  assert.ok(!index.includes("Basic Remedies"));
+});
+
+test("the lesson template asks for evidence of the solution", () => {
+  const t = page("lesson-template.md");
+  assert.match(t, /^### Evidence of the solution$/m);
+  for (const text of ["Passes", "Turns", "Failed checks", "Tool errors",
+    "Context", "Wall", "Output tokens"])
+    assert.ok(t.includes(text), `template lacks ${text}`);
+  assert.match(t, /^### What the telemetry shows$/m);
+  assert.match(t, /^### The code$/m);
+  assert.ok(t.includes("```ts"), "template lacks a code sample");
+  assert.match(t, /n = 1/);
 });
 
 test("the ditch shows a claim that did not survive a check", () => {
@@ -152,11 +181,13 @@ test("the ditch shows a claim that did not survive a check", () => {
   assert.match(page("getting-started/index.md"), /ditch\.md/);
 });
 
-test("the worker-extension lesson names the vehicle and the shallow test", () => {
+test("the worker-extension lesson teaches the extension mechanism", () => {
   const l = page("getting-started/worker-extension.md");
-  for (const text of ["A Pi extension", "/mellum", "assert True", "n = 1",
-    "the vehicle"])
+  for (const text of ["A Pi extension", "registerCommand", "pi.on",
+    "before_provider_request", "tool_call", "agent_before_settle", "context",
+    "callback", "/mellum"])
     assert.ok(l.toLowerCase().includes(text.toLowerCase()), `worker lesson lacks ${text}`);
+  assert.doesNotMatch(l, /assert True|Run it on the ditch|n = 1/);
   assert.match(page("getting-started/index.md"), /worker-extension\.md/);
 });
 
