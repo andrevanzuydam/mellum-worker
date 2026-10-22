@@ -77,13 +77,16 @@ export const PHASES: Record<string, Phase> = {
 	},
 	code: {
 		thinking: "low",
-		tools: "read,grep,find,ls,write,edit,bash",
-		ext: [ext("mellum-nonblock.ts"), ext("mellum-guards.ts"), ext("mellum-surgical.ts")],
+		tools: "read,grep,find,ls,write,edit,bash,lookup",
+		ext: [ext("mellum-nonblock.ts"), ext("mellum-guards.ts"), ext("mellum-surgical.ts"), ext("mellum-knowledge.ts")],
 		prompt:
 			"You are the CODER. Read TODO.md and specs/. Implement each unchecked `- [ ]` item in order " +
 			"and check it off (`- [x]`) once done. The suite ships NO tests, so when the spec requires " +
 			"tests you must WRITE them yourself under `tests/` (e.g. `tests/test_home.py`) with the exact " +
-			"assertions; `pytest` finding no tests is a FAILURE to fix by writing them. Run the tests " +
+			"assertions; `pytest` finding no tests is a FAILURE to fix by writing them. When you are " +
+			"unsure of a library's exact API — a signature, a DEFAULT value, behavior — use the `lookup` " +
+			"tool (it searches the installed packages) BEFORE guessing; do the same when a failure looks " +
+			"API-shaped (e.g. `TooManyRedirects` -> look up the redirect status default). Run the tests " +
 			"with `PYTHONPATH=. uv run --with pytest pytest -q` so `from app import ...` resolves; never " +
 			"start a server — use starlette.testclient.TestClient. Make every test pass. Address any " +
 			"reviewer feedback below.",

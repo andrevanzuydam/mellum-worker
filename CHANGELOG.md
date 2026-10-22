@@ -6,6 +6,20 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A `mellum-knowledge` extension (`extensions/mellum-knowledge.ts`) and
+  `learn/code/docs_lookup.py`: a `lookup` tool grounded in the INSTALLED venv
+  packages. `docs_lookup.py` builds a BM25 index over the venv's package source
+  — every class and function with its signature (default values included) and
+  docstring — and returns the top matches for a query; the extension exposes it
+  as a tool the coder calls when unsure of an exact API, or when a failure is
+  API-shaped (`TooManyRedirects` -> FastAPI's `RedirectResponse` defaults to
+  307, so a POST redirect needs `status_code=303`). It reflects the exact
+  installed versions — the only way past the model's training cutoff, since the
+  ladder runs on Python 3.15. The harness builds the index on the initial run
+  and caches it; it grounds on library docs a developer would have, never the
+  task solution or the hidden grader. Offline, dependency-free (pure-Python
+  BM25). Loaded on the coder.
+
 - Smart decomposition in `flow_run`: split a task on Phase/Step headers at ANY
   level, then any markdown header, so a multi-level spec (the hard suite's
   `# Phase 5`–`7` under `## Phase 1`–`4`) breaks into its real phases instead of

@@ -177,6 +177,15 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
     provider, model = harness.profile_pin(run / "profile")
     task = "\n\n".join(suite.prompts)
 
+    # Index the installed venv for the `lookup` tool up front, so grounded docs are ready
+    # whenever the model calls it (index on initial run). Best-effort, in the background:
+    # create the venv from the lockfile, then build the BM25 cache.
+    docs_lookup = Path(__file__).resolve().parent / "docs_lookup.py"
+    subprocess.Popen(
+        ["sh", "-c", 'uv sync --frozen >/dev/null 2>&1; python3 "$0" --rebuild warmup >/dev/null 2>&1',
+         str(docs_lookup)],
+        cwd=workspace, start_new_session=True)
+
     # Decompose into phases and drive ONE at a time over the shared workspace, so each
     # orchestrator run gets a small, answerable task. Each phase carries a small, constant
     # FORWARD CONTEXT — a model-determined north star, a running summary of what is already
