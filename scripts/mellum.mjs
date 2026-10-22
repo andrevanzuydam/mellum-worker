@@ -1,7 +1,7 @@
 /**
- * Mellum from the terminal, for any host (Pi Mode, Pi Worker, OpenCode):
+ * Mellum from the terminal, for Pi:
  *
- *   node scripts/mellum.mjs check [--host pi|opencode] [--json]
+ *   node scripts/mellum.mjs check [--host pi] [--json]
  *   node scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]
  *   node scripts/mellum.mjs last [--file <jsonl>] [--json]
  *
@@ -27,10 +27,10 @@ import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const PKG = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const USAGE = "usage: node scripts/mellum.mjs check [--host pi|opencode] [--json]\n       node scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]\n       node scripts/mellum.mjs last [--file <jsonl>] [--json]";
+const USAGE = "usage: node scripts/mellum.mjs check [--host pi] [--json]\n       node scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]\n       node scripts/mellum.mjs last [--file <jsonl>] [--json]";
 
 /**
- * Node refuses to strip types from .ts files under node_modules, where OpenCode installs this
+ * Node refuses to strip types from .ts files under node_modules, where a git install puts this
  * package. There, copy the extensions and the templates they read to a mirror in the temp dir
  * (same layout) and import from that. Each file is written whole, then renamed into place.
  */
@@ -42,7 +42,6 @@ function codeRoot() {
 		"package.json",
 		"templates/omlx-model-settings.json",
 		"templates/pi/models.omlx.json",
-		"templates/opencode/provider.omlx.json",
 		...readdirSync(join(PKG, "extensions"))
 			.filter((f) => f.endsWith(".ts"))
 			.map((f) => `extensions/${f}`),
@@ -75,7 +74,7 @@ function parseArgs(argv) {
 		}
 		else fail(`unknown argument: ${rest[i]}`);
 	}
-	if (opts.host !== "pi" && opts.host !== "opencode") fail(`unknown host: ${opts.host}`);
+	if (opts.host !== "pi") fail(`unknown host: ${opts.host}`);
 	if (!(opts.n >= 1)) fail("--n must be a whole number above 0");
 	if ((cmd === "learn" || cmd === "last") && opts.file !== undefined && !existsSync(opts.file)) fail(`no such file: ${opts.file}`);
 	return opts;
@@ -123,7 +122,7 @@ async function last(opts) {
 		console.error(`mellum last: ${why}`);
 		process.exitCode = 1;
 	};
-	if (files.length === 0) return none("run records are off (MELLUM_MODE_RUNS=0, MELLUM_WORKER_RUNS=0)");
+	if (files.length === 0) return none("run records are off (MELLUM_MODE_RUNS=0)");
 	const { record } = m.pickLast(files.map((p) => (existsSync(p) ? readFileSync(p, "utf8") : undefined)), cwd);
 	if (!record) return none(`no Mellum runs recorded under ${cwd} (read ${files.join(", ")})`);
 	console.log(opts.json ? JSON.stringify(record, null, 2) : m.formatLast(record));

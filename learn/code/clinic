@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
+export PI_CODING_AGENT_DIR="$root/learn/code/profile"
+
+exec pi -p --session-id clinic --session-dir "${TMPDIR:-/tmp}/clinic-session" \
+  --provider llamacpp --model Mellum2.1-12B-A2.5B-Thinking \
+  --no-approve --no-extensions --no-skills --no-prompt-templates \
+  --no-themes --no-context-files \
+  -e "$root/extensions/mellum-worker.ts" "$@"

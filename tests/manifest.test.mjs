@@ -7,10 +7,6 @@ import test from "node:test";
 const ROOT = resolve(import.meta.dirname, "..");
 const pkg = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf8"));
 
-test("main points at an existing file", () => {
-	assert.ok(existsSync(resolve(ROOT, pkg.main)), `${pkg.main} missing`);
-});
-
 test("every pi extension and skills path exists", () => {
 	for (const p of [...pkg.pi.extensions, ...pkg.pi.skills]) {
 		assert.ok(existsSync(resolve(ROOT, p)), `${p} missing`);
@@ -18,7 +14,7 @@ test("every pi extension and skills path exists", () => {
 });
 
 test("pi extensions list is explicit and never includes the guards file", () => {
-	assert.deepEqual(pkg.pi.extensions, ["./extensions/mellum-mode.ts"]);
+	assert.deepEqual(pkg.pi.extensions, ["./extensions/mellum-worker.ts"]);
 });
 
 test("package version matches the newest git tag when one exists", () => {
@@ -31,7 +27,7 @@ test("package version matches the newest git tag when one exists", () => {
 	assert.equal(tag, `v${pkg.version}`);
 });
 
-test("no script that makes npm's git fetcher run a nested install (OpenCode installs from Git via pacote)", () => {
+test("no script that makes npm's git fetcher run a nested install", () => {
 	// pacote #prepareDir runs `npm install` inside the clone when any of these exist;
 	// that step fails inside OpenCode's embedded installer with "git dep preparation failed".
 	const triggers = ["postinstall", "build", "preinstall", "install", "prepack", "prepare"];

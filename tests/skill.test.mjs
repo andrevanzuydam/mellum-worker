@@ -18,19 +18,19 @@ test("SKILL.md has the frontmatter both tools require", () => {
 test("every phase referenced by SKILL.md exists", () => {
 	const text = readFileSync(resolve(SKILL, "SKILL.md"), "utf8");
 	const refs = [...text.matchAll(/reference\/(\d\d-[a-z-]+\.md)/g)].map((m) => m[1]);
-	assert.ok(refs.length >= 9, `expected at least 9 reference links, found ${refs.length}`);
+	assert.ok(refs.length >= 7, `expected at least 7 reference links, found ${refs.length}`);
 	for (const r of new Set(refs)) assert.ok(existsSync(resolve(SKILL, "reference", r)), `${r} missing`);
 });
 
 test("the optional project-facts phase is linked and states the section, the cap and the switch", () => {
 	const text = readFileSync(resolve(SKILL, "SKILL.md"), "utf8");
-	assert.match(text, /reference\/08-project-facts\.md/);
-	const step = readFileSync(resolve(SKILL, "reference", "08-project-facts.md"), "utf8");
+	assert.match(text, /reference\/07-project-facts\.md/);
+	const step = readFileSync(resolve(SKILL, "reference", "07-project-facts.md"), "utf8");
 	assert.match(step, /^## Mellum$/m, "shows the section heading");
 	assert.match(step, /600 characters/, "states the cap");
 	assert.match(step, /MELLUM_MODE_FACTS=0/, "names the switch");
 	assert.match(step, /uv run --offline python -m pytest -q/, "names the fallback");
-	// Phase 6 appends `## Mellum Worker`; the check must match only Mode's exact heading.
+	// The check must match only the exact heading.
 	assert.ok(step.includes("grep -niE '^##[[:space:]]+Mellum[[:space:]]*$' AGENTS.md"), "check is anchored to the exact heading");
 	assert.match(text, /exactly `## Mellum`/, "SKILL.md check names the exact heading");
 });
@@ -39,16 +39,5 @@ test("the smoke fixture is the failing calculator and its test command is the on
 	const dir = resolve(SKILL, "smoke", "calculator");
 	const pkg = JSON.parse(readFileSync(resolve(dir, "package.json"), "utf8"));
 	assert.equal(pkg.scripts.test, "node --test calculator.test.js");
-	assert.throws(() => execFileSync("node", ["--test", "calculator.test.js"], { cwd: dir, stdio: "pipe", env: { ...process.env, NODE_TEST_CONTEXT: undefined } }), "the fixture must fail before the worker fixes it");
-});
-
-test("render-agent prints a Pi agent file with an absolute guards path", () => {
-	const out = execFileSync("node", [resolve(ROOT, "scripts", "render-agent.mjs"), "pi", "/abs/pkg"], { encoding: "utf8" });
-	assert.match(out, /^subagentOnlyExtensions: \/abs\/pkg\/extensions\/mellum-guards\.ts$/m);
-	assert.ok(!out.includes("{{"), "no placeholder left");
-});
-
-test("render-agent prints the OpenCode agent file unchanged", () => {
-	const out = execFileSync("node", [resolve(ROOT, "scripts", "render-agent.mjs"), "opencode"], { encoding: "utf8" });
-	assert.equal(out, readFileSync(resolve(ROOT, "templates", "opencode", "mellum-worker.md"), "utf8"));
+	assert.throws(() => execFileSync("node", ["--test", "calculator.test.js"], { cwd: dir, stdio: "pipe", env: { ...process.env, NODE_TEST_CONTEXT: undefined } }), "the fixture must fail before `/mellum` fixes it");
 });

@@ -24,7 +24,6 @@ const BASE = "http://127.0.0.1:8001/v1";
 const ADMIN = "http://127.0.0.1:8001";
 
 const piTemplate = providerEntry("pi", json("../../../templates/pi/models.omlx.json"));
-const ocTemplate = providerEntry("opencode", json("../../../templates/opencode/provider.omlx.json"));
 const inputs = (over = {}) => ({
 	baseUrl: BASE,
 	models: ok(json("v1-models.json")),
@@ -87,23 +86,6 @@ test("server values the client's request overrides are info, never a fail or a w
 	assert.equal(info.level, "info");
 	for (const k of ["max_tokens 999", "enable_thinking false", "presence_penalty 0.5", "repetition_penalty 1.1", "chat_template_kwargs"]) assert.ok(info.message.includes(k), k);
 });
-
-test("for OpenCode the info says its template sends only max_tokens, so the server's other values apply", () => {
-	const f = checkSetup(inputs({ provider: { host: "opencode", entry: ocTemplate }, template: ocTemplate }), expected);
-	const info = settingsFindings(f).find((x) => x.level === "info");
-	assert.match(info.message, /OpenCode's template sends only max_tokens/);
-	assert.doesNotMatch(info.message, /overridden by the client's request values/);
-	const pi = settingsFindings(checkSetup(inputs(), expected)).find((x) => x.level === "info");
-	assert.doesNotMatch(pi.message, /OpenCode/);
-});
-
-// The three rules: each is a settings fail and counts in settingsDiffs (activation, record).
-const withSettings = (over) => {
-	const admin = json("admin-models-match.json");
-	Object.assign(admin.models[0].settings, over);
-	return admin;
-};
-const settingsOf = (over) => settingsFindings(checkSetup(inputs({ adminModels: ok(withSettings(over)) }), expected));
 
 test("thinking forced off fails: forced_ct_kwargs has enable_thinking and the server's enable_thinking is false", () => {
 	const over = { forced_ct_kwargs: ["enable_thinking"], enable_thinking: false };
@@ -306,68 +288,19 @@ test("a provider maxTokens or sampling value that differs fails: those are what 
 	assert.equal(mk((m) => delete m.samplingParams).level, "fail");
 });
 
+const withSettings = (over) => {
+	const admin = json("admin-models-match.json");
+	Object.assign(admin.models[0].settings, over);
+	return admin;
+};
+const settingsOf = (over) => settingsFindings(checkSetup(inputs({ adminModels: ok(withSettings(over)) }), expected));
+
 test("a provider without the Mellum model entry fails", () => {
 	const entry = structuredClone(piTemplate);
 	entry.models = [];
 	const f = byId(checkSetup(inputs({ provider: { host: "pi", entry } }), expected), "provider");
 	assert.equal(f.level, "fail");
 	assert.match(f.message, new RegExp(expected.modelId));
-});
-
-test("opencode: limit.context/output map to contextWindow/maxTokens; no sampling block needed", () => {
-	const mk = (over) => {
-		const entry = structuredClone(ocTemplate);
-		over?.(entry);
-		return checkSetup(inputs({ provider: { host: "opencode", entry }, template: ocTemplate }), expected);
-	};
-	assert.equal(byId(mk(), "provider").level, "ok");
-	const f = byId(mk((e) => (e.models[expected.modelId].limit.context = 1000)), "provider");
-	assert.equal(f.level, "warn");
-	assert.match(f.message, /contextWindow 1000 \(expected 56000\)/);
-	assert.match(f.fix, /04-provider-opencode|step 4/);
-	const g = byId(mk((e) => (e.options.baseURL = "http://127.0.0.1:9999/v1")), "provider");
-	assert.match(g.message, /baseUrl "http:\/\/127\.0\.0\.1:9999\/v1"/);
-	assert.equal(g.level, "warn");
-	const out = byId(mk((e) => (e.models[expected.modelId].limit.output = 4096)), "provider");
-	assert.equal(out.level, "fail");
-	assert.match(out.message, /maxTokens 4096 \(expected 16384\)/);
-});
-
-test("parseJsonc parses a file with // and /* */ comments, a trailing comma, and // inside a string", () => {
-	const text = fixture("opencode.jsonc");
-	assert.throws(() => JSON.parse(text));
-	const v = parseJsonc(text);
-	assert.equal(v.provider.omlx.options.baseURL, BASE);
-	assert.deepEqual(parseJsonc('{"a": "x, ]", "b": [1, 2,], /* c */ "c": "/* not */",}'), { a: "x, ]", b: [1, 2], c: "/* not */" });
-});
-
-test("parseJsonc on empty text returns undefined without throwing", () => {
-	assert.equal(parseJsonc(""), undefined);
-	assert.equal(parseJsonc("  \n// only a comment\n"), undefined);
-});
-
-test("readProvider opencode: opencode.jsonc, then opencode.json; none -> default baseUrl and error", () => {
-	const reads = [];
-	const r = readProvider("opencode", "/home/user", (p) => {
-		reads.push(p);
-		return p.endsWith("opencode.jsonc") ? fixture("opencode.jsonc") : undefined;
-	});
-	assert.deepEqual(reads, ["/home/user/.config/opencode/opencode.jsonc"]);
-	assert.equal(r.baseUrl, BASE);
-	assert.deepEqual(r.entry, ocTemplate);
-
-	const reads2 = [];
-	const r2 = readProvider("opencode", "/home/user", (p) => {
-		reads2.push(p);
-		return p.endsWith("opencode.json") ? '{"provider":{"omlx":{"options":{"baseURL":"http://h:1/v1"},"models":{}}}}' : undefined;
-	});
-	assert.deepEqual(reads2, ["/home/user/.config/opencode/opencode.jsonc", "/home/user/.config/opencode/opencode.json"]);
-	assert.equal(r2.baseUrl, "http://h:1/v1");
-
-	const none = readProvider("opencode", "/home/user", () => undefined);
-	assert.equal(none.baseUrl, BASE);
-	assert.equal(none.entry, undefined);
-	assert.ok(none.error);
 });
 
 test("formatFindings: fails first, then warns, then info; oks collapse into a count", () => {
@@ -440,10 +373,6 @@ test("gatherInputs reads the host config, GETs the three URLs from its baseUrl, 
 	assert.equal(got.baseUrl, "http://h:9/v1");
 	assert.deepEqual(got.provider, { host: "pi", entry: config.providers.omlx });
 	assert.deepEqual(got.template, piTemplate);
-	const oc = await gatherInputs("opencode", { home: "/nowhere", read: () => undefined, get: async () => ({ ok: false, error: "x" }) });
-	assert.match(oc.provider.error, /no opencode config/);
-	assert.deepEqual(oc.template, ocTemplate);
-	assert.equal(oc.baseUrl, BASE);
 });
 
 const reply = (body) => async () => ({ ok: true, status: 200, json: async () => body });

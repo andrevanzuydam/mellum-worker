@@ -68,11 +68,3 @@ def test_summarize_flags_empty_final_and_non_stop(tmp_path):
 def test_summarize_flags_runs_the_loop_breaker_would_have_blocked(tmp_path):
     write_runs(tmp_path, [rec(1, True, loop_breaker_would_block=3), rec(1, True)])
     assert summarize(tmp_path)["nonzero"] == {"loop_breaker_would_block": 1}
-
-
-def test_summarize_flags_runs_where_the_parent_did_not_delegate(tmp_path):
-    r = rec(1, True)
-    r["mode"] = "delegated"
-    r["parent"] = {"delegated": False}
-    write_runs(tmp_path, [r, rec(1, True)])
-    assert summarize(tmp_path)["nonzero"] == {"not_delegated": 1}

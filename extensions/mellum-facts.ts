@@ -1,5 +1,5 @@
 /**
- * Project facts for Mellum Mode: the `## Mellum` section of the project's AGENTS.md
+ * Project facts for Mellum Worker: the `## Mellum` section of the project's AGENTS.md
  * (Markdown bullets only, 600 characters at most), plus a `python -m pytest` test
  * command when the section names none and pyproject.toml mentions pytest.
  * Mode appends the block to the user messages it forwards (filterForMellum).
@@ -74,7 +74,7 @@ export function readProjectFacts(
 	const agents = read("AGENTS.md");
 	const section = agents === undefined ? undefined : sectionBullets(agents);
 	if (section && total(section) > FACTS_CAP) {
-		warning = `mellum-mode: the ## Mellum section in AGENTS.md has ${total(section)} characters of bullets (the limit is ${FACTS_CAP}); ignoring it`;
+		warning = `mellum-worker: the ## Mellum section in AGENTS.md has ${total(section)} characters of bullets (the limit is ${FACTS_CAP}); ignoring it`;
 	} else if (section) {
 		bullets = section;
 	}

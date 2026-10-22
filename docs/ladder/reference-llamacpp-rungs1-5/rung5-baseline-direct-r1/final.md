@@ -1,0 +1,1 @@
+Fixed the export functionality to include the totals row when requested, and all tests pass.

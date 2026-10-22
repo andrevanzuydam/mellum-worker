@@ -7,10 +7,18 @@ import { formatMerge, formatReport, learnFromTexts, mergeSuggestion } from "../e
 const ROOT = resolve(import.meta.dirname, "..");
 const read = (p) => readFileSync(resolve(ROOT, p), "utf8");
 
-test("README carries both pinned install lines and the status table", () => {
+test("the README links all three Getting started lessons", () => {
+  const readme = read("README.md");
+  for (const page of ["base-pi-on-llamacpp", "harness", "suite"])
+    assert.ok(readme.includes(`learn/getting-started/${page}.md`),
+      `README lacks the ${page} lesson`);
+  assert.ok(readme.includes("learn/code/harness.py run --suite all --grade"),
+    "README lacks the harness command");
+});
+
+test("README carries the pinned install line and the status table", () => {
 	const readme = read("README.md");
 	const version = JSON.parse(read("package.json")).version;
-	assert.ok(readme.includes(`mellum-worker@git+https://github.com/pauleveritt/mellum-worker.git#v${version}`));
 	assert.ok(readme.includes(`pi install git:github.com/pauleveritt/mellum-worker@v${version}`));
 	assert.match(readme, /15\/15/);
 	assert.match(readme, /unmeasured/i);
@@ -31,7 +39,6 @@ test("README Use it says how to run the setup check in Pi Mode and from the term
 	assert.match(use, /\*\*Check your setup\.\*\*/);
 	assert.ok(use.includes("/mellum check"), "names /mellum check");
 	assert.ok(use.includes("scripts/mellum.mjs check --host pi"), "names the CLI for Pi");
-	assert.ok(use.includes("scripts/mellum.mjs check --host opencode"), "names the CLI for OpenCode");
 	for (const fence of use.matchAll(/```bash\n([\s\S]*?)```/g)) assert.doesNotMatch(fence[1], /\w\|\w/, "no a|b alternation in a bash fence");
 	assert.match(use, /exit/i, "says how it exits");
 	assert.ok(use.includes("Mellum server settings differ"), "shows the activation warning");
@@ -47,7 +54,6 @@ test("README Use it says how to run learn in Pi Mode and from the terminal, afte
 	assert.ok(learn.includes("scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]"), "names the CLI and its flags");
 	assert.ok(learn.includes("AGENTS.md"), "says where the suggestion goes");
 	assert.ok(learn.includes("MELLUM_MODE_RUNS"), "says where the records live");
-	assert.ok(learn.includes("MELLUM_WORKER_RUNS"), "says where Worker records live");
 	assert.match(learn, /from\s+the\s+project\s+directory/, "says to run the CLI from the project directory");
 	for (const fence of learn.matchAll(/```bash\n([\s\S]*?)```/g)) assert.doesNotMatch(fence[1], /\w\|\w/, "no a|b alternation in a bash fence");
 });
@@ -67,7 +73,6 @@ test("README Model settings says which values the provider entry sends per reque
 	const use = read("README.md").split("\n## Use it\n")[1].split("\n## What you get\n")[0];
 	const settings = use.split("**Model settings.**")[1].split("**Check your setup.**")[0];
 	assert.match(settings, /Pi\s+sends[^.]*per\s+request/);
-	assert.match(settings, /OpenCode's\s+template\s+sets\s+only\s+the\s+output\s+limit/);
 	assert.match(settings, /force_sampling/);
 	assert.match(settings, /honours/);
 	assert.match(settings, /server-only/);
@@ -102,10 +107,10 @@ test("README learn paragraph shows a trimmed report and the suggestion", () => {
 	assert.match(learn, /```\nmellum learn: \d+ runs in [\s\S]*Suggested for AGENTS\.md:[\s\S]*## Mellum[\s\S]*```/);
 });
 
-test("the setup smoke step ends with the check, for every host", () => {
-	const smoke = read("skills/mellum-setup/reference/07-smoke.md");
+test("the setup smoke step ends with the check, for Pi", () => {
+	const smoke = read("skills/mellum-setup/reference/06-smoke.md");
 	assert.ok(smoke.includes("scripts/mellum.mjs check --host"), "names the CLI");
-	assert.ok(smoke.includes("/mellum check"), "names the Pi Mode command");
+	assert.ok(smoke.includes("/mellum check"), "names the Pi command");
 	assert.ok(smoke.indexOf("scripts/mellum.mjs check") > smoke.indexOf("calculator.js` multiplies"), "after the fixture passes");
 });
 
@@ -126,27 +131,4 @@ test("the oMLX backend guide lists step 3's server values", () => {
 	assert.match(omlx, /\| `max_tokens` \| 16384 \|/);
 	assert.match(omlx, /\| `forced_ct_kwargs` \| `\["enable_thinking"\]` \|/);
 	assert.match(omlx, /force_sampling/, "says force_sampling makes the server's sampling win");
-});
-
-test("README Use it says which --host serves which host, and that Pi Worker runs are recorded while OpenCode is on the backlog", () => {
-	const use = read("README.md").split("\n## Use it\n")[1].split("\n## What you get\n")[0];
-	const check = use.split("**Check your setup.**")[1].split("**Learn from your runs.**")[0];
-	assert.match(check, /`--host pi`[^.]*Pi Mode and Pi Worker/, "--host pi is for Pi Mode and Pi Worker");
-	assert.match(check, /`--host opencode`[^.]*OpenCode/, "--host opencode is for OpenCode");
-	const learn = use.slice(use.indexOf("**Learn from your runs.**"));
-	assert.match(learn, /Pi Worker[^.]*\bwrite/, "says Pi Worker writes records");
-	assert.match(learn, /OpenCode[^.]*backlog/, "measuring the OpenCode port is on the backlog");
-	assert.match(learn, /OpenCode[^.]*0 runs/, "says an OpenCode project finds 0 runs today");
-});
-
-test("README learn example is the real output on the test fixture it names", () => {
-	const use = read("README.md").split("\n## Use it\n")[1].split("\n## What you get\n")[0];
-	const learn = use.slice(use.indexOf("**Learn from your runs.**"));
-	const fixture = /`(tests\/fixtures\/learn\/[\w./-]+\.jsonl)`/.exec(learn)?.[1];
-	assert.ok(fixture, "names the fixture it ran on");
-	const shown = /```\n(mellum learn: [\s\S]*?)\n```/.exec(learn)?.[1];
-	const cwd = "/home/user/proj";
-	const report = learnFromTexts([read(fixture)], { cwd, n: 10 });
-	const merged = mergeSuggestion(undefined, report.suggestion);
-	assert.equal(shown, formatReport(report, cwd, merged.added) + formatMerge(merged, report.suggestion));
 });

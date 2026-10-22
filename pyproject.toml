@@ -1,0 +1,16 @@
+[project]
+name = "mellum-worker-learning-center"
+version = "0.0.0"
+description = "Learner workspace for the Mellum Learning Center"
+requires-python = ">=3.14"
+
+[tool.uv]
+package = false
+
+[tool.mellum]
+model = "JetBrains/Mellum2.1-12B-A2.5B-Thinking-GGUF:Q4_K_M"
+context = 50000
+max_tokens = 16384
+temperature = 1.0
+top_p = 0.95
+top_k = 20

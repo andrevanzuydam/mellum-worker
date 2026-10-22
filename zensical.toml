@@ -1,0 +1,33 @@
+[project]
+site_name = "Andre/Paul Learning Center"
+site_url = "https://pauleveritt.github.io/mellum-worker/"
+site_description = "Small coding models, measured: problems, fixes, evidence."
+repo_url = "https://github.com/pauleveritt/mellum-worker"
+docs_dir = "learn"
+site_dir = "site"
+exclude_docs = "code/"
+nav = [
+  { "Home" = "index.md" },
+  { "Getting started" = ["getting-started/index.md", "getting-started/base-pi-on-llamacpp.md", "getting-started/ditch.md",
+    "getting-started/harness.md",
+    "getting-started/suite.md", "getting-started/worker-extension.md"] },
+  { "Lessons" = ["lessons/index.md", "lessons/baseline.md",
+    "lessons/primary-agent.md", "lessons/short-prompt.md"] },
+  { "About" = [
+    "about/index.md", "about/how-to-read.md",
+    "about/evidence.md", "about/contributing.md",
+  ] },
+  { "Project" = ["project/index.md", "project/toolchain.md"] },
+  { "Glossary" = "glossary.md" },
+  { "Lesson template" = "lesson-template.md" },
+  { "Credits" = "credits.md" },
+]
+
+[project.markdown_extensions]
+pymdownx.superfences = {}
+
+[project.markdown_extensions.zensical_glossary]
+glossary_file = "glossary.md"
+heading_level = 3
+first_only = true
+base_url = "/mellum-worker/glossary/"

@@ -4,16 +4,14 @@
 
 [JetBrains Mellum 2.1](https://huggingface.co/JetBrains/Mellum2.1-12B-A2.5B-Thinking),
 a 12B-A2.5B thinking model, as a local, bounded coding worker for
-[Pi](https://pi.dev), with an [OpenCode](https://opencode.ai) port. It takes
-a precise brief, edits code, runs the tests until they pass, and reports.
-Your main model stays in charge.
+[Pi](https://pi.dev). It takes a precise brief, edits code, runs the tests
+until they pass, and reports. Your main model stays in charge.
 
-- **Mellum Mode** (Pi): `/mellum <task>` runs Mellum inside your session
-  with the worker prompt and seven file tools, then hands the session back.
-  No extra packages. 15/15 on the ladder with project facts.
-- **Mellum Worker**: a [pi-subagents](https://github.com/nicobailon/pi-subagents)
-  child. Your model briefs it and runs the tests itself. 15/15. Retired
-  once the mediated test below is measured ([M.12](ROADMAP.md#phases)).
+- **Mellum Worker**: `/mellum <task>` temporarily switches your session to
+  Mellum, with the worker prompt and seven file tools, then restores your main
+  model and hands it a compact report. No extra packages. 15/15 on the ladder with project facts. The pi-subagents
+  child and the OpenCode port were retired on 2026-10-20; their ladder
+  records remain, and the table below marks them as history.
 
 Every setting was measured by the ladder (`ladder/`; records in
 `docs/ladder/`). The 6-bit MLX weights (for Apple Silicon, served by oMLX)
@@ -33,7 +31,7 @@ or a spec phase into a failing test, shows it to you, confirms it fails, and
 hands it to Mellum as "make this pass". Mellum's best measured shape is a
 named failing test: rung 4, three files, 3/3 in every arm. Whether that
 shape lifts the four-phase build (rungs 6–9, 9/12 with the `## Mellum`
-section) is M.11's question and is unmeasured; the lead is phase 4, which
+section) is the mediated test's question and is unmeasured; the lead is phase 4, which
 misses its automatic id in most runs because the spec's test line never asks
 for it. You can do it by hand today:
 
@@ -53,23 +51,13 @@ Pi:
 pi install git:github.com/pauleveritt/mellum-worker@v0.1.8
 ```
 
-Then `/skill:mellum-setup`: weights, oMLX server, provider entry, agent
-file, optional rules, smoke test. It checks each step and asks before
-writing to your files. Mode works once the model is served; Worker also
-needs pi-subagents.
-
-OpenCode, in the `plugin` array of `~/.config/opencode/opencode.json(c)`:
-
-```json
-{ "plugin": ["mellum-worker@git+https://github.com/pauleveritt/mellum-worker.git#v0.1.8"] }
-```
-
-Then ask "run the mellum-setup skill". The OpenCode port is ported and
-unmeasured, and measuring it is a [backlog entry](BACKLOG.md), not a phase.
+Then `/skill:mellum-setup`: weights, oMLX server, provider entry, optional
+rules, smoke test. It checks each step and asks before writing to your
+files. Mellum Worker works once the model is served.
 
 ## Use it
 
-**Mellum Mode (Pi).** Type `/mellum <task>`:
+**Mellum Worker (Pi).** Type `/mellum <task>`:
 
 ```
 /mellum Add hello.py at the repo root with hello() returning "Hello, World!", and tests/test_hello.py that imports it. Test command: uv run --offline python -m pytest -q tests
@@ -122,17 +110,10 @@ If your tests import a module from the project root, add `pythonpath =
 `pytest`, `uv run pytest` and `python -m pytest` all find it.
 
 **Mellum as your main Pi model** gets none of this: no worker prompt, facts,
-guards or run record (8/15 on the ladder). Use `/mellum` or the Worker. If
+guards or run record (8/15 on the ladder). Use `/mellum`. If
 you do run it bare, start Pi from the project's environment (`uv run pi`, or
 `source .venv/bin/activate` first) so `python` and `pytest` are on PATH, and
 leave context files on so it sees `AGENTS.md`.
-
-**Mellum Worker (Pi).** "Use mellum-worker to do this: the cart total
-ignores quantity, fix it. Test command: node --test calculator.test.js."
-If pi-subagents says the child "produced no output", dispatch it once more
-(that recovered ten of eleven in sixty runs).
-
-**OpenCode.** "Delegate to mellum-worker: …" with the same kind of brief.
 
 **Right-sizing the task.** Mellum passes on fact sheets, not plans:
 
@@ -159,25 +140,21 @@ If pi-subagents says the child "produced no output", dispatch it once more
 | hot cache | off | server only |
 
 Pi sends the first three from its provider entry per request, and oMLX
-honours them over the server's own values; OpenCode's template sets only
-the output limit, so for OpenCode the server's thinking and sampling apply.
-With `force_sampling` on in oMLX, the server's sampling wins over any
+honours them over the server's own values. With `force_sampling` on in
+oMLX, the server's sampling wins over any
 request, so `/mellum check` fails unless it is 1 / 0.95 / 20. The
 server-only values bind every client, and other clients of the same oMLX
 model can change them.
 
-**Check your setup.** In Pi Mode, `/mellum check`. From the terminal,
-`--host pi` checks the setup Pi Mode and Pi Worker share, and
-`--host opencode` checks OpenCode's (`--json` for JSON):
+**Check your setup.** In Pi, `/mellum check`. From the terminal
+(`--json` for JSON):
 
 ```bash
 node <package dir>/scripts/mellum.mjs check --host pi
-node <package dir>/scripts/mellum.mjs check --host opencode
 ```
 
-`<package dir>` is `~/.pi/agent/git/github.com/pauleveritt/mellum-worker`
-(Pi) or `~/.cache/opencode/packages/*/node_modules/mellum-worker`
-(OpenCode). It checks that the server answers and lists the model, that the
+`<package dir>` is `~/.pi/agent/git/github.com/pauleveritt/mellum-worker`.
+It checks that the server answers and lists the model, that the
 settings no request can undo match (the server-only rows above, thinking
 not forced off, and forced sampling at 1 / 0.95 / 20), and that your
 provider entry matches the template, `maxTokens` and sampling included; a
@@ -218,11 +195,9 @@ node <package dir>/scripts/mellum.mjs learn [--n 10] [--file <jsonl>] [--json]
 ```
 
 Records come from `MELLUM_MODE_RUNS` (default
-`~/.pi/agent/mellum-mode-runs.jsonl`) and `MELLUM_WORKER_RUNS` (default
-`~/.pi/agent/mellum-worker-runs.jsonl`; `0` or empty turns it off); `--file` reads
-one file instead. Pi Mode and Pi Worker write records, and `learn` reports
-both. The OpenCode port writes no records and measuring it is on the
-backlog, so `learn` in an OpenCode project finds 0 runs.
+`~/.pi/agent/mellum-mode-runs.jsonl`; `0` or empty turns it off); `--file`
+reads one file instead. Mellum Worker writes records, and `learn` reports
+them.
 
 **See the last run.** `/mellum last` shows the newest run at or under the
 current directory, Mode or Worker, as a table, with no model call. It goes into the
@@ -257,13 +232,14 @@ Rungs 1–5, five coding tasks, three runs each, on an M5 Max through oMLX
 
 | Host | Deliverable | Use | Passes | Wall s, mean | Requests per run | Your main model per run |
 | --- | --- | --- | --- | --- | --- | --- |
-| Pi | Mellum Mode | `/mellum <task>` | 14/15 (15/15 with facts) | 70 | 13.1 | none |
-| Pi | Mellum Worker | "Use mellum-worker to ..." | 15/15 | 54 | 11.1 | 6.5 turns, ~3k output and 120k mostly cached input tokens |
-| OpenCode | Worker subagent | "Delegate to mellum-worker ..." | ported, unmeasured | | | |
+| Pi | Mellum Worker | `/mellum <task>` | 14/15 (15/15 with facts) | 70 | 13.1 | none |
+
+History, retired 2026-10-20: the pi-subagents Worker passed 15/15 at 54 s
+(11.1 requests per run, 6.5 parent turns); the OpenCode port was ported and
+unmeasured.
 
 Mellum as the primary agent: 8/15 in bare Pi (51 s), 10/15 in a full
-Superpowers profile (72 s). Mode costs your main model nothing; Worker is
-faster on multi-file tasks and keeps your session clean.
+Superpowers profile (72 s). Mellum Worker costs your main model nothing.
 
 Rungs 6–9 build a small FastAPI app (AgentClinic) from four loose phase
 specs. A run passes when the project's tests and hidden behaviour tests
@@ -304,61 +280,47 @@ Pi was not run on these rungs.
 
 ## Findings
 
+- [Learning Center](learn/index.md): problems, fixes, and evidence for small coding models.
 - [recipe.md §6](docs/recipe.md#6-what-is-settled-and-what-is-not): what is settled and what is not.
 - [recipe.md §4](docs/recipe.md#4-using-mellum-worker-delegated): recorded pathologies and the guard for each.
 - [Ablation summary](docs/ladder/ablation-summary.md): every setting measured in and out.
 - [Where the cost goes](docs/superpowers/research/2026-10-09-worker-cost-options.md): Mode versus Worker.
 - [Recovery report](docs/superpowers/research/2026-10-07-mellum-recovery/report.md): why Mellum cannot be the primary agent.
 
-## This session — 2026-10-18
+## Learning Center
 
-Harness work toward M.11 (the mediated test). Everything here is a ladder
-capability and a set of screens, **not** a shipped claim — the runs were on a
-plain `mlx_lm.server`, not the measured oMLX backend, so the deciding comparison
-is still owed (see the
-[preregistration](docs/superpowers/research/2026-10-18-mediated-rungs-6-9-preregistration.md)).
+`learn/` is a short course from a machine with no Python to a graded eval
+harness, with every claim labelled by the evidence behind it:
 
-Built in the ladder, test-first:
+1. [Base Pi on llama.cpp](learn/getting-started/base-pi-on-llamacpp.md) —
+   install `uv`, llama.cpp and the Mellum weights, chat, and get an answer
+   from base Pi.
+2. [The ditch](learn/getting-started/ditch.md) — one open-ended AgentClinic
+   session, and a final report that does not survive being checked.
+3. [Make a mini harness](learn/getting-started/harness.md) — one task, one
+   fresh directory, one score line.
+4. [Eval suites and the telemetry](learn/getting-started/suite.md) — three
+   AgentClinic suites with hidden graders and known-good/broken qualification,
+   graded with `ruff`, `pyrefly` and `complexipy`, and read from the trace.
+5. [The worker extension](learn/getting-started/worker-extension.md) — what a
+   Pi extension is, and `/mellum` as the vehicle the remedies improve.
 
-- **mlx-lm backend** — `--backend mlx-lm --base-url …`, `--model-id`, and
-  `--temperature`/`--top-p` run the ladder against any OpenAI-compatible MLX
-  server and sweep sampling ([docs/backends/mlx-lm.md](docs/backends/mlx-lm.md)).
-- **Mediated-test exit gate** — `--acceptance-test` places and freezes an
-  external, complete test; `--redispatch N` re-runs it and hands the failure to a
-  fresh worker, including on a timed-out attempt. Retries grow the temperature
-  (capped, since high temperature corrupts the worker's JSON tool calls) and move
-  the seed; the retry message now carries the real test failure (warnings
-  suppressed, short traceback) instead of a blind tail.
-- **Effort ramp** — `--effort-ramp` starts quick (Pi thinking off, small token
-  budget — sub-second on an easy fix) and escalates thinking and budget only as
-  the frozen test keeps failing. "Small deadline slicing": a relay of short,
-  fresh-context slices on one cumulative workspace, compute spent in proportion
-  to measured difficulty.
-- **Dev discipline** — a `mellum-dev` skill and CI that runs the node and ladder
-  suites on every PR.
-
-Findings (n = 1 screens, `mlx_lm.server`):
-
-- Freezing the oracle cracked rung 9's long-standing wall: the Phase 4
-  auto-`id` requirement that failed every prior run (A21 at 0/3) now passes,
-  because an external frozen test forces what a self-authored test let slip.
-- A remaining rung-9 failure was a worker framework-confusion bug (Flask route
-  syntax in a FastAPI app), not a missed requirement — the tests check behavior,
-  not framework.
-- Mellum fixes that bug unaided *when it can think*; thinking-off is ~150×
-  faster but too shallow for it, which is the whole point of the effort ramp.
-- `preserve_thinking` is load-bearing for Qwen-family tool calls (stripping it
-  degrades them to empty arguments), so prior reasoning stays; slicing, not
-  stripping, is what bounds context.
+All findings lessons are in [Lessons](learn/lessons/index.md). The site builds on
+pull requests and deploys to GitHub Pages from `main`
+(`.github/workflows/docs.yml`). Run the harness with `uv run learn/code/harness.py run --suite all --grade`; build
+the site with `uvx --with zensical-glossary zensical build` (output in
+`site/`). The glossary extension is required; a bare `zensical build`
+fails without it.
 
 ## Requirements
 
 - Apple Silicon Mac, [oMLX](https://github.com/jundot/omlx) 0.6.4 or newer, 9.9 GB for the weights
-- Node 24 or newer; Pi 1.0 or newer (Worker also needs pi-subagents)
-- OpenCode port: OpenCode 1.18 or newer (V1 plugin API); 2.x not yet
+- Node 24 or newer; Pi 1.0 or newer
 
-Other backends: [docs/backends/ollama.md](docs/backends/ollama.md) lists
-what a port needs. Only oMLX has been run.
+Other backends: [docs/backends/llamacpp.md](docs/backends/llamacpp.md) is
+smoke-tested but not ladder-measured, and
+[docs/backends/ollama.md](docs/backends/ollama.md) lists what a port needs.
+Only oMLX has been measured.
 
 ## How it works
 
@@ -369,114 +331,40 @@ pyproject) and `node --test <file>` (package.json); a command in the brief
 wins, and Mode supplies one from `## Mellum` or the fallback. Detail:
 [docs/recipe.md](docs/recipe.md).
 
-Nothing registers at load time. Pi loads Mode, dormant until `/mellum`;
-OpenCode loads a one-hook plugin for the skill. The skill writes provider,
-agent and rules into your config from [templates/](templates/). OpenCode
-has no Mode or guards: Worker only, step-capped, unmeasured.
-
-## Working on it — the 🍓 skill
-
-Development here runs through the **`mellum-dev` skill**
-([`.claude/skills/mellum-dev/SKILL.md`](.claude/skills/mellum-dev/SKILL.md)),
-which operationalizes `AGENTS.md` and [`docs/sdd.md`](docs/sdd.md): spec-driven
-development, test-first, fail-fast **and** fail-loud, frozen-oracle runs,
-recording every run, running them where you can watch, and one small PR per win
-or loss.
-
-**Activate it.** In **Claude Code** it loads on its own — `CLAUDE.md` says to
-always load and follow it when developing here, so any session in this repo
-picks it up. You know it is active because replies open with the **🍓** marker
-(and **💥 Bazinga!** on an *earned*, verified win). With **other agents**, point
-them at the skill file and have them follow it; its authoritative sources are
-`AGENTS.md` and `docs/sdd.md`.
-
-**Why.** The measured claims here only hold if the process holds — tests shown
-to fail first, settings frozen without evidence, every run recorded, failures
-surfaced loudly instead of swallowed. The skill makes that the default rather
-than something to remember, and the 🍓 marker is a visible promise that it is in
-force.
-
-## Getting started (the next engineer)
-
-Start with **[`LESSONS.md`](LESSONS.md)** — a hundred lessons and a dated
-addendum from building this, gotchas included. Then, to run the ladder
-yourself:
-
-1. **The ladder lives in `ladder/`, on `uv`.** `cd ladder`; `uv run python -m
-   pytest` runs its suite, and `uv run python -m ladder.run_ladder --help` lists
-   every flag.
-
-2. **Serve Mellum on oMLX first.** Follow
-   [`docs/backends/omlx.md`](docs/backends/omlx.md): the model answers at
-   `http://127.0.0.1:8001/v1`, and the server holds the tuned settings the
-   records were measured under. `/mellum check` tells you when it's drifted.
-
-3. **Register the provider before you run Mellum Mode.** `--mode mode` is the
-   shipped worker, and it reads `~/.pi/agent/models.json`; without it Pi refuses
-   with `Model "omlx/Mellum…" not found`. Copy it once:
-   ```bash
-   cp templates/pi/models.omlx.json ~/.pi/agent/models.json
-   ```
-   `--mode direct` wires its own provider, so it runs without this step — which
-   is exactly why a direct run can pass while Mode won't even start. That one
-   cost a day; it's in the addendum.
-
-4. **Run it where you can watch** (skill §9). In one terminal start the
-   follower, then launch the run in another:
-   ```bash
-   python scripts/watch_ladder.py
-   ```
-   It tails the newest per-rung trace and prints each turn — the thinking and
-   the tool calls — as they happen, switching rungs on its own.
-
-5. **Know which worker you're measuring.** `--mode direct` is the isolation
-   rig: the ladder supplies the provider and the mediation (`--acceptance-test`,
-   `--redispatch`, `--effort-ramp`). `--mode mode` is the real product — Mellum
-   Mode with its guards and project facts. They aren't the same run, and a
-   direct number isn't a Mode number.
-
-6. **The frozen acceptance tests are committed**, so a mediated run reproduces:
-   point `--acceptance-test` at
-   [`docs/ladder/2026-10-20-v7-ablation/acceptance/`](docs/ladder/2026-10-20-v7-ablation/acceptance/)
-   (`test_phase1.py`…`test_phase4.py`).
-
-7. **Every run that backs a claim is recorded** under
-   `docs/ladder/<date-topic>/`; compare any two mechanically with `uv run python
-   scripts/compare_runs.py <dirA> <dirB>`.
+Nothing registers at load time. Pi loads the worker extension, dormant
+until `/mellum`; the skill writes the provider and rules into your config
+from [templates/](templates/).
 
 ## Layout
 
 ```
 prompts/mellum-worker.md      the prompt, single source
-extensions/                   Mellum Mode and the child guards (Pi)
-opencode/plugin.js            skills-path hook (OpenCode)
+extensions/                   Mellum Worker and the guards (Pi)
 skills/mellum-setup/          the guided installer
-templates/                    agent files and provider fragments, per host
-scripts/                      merge-json, render-agent (the skill); mellum.mjs check, learn
+templates/                    provider fragments
+scripts/                      merge-json (the skill); mellum.mjs check, learn
 docs/                         recipe, backend guides, docs/sdd.md
 ladder/, docs/ladder/         the measuring ladder and its phase records
 ROADMAP.md, BACKLOG.md        phases and deferred work
 ```
 
-`npm test` runs the suite; `node build.mjs` regenerates the agent templates
-after a prompt change. From `ladder/`: `uv run python -m pytest`, and
+`npm test` runs the suite. From `ladder/`: `uv run python -m pytest`, and
 `uv run python -m ladder.run_ladder --help` for runs.
 
 ## Future work
 
-Two phases remain; see [ROADMAP.md](ROADMAP.md). Everything else is a
-[backlog entry](BACKLOG.md) with a reopen condition.
+The M series closed on 2026-10-20 and is [archived](ROADMAP-M.md); the
+Learning Center is the active roadmap ([ROADMAP.md](ROADMAP.md)). Everything
+deferred is a [backlog entry](BACKLOG.md) with a reopen condition.
 
-- **M.11:** the mediated test, measured: a rung 9 screen first, then a
-  preregistered run on rungs 6–9, then the `/mellum` command that writes
-  the test with your main model, shows it, runs it red and dispatches.
-- **M.12:** one worker: retire the pi-subagents Worker and rename Mellum
-  Mode to mellum-worker. `/mellum` stays.
-- **Backlog:** measuring the OpenCode port, an Ollama backend, execution
-  bounds, versioned assessments.
+- **The mediated test:** a rung 9 screen first, then a preregistered run on
+  rungs 6–9, then the `/mellum` command that writes the test with your main
+  model, shows it, runs it red and dispatches. PR #1 is a candidate.
+- **Also parked:** an Ollama backend, execution bounds, versioned
+  assessments.
 
 ## Releases
 
-Pin a tag in both install lines; OpenCode treats an unpinned git spec as
-"latest" and may refresh it. Tags follow semver and match the package
-version (a test checks it).
+Pin a tag in the install line; an unpinned git spec is treated as
+"latest" and may refresh. Tags follow semver and match the package version
+(a test checks it).

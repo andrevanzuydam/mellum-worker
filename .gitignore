@@ -9,4 +9,8 @@ docs/ladder/**/stdout.txt
 docs/ladder/**/diff.patch
 
 .worktrees/
-runs/
+site/
+learn/code/.runs/
+learn/code/profile/auth.json
+learn/code/profile/models-store.json
+learn/code/profile/trust.json

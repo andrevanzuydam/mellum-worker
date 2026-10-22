@@ -1,6 +1,6 @@
-# Mellum Worker and Mellum Mode: Mellum 2.1 as a coding worker under Pi
+# Mellum Worker and Mellum Worker: Mellum 2.1 as a coding worker under Pi
 
-**Status: shipped 2026-10-09; two ways to use the worker (§4 delegated, §4b in-session), both measured. What remains is in [`ROADMAP.md`](../ROADMAP.md) (M.11, M.12) and [`BACKLOG.md`](../BACKLOG.md); the [2026-10-09 table](superpowers/research/2026-10-09-future-work.md) is history. Every number links to its record under `docs/ladder/`; the lean-down that produced the shipped worker is summarised in [ablation-summary.md](ladder/ablation-summary.md).**
+**Status: shipped 2026-10-09; two ways to use the worker (§4 delegated, §4b in-session), both measured. 2026-10-20: the delegated Worker and the OpenCode port were retired; §4 is history, and §4b is the shipped shape. What remains is in [`ROADMAP.md`](../ROADMAP.md) (M.11, M.12) and [`BACKLOG.md`](../BACKLOG.md); the [2026-10-09 table](superpowers/research/2026-10-09-future-work.md) is history. Every number links to its record under `docs/ladder/`; the lean-down that produced the shipped worker is summarised in [ablation-summary.md](ladder/ablation-summary.md).**
 
 Installed from this repo; measured by the ladder (`ladder/`), whose fixtures and phase records (`docs/ladder/`) live here too.
 
@@ -193,12 +193,12 @@ where the briefed child needs fewer requests (14 vs 20) and never more than
 request carries. The options for cutting this further, measured and
 projected, are in [2026-10-09-worker-cost-options.md](superpowers/research/2026-10-09-worker-cost-options.md).
 
-## 4b. The second way: Mellum Mode in your own session
+## 4b. The second way: Mellum Worker in your own session
 
-**Mellum Mode** (`extensions/mellum-mode.ts`) turns your current session
+**Mellum Worker** (`extensions/mellum-worker.ts`) turns your current session
 into the worker without a parent, a brief, or a subagent.
 
-Mellum Mode loads with the package; no `-e` flags. Type `/mellum <task>`: the session switches to Mellum, runs the task, and
+Mellum Worker loads with the package; no `-e` flags. Type `/mellum <task>`: the session switches to Mellum, runs the task, and
 switches back when the agent settles. For a longer back-and-forth use
 `/mellum on`, type as many prompts as you like, and `/mellum off`. While the
 mode is on, the model is Mellum, the tools are the worker's seven, and
@@ -232,7 +232,7 @@ parent's independent test run afterwards; run the tests yourself.
 Where the cost goes, measured per task at the same sampling
 ([A10](ladder/ablation-a10-delegated-v5/README.md) vs [A14](ladder/ablation-a14-mellum-mode/README.md)):
 
-| per task | Mellum Worker | Mellum Mode |
+| per task | Mellum Worker | Mellum Worker |
 | --- | --- | --- |
 | passes | 15/15 | 14/15 |
 | wall, mean (by rung) | 54 s (30 / 38 / 24 / 77 / 99) | 70 s (24 / 76 / 31 / 99 / 122) |
@@ -259,7 +259,7 @@ The section ends at the next `#` or `##` heading and is capped at 600
 characters of bullets; over that, Mode warns and ignores it. With no
 `Test command:` bullet and a `pyproject.toml` that mentions pytest, Mode
 adds `uv run --offline python -m pytest -q`. `MELLUM_MODE_FACTS=0` turns
-both off. The session shows `[mellum-mode on] facts: <source>` when a
+both off. The session shows `[mellum-worker on] facts: <source>` when a
 span starts, and the run record's `facts` field and the handoff summary
 line name the same source (`agents-md`, `detected`, `agents-md+detected`,
 `none`, `off`). The prompt is unchanged (v5). Write the label as plain
@@ -316,10 +316,10 @@ which showed each request carrying exactly the
 expected prompt, history and tools. That probe predates project facts and
 used the Node calculator fixture: facts were measured headless only, and
 the interactive facts path (`/mellum on`, `/mellum <task>`, the
-`[mellum-mode on] facts:` line, the handoff's `facts:`) is unit-tested, not
+`[mellum-worker on] facts:` line, the handoff's `facts:`) is unit-tested, not
 yet observed in a real Pi session (a probe on a Python fixture such as
 agentclinic-p1 would observe it). The refusal to auto-compact while on
-is unit-tested. Mellum Mode is loaded as a package extension; its payload filter rewrites the request it sees, and other packages' hooks may run before or after it. Load order was only verified for the `-e` form in the ladder. None of
+is unit-tested. Mellum Worker is loaded as a package extension; its payload filter rewrites the request it sees, and other packages' hooks may run before or after it. Load order was only verified for the `-e` form in the ladder. None of
 Superpowers, pi-subagents or context7 rewrites the payload today. Auto-compaction is refused while the mode is on
 (`/compact` still works); run `/mellum off` before a long parent turn.
 
@@ -342,7 +342,6 @@ from the child's system prompt (the marker is found on any line, after
 pi-subagents' preamble), and `server` from the same 1,000 ms settings check
 as Mode. `extensions/mellum-guards.ts` writes it inside the pi-subagents
 child, one line per finished run; a child killed before it settles writes
-none. The OpenCode port writes no records; measuring it is on the backlog.
 
 Records written after 0.1.6 also have `toolCalls` (count per tool name),
 `toolErrors` (tool results marked as errors, any tool) and

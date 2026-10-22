@@ -26,7 +26,7 @@ curl -s http://127.0.0.1:8001/admin/api/models | python3 -c "import json,sys; [p
 ```
 
 Wanted. The context window, TurboQuant, thinking budget and tool-result cap
-bind every client and no request changes them. Pi and OpenCode send their
+bind every client and no request changes them. Pi sends their
 own `max_tokens` with every request, and Pi its thinking flag, and oMLX
 gives the request precedence; the server's `max_tokens` covers a client that
 sends none. Two server settings beat the request: `forced_ct_kwargs` and
@@ -35,8 +35,8 @@ sends none. Two server settings beat the request: `forced_ct_kwargs` and
 | key | value | why |
 | --- | --- | --- |
 | `max_context_window` | 56000 | 50k prompt plus generation fits the validated memory budget |
-| `max_tokens` | 16384 | Pi and OpenCode send 16,384 per request anyway; the measured Mode and Worker runs used it |
-| `forced_ct_kwargs` | `["enable_thinking"]` | forces the server's `enable_thinking` over any request, so every client thinks, OpenCode included; Pi sends it on anyway (thinking off failed the ladder) |
+| `max_tokens` | 16384 | Pi sends 16,384 per request anyway; the measured Mode and Worker runs used it |
+| `forced_ct_kwargs` | `["enable_thinking"]` | forces the server's `enable_thinking` over any request, so every client thinks; Pi sends it on anyway (thinking off failed the ladder) |
 | `enable_thinking` | true | the value forced; false here would turn thinking off for every client |
 | `thinking_budget_enabled` | false | the ladder never ran with a server thinking budget |
 | `max_tool_result_tokens` | `null` (unset) | the ladder never cut tool results |

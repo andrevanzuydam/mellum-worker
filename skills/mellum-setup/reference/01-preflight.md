@@ -14,4 +14,4 @@ Checks, in order. Stop at the first failure and tell the user what v1 needs.
 4. `node --version` is 24 or newer; the setup scripts need it.
 5. Free disk: `df -h ~ | tail -1`. The weights are 9.9 GB.
 
-Record the host (Pi or OpenCode) from the SKILL.md rule. Done.
+The host is Pi. Done.

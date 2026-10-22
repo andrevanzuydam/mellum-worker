@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { readRecords } from "../extensions/mellum-learn.ts";
-import { RUNS, replay } from "./helpers/worker-replay.mjs";
 
 // The CLI never touches the network here: MELLUM_CHECK_FIXTURES makes it read the three
 // GET responses from a directory, and HOME is a temp dir holding the host's config.
@@ -32,7 +31,6 @@ function fixtures(adminModels) {
 function home() {
 	const dir = temp("mellum-cli-home-");
 	copy(join(FIX, "pi-models.json"), join(dir, ".pi/agent/models.json"));
-	copy(join(FIX, "opencode.jsonc"), join(dir, ".config/opencode/opencode.jsonc"));
 	return dir;
 }
 
@@ -69,14 +67,6 @@ test("check without --json prints the findings as text, fails first", () => {
 	assert.match(r.stdout, /checks ok\n?$/);
 });
 
-test("check --host opencode reads the OpenCode config", () => {
-	const r = run(["check", "--host", "opencode", "--json"]);
-	assert.equal(r.status, 0, r.stderr);
-	const out = JSON.parse(r.stdout);
-	assert.equal(out.host, "opencode");
-	assert.notEqual(out.findings.find((f) => f.id === "provider").level, "fail");
-});
-
 test("a missing fixture file reads as an unreachable server", () => {
 	const dir = temp("mellum-cli-empty-");
 	const r = run(["check", "--json"], { env: { MELLUM_CHECK_FIXTURES: dir } });
@@ -94,14 +84,13 @@ test("usage errors exit 2: no command, an unknown command, an unknown host", () 
 	}
 });
 
-test("installed under node_modules (as OpenCode installs it), the CLI runs from a mirror in the temp dir", () => {
+test("installed under node_modules, the CLI runs from a mirror in the temp dir", () => {
 	const pkg = join(temp("mellum-cli-nm-"), "node_modules", "mellum-worker");
 	const files = [
 		"package.json",
 		"scripts/mellum.mjs",
 		"templates/omlx-model-settings.json",
 		"templates/pi/models.omlx.json",
-		"templates/opencode/provider.omlx.json",
 		...readdirSync(join(ROOT, "extensions")).filter((f) => f.endsWith(".ts")).map((f) => `extensions/${f}`),
 	];
 	for (const f of files) copy(join(ROOT, f), join(pkg, f));
@@ -172,19 +161,6 @@ test("learn --json parses, with the report, the lines it would add and the confl
 	assert.equal(existsSync(join(p.dir, "AGENTS.md")), false);
 });
 
-test("learn without --file reads MELLUM_MODE_RUNS and the Worker file in HOME, either may be missing", () => {
-	const p = project("servers");
-	const home = temp("mellum-cli-home-");
-	const both = learnRun(["learn", "--json"], { cwd: p.dir, env: { HOME: home, MELLUM_MODE_RUNS: p.runs } });
-	assert.equal(JSON.parse(both.stdout).runs, 4, both.stderr);
-	copy(p.runs, join(home, ".pi/agent/mellum-worker-runs.jsonl"));
-	const worker = learnRun(["learn", "--json", "--n", "100"], { cwd: p.dir, env: { HOME: home, MELLUM_MODE_RUNS: "0" } });
-	assert.equal(JSON.parse(worker.stdout).runs, 4, worker.stderr);
-	const none = learnRun(["learn", "--json"], { cwd: p.dir, env: { HOME: temp("mellum-cli-home-"), MELLUM_MODE_RUNS: join(p.dir, "nope.jsonl") } });
-	assert.equal(none.status, 0, none.stderr);
-	assert.equal(JSON.parse(none.stdout).runs, 0);
-});
-
 test("learn near the 600-character facts cap says so, in text and in JSON", () => {
 	const p = project("servers");
 	writeFileSync(join(p.dir, "AGENTS.md"), `## Mellum\n\n- Note: ${"x".repeat(584)}\n`);
@@ -215,26 +191,11 @@ test("learn --json: suggestion holds only the lines that would be added (a Do no
 	assert.match(none.stdout, /AGENTS\.md already has these lines\.\n$/);
 });
 
-test("learn --json reads the three replayed Worker records as three runs", async () => {
-	// Records written by the guards extension from real A10 child sessions (no model, no server);
-	// each carries the test's cwd, so learn runs from there.
-	const runs = join(temp("mellum-cli-replay-"), "runs.jsonl");
-	for (const name of RUNS) await replay(name, runs);
-	assert.deepEqual(readRecords(readFileSync(runs, "utf8")).records.map((r) => r.kind), ["worker", "worker", "worker"], "kind survives learn's parser");
-	const r = learnRun(["learn", "--json", "--file", runs], { cwd: process.cwd() });
-	assert.equal(r.status, 0, r.stderr);
-	const out = JSON.parse(r.stdout);
-	assert.equal(out.runs, 3);
-	assert.deepEqual(out.skipped, { old: 0, bad: 0 });
-});
-
-// ---- last: the newest run under the directory, as Markdown or JSON ----
-
 test("last --file prints the newest run under the directory as a Markdown table", () => {
 	const p = project("servers");
 	const r = learnRun(["last", "--file", p.runs], { cwd: p.dir });
 	assert.equal(r.status, 0, r.stderr);
-	assert.match(r.stdout, /^\*\*mellum last\*\*: Mode/);
+	assert.match(r.stdout, /^\*\*mellum last\*\*: Mellum Worker/);
 	assert.match(r.stdout, /\| Metric \| Value \|\n\|---\|---\|/);
 	const newest = readRecords(readFileSync(p.runs, "utf8")).records.sort((a, b) => b.endedAt.localeCompare(a.endedAt))[0];
 	assert.ok(r.stdout.includes(`| Task | ${newest.task.replace(/\|/g, "\\|")} |`), r.stdout);
@@ -249,20 +210,13 @@ test("last --json prints the record itself", () => {
 	assert.equal(rec.cwd.startsWith(p.dir), true);
 });
 
-test("last without --file reads MELLUM_MODE_RUNS and the Worker file in HOME", () => {
-	const p = project("servers");
-	const r = learnRun(["last"], { cwd: p.dir, env: { MELLUM_MODE_RUNS: p.runs } });
-	assert.equal(r.status, 0, r.stderr);
-	assert.match(r.stdout, /^\*\*mellum last\*\*/);
-});
-
 test("last with no runs under the directory, or with recording off, exits 1 and says why", () => {
 	const p = project("servers");
 	const elsewhere = realpathSync(temp("mellum-cli-elsewhere-"));
 	const none = learnRun(["last", "--file", p.runs], { cwd: elsewhere });
 	assert.equal(none.status, 1);
 	assert.match(none.stderr, new RegExp(`no Mellum runs recorded under ${elsewhere}`));
-	const off = learnRun(["last"], { cwd: p.dir, env: { MELLUM_MODE_RUNS: "0", MELLUM_WORKER_RUNS: "0" } });
+	const off = learnRun(["last"], { cwd: p.dir, env: { MELLUM_MODE_RUNS: "0" } });
 	assert.equal(off.status, 1);
 	assert.match(off.stderr, /run records are off/);
 });

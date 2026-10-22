@@ -110,7 +110,7 @@ not arise there. The fix is a new baseline at each new user prompt, with
 the dedupe key per prompt. *Reopens when* a host re-uses a Worker child
 across prompts, or `learn` reports from `-e` sessions start to matter.
 
-**OpenCode port: measure it and record its runs (was M.3).** The OpenCode
+** The OpenCode
 port ships a step-capped Worker subagent, installed through the plugin array,
 with no Mode, guards or run records; the README says it is unmeasured.
 Measuring it needs a `--harness opencode` runner in `ladder/` and a record
@@ -122,7 +122,8 @@ or someone offers the runner.
 provider templates for both hosts and a ladder rerun;
 [`docs/backends/ollama.md`](docs/backends/ollama.md) lists what a port needs.
 Only oMLX has been run. *Reopens when* a machine without Apple Silicon is on
-hand to run the ladder against it.
+hand to run the ladder against it. Restored 2026-10-20: LC.2 chose llama.cpp,
+so this entry is not taken and its condition still stands.
 
 **Execution bounds (was M.7E).** A measured opt-in policy for bash commands
 with no timeout under the shipped guards, preserving explicit overrides and
@@ -144,6 +145,29 @@ Retired on 2026-10-13 as instrument work the current checks already cover
 on pass/fail but differ in verification or report, and the existing `check`
 fields cannot show it.
 
+**The mediated test.** Your main model turns a request or a spec phase into
+a failing test, shows it, and hands it to the worker as "make this pass";
+completion is scored by the hidden tests and write list, with the test
+written once and not by the worker. Measured in the triage note's order: a
+rung 9 screen (three runs) first, then a preregistered run on rungs 6–9
+against A21's 9/12, then a command that records the test beside the request.
+Andre's [PR #1](https://github.com/pauleveritt/mellum-worker/pull/1) is a
+candidate implementation (`--acceptance-test`; an n = 1 rung 9 screen on
+mlx-lm, [digest](docs/superpowers/research/2026-10-20-pr-digest.md)).
+*Reopens when* someone can run the rung 9 screen and wants the result; the
+closed phase and its design inputs are in [`ROADMAP-M.md`](ROADMAP-M.md).
+
+**One worker.** Retire the pi-subagents Worker (agent template, child-only
+guard loading, Worker run records, the setup skill's agent-file and intercom
+phases, the ladder's `delegated` mode) and rename: `extensions/mellum-mode.ts`
+becomes `mellum-worker.ts` and "Mellum Mode" becomes mellum-worker in the
+docs, skill and templates. `/mellum` and the run-record path stay; `learn`
+and `last` keep reading old `kind: "worker"` records; a rung 1 and a rung 6
+smoke show the rename launches the same requests. *Reopens when* the mediated
+test lands, or the rename is worth doing on its own; the closed phase and its
+exclusions are in [`ROADMAP-M.md`](ROADMAP-M.md). 2026-10-20: taken as LC.8
+because the Learning Center needs one worker; the entry stays until it lands.
+
 **pi-subagents Worker: one-liners and an in-process child (were M.8, M.9).**
 `async: false`, a re-dispatch line in the description and the intercom
 opt-out ([A11](docs/ladder/ablation-a11-delegated-nointercom/README.md)); a
@@ -151,26 +175,41 @@ opt-out ([A11](docs/ladder/ablation-a11-delegated-nointercom/README.md)); a
 ([cost note](docs/superpowers/research/2026-10-09-worker-cost-options.md) §2,
 §3b). *Reopens when* M.12 does not retire the Pi Worker.
 
-**Freeze-the-oracle exit gate.** Make "done" an external test the worker cannot
-weaken, instead of its own final message. Promote the ladder's scorer checks —
-`existing_tests_kept` (no existing test edited or removed; additions allowed)
-and `outside_write_list` — into a runtime guard on the worker, and gate the
-exit on an actual run of the frozen acceptance test with the failure
-re-dispatched as the next "make this pass". M.11 supplies the external, complete
-test but Excludes guard changes, so the unweakenable half is here
-([note](docs/superpowers/research/2026-10-18-harness-exit-gate.md)).
-*Reopens when* M.11's screen moves rung 9 and a trace shows a worker editing or
-deleting a test to exit, or writing outside the allowed paths, on a run that
-then scored as done.
+**PyCharm learning content.** Learning Center material made for PyCharm
+users, building on the Getting started track. Paul's pitch to Andre
+(2026-10-20) names it as a later step that needs JetBrains approval; the
+[Learning Center spec](docs/superpowers/specs/2026-10-20-learning-center-design.md)
+excludes it. *Reopens when* JetBrains approves the content and LC.3 has
+closed, so both Getting started lessons exist to build on.
 
-**Benchmark a plain mlx_lm.server against oMLX, and sampling screens.** The
-ladder now supports both (`--backend mlx-lm --base-url`, and
-`--temperature`/`--top-p`; direct mode only), but no runs have been made. The
-two servers cannot be made byte-identical — `thinking_budget`,
-`max_tool_result_tokens` and penalty handling are oMLX server-only with no
-mlx_lm.server equivalent — so an oMLX-vs-mlx-lm result is a harness finding
-about servers, not a claim about the shipped worker; sampling sweeps are the
-same, since the ladder is greedy by design ([sdd](docs/sdd.md)).
-*Reopens when* someone runs a screen (a few rungs, a research note naming the
-server's launch flags and n); a measured claim additionally needs a
-preregistered run with the server differences pinned.
+**Satyrn Education refactor.** Move the Learning Center from `learn/` in
+this repo to Satyrn Education, keeping lessons as plain Markdown with front
+matter so the move is a copy
+([spec](docs/superpowers/specs/2026-10-20-learning-center-design.md) §11).
+From Paul's pitch to Andre (2026-10-20). *Reopens when* LC.5 has closed and
+Satyrn Education is ready to host the lessons.
+
+**Model-parameter impact on eval results.** What temperature, `top_p`, `top_k`
+and context do to rung scores is unmeasured; the lesson that teaches a setting
+needs that evidence, and the settings come from a checked-in project file so an
+arm can differ by one value ([spec](docs/superpowers/specs/2026-10-20-learning-center-design.md)
+§12). *Reopens when* LC.3's harness can run a rung fixture twice with one
+parameter changed.
+
+**Pathologies page.** A reference in `learn/` of the ways small models fail:
+announce-and-stop, false success, test-command thrash, a bent project, long
+runs, servers, settings drift, empty finals, loops, writing outside the
+layout, a test edited to pass, a lost phase id. Each gets the record that
+shows it and the guard, fact or spec shape that answers it. `learn` already
+counts seven of these from run records; the page adds the ladder's and links
+`docs/ladder/`, so a lesson links one pathology instead of restating it.
+*Reopens when* the ditch lesson names more than the page covers, or a second
+lesson needs the same explanation. Taken as LC.7A on 2026-10-21; the entry stays until it lands.
+
+**Glossary of the eval terms.** One page that fixes the measurement vocabulary —
+session, prompt, turn, suite, rung, arm, screen, reference run — so lessons,
+records and the harness use the same words. `learn/glossary.md` already defines
+the Learning Center's terms; this one covers the eval terms and links back.
+Session is the unit: one isolated Pi context and workspace, fed one or more
+prompts, with one trace. *Reopens when* a record or lesson uses an eval term the
+glossary lacks, or two documents use one word for different things.

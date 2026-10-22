@@ -12,7 +12,6 @@ import sys
 import tempfile
 from pathlib import Path
 
-from .pi_profile import prepare_pi_workspace
 from .run_ladder import prepare_workspace
 from .rungs import RUNGS
 
@@ -20,7 +19,6 @@ from .rungs import RUNGS
 def make_sandbox(rung: int, parent: Path | None = None) -> Path:
     scratch = Path(tempfile.mkdtemp(prefix=f"mellum-try-rung{rung}-", dir=parent))
     ws = prepare_workspace(RUNGS[rung], scratch)
-    prepare_pi_workspace(ws, None)
     return ws
 
 
@@ -28,4 +26,4 @@ if __name__ == "__main__":
     number = int(sys.argv[1]) if len(sys.argv) > 1 else 1
     ws = make_sandbox(number)
     print(ws)
-    print(f'try: cd {ws} && pi   # then: "Use mellum-worker: {RUNGS[number].sentence}"')
+    print(f"try: cd {ws} && pi   # then: /mellum {RUNGS[number].sentence}")
