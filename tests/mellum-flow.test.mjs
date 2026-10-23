@@ -5,7 +5,23 @@ import { mkdtempSync, mkdirSync, writeFileSync, readdirSync, readFileSync, rmSyn
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { PHASES, finalText, asTodo, asCode, looksLikePytest, freezeName, gateTestName, GATE_DIR, materializeGate, flowBlock, PHASE_CALL_CAP } from "../extensions/mellum-flow.ts";
+import { PHASES, finalText, asTodo, asCode, looksLikePytest, freezeName, gateTestName, GATE_DIR, materializeGate, flowBlock, PHASE_CALL_CAP, BASE_GUIDE } from "../extensions/mellum-flow.ts";
+
+test("BASE_GUIDE restores structure generically without contradicting any role", () => {
+	assert.match(BASE_GUIDE, /single-purpose|ONE job/i);
+	assert.match(BASE_GUIDE, /decisive and brief|do not deliberate/i); // the anti-ramble line
+	assert.match(BASE_GUIDE, /authoritative/i); // the role prompt wins on specifics
+	// it governs HOW to operate, not WHAT to produce — must not name a role's output (code/test/plan)
+	assert.ok(!/write (the )?(code|tests?|implementation)/i.test(BASE_GUIDE), "guide must not prescribe a role's output");
+});
+
+test("per-phase max_tokens: planner/reviewers capped tight, examine/code generous", () => {
+	assert.ok(PHASES.plan.maxTokens <= 2048, "plan must be capped to stop the ramble");
+	assert.ok(PHASES.review_plan.maxTokens <= 2048);
+	assert.equal(PHASES.examine.maxTokens, 16384); // a thorough test needs room
+	assert.equal(PHASES.code.maxTokens, 16384);
+	assert.ok(PHASES.review_code.maxTokens <= 8192);
+});
 
 test("flowBlock always allows test (the only exit) and read", () => {
 	assert.equal(flowBlock("test", 9999, false), undefined);

@@ -6,6 +6,14 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- Removing Pi's base prompt (the `--system-prompt` fix) also removed the structure that kept the
+  planner concise, so it rambled ~635s on a trivial plan and timed the fork out. Two fixes, since
+  the model's reasoning can't be toggled off (neither `reasoning_effort` nor `enable_thinking` is
+  honored — verified): (1) a project operating guide (`BASE_GUIDE`) is prepended to every role —
+  focus, brevity ("be decisive, do not deliberate"), tool-use, output-only — replacing Pi's
+  structure in our own voice, generic so it contradicts no role; (2) per-phase `max_tokens` — the
+  planner and reviewers capped tight (2048/4096) so they physically can't ramble to the timeout,
+  examine and code kept generous (16384). `max_tokens` is the only lever that bounds reasoning here.
 - Flow phase sub-agents appended their role prompt to Pi's base coding-agent prompt
   (`--append-system-prompt`), leaving Pi's generic "thorough coding agent" framing on top of
   every tightly-scoped role — diluting them and pushing the examiner to over-assert. They now

@@ -17,7 +17,7 @@
  */
 
 import { spawn } from "node:child_process";
-import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { appendFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -43,7 +43,25 @@ interface Phase {
 	tools: string;
 	ext: string[];
 	prompt: string;
+	maxTokens: number;
 }
+
+// Our own operating guide, prepended to every role. It REPLACES the structure Pi's base prompt
+// used to give (focus, brevity, tool-use, output-only) now that we send --system-prompt instead
+// of --append — WITHOUT Pi's "thorough coding agent" framing that made the examiner over-assert,
+// and WITHOUT contradicting any role (it governs HOW to operate, never WHAT to produce). The
+// "be decisive, do not deliberate at length" line is the direct counter to the planner rambling
+// for 600s on a trivial plan once Pi's base prompt was removed.
+export const BASE_GUIDE =
+	"You are a single-purpose sub-agent in an automated build. Your ONE job is defined under " +
+	"YOUR ROLE below; do exactly that and nothing else. Operate with discipline:\n" +
+	"- Be decisive and brief. Reach the result and STOP. Do NOT deliberate at length, restate the " +
+	"task, think out loud, or add commentary — a long internal monologue wastes the token budget and " +
+	"risks truncating your answer before it is written.\n" +
+	"- Use the tools you are given to gather exactly what you need, then act. Do not narrate tool use.\n" +
+	"- Produce EXACTLY the output your role specifies, in the format it specifies, with nothing around it.\n" +
+	"- YOUR ROLE below is authoritative: where it is specific, follow it over this general guidance.\n\n" +
+	"=== YOUR ROLE ===\n";
 
 // The coder is the only executor (write/edit/bash + the safety guards). Reviewers are
 // read-only judges; the planner turns the spec into a checklist. Budget maps to the ROLE:
@@ -56,6 +74,7 @@ export const PHASES: Record<string, Phase> = {
 		thinking: "high",
 		tools: "read,grep,find,ls",
 		ext: [],
+		maxTokens: 2048,
 		prompt:
 			"You are the PLANNER. Read specs/ and the task below (specs/roadmap.md may list several " +
 			"phases — plan ONLY the phase(s) the task names). Your REPLY must be the TODO.md content " +
@@ -71,6 +90,7 @@ export const PHASES: Record<string, Phase> = {
 		thinking: "high",
 		tools: "read,grep,find,ls",
 		ext: [],
+		maxTokens: 2048,
 		prompt:
 			"You are the PLAN REVIEWER — you only READ and judge; you cannot change files. Read specs/ " +
 			"and TODO.md. Check the plan (a) has a North Star near the top stating the task's goal that " +
@@ -82,6 +102,7 @@ export const PHASES: Record<string, Phase> = {
 		thinking: "high",
 		tools: "read,grep,find,ls,lookup",
 		ext: [ext("mellum-knowledge.ts")],
+		maxTokens: 16384,
 		prompt:
 			"You are the EXAMINER. You write the acceptance test — the executable definition of DONE — " +
 			"for THIS phase's spec in TASK.md (and specs/). You do NOT see or write the implementation; " +
@@ -125,6 +146,7 @@ export const PHASES: Record<string, Phase> = {
 		thinking: "low",
 		tools: "read,grep,find,ls,write,edit,bash,lookup",
 		ext: [ext("mellum-nonblock.ts"), ext("mellum-guards.ts"), ext("mellum-surgical.ts"), ext("mellum-knowledge.ts")],
+		maxTokens: 16384,
 		prompt:
 			"You are the CODER. Read plan/TODO.md and specs/. The acceptance tests are ALREADY written for you " +
 			"under `tests/` (files named `test_gate_phase_*.py`) — they are the definition of DONE, one " +
@@ -143,6 +165,7 @@ export const PHASES: Record<string, Phase> = {
 		thinking: "high",
 		tools: "read,grep,find,ls",
 		ext: [],
+		maxTokens: 4096,
 		prompt:
 			"You are the CODE REVIEWER — you only READ and judge; you cannot change files. Read specs/ " +
 			"and the code. Check (1) CONFORMANCE — every requirement of the task's phase(s) is actually " +
@@ -172,7 +195,23 @@ function runSubagent(phase: string, task: string, cwd: string, signal?: AbortSig
 	const cfg = PHASES[phase];
 	const dir = mkdtempSync(join(tmpdir(), "mellum-flow-"));
 	const promptFile = join(dir, `${phase}.md`);
-	writeFileSync(promptFile, cfg.prompt);
+	// Our operating guide first (focus/brevity), then the authoritative role prompt.
+	writeFileSync(promptFile, BASE_GUIDE + cfg.prompt);
+	// Per-phase max_tokens: pi has no CLI flag for it, so patch a copy of the inherited agent dir's
+	// models.json. The planner/reviewers get a tight cap (they can't bound their own reasoning and
+	// otherwise ramble to the per-attempt timeout); examine/code keep a generous cap.
+	let env = process.env;
+	const baseAgent = process.env.PI_CODING_AGENT_DIR;
+	if (baseAgent && existsSync(join(baseAgent, "models.json"))) {
+		const agentDir = join(dir, "agent");
+		cpSync(baseAgent, agentDir, { recursive: true });
+		const mp = join(agentDir, "models.json");
+		const data = JSON.parse(readFileSync(mp, "utf8"));
+		const prov: any = Object.values(data.providers)[0];
+		prov.models[0].maxTokens = cfg.maxTokens;
+		writeFileSync(mp, `${JSON.stringify(data, null, 2)}\n`);
+		env = { ...process.env, PI_CODING_AGENT_DIR: agentDir };
+	}
 	const args = [
 		"--mode", "json", "-p", "--no-session",
 		"--no-extensions", "--no-skills", "--no-prompt-templates", "--no-context-files", "--no-approve",
@@ -187,7 +226,7 @@ function runSubagent(phase: string, task: string, cwd: string, signal?: AbortSig
 
 	feed(`  ━ ${phase} starting (think=${cfg.thinking}) ━`);
 	return new Promise((resolve) => {
-		const child = spawn("pi", args, { cwd, env: process.env, stdio: ["ignore", "pipe", "pipe"] });
+		const child = spawn("pi", args, { cwd, env, stdio: ["ignore", "pipe", "pipe"] });
 		const events: any[] = [];
 		const t0 = Date.now();
 		// Heartbeat: a phase working silently should still show it is alive. Independent of pi's
