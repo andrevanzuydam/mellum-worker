@@ -479,3 +479,74 @@ the numbering runs straight through.
   rungs 1-3 pass and 4-5 fail (3/5); AgentClinic phase-1 (rung 6) fails while
   phase-2 (rung 7) passes — the bare model is capable but inconsistent, which is
   the exact gap a habit formula is built to close.
+
+## Addendum — breaking the ceiling: it was the harness, not the model (2026-10-23)
+
+The previous addendum left the hard suite's claim open: it would fail even under
+the full harness. It did not hold the way it read. A tool-based, decomposed,
+best-of-N, examiner-gated harness cleared all seven phases of the hard suite's
+*visible* tests (up from a 4/7 ceiling) — and every gap that remained was a
+harness affordance, not model capability. The model was never the limit.
+
+- **The "stall" was a serving-format bug, not a model refusal.** On a non-trivial
+  task the agent emitted nothing and stopped. Cause: oMLX's tool-call parser drops
+  a tool call whose JSON arguments are a large multi-line string, so passing the
+  whole task as `plan(task=…)` was silently dropped and the agent got no result.
+  Easy (a 33-char task) always parsed; larger phases did not — which is exactly why
+  "easy works, bigger stalls." Fix: every phase tool is **argument-free**; the task,
+  plan and feedback flow through files (`TASK.md`, `TODO.md`, `REVIEW.md`). Keep the
+  arguments the model *generates* tiny and the call always parses.
+
+- **Decompose to the model's size and thread a constant forward context.** The
+  model cannot bound its own reasoning (`supportsReasoningEffort: false`), so a big
+  multi-phase task drowns it — it reasons until exhausted and emits nothing. Split
+  the task on its own headers and drive one small phase at a time, each carrying a
+  small constant brief: a model-set north star, a running summary of what is built,
+  and the last phase's context. Small grounded tasks finish; the whole wall does not.
+
+- **The serving config is a lever, and throughput is not latency.** Served with
+  `--max-concurrent-requests 1`, the batched engine serialised; raising it to 16
+  gave 2.5–2.8× aggregate throughput (measured 127→351 tok/s, N=1→16, knee at 4–8).
+  But a dependent plan→code→test chain has one call in flight at a time and sees
+  none of it — concurrency pays only when independent work runs in parallel.
+
+- **Best-of-N beats per-phase variance, and the diversity is the point.** One
+  attempt per phase is a coin flip; an unlucky draw fails a phase (the 303-vs-307
+  redirect) and cascades. Run N attempts in parallel on the batched server with a
+  **temperature spread** (0.3 conservative → 1.2 exploratory), fork the workspace
+  per attempt, and promote the first that passes — the low-temp forks write the
+  by-the-book answer, the high-temp ones escape a stuck one, and the throughput is
+  finally used. Clones gain nothing; the spread is what hedges.
+
+- **The worker must not grade itself — an independent examiner is the definition of
+  done.** The worker writes its own tests, so it writes ones that pass its own
+  (sometimes wrong) implementation: hard reached visible 7/7 while the hidden grader
+  held at 3/7 — wrong `/report` keys, undone `sqlite-utils` migrations. The fix is
+  the deferred "Tier-2 examiner", now built: a separate sub-agent reads ONLY the
+  spec and writes a strict *behavioral* acceptance test (exact keys, status codes,
+  named migrations, expected values computed from the source of truth) BEFORE any
+  coding; the coder builds to pass it and cannot weaken it (the gate is frozen and
+  restored). Visible pass then means *correct*, not *self-consistent*. (`mellum-contract`
+  was the Tier-1 structural precursor — routes exist; the behavioral gate is new.)
+
+- **Ground on the live environment, and FORCE the lookup.** The model cannot know
+  post-cutoff APIs (the ladder runs on Python 3.15). A BM25 index over the installed
+  venv gives exact signatures and defaults for the versions actually running. But
+  available is not used: left to offer it, the model called `lookup` zero times
+  across a full hard run while missing the very migration API it needed — so the
+  harness must *require* a lookup on exact-API / database work, not merely provide it.
+
+- **Never attribute a failure to the model; know the quant before blaming precision.**
+  The model is fixed; every gap is the harness's to close, and "the model can't" is
+  both unhelpful and the wrong frame. Precision was not the problem: the 6-bit is a
+  careful mixed-precision quant that protects the sensitive MoE routers at 8-bit, and
+  fp16 would not touch the serving, variance and knowledge failures that sank runs.
+  The one plausible precision lever is the output head — `lm_head`/embeddings at
+  8-bit for cleaner structural-token logits — a cheap A/B against the tool-call-drop
+  rate, not a blanket upgrade.
+
+- **Visibility is load-bearing, and drain every spawned stderr.** A silent run reads
+  as stuck; a heartbeat (event-count liveness per sub-agent) plus streamed phase
+  steps is how a run is understood — and it is what surfaced an unread-stderr pipe
+  that deadlocked a coder for a whole timeout. A sub-process spawned with a piped but
+  unread stderr fills the pipe buffer and hangs; always drain it.
