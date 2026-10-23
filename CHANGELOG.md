@@ -4,6 +4,22 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Fixed
+
+- The flow harness counted a phase as passed whenever pytest passed — even when the
+  examiner had produced no acceptance test for that phase. A fork whose examiner output
+  was dropped or malformed then inherited only the earlier phases' gate and passed
+  trivially, and best-of-N (promote the first fork to pass) actively selected that
+  weakest fork. On a hard run this meant phases 3–7 reported PASS while only phases 1–2
+  were built. A fork now counts as passing phase N only when it froze a real acceptance
+  test for N: `.mellum_gate/phase_<n>.py` must exist, compile as Python (an examiner that
+  emitted an HTML/template blob is rejected) and define at least one test. The examiner
+  also validates its own output, retries once on a non-pytest reply, and refuses to
+  freeze a junk gate; `asCode` now prefers a ```python block over any other fenced block.
+- `run_top` crashed a whole best-of-N run when reaping a child process group raised
+  `PermissionError` (EPERM) — a pid recycled into a group the process no longer owns. The
+  reap now ignores both `ProcessLookupError` and `PermissionError`.
+
 ### Changed
 
 - The flow harness's self-written acceptance tests now **accumulate across phases**

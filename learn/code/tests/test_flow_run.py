@@ -41,3 +41,24 @@ def test_restore_gate_materialises_every_phase_and_clears_stale(tmp_path):
 
 def test_restore_gate_is_a_noop_without_a_gate_dir(tmp_path):
     flow_run.restore_gate(tmp_path)  # no .mellum_gate — must not raise
+
+
+def _freeze(ws, phase, text):
+    (ws / ".mellum_gate").mkdir(exist_ok=True)
+    (ws / ".mellum_gate" / f"phase_{phase}.py").write_text(text)
+
+
+def test_phase_gate_ok_requires_a_real_frozen_test_for_this_phase(tmp_path):
+    # the bug: a fork with no phase-N test inherits the earlier gate and "passes" trivially.
+    assert flow_run.phase_gate_ok(tmp_path, 3) is False          # no gate dir / file at all
+    _freeze(tmp_path, 1, "def test_home():\n    assert 1\n")
+    assert flow_run.phase_gate_ok(tmp_path, 3) is False          # phase 1 frozen, but not phase 3
+    _freeze(tmp_path, 3, "def test_add():\n    assert 1\n")
+    assert flow_run.phase_gate_ok(tmp_path, 3) is True           # phase 3 now has a real test
+
+
+def test_phase_gate_ok_rejects_html_and_testless_files(tmp_path):
+    _freeze(tmp_path, 3, "templates/complaints.html\n{% extends 'base.html' %}\n<div>hi</div>\n")
+    assert flow_run.phase_gate_ok(tmp_path, 3) is False          # an HTML blob does not compile
+    _freeze(tmp_path, 3, "import pytest\nX = 1  # no test functions\n")
+    assert flow_run.phase_gate_ok(tmp_path, 3) is False          # compiles but defines no test

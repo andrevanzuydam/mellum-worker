@@ -219,6 +219,23 @@ def restore_gate(workspace: Path) -> None:
         shutil.copy2(frozen, tests / f"test_gate_{frozen.stem}.py")
 
 
+def phase_gate_ok(workspace: Path, phase: int) -> bool:
+    """A fork may only count as passing phase N if it actually FROZE a real acceptance
+    test for phase N. Without this, a fork whose examiner produced nothing just inherits
+    the earlier phases' gate and 'passes' trivially — and best-of-N then promotes that
+    weakest fork first. The frozen file must exist, be importable Python (an examiner that
+    emitted an HTML blob fails here), and define at least one test."""
+    f = workspace / ".mellum_gate" / f"phase_{phase}.py"
+    if not f.is_file():
+        return False
+    text = f.read_text()
+    try:
+        compile(text, str(f), "exec")
+    except SyntaxError:
+        return False
+    return re.search(r"(?m)^\s*(async\s+)?def\s+test\w*\s*\(|^\s*class\s+Test\w*", text) is not None
+
+
 def pin_temperature(profile_dir: Path, temp: float) -> None:
     """Set the sampling temperature in a per-attempt profile, to SPREAD the best-of-N samples:
     low temps write the by-the-book correct code, high temps explore out of a stuck solution."""
@@ -302,6 +319,7 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
                 timeout=timeout, thinking=thinking, phase=pnum)
         restore_gate(aw)  # score against the cumulative gate — every prior phase must still pass
         ok, _ = lr.run_tests(aw, 120.0)
+        ok = ok and phase_gate_ok(aw, pnum)  # and THIS phase must have frozen a real acceptance test
         return idx, ok, aw
 
     passed = False
@@ -337,6 +355,7 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
                         timeout=timeout, thinking=thinking, phase=pnum)
                 restore_gate(workspace)  # score against the cumulative gate — every prior phase must still pass
                 passed, _ = lr.run_tests(workspace, 120.0)
+                passed = passed and phase_gate_ok(workspace, pnum)  # and THIS phase must have frozen a real acceptance test
             else:
                 temps = temp_ladder(concurrency)
                 lr.emit(f"  phase {pnum} round {rnd + 1}: {concurrency} parallel attempts, temps {temps}")

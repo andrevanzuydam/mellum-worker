@@ -261,10 +261,21 @@ export function asTodo(reply: string): string {
 	return text.trimEnd() + "\n";
 }
 
-/** Extract a Python file from an examiner reply: take a fenced block if present, else the raw text. */
+/** Extract a Python file from an examiner reply: prefer a ```python block (the examiner sometimes
+ * emits an HTML/template block FIRST, which a language-agnostic match would wrongly grab), then any
+ * fenced block, then the raw text. */
 export function asCode(reply: string): string {
-	const fence = reply.match(/```(?:python)?\s*\n([\s\S]*?)```/i);
-	return (fence ? fence[1] : reply).trim() + "\n";
+	const py = reply.match(/```python\s*\n([\s\S]*?)```/i);
+	const any = reply.match(/```[a-z]*\s*\n([\s\S]*?)```/i);
+	return (py ? py[1] : any ? any[1] : reply).trim() + "\n";
+}
+
+/** Is this reply actually a pytest file? It must define a test, and must not be HTML/template
+ * leakage (the examiner once emitted a `templates/x.html` Jinja block as the "test"). */
+export function looksLikePytest(code: string): boolean {
+	if (!/(^|\n)\s*(async\s+)?def\s+test\w*\s*\(|(^|\n)\s*class\s+Test\w*/.test(code)) return false;
+	if (/(^|\n)\s*<|\{%|\{\{|(^|\n)\S+\.(html|js|css|txt)\s*(\n|$)/m.test(code)) return false;
+	return true;
 }
 
 /** The frozen gate holds one acceptance test per phase; the current phase comes from MELLUM_PHASE. */
@@ -346,8 +357,18 @@ export default function (pi: any): void {
 			"pass it, and it joins the cumulative gate that test() runs (every earlier phase too).",
 		parameters: { type: "object", properties: {}, additionalProperties: false },
 		async execute(_id: string, _params: any, signal: AbortSignal) {
-			const reply = await runSubagent("examine", readOr(join(cwd(), "TASK.md")), cwd(), signal);
-			const code = asCode(reply);
+			const task = readOr(join(cwd(), "TASK.md"));
+			let code = asCode(await runSubagent("examine", task, cwd(), signal));
+			if (!looksLikePytest(code)) {
+				// One corrective retry — a dropped or mis-formatted reply must not freeze a junk gate,
+				// which would let the phase "pass" with no real test (and best-of-N would promote it).
+				const fix = "\n\nYour previous reply was NOT a valid pytest file. Output ONLY the contents of a " +
+					"Python pytest file — `def test_...` functions with assertions. No prose, no code fences, no HTML, no templates.";
+				code = asCode(await runSubagent("examine", task + fix, cwd(), signal));
+			}
+			if (!looksLikePytest(code)) {
+				return textResult("examine did not produce a valid pytest file — this phase has NO gate yet. Call examine again before code.", true);
+			}
 			// Freeze THIS phase under its own name so the gate ACCUMULATES: a later phase can never
 			// pass by regressing an earlier one, and the coder cannot weaken a gate it is told not to touch.
 			const gate = join(cwd(), GATE_DIR);

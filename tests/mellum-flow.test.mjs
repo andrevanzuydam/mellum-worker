@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readdirSync, readFileSync, rmSyn
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { PHASES, finalText, asTodo, asCode, freezeName, gateTestName, GATE_DIR, materializeGate } from "../extensions/mellum-flow.ts";
+import { PHASES, finalText, asTodo, asCode, looksLikePytest, freezeName, gateTestName, GATE_DIR, materializeGate } from "../extensions/mellum-flow.ts";
 
 test("the examiner is read-only but has lookup, and writes the acceptance gate from the spec", () => {
 	assert.ok(!PHASES.examine.tools.includes("write"));
@@ -58,6 +58,19 @@ test("materializeGate restores EVERY frozen phase into tests/ and clears stale g
 test("asCode extracts a fenced python block, else returns the raw text", () => {
 	assert.equal(asCode("```python\nimport x\nassert 1\n```"), "import x\nassert 1\n");
 	assert.equal(asCode("def test():\n    assert True"), "def test():\n    assert True\n");
+});
+
+test("asCode prefers a python block over an HTML block that appears first", () => {
+	const reply = "```html\n<div>complaints</div>\n```\nand the test:\n```python\ndef test_x():\n    assert 1\n```";
+	assert.equal(asCode(reply), "def test_x():\n    assert 1\n");
+});
+
+test("looksLikePytest accepts a real test file and rejects HTML/template or testless leakage", () => {
+	assert.ok(looksLikePytest("from app import app\ndef test_home():\n    assert 1\n"));
+	assert.ok(looksLikePytest("class TestThing:\n    def test_a(self):\n        assert 1\n"));
+	// the exact failure seen in flow20: an HTML/template blob written as the "test"
+	assert.ok(!looksLikePytest("templates/complaints.html\n{% extends 'base.html' %}\n<div>hi</div>\n"));
+	assert.ok(!looksLikePytest("import pytest\nX = 1\n")); // compiles but defines no test
 });
 
 test("finalText returns the LAST assistant text block from a json event stream", () => {
