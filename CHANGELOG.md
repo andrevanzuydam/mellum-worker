@@ -4,6 +4,15 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Added
+
+- A workspace-confinement guard in `mellum-guards.ts` (`confineToWorkspace`, on by default):
+  it blocks a `bash` tree-walk (`grep -r`/`-R`, `find`, `rg`, `ls -R`) that targets an
+  absolute path outside the worker's working folder, while allowing relative searches and
+  paths under it. A worker had run `grep -rl pattern /Users /var /tmp …`, which crawls the
+  whole machine and hangs the run for minutes; the guard stops that and tells the worker to
+  search within its workspace.
+
 ### Fixed
 
 - The flow harness counted a phase as passed whenever pytest passed — even when the
