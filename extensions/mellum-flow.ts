@@ -219,11 +219,12 @@ function runSubagent(phase: string, task: string, cwd: string, signal?: AbortSig
 		"--thinking", cfg.thinking, "--tools", cfg.tools,
 	];
 	for (const e of cfg.ext) args.push("-e", e); // explicit -e still load under --no-extensions
-	// REPLACE Pi's base prompt, don't append to it: each PHASES[phase].prompt is a complete,
-	// tightly-scoped role ("you ONLY write a pytest file", "pass the frozen gate"). Appending left
-	// Pi's generic "thorough coding agent" prompt on top of every role, diluting the scoping and
-	// pushing the examiner to over-assert. The orchestrator and the direct worker already replace.
-	args.push("--system-prompt", promptFile, `Task: ${task}`);
+	// Append our guide + role UNDER Pi's base prompt. We tried REPLACING Pi's base (--system-prompt)
+	// to stop it diluting the roles, but without it Mellum's planner thinks without bound and never
+	// emits a plan — empty output even at 16384 tokens (every medium run died on an empty TODO). Pi's
+	// base scaffolding is what keeps the model producing a final answer, so keep it and append
+	// BASE_GUIDE + the role on top; the de-brittle examiner prompt mitigates Pi's "be thorough" nudge.
+	args.push("--append-system-prompt", promptFile, `Task: ${task}`);
 
 	feed(`  ━ ${phase} starting (think=${cfg.thinking}) ━`);
 	return new Promise((resolve) => {
