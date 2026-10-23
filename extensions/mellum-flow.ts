@@ -313,6 +313,24 @@ export function materializeGate(cwd: string): number {
 	return frozen.length;
 }
 
+/** Per-phase tool-call cap: a clean phase is ~6-10 calls (plan, review, examine, code, review, test,
+ * plus a REDO or two). Past this the orchestrator is thrashing — a rung-6 flow run re-ran examine 5×
+ * and review_code 3× and never called test, burning the whole deadline on a solution it already had. */
+export const PHASE_CALL_CAP = 16;
+
+/** The block decision for a phase tool call, given the running budget and whether this phase's gate
+ * is already frozen. `test` and `read` are always allowed (test is the only exit). examine runs ONCE
+ * per phase — the gate is its product, re-deriving it is pure waste. Returns a reason to block, or
+ * undefined to allow. Pure, so it is unit-tested; the live hook supplies the counts and gate state. */
+export function flowBlock(toolName: string, calls: number, gateExists: boolean, cap = PHASE_CALL_CAP): string | undefined {
+	if (toolName === "test" || toolName === "read") return undefined;
+	if (toolName === "examine" && gateExists)
+		return "The acceptance test for this phase is already written and frozen. Do NOT examine again — call code() then test().";
+	if (calls >= cap)
+		return "Phase tool-call budget reached — you have planned, examined and coded enough. Call test() to check and finish; do not plan/examine/code/review_code again.";
+	return undefined;
+}
+
 export default function (pi: any): void {
 	const cwd = () => process.cwd();
 	// TASK.md / TODO.md / REVIEW.md live under plan/, created on demand.
@@ -320,6 +338,19 @@ export default function (pi: any): void {
 	const ensurePlan = () => mkdirSync(join(cwd(), PLAN_DIR), { recursive: true });
 	const hasTodo = () => existsSync(planPath("TODO.md"));
 	const needTodo = "No TODO.md yet — call `plan` first, then `review_plan`, before coding.";
+
+	// Cap the phase so the orchestrator can't loop to the deadline, and make examine run once:
+	// re-deriving a frozen gate is the single biggest waste in a thrashing phase.
+	let calls = 0;
+	pi.on("tool_call", (event: { toolName?: string }) => {
+		const name = event?.toolName ?? "";
+		const gateExists = name === "examine"
+			&& existsSync(join(cwd(), GATE_DIR, freezeName(process.env.MELLUM_PHASE ?? "1")));
+		const reason = flowBlock(name, calls, gateExists);
+		if (reason) return { block: true, reason };
+		if (name !== "test" && name !== "read") calls += 1;
+		return undefined;
+	});
 
 	pi.registerTool({
 		name: "plan",

@@ -4,6 +4,15 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Fixed
+
+- The flow orchestrator could loop a phase to the deadline: a rung-6 run re-ran the
+  (expensive) `examine` tool 5×, `review_code` 3×, and never called `test`, burning the whole
+  1200s budget on a solution it already had. `examine` now runs **once per phase** — once its
+  gate is frozen, re-calls are blocked with a pointer to `code()`/`test()` — and a per-phase
+  tool-call cap (`PHASE_CALL_CAP`, 16) stops the orchestrator thrashing, while always leaving
+  `test` (the only exit) callable.
+
 ### Added
 
 - A `flow` mode for the ladder (`run_ladder --mode flow`): runs the spec-driven flow

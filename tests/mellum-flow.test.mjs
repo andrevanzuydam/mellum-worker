@@ -5,7 +5,25 @@ import { mkdtempSync, mkdirSync, writeFileSync, readdirSync, readFileSync, rmSyn
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { PHASES, finalText, asTodo, asCode, looksLikePytest, freezeName, gateTestName, GATE_DIR, materializeGate } from "../extensions/mellum-flow.ts";
+import { PHASES, finalText, asTodo, asCode, looksLikePytest, freezeName, gateTestName, GATE_DIR, materializeGate, flowBlock, PHASE_CALL_CAP } from "../extensions/mellum-flow.ts";
+
+test("flowBlock always allows test (the only exit) and read", () => {
+	assert.equal(flowBlock("test", 9999, false), undefined);
+	assert.equal(flowBlock("read", 9999, false), undefined);
+});
+
+test("flowBlock makes examine run once per phase (blocked once the gate is frozen)", () => {
+	assert.equal(flowBlock("examine", 1, false), undefined); // first call: no gate yet
+	assert.match(flowBlock("examine", 1, true), /already written|Do NOT examine again/i); // gate frozen → blocked
+});
+
+test("flowBlock caps the phase so the orchestrator can't loop to the deadline", () => {
+	assert.equal(flowBlock("code", PHASE_CALL_CAP - 1, false), undefined); // under budget
+	assert.match(flowBlock("code", PHASE_CALL_CAP, false), /budget reached/i); // at the cap
+	assert.match(flowBlock("review_code", PHASE_CALL_CAP + 3, false), /budget reached/i);
+	// but test can still be called past the cap, so the phase can finish
+	assert.equal(flowBlock("test", PHASE_CALL_CAP + 3, false), undefined);
+});
 
 test("the examiner is read-only but has lookup, and writes the acceptance gate from the spec", () => {
 	assert.ok(!PHASES.examine.tools.includes("write"));
