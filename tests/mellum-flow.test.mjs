@@ -41,6 +41,22 @@ test("the examiner is told to be exhaustive and to cover negative/edge cases, no
 	assert.match(PHASES.examine.prompt, /earlier phase|already frozen/i);
 });
 
+test("thinking budget maps to the role: reasoning roles think hard, the coder acts", () => {
+	for (const r of ["plan", "review_plan", "examine", "review_code"]) {
+		assert.equal(PHASES[r].thinking, "high", r); // reasoning roles
+	}
+	assert.equal(PHASES.code.thinking, "low"); // the coder executes against a decided gate
+});
+
+test("the examiner must assert stable identity for mutate-a-specific-record phases", () => {
+	// medium phase 4 failed the hidden grader because Complaint had no stable `id` field — the
+	// examiner tested resolve/reopen behaviour but not that identity is an explicit, stable field.
+	assert.match(PHASES.examine.prompt, /IDENTITY|identity field/i);
+	assert.match(PHASES.examine.prompt, /stable/i);
+	assert.match(PHASES.examine.prompt, /list position|index/i); // must forbid positional ids
+	assert.match(PHASES.examine.prompt, /distinct ids|DISTINCT ids/i);
+});
+
 test("the coder is pointed at the cumulative gate and told earlier phases must keep passing", () => {
 	assert.match(PHASES.code.prompt, /test_gate_phase/);
 	assert.match(PHASES.code.prompt, /earlier phase/i);

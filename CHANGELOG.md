@@ -6,6 +6,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- The flow examiner under-specified identity, so a multi-phase run could pass its own gate
+  while the hidden grader failed. Medium went visible=PASS / hidden=FAIL because the worker
+  gave `Complaint` no stable `id` field (resolve/reopen worked by list index), and the
+  examiner never asserted identity. `examine` now requires, for any phase that acts on a
+  specific record (resolve/reopen/update/delete/fetch by id), a stable explicit id FIELD on
+  the model — distinct per record, addressed by id, unchanged across the mutation, no
+  reordering — closing the visible/hidden gap on that class of phase.
 - The flow orchestrator could loop a phase to the deadline: a rung-6 run re-ran the
   (expensive) `examine` tool 5×, `review_code` 3×, and never called `test`, burning the whole
   1200s budget on a solution it already had. `examine` now runs **once per phase** — once its

@@ -46,11 +46,14 @@ interface Phase {
 }
 
 // The coder is the only executor (write/edit/bash + the safety guards). Reviewers are
-// read-only judges. The planner writes TODO.md only. Budgets: reviewers/planner think
-// hard, the coder executes.
+// read-only judges; the planner turns the spec into a checklist. Budget maps to the ROLE:
+// the reasoning roles (plan, review_plan, examine, review_code) think hard; the coder acts
+// against an already-decided gate, so it executes rather than deliberates. NOTE: these bite
+// only when the model exposes reasoning effort. Mellum/Flint set supportsReasoningEffort:false,
+// so --thinking is a no-op for them and reasoning is bounded by max_tokens, not by this budget.
 export const PHASES: Record<string, Phase> = {
 	plan: {
-		thinking: "off",
+		thinking: "high",
 		tools: "read,grep,find,ls",
 		ext: [],
 		prompt:
@@ -99,6 +102,12 @@ export const PHASES: Record<string, Phase> = {
 			"hardcode a number: COMPUTE the expected result from the source of truth the spec points to, " +
 			"using the EXACT definition the spec gives (watch for traps the spec explicitly calls out), " +
 			"and assert the output matches.\n" +
+			"- IDENTITY: if the phase acts on a SPECIFIC record (resolve/reopen/update/delete/fetch a " +
+			"particular item, or anything addressed by an id), the record must carry a STABLE, EXPLICIT " +
+			"identity FIELD on the model itself — never a list position or a route-local id. Assert the " +
+			"model exposes that id field, that seeded records have DISTINCT ids, that the mutate route is " +
+			"addressed BY that id, and that the id is UNCHANGED across the mutation and does not reorder or " +
+			"renumber the collection. A route that 'works' by index passes a weak test and fails the real one.\n" +
 			"- For schema/migration/setup requirements, assert the NAMED artifacts exist, apply, and are " +
 			"idempotent, using the API the spec names.\n" +
 			"- Drive a web app via `from app import app` + `starlette.testclient.TestClient` unless the " +
