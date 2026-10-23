@@ -448,7 +448,11 @@ export default function (pi: any): void {
 			const verdict = await runSubagent("review_plan", "Review plan/TODO.md against the spec in plan/TASK.md (and specs/).", cwd(), signal);
 			ensurePlan();
 			writeFileSync(planPath("REVIEW.md"), verdict); // the next plan reads this
-			return textResult(verdict.includes("REVIEW: PASS") ? "REVIEW: PASS" : "REVIEW: REDO (feedback saved for the next plan).");
+			// Fail OPEN: loop back to plan only on an explicit REVIEW: REDO. A thinking-model reviewer
+			// that rambles or truncates before emitting "REVIEW: PASS" must not trap the pipeline in an
+			// infinite plan↔review loop (it never reaches examine). The examiner's test + hidden grader
+			// are the real gates; this review is advisory.
+			return textResult(verdict.includes("REVIEW: REDO") ? "REVIEW: REDO (feedback saved for the next plan)." : "REVIEW: PASS");
 		},
 	});
 
@@ -508,7 +512,9 @@ export default function (pi: any): void {
 			const verdict = await runSubagent("review_code", "Review the implementation against the spec in plan/TASK.md (and specs/).", cwd(), signal);
 			ensurePlan();
 			writeFileSync(planPath("REVIEW.md"), verdict); // the next code reads this
-			return textResult(verdict.includes("REVIEW: PASS") ? "REVIEW: PASS" : "REVIEW: REDO (feedback saved for the next code).");
+			// Fail OPEN (see review_plan): REDO only on an explicit REVIEW: REDO, so a lost/truncated
+			// verdict can't trap the coder in an endless review loop. test() is the real code gate.
+			return textResult(verdict.includes("REVIEW: REDO") ? "REVIEW: REDO (feedback saved for the next code)." : "REVIEW: PASS");
 		},
 	});
 
