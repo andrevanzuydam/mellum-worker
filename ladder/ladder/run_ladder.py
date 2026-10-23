@@ -42,9 +42,45 @@ PROMPT_FILE = REPO_ROOT / "prompts" / "mellum-worker.md"
 RECORD_EXT = LADDER_ROOT / "ladder" / "record-pi.js"
 MODE_EXT = REPO_ROOT / "extensions" / "mellum-worker.ts"
 GUARDS_EXT = REPO_ROOT / "extensions" / "mellum-guards.ts"
+FLOW_EXT = REPO_ROOT / "extensions" / "mellum-flow.ts"
 MODEL = "omlx/Mellum2.1-12B-A2.5B-Thinking-6bit"
 MODEL_ID = MODEL.split("/", 1)[1]
 TOOLS = "read,grep,find,ls,bash,edit,write"
+
+# The spec-driven flow orchestrator (mellum-flow.ts): Pi coordinates the phase tools, which
+# each run as an isolated sub-agent. The examiner writes the acceptance test FROM the spec, so
+# a rung whose fixture ships no visible test still gets a checkable target. Constants mirror
+# flow_run.py (the standalone flow runner); kept here so the ladder stays self-contained.
+FLOW_TOOLS = "plan,review_plan,examine,code,review_code,test,read"
+FLOW_ORCH_MSG = (
+    "The task for this phase is in TASK.md. Build it by calling the tools — all take "
+    "NO arguments. Start now by calling plan()."
+)
+FLOW_WORKFLOW = (
+    "The task for this phase is in the file TASK.md. You COORDINATE building it by CALLING TOOLS. "
+    "CRITICAL: every tool takes NO arguments — call them exactly as `plan()`, `review_plan()`, "
+    "`code()`, `review_code()`, `test()`. NEVER pass the task text (or any long text) as an "
+    "argument; the tools read TASK.md, TODO.md and REVIEW.md themselves. Passing long arguments "
+    "breaks the tool call.\n\n"
+    "  plan()        — reads TASK.md, writes TODO.md (a `## North Star` goal + a checklist).\n"
+    "  review_plan() — judges the plan; returns REVIEW: PASS or REVIEW: REDO.\n"
+    "  examine()     — writes the acceptance test (the definition of DONE) from the spec.\n"
+    "  code()        — implements to PASS the acceptance test (reads REVIEW.md for feedback).\n"
+    "  review_code() — judges the code; returns REVIEW: PASS or REVIEW: REDO.\n"
+    "  test()        — runs the acceptance test; returns TESTS: PASS or TESTS: FAIL.\n\n"
+    "Your VERY FIRST action is to call `plan()` — no arguments. Do not reply with prose.\n\n"
+    "TERMINATION — overrides everything: `test` is the ONLY exit. The MOMENT test returns "
+    "`TESTS: PASS`, you are DONE — stop and call NO further tool.\n\n"
+    "Workflow:\n"
+    "  1. plan()\n"
+    "  2. review_plan(). On REDO, call plan() again (it re-reads the feedback); repeat until PASS.\n"
+    "  3. examine()  — write the acceptance test from the spec, BEFORE any coding.\n"
+    "  4. code()\n"
+    "  5. review_code(). On REDO, call code() again; repeat until PASS.\n"
+    "  6. test(). On TESTS: PASS, STOP. On TESTS: FAIL, call code() again then test() again; "
+    "repeat until it passes.\n"
+    "Always plan, then examine, then code. Never call a tool after a passing test."
+)
 
 
 def prompt_version(prompt: Path) -> str:
@@ -101,6 +137,45 @@ def build_pi_direct_args(
     if guards:
         args += ["-e", str(GUARDS_EXT)]
     return [*args, sentence]
+
+
+def build_pi_flow_args(
+    thinking: str = "high",
+    model: str = MODEL,
+    guards: bool = False,
+) -> list[str]:
+    """The spec-driven flow orchestrator in place of the direct worker. Pi loads mellum-flow.ts
+    and drives the phase tools (plan, review_plan, examine, code, review_code, test); the examiner
+    writes the acceptance test from the spec in TASK.md before the coder runs, so a rung with no
+    shipped visible test still has a checkable target. The task text lives in TASK.md, so the
+    orchestrator message carries no long argument."""
+    args = [
+        "pi",
+        "-p",
+        "--mode",
+        "json",
+        "--no-extensions",
+        "--no-skills",
+        "--no-prompt-templates",
+        "--no-themes",
+        "--no-context-files",
+        "--no-session",
+        "--thinking",
+        thinking,
+        "--model",
+        model,
+        "--tools",
+        FLOW_TOOLS,
+        "--system-prompt",
+        FLOW_WORKFLOW,
+        "-e",
+        str(FLOW_EXT),
+        "-e",
+        str(RECORD_EXT),
+    ]
+    if guards:
+        args += ["-e", str(GUARDS_EXT)]
+    return [*args, FLOW_ORCH_MSG]
 
 
 def child_env(
@@ -457,6 +532,20 @@ def run_once(
         )
         args = build_pi_mode_args(rung.sentence)
         guards = True  # the mode always loads the guard extension
+    elif mode == "flow":
+        provider_name, model_id = model.split("/", 1)
+        agent_dir = direct_agent_dir(
+            scratch / "pi-agent", prof, base_url,
+            provider=provider_name, model_id=model_id,
+            context_window=context_window,
+        )
+        env = child_env(dict(os.environ), str(trace), agent_dir, offline=True)
+        env["MELLUM_FLOW_FEED"] = str(scratch / "flow.subfeed")
+        env["MELLUM_PHASE"] = "1"  # a rung is one phase; the examiner freezes plan/gate/phase_1.py
+        # The flow examiner reads plan/TASK.md (and specs/) to write its acceptance test.
+        (ws / "plan").mkdir(exist_ok=True)
+        (ws / "plan" / "TASK.md").write_text(rung.sentence + "\n")
+        args = build_pi_flow_args(thinking, model, guards)
     else:
         provider_name, model_id = model.split("/", 1)
         agent_dir = direct_agent_dir(
@@ -516,6 +605,13 @@ def run_once(
     # Servers Mellum started with `&` outlive Pi; stop them before staging the
     # workspace so they neither hold ports for later runs nor write after it.
     leftovers = stop_leftovers(ws)
+    if mode == "flow":
+        # plan/ is the flow harness's own bookkeeping (TASK/TODO/REVIEW + the frozen gate), not
+        # the graded solution. Move it out of the workspace so it does not trip the write-list
+        # check; the materialized acceptance tests under tests/ stay. Kept in scratch for debugging.
+        plan_dir = ws / "plan"
+        if plan_dir.exists():
+            shutil.move(str(plan_dir), str(scratch / "plan"))
     stop_reason, final_text, thinking_reentries = parse_pi_json(
         stdout, with_reentries=True
     )
@@ -532,7 +628,7 @@ def run_once(
             "provider": provider,
             "base_url": base_url,
             "model": model,
-        } if mode == "direct" else None,
+        } if mode in ("direct", "flow") else None,
         "harness": "pi",
         "plain": plain,
         "guards": guards,
@@ -649,7 +745,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--mode",
-        choices=["direct", "primary", "mode"],
+        choices=["direct", "primary", "mode", "flow"],
         default="direct",
     )
     parser.add_argument("--profile", choices=sorted(PROFILES), required=True)

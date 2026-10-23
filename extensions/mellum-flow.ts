@@ -111,7 +111,7 @@ export const PHASES: Record<string, Phase> = {
 		tools: "read,grep,find,ls,write,edit,bash,lookup",
 		ext: [ext("mellum-nonblock.ts"), ext("mellum-guards.ts"), ext("mellum-surgical.ts"), ext("mellum-knowledge.ts")],
 		prompt:
-			"You are the CODER. Read TODO.md and specs/. The acceptance tests are ALREADY written for you " +
+			"You are the CODER. Read plan/TODO.md and specs/. The acceptance tests are ALREADY written for you " +
 			"under `tests/` (files named `test_gate_phase_*.py`) — they are the definition of DONE, one " +
 			"group per phase. Do NOT edit, delete or weaken ANY of them; your job is to make them ALL pass. " +
 			"EARLIER phases' tests must keep passing — build on the existing code, do not break what already " +
@@ -279,7 +279,10 @@ export function looksLikePytest(code: string): boolean {
 }
 
 /** The frozen gate holds one acceptance test per phase; the current phase comes from MELLUM_PHASE. */
-export const GATE_DIR = ".mellum_gate";
+// Harness bookkeeping lives under plan/ so it never pollutes the solution tree (and a
+// write-list check — e.g. the ladder's AgentClinic rule — can keep it out of grading).
+export const PLAN_DIR = "plan";
+export const GATE_DIR = "plan/gate";
 
 /** Freeze filename for a phase inside the gate dir (phase_1.py, phase_2.py, …). */
 export function freezeName(phase: string | number): string {
@@ -312,7 +315,10 @@ export function materializeGate(cwd: string): number {
 
 export default function (pi: any): void {
 	const cwd = () => process.cwd();
-	const hasTodo = () => existsSync(join(cwd(), "TODO.md"));
+	// TASK.md / TODO.md / REVIEW.md live under plan/, created on demand.
+	const planPath = (name: string) => join(cwd(), PLAN_DIR, name);
+	const ensurePlan = () => mkdirSync(join(cwd(), PLAN_DIR), { recursive: true });
+	const hasTodo = () => existsSync(planPath("TODO.md"));
 	const needTodo = "No TODO.md yet — call `plan` first, then `review_plan`, before coding.";
 
 	pi.registerTool({
@@ -324,13 +330,14 @@ export default function (pi: any): void {
 			"the plan on REDO (it re-reads the reviewer feedback in REVIEW.md).",
 		parameters: { type: "object", properties: {}, additionalProperties: false },
 		async execute(_id: string, _params: any, signal: AbortSignal) {
-			const task = readOr(join(cwd(), "TASK.md"));
-			const fb = readOr(join(cwd(), "REVIEW.md"));
+			const task = readOr(planPath("TASK.md"));
+			const fb = readOr(planPath("REVIEW.md"));
 			const prompt = task + (fb ? `\n\n=== REVIEWER FEEDBACK — address every point ===\n${fb}` : "");
 			const reply = await runSubagent("plan", prompt, cwd(), signal);
 			const todo = asTodo(reply);
 			// The harness writes TODO.md from the planner's reply, so a plan is ALWAYS persisted.
-			writeFileSync(join(cwd(), "TODO.md"), todo);
+			ensurePlan();
+			writeFileSync(planPath("TODO.md"), todo);
 			return textResult(`TODO.md written (${todo.split("\n").length} lines).`);
 		},
 	});
@@ -342,8 +349,9 @@ export default function (pi: any): void {
 		parameters: { type: "object", properties: {}, additionalProperties: false },
 		async execute(_id: string, _params: any, signal: AbortSignal) {
 			if (!hasTodo()) return textResult(needTodo, true);
-			const verdict = await runSubagent("review_plan", "Review TODO.md against the spec in TASK.md.", cwd(), signal);
-			writeFileSync(join(cwd(), "REVIEW.md"), verdict); // the next plan reads this
+			const verdict = await runSubagent("review_plan", "Review plan/TODO.md against the spec in plan/TASK.md (and specs/).", cwd(), signal);
+			ensurePlan();
+			writeFileSync(planPath("REVIEW.md"), verdict); // the next plan reads this
 			return textResult(verdict.includes("REVIEW: PASS") ? "REVIEW: PASS" : "REVIEW: REDO (feedback saved for the next plan).");
 		},
 	});
@@ -357,7 +365,7 @@ export default function (pi: any): void {
 			"pass it, and it joins the cumulative gate that test() runs (every earlier phase too).",
 		parameters: { type: "object", properties: {}, additionalProperties: false },
 		async execute(_id: string, _params: any, signal: AbortSignal) {
-			const task = readOr(join(cwd(), "TASK.md"));
+			const task = readOr(planPath("TASK.md"));
 			let code = asCode(await runSubagent("examine", task, cwd(), signal));
 			if (!looksLikePytest(code)) {
 				// One corrective retry — a dropped or mis-formatted reply must not freeze a junk gate,
@@ -389,9 +397,9 @@ export default function (pi: any): void {
 		parameters: { type: "object", properties: {}, additionalProperties: false },
 		async execute(_id: string, _params: any, signal: AbortSignal) {
 			if (!hasTodo()) return textResult(needTodo, true);
-			const fb = readOr(join(cwd(), "REVIEW.md"));
+			const fb = readOr(planPath("REVIEW.md"));
 			const extra = fb ? `\n\n=== FEEDBACK TO ADDRESS ===\n${fb}` : "";
-			return textResult(await runSubagent("code", `Implement TODO.md (the spec is in TASK.md).${extra}`, cwd(), signal));
+			return textResult(await runSubagent("code", `Implement plan/TODO.md (the spec is in plan/TASK.md).${extra}`, cwd(), signal));
 		},
 	});
 
@@ -401,8 +409,9 @@ export default function (pi: any): void {
 		description: "Judge the code for conformance to the spec and simplicity. Returns REVIEW: PASS or REDO + reasons.",
 		parameters: { type: "object", properties: {}, additionalProperties: false },
 		async execute(_id: string, _params: any, signal: AbortSignal) {
-			const verdict = await runSubagent("review_code", "Review the implementation against the spec in TASK.md.", cwd(), signal);
-			writeFileSync(join(cwd(), "REVIEW.md"), verdict); // the next code reads this
+			const verdict = await runSubagent("review_code", "Review the implementation against the spec in plan/TASK.md (and specs/).", cwd(), signal);
+			ensurePlan();
+			writeFileSync(planPath("REVIEW.md"), verdict); // the next code reads this
 			return textResult(verdict.includes("REVIEW: PASS") ? "REVIEW: PASS" : "REVIEW: REDO (feedback saved for the next code).");
 		},
 	});

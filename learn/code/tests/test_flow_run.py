@@ -23,8 +23,8 @@ def test_reap_group_signals_the_group_on_the_happy_path(monkeypatch):
 
 
 def test_restore_gate_materialises_every_phase_and_clears_stale(tmp_path):
-    gate = tmp_path / ".mellum_gate"
-    gate.mkdir()
+    gate = tmp_path / "plan" / "gate"
+    gate.mkdir(parents=True)
     tests = tmp_path / "tests"
     tests.mkdir()
     (gate / "phase_1.py").write_text("def test_p1():\n    assert 1\n")
@@ -40,12 +40,12 @@ def test_restore_gate_materialises_every_phase_and_clears_stale(tmp_path):
 
 
 def test_restore_gate_is_a_noop_without_a_gate_dir(tmp_path):
-    flow_run.restore_gate(tmp_path)  # no .mellum_gate — must not raise
+    flow_run.restore_gate(tmp_path)  # no plan/gate — must not raise
 
 
 def _freeze(ws, phase, text):
-    (ws / ".mellum_gate").mkdir(exist_ok=True)
-    (ws / ".mellum_gate" / f"phase_{phase}.py").write_text(text)
+    (ws / "plan" / "gate").mkdir(parents=True, exist_ok=True)
+    (ws / "plan" / "gate" / f"phase_{phase}.py").write_text(text)
 
 
 def test_phase_gate_ok_requires_a_real_frozen_test_for_this_phase(tmp_path):

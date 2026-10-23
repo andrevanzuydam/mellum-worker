@@ -5,11 +5,14 @@ import pytest
 
 from ladder.pi_profile import REPO_ROOT
 from ladder.run_ladder import (
+    FLOW_EXT,
+    FLOW_TOOLS,
     GUARDS_EXT,
     MODE_EXT,
     PROMPT_FILE,
     RECORD_EXT,
     build_pi_direct_args,
+    build_pi_flow_args,
     build_pi_mode_args,
 )
 
@@ -43,6 +46,32 @@ def test_direct_args_are_the_clean_profile():
     assert args[args.index("--tools") + 1] == "read,grep,find,ls,bash,edit,write"
     assert args[args.index("--append-system-prompt") + 1] == str(PROMPT_FILE)
     assert args[-1] == "fix it"
+
+
+def test_flow_args_load_the_phase_tools_and_orchestrator_prompt():
+    args = build_pi_flow_args()
+    # the spec-driven orchestrator, not the direct worker: mellum-flow + the phase tools
+    assert "-e" in args and str(FLOW_EXT) in args
+    assert str(RECORD_EXT) in args
+    assert args[args.index("--tools") + 1] == FLOW_TOOLS
+    assert "examine" in FLOW_TOOLS  # the step that writes the acceptance test from the spec
+    # the task lives in TASK.md; the final argument must carry no long task text
+    assert "TASK.md" in args[-1] and len(args[-1]) < 200
+    # the direct worker prompt file must NOT be used in flow mode
+    assert str(PROMPT_FILE) not in args
+
+
+def test_flow_args_add_guards_only_when_asked():
+    assert str(GUARDS_EXT) not in build_pi_flow_args()
+    assert str(GUARDS_EXT) in build_pi_flow_args(guards=True)
+
+
+def test_flow_is_a_valid_mode():
+    from ladder.run_ladder import build_parser
+
+    assert "flow" in build_parser().parse_args(
+        ["--profile", "baseline", "--rung", "6", "--out", "/tmp/x", "--mode", "flow"]
+    ).mode
 
 
 def test_parse_pi_json_extracts_final_stop_and_text():

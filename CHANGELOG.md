@@ -6,6 +6,17 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A `flow` mode for the ladder (`run_ladder --mode flow`): runs the spec-driven flow
+  orchestrator (mellum-flow.ts — plan/review/examine/code/test, the examiner writing the
+  acceptance test from the spec) on a rung's fixture and scores it with the rung's own hidden
+  grader, so the spec-driven paradigm is measured on the same rungs as the direct baseline.
+  It cleared rung 6 (AgentClinic phase 1), which both models fail in direct mode because the
+  fixture ships no visible test — the examiner supplies the missing target.
+- The flow harness now keeps its bookkeeping (`TASK.md`, `TODO.md`, `REVIEW.md`, the frozen
+  gate) under a single `plan/` folder instead of the workspace root, so it never mixes with
+  the solution tree; the ladder's flow mode moves `plan/` out of the workspace before grading
+  so it cannot trip the AgentClinic write-list (`app.py, models.py, templates/, tests/`).
+
 - A workspace-confinement guard in `mellum-guards.ts` (`confineToWorkspace`, on by default):
   it blocks a `bash` tree-walk (`grep -r`/`-R`, `find`, `rg`, `ls -R`) that targets an
   absolute path outside the worker's working folder, while allowing relative searches and

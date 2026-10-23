@@ -207,8 +207,8 @@ def restore_gate(workspace: Path) -> None:
     """Re-materialise EVERY frozen per-phase acceptance test into tests/ before the
     authoritative scoring run. This makes the gate cumulative: a later phase cannot
     pass by regressing an earlier one, and a coder that edited or deleted a gate file
-    gets it restored. The examiner froze each phase under .mellum_gate/phase_<n>.py."""
-    gate = workspace / ".mellum_gate"
+    gets it restored. The examiner froze each phase under plan/gate/phase_<n>.py."""
+    gate = workspace / "plan" / "gate"
     if not gate.is_dir():
         return  # single-phase easy runs may freeze a single file instead; nothing to do
     tests = workspace / "tests"
@@ -225,7 +225,7 @@ def phase_gate_ok(workspace: Path, phase: int) -> bool:
     the earlier phases' gate and 'passes' trivially — and best-of-N then promotes that
     weakest fork first. The frozen file must exist, be importable Python (an examiner that
     emitted an HTML blob fails here), and define at least one test."""
-    f = workspace / ".mellum_gate" / f"phase_{phase}.py"
+    f = workspace / "plan" / "gate" / f"phase_{phase}.py"
     if not f.is_file():
         return False
     text = f.read_text()
@@ -339,9 +339,10 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
                 "Build on the existing workspace (app.py, models.py, templates/, tests/); keep "
                 "every existing route and test working, and do not rewrite what already passes."
             )
-        # The phase task (north star + progress + spec) goes in TASK.md — NOT into a tool argument.
-        (workspace / "TASK.md").write_text(base_msg)
-        (workspace / "REVIEW.md").unlink(missing_ok=True)  # fresh feedback per phase
+        # The phase task (north star + progress + spec) goes in plan/TASK.md — NOT a tool argument.
+        (workspace / "plan").mkdir(exist_ok=True)
+        (workspace / "plan" / "TASK.md").write_text(base_msg)
+        (workspace / "plan" / "REVIEW.md").unlink(missing_ok=True)  # fresh feedback per phase
         lr.emit(f"\n========== PHASE {pnum}/{len(phases)}: {title} ==========")
         passed = False
         for rnd in range(attempts):
@@ -381,7 +382,7 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
             done.append(title)
 
     graded, _ = harness.score_workspace(workspace, suite)
-    todo = (workspace / "TODO.md").exists()
+    todo = (workspace / "plan" / "TODO.md").exists()
     result = {
         "suite": suite_name, "visible": passed, "graded": graded, "todo": todo,
         "phases": len(phases), "phase_results": phase_results, "north_star": north_star,
