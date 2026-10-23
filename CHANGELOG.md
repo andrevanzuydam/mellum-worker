@@ -6,6 +6,16 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- Flow phase sub-agents appended their role prompt to Pi's base coding-agent prompt
+  (`--append-system-prompt`), leaving Pi's generic "thorough coding agent" framing on top of
+  every tightly-scoped role — diluting them and pushing the examiner to over-assert. They now
+  REPLACE it (`--system-prompt`), matching the orchestrator and the direct worker; only the
+  role prompt governs each phase.
+- The flow examiner invented exact strings the spec never gave (e.g. a viewport
+  `initial-scale=1.0`, exact nav markup), producing brittle gates that a correct
+  implementation can't match — even the home page failed. It now asserts exact values ONLY
+  where the spec is verbatim, and asserts the requirement (a viewport meta exists, a link to
+  the named route is present) — not an invented string — for loosely-described requirements.
 - The flow examiner under-specified identity, so a multi-phase run could pass its own gate
   while the hidden grader failed. Medium went visible=PASS / hidden=FAIL because the worker
   gave `Complaint` no stable `id` field (resolve/reopen worked by list index), and the

@@ -92,9 +92,15 @@ export const PHASES: Record<string, Phase> = {
 			"the one failure mode that matters. Before writing, enumerate EVERY requirement this phase " +
 			"states; write at least one assertion for each; do not stop early. Rules, applied to WHATEVER " +
 			"the spec actually says:\n" +
-			"- Assert EVERY exact contract the spec names, verbatim: each exact key/field name, each exact " +
-			"status code, each exact string, each exact route/path, and each exact behaviour the spec " +
-			"states (ordering, redirects, what is included or excluded).\n" +
+			"- Assert exact values ONLY where the spec gives them VERBATIM — a key/field name, status code, " +
+			"route/path, or a quoted string the spec states literally. Those you assert character-for-character.\n" +
+			"- For a requirement the spec describes WITHOUT a literal value (e.g. 'a responsive viewport', " +
+			"'a navbar with links to Home and Complaints', 'a welcoming paragraph'), assert the REQUIREMENT, " +
+			"NOT an invented string: that a `<meta name=\"viewport\">` tag exists, that a link whose href is " +
+			"the named route is present, that the element is there — NEVER a made-up exact attribute value, " +
+			"class list, whitespace or markup the spec did not give. Inventing exact strings the spec never " +
+			"stated is the brittleness that fails correct implementations — do not do it.\n" +
+			"- Assert each exact BEHAVIOUR the spec states (ordering, redirects, what is included or excluded).\n" +
 			"- Assert the NEGATIVE and EDGE cases the spec implies, not just the happy path: missing or " +
 			"invalid input, the empty case, unauthorized/forbidden access, not-found, duplicates, and each " +
 			"error case with its exact status and message. A phase is not DONE if only its happy path works.\n" +
@@ -173,7 +179,11 @@ function runSubagent(phase: string, task: string, cwd: string, signal?: AbortSig
 		"--thinking", cfg.thinking, "--tools", cfg.tools,
 	];
 	for (const e of cfg.ext) args.push("-e", e); // explicit -e still load under --no-extensions
-	args.push("--append-system-prompt", promptFile, `Task: ${task}`);
+	// REPLACE Pi's base prompt, don't append to it: each PHASES[phase].prompt is a complete,
+	// tightly-scoped role ("you ONLY write a pytest file", "pass the frozen gate"). Appending left
+	// Pi's generic "thorough coding agent" prompt on top of every role, diluting the scoping and
+	// pushing the examiner to over-assert. The orchestrator and the direct worker already replace.
+	args.push("--system-prompt", promptFile, `Task: ${task}`);
 
 	feed(`  ━ ${phase} starting (think=${cfg.thinking}) ━`);
 	return new Promise((resolve) => {

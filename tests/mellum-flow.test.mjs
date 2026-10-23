@@ -48,6 +48,14 @@ test("thinking budget maps to the role: reasoning roles think hard, the coder ac
 	assert.equal(PHASES.code.thinking, "low"); // the coder executes against a decided gate
 });
 
+test("the examiner asserts exact strings only where the spec is verbatim, requirements otherwise", () => {
+	// medium phase 1 failed because the examiner invented `initial-scale=1.0` and exact nav markup
+	// the spec never gave — brittle strings a correct implementation can't match.
+	assert.match(PHASES.examine.prompt, /ONLY where the spec gives them VERBATIM/i);
+	assert.match(PHASES.examine.prompt, /NOT an invented string|made-up exact/i);
+	assert.match(PHASES.examine.prompt, /brittleness/i);
+});
+
 test("the examiner must assert stable identity for mutate-a-specific-record phases", () => {
 	// medium phase 4 failed the hidden grader because Complaint had no stable `id` field — the
 	// examiner tested resolve/reopen behaviour but not that identity is an explicit, stable field.
