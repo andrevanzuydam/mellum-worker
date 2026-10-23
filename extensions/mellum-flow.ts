@@ -17,7 +17,7 @@
  */
 
 import { spawn } from "node:child_process";
-import { appendFileSync, existsSync, mkdtempSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -208,6 +208,17 @@ function runTests(cwd: string): Promise<{ ok: boolean; tail: string }> {
 
 const textResult = (text: string, isError = false) => ({ content: [{ type: "text", text }], isError });
 
+/** Read a file, or "" if it does not exist. Content flows through files, NOT tool arguments —
+ * oMLX's tool-call parser drops a tool call whose JSON arguments are a large multi-line string,
+ * so the orchestrator calls every tool with NO arguments and the tools read TASK.md / REVIEW.md. */
+function readOr(path: string): string {
+	try {
+		return readFileSync(path, "utf8");
+	} catch {
+		return "";
+	}
+}
+
 /** Trim a planner reply to the markdown plan: drop any preamble/code-fences before the first heading. */
 export function asTodo(reply: string): string {
 	let text = reply.replace(/```[a-z]*\n?/gi, "").trim();
@@ -226,21 +237,19 @@ export default function (pi: any): void {
 		name: "plan",
 		label: "Plan",
 		description:
-			"Write TODO.md for the task: a `## North Star` goal and a checklist of every requirement, " +
-			"the simplest plan that meets it. Call this FIRST, and again to revise the plan on REDO.",
-		parameters: {
-			type: "object",
-			properties: { task: { type: "string", description: "The task/spec to plan, plus any reviewer feedback to address." } },
-			required: ["task"],
-			additionalProperties: false,
-		},
-		async execute(_id: string, params: any, signal: AbortSignal) {
-			const reply = await runSubagent("plan", String(params.task ?? ""), cwd(), signal);
+			"Write TODO.md for this phase's task (read from TASK.md): a `## North Star` goal and a " +
+			"checklist of every requirement. Takes NO arguments. Call this FIRST, and again to revise " +
+			"the plan on REDO (it re-reads the reviewer feedback in REVIEW.md).",
+		parameters: { type: "object", properties: {}, additionalProperties: false },
+		async execute(_id: string, _params: any, signal: AbortSignal) {
+			const task = readOr(join(cwd(), "TASK.md"));
+			const fb = readOr(join(cwd(), "REVIEW.md"));
+			const prompt = task + (fb ? `\n\n=== REVIEWER FEEDBACK — address every point ===\n${fb}` : "");
+			const reply = await runSubagent("plan", prompt, cwd(), signal);
 			const todo = asTodo(reply);
-			// The harness writes TODO.md from the planner's reply, so a plan is ALWAYS persisted —
-			// the model cannot "forget" to call write (its failure mode on large tasks).
+			// The harness writes TODO.md from the planner's reply, so a plan is ALWAYS persisted.
 			writeFileSync(join(cwd(), "TODO.md"), todo);
-			return textResult(`TODO.md written (${todo.split("\n").length} lines):\n${todo.slice(0, 600)}`);
+			return textResult(`TODO.md written (${todo.split("\n").length} lines).`);
 		},
 	});
 
@@ -251,7 +260,9 @@ export default function (pi: any): void {
 		parameters: { type: "object", properties: {}, additionalProperties: false },
 		async execute(_id: string, _params: any, signal: AbortSignal) {
 			if (!hasTodo()) return textResult(needTodo, true);
-			return textResult(await runSubagent("review_plan", "Review the current TODO.md against the spec.", cwd(), signal));
+			const verdict = await runSubagent("review_plan", "Review TODO.md against the spec in TASK.md.", cwd(), signal);
+			writeFileSync(join(cwd(), "REVIEW.md"), verdict); // the next plan reads this
+			return textResult(verdict.includes("REVIEW: PASS") ? "REVIEW: PASS" : "REVIEW: REDO (feedback saved for the next plan).");
 		},
 	});
 
@@ -259,17 +270,15 @@ export default function (pi: any): void {
 		name: "code",
 		label: "Code",
 		description:
-			"Implement the plan in TODO.md (the coder writes/edits files and runs tests). Pass any " +
-			"reviewer or test feedback so it is addressed. Requires a plan to exist.",
-		parameters: {
-			type: "object",
-			properties: { feedback: { type: "string", description: "Reviewer or test feedback to address (optional)." } },
-			additionalProperties: false,
-		},
-		async execute(_id: string, params: any, signal: AbortSignal) {
+			"Implement the plan in TODO.md (the coder writes/edits files and runs tests). Takes NO " +
+			"arguments — it reads TODO.md, the spec in TASK.md, and any reviewer/test feedback in " +
+			"REVIEW.md. Requires a plan to exist.",
+		parameters: { type: "object", properties: {}, additionalProperties: false },
+		async execute(_id: string, _params: any, signal: AbortSignal) {
 			if (!hasTodo()) return textResult(needTodo, true);
-			const fb = params?.feedback ? `\n\n=== FEEDBACK TO ADDRESS ===\n${params.feedback}` : "";
-			return textResult(await runSubagent("code", `Implement TODO.md.${fb}`, cwd(), signal));
+			const fb = readOr(join(cwd(), "REVIEW.md"));
+			const extra = fb ? `\n\n=== FEEDBACK TO ADDRESS ===\n${fb}` : "";
+			return textResult(await runSubagent("code", `Implement TODO.md (the spec is in TASK.md).${extra}`, cwd(), signal));
 		},
 	});
 
@@ -279,7 +288,9 @@ export default function (pi: any): void {
 		description: "Judge the code for conformance to the spec and simplicity. Returns REVIEW: PASS or REDO + reasons.",
 		parameters: { type: "object", properties: {}, additionalProperties: false },
 		async execute(_id: string, _params: any, signal: AbortSignal) {
-			return textResult(await runSubagent("review_code", "Review the implementation against the spec.", cwd(), signal));
+			const verdict = await runSubagent("review_code", "Review the implementation against the spec in TASK.md.", cwd(), signal);
+			writeFileSync(join(cwd(), "REVIEW.md"), verdict); // the next code reads this
+			return textResult(verdict.includes("REVIEW: PASS") ? "REVIEW: PASS" : "REVIEW: REDO (feedback saved for the next code).");
 		},
 	});
 

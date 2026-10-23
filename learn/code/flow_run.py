@@ -11,6 +11,7 @@ when the harness offers well-shaped phase tools.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures as cf
 import json
 import os
 import re
@@ -31,27 +32,26 @@ FLOW = EXT / "mellum-flow.ts"
 # The top agent gets ONLY the phase tools (+ read to peek). It orchestrates by calling them.
 TOP_TOOLS = "plan,review_plan,code,review_code,test,read"
 WORKFLOW = (
-    "Your VERY FIRST action MUST be to call the `plan` tool, passing the ENTIRE task text as its "
-    "`task` argument. Do not reply with prose, do not summarise, do not stop — call `plan` now. "
-    "You are DONE only when `test` returns TESTS: PASS; never stop before that.\n\n"
-    "You COORDINATE building a solution to the task by CALLING TOOLS — you do not read or "
-    "edit project files yourself. Each phase is a tool:\n"
-    "  plan(task)       — writes TODO.md (a `## North Star` goal + a checklist).\n"
-    "  review_plan()    — judges the plan; returns REVIEW: PASS or REVIEW: REDO + reasons.\n"
-    "  code(feedback?)  — implements the plan and runs tests.\n"
-    "  review_code()    — judges the code; returns REVIEW: PASS or REVIEW: REDO + reasons.\n"
-    "  test()           — runs the suite; returns TESTS: PASS or TESTS: FAIL + output.\n\n"
-    "TERMINATION — this overrides everything else: `test` is the ONLY exit. The MOMENT test "
-    "returns `TESTS: PASS`, you are DONE — stop immediately and call NO further tool. Do not "
-    "review, read or code after a passing test.\n\n"
-    "Workflow (pass every reviewer/test reason forward to the next call):\n"
-    "  1. Call plan with the FULL task text.\n"
-    "  2. Call review_plan. On REDO, call plan again with the task AND the reviewer's reasons; "
-    "repeat until PASS.\n"
-    "  3. Call code.\n"
-    "  4. Call review_code. On REDO, call code again with the reasons; repeat until PASS.\n"
-    "  5. Call test. On `TESTS: PASS`, STOP now. On `TESTS: FAIL`, call code again with the "
-    "failing output, then call test again; repeat until it passes.\n"
+    "The task for this phase is in the file TASK.md. You COORDINATE building it by CALLING TOOLS. "
+    "CRITICAL: every tool takes NO arguments — call them exactly as `plan()`, `review_plan()`, "
+    "`code()`, `review_code()`, `test()`. NEVER pass the task text (or any long text) as an "
+    "argument; the tools read TASK.md, TODO.md and REVIEW.md themselves. Passing long arguments "
+    "breaks the tool call.\n\n"
+    "  plan()        — reads TASK.md, writes TODO.md (a `## North Star` goal + a checklist).\n"
+    "  review_plan() — judges the plan; returns REVIEW: PASS or REVIEW: REDO.\n"
+    "  code()        — implements TODO.md (reads REVIEW.md for any feedback).\n"
+    "  review_code() — judges the code; returns REVIEW: PASS or REVIEW: REDO.\n"
+    "  test()        — runs the suite; returns TESTS: PASS or TESTS: FAIL.\n\n"
+    "Your VERY FIRST action is to call `plan()` — no arguments. Do not reply with prose.\n\n"
+    "TERMINATION — overrides everything: `test` is the ONLY exit. The MOMENT test returns "
+    "`TESTS: PASS`, you are DONE — stop and call NO further tool.\n\n"
+    "Workflow:\n"
+    "  1. plan()\n"
+    "  2. review_plan(). On REDO, call plan() again (it re-reads the feedback); repeat until PASS.\n"
+    "  3. code()\n"
+    "  4. review_code(). On REDO, call code() again; repeat until PASS.\n"
+    "  5. test(). On TESTS: PASS, STOP. On TESTS: FAIL, call code() again then test() again; "
+    "repeat until it passes.\n"
     "Always plan before you code. Never call a tool after a passing test."
 )
 
@@ -160,8 +160,55 @@ def run_orient(titles: str, *, workspace: Path, profile: Path, recorder: Path, p
     return "Build the complete application described across all the phases."
 
 
+def fork_workspace(base: Path, dest: Path) -> None:
+    """A fresh copy of the workspace SOURCE for an independent attempt. The venv is shared
+    read-only (`uv run --frozen` does not mutate it), so forking is cheap."""
+    if dest.exists():
+        shutil.rmtree(dest)
+    dest.mkdir(parents=True)
+    for item in base.iterdir():
+        if item.name == ".venv":
+            os.symlink(item.resolve(), dest / ".venv")
+        elif item.is_dir():
+            shutil.copytree(item, dest / item.name)
+        else:
+            shutil.copy2(item, dest / item.name)
+
+
+def promote(winner: Path, base: Path) -> None:
+    """Make the winning attempt the new shared workspace: replace the source, keep the venv."""
+    for item in list(base.iterdir()):
+        if item.name == ".venv":
+            continue
+        shutil.rmtree(item) if item.is_dir() else item.unlink()
+    for item in winner.iterdir():
+        if item.name == ".venv":
+            continue
+        if item.is_dir():
+            shutil.copytree(item, base / item.name)
+        else:
+            shutil.copy2(item, base / item.name)
+
+
+def pin_temperature(profile_dir: Path, temp: float) -> None:
+    """Set the sampling temperature in a per-attempt profile, to SPREAD the best-of-N samples:
+    low temps write the by-the-book correct code, high temps explore out of a stuck solution."""
+    mp = profile_dir / "models.json"
+    data = json.loads(mp.read_text())
+    _, prov = next(iter(data["providers"].items()))
+    prov["models"][0].setdefault("samplingParams", {})["temperature"] = temp
+    mp.write_text(json.dumps(data, indent=2) + "\n")
+
+
+def temp_ladder(n: int) -> list[float]:
+    """A temperature spread across n parallel attempts (0.3 conservative → 1.2 exploratory)."""
+    if n <= 1:
+        return [0.7]
+    return [round(0.3 + 0.9 * i / (n - 1), 2) for i in range(n)]
+
+
 def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, model_id: str,
-         thinking: str, attempts: int) -> dict:
+         thinking: str, attempts: int, concurrency: int) -> dict:
     suite = harness.load_suite(harness.SUITES, suite_name)
     run = harness.new_run(runs_dir, f"flow-{suite_name}")
     workspace = run / "workspace"
@@ -177,14 +224,12 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
     provider, model = harness.profile_pin(run / "profile")
     task = "\n\n".join(suite.prompts)
 
-    # Index the installed venv for the `lookup` tool up front, so grounded docs are ready
-    # whenever the model calls it (index on initial run). Best-effort, in the background:
-    # create the venv from the lockfile, then build the BM25 cache.
+    # Create the venv from the lockfile (synchronously — parallel attempts fork it) and index it
+    # for the `lookup` tool. uv sync blocks; the BM25 index builds in the background.
     docs_lookup = Path(__file__).resolve().parent / "docs_lookup.py"
-    subprocess.Popen(
-        ["sh", "-c", 'uv sync --frozen >/dev/null 2>&1; python3 "$0" --rebuild warmup >/dev/null 2>&1',
-         str(docs_lookup)],
-        cwd=workspace, start_new_session=True)
+    subprocess.run(["uv", "sync", "--frozen"], cwd=workspace, capture_output=True, timeout=300, check=False)
+    subprocess.Popen(["python3", str(docs_lookup), "--rebuild", "warmup"], cwd=workspace,
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
 
     # Decompose into phases and drive ONE at a time over the shared workspace, so each
     # orchestrator run gets a small, answerable task. Each phase carries a small, constant
@@ -206,6 +251,29 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
         north_star = titles[0]
     lr.emit(f"  north star: {north_star}")
 
+    # One independent best-of-N attempt: fork the workspace, run the orchestrator at its own
+    # sampling temperature, report whether that fork's tests pass. Run concurrently so the
+    # batched oMLX server actually fills — this is where the concurrency we unlocked turns into
+    # speed, and best-of-N beats the per-phase variance of a single try.
+    # The orchestrator's own message is SHORT — the phase task lives in TASK.md (forked into each
+    # attempt), and every tool is argument-free, so the model never generates a large tool-call
+    # argument (which oMLX's parser drops, the root cause of the "stalls").
+    orch_msg = ("The task for this phase is in TASK.md. Build it by calling the tools — all take "
+                "NO arguments. Start now by calling plan().")
+
+    def one_attempt(pnum: int, rnd: int, idx: int, temp: float):
+        aw = run / f"p{pnum}-r{rnd}-t{idx}"
+        fork_workspace(workspace, aw)
+        prof = run / f"profile-t{idx}"
+        if not prof.exists():
+            shutil.copytree(run / "profile", prof)
+            pin_temperature(prof, temp)
+        run_top(orch_msg, workspace=aw, profile=prof, recorder=recorder, provider=provider,
+                model=model, trace=run / f"trace-p{pnum}-r{rnd}-{idx}.jsonl",
+                timeout=timeout, thinking=thinking)
+        ok, _ = lr.run_tests(aw, 120.0)
+        return idx, ok, aw
+
     passed = False
     phase_results: list[bool] = []
     done: list[str] = []
@@ -223,23 +291,41 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
                 "Build on the existing workspace (app.py, models.py, templates/, tests/); keep "
                 "every existing route and test working, and do not rewrite what already passes."
             )
+        # The phase task (north star + progress + spec) goes in TASK.md — NOT into a tool argument.
+        (workspace / "TASK.md").write_text(base_msg)
+        (workspace / "REVIEW.md").unlink(missing_ok=True)  # fresh feedback per phase
         lr.emit(f"\n========== PHASE {pnum}/{len(phases)}: {title} ==========")
         passed = False
-        for attempt in range(attempts):
-            nudge = "" if attempt == 0 else (
-                "\n\nNOTE: work from a previous attempt may already be in the workspace — use read/ls, "
-                "then CONTINUE toward passing tests; call plan only if TODO.md is missing."
-            )
-            run_top(base_msg + nudge, workspace=workspace, profile=run / "profile", recorder=recorder,
-                    provider=provider, model=model, trace=run / f"trace-p{pnum}-{attempt}.jsonl",
-                    timeout=timeout, thinking=thinking)
-            passed, _ = lr.run_tests(workspace, 120.0)
+        for rnd in range(attempts):
+            if concurrency <= 1:
+                nudge = "" if rnd == 0 else (
+                    " Work from a previous attempt may already be in the workspace — continue toward "
+                    "passing tests; call plan() only if TODO.md is missing."
+                )
+                run_top(orch_msg + nudge, workspace=workspace, profile=run / "profile", recorder=recorder,
+                        provider=provider, model=model, trace=run / f"trace-p{pnum}-{rnd}.jsonl",
+                        timeout=timeout, thinking=thinking)
+                passed, _ = lr.run_tests(workspace, 120.0)
+            else:
+                temps = temp_ladder(concurrency)
+                lr.emit(f"  phase {pnum} round {rnd + 1}: {concurrency} parallel attempts, temps {temps}")
+                winner = None
+                with cf.ThreadPoolExecutor(max_workers=concurrency) as ex:
+                    futs = [ex.submit(one_attempt, pnum, rnd, i, temps[i]) for i in range(concurrency)]
+                    for fut in cf.as_completed(futs):
+                        i, ok, aw = fut.result()
+                        lr.emit(f"  phase {pnum} try{i} (t={temps[i]}): {'PASS' if ok else 'fail'}")
+                        if ok and winner is None:
+                            winner = aw
+                if winner is not None:
+                    promote(winner, workspace)
+                    passed = True
             if passed:
                 lr.emit(f"  phase {pnum}: tests PASS")
                 break
-            lr.emit(f"  phase {pnum} [attempt {attempt + 1}/{attempts}]: tests not passing — re-invoking")
-        else:
-            lr.emit(f"  phase {pnum}: tests still FAIL after {attempts} attempts — continuing")
+            lr.emit(f"  phase {pnum} round {rnd + 1}/{attempts}: no pass — retrying")
+        if not passed:
+            lr.emit(f"  phase {pnum}: still FAIL after {attempts} round(s) — continuing")
         phase_results.append(passed)
         if passed:
             done.append(title)
@@ -263,7 +349,9 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--suite", required=True, help="a suite name, or comma-separated names")
     p.add_argument("--timeout", type=float, default=900.0, help="per-attempt wall-clock budget")
-    p.add_argument("--attempts", type=int, default=6, help="max orchestrator (re-)invocations per task")
+    p.add_argument("--attempts", type=int, default=6, help="max rounds per phase (retries / best-of-N rounds)")
+    p.add_argument("--concurrency", type=int, default=1,
+                   help="parallel attempts per phase (best-of-N on the batched server); 1 = sequential")
     p.add_argument("--thinking", default="medium", help="orchestrator thinking budget")
     p.add_argument("--runs-dir", type=Path, default=harness.RUNS / "flow")
     p.add_argument("--base-url", default="http://127.0.0.1:8001/v1")
@@ -272,7 +360,7 @@ def main(argv: list[str] | None = None) -> int:
     for name in args.suite.split(","):
         loop(name.strip(), runs_dir=args.runs_dir, timeout=args.timeout,
              base_url=args.base_url, model_id=args.model, thinking=args.thinking,
-             attempts=args.attempts)
+             attempts=args.attempts, concurrency=args.concurrency)
     return 0
 
 

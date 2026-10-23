@@ -6,6 +6,20 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- Fix the orchestrator "stall": the phase task and reviewer feedback now flow
+  through files (`TASK.md`, `TODO.md`, `REVIEW.md`) and every phase tool is called
+  with NO arguments. oMLX's tool-call parser drops a tool call whose JSON arguments
+  are a large multi-line string, so passing the whole task as `plan(task=…)` was
+  silently dropped and the agent emitted nothing — the cause of every stall on a
+  non-trivial task (easy, with a 33-char task, always parsed; larger phases did
+  not). Argument-free tool calls always parse.
+
+- `flow_run` best-of-N concurrency (`--concurrency N`): run N attempts per phase
+  in parallel on the batched oMLX server (sampling temperatures spread 0.3→1.2 for
+  diverse tries), forking the workspace per attempt and promoting the first that
+  passes. Turns the server's concurrent throughput into wall-clock speed and beats
+  the per-phase variance of a single sequential try.
+
 - A `mellum-knowledge` extension (`extensions/mellum-knowledge.ts`) and
   `learn/code/docs_lookup.py`: a `lookup` tool grounded in the INSTALLED venv
   packages. `docs_lookup.py` builds a BM25 index over the venv's package source
