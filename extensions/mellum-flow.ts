@@ -17,7 +17,7 @@
  */
 
 import { spawn } from "node:child_process";
-import { appendFileSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -75,21 +75,44 @@ export const PHASES: Record<string, Phase> = {
 			"(b) is complete for the task's phase(s), and (c) is the simplest that meets them. End with " +
 			"exactly `REVIEW: REDO` and a plain list of what to fix, or exactly `REVIEW: PASS`.",
 	},
+	examine: {
+		thinking: "high",
+		tools: "read,grep,find,ls,lookup",
+		ext: [ext("mellum-knowledge.ts")],
+		prompt:
+			"You are the EXAMINER. You write the acceptance test — the executable definition of DONE — " +
+			"from the SPEC in TASK.md (and specs/). You do NOT see or write the implementation; you state " +
+			"what 'correct' means. Your REPLY is the full contents of a pytest file and nothing else (no " +
+			"prose, no code fences). Rules, applied to WHATEVER the spec actually says:\n" +
+			"- Assert EVERY exact contract the spec names, verbatim: each exact key/field name, each exact " +
+			"status code, each exact string, each exact route/path, and each exact behaviour the spec " +
+			"states (ordering, redirects, what is included or excluded, error cases).\n" +
+			"- For any value DERIVED from data or state (a sum, count, filter, transformation), do not " +
+			"hardcode a number: COMPUTE the expected result from the source of truth the spec points to, " +
+			"using the EXACT definition the spec gives (watch for traps the spec explicitly calls out), " +
+			"and assert the output matches.\n" +
+			"- For schema/migration/setup requirements, assert the NAMED artifacts exist, apply, and are " +
+			"idempotent, using the API the spec names.\n" +
+			"- Drive a web app via `from app import app` + `starlette.testclient.TestClient` unless the " +
+			"spec says otherwise. If you are unsure of a library's exact API, call the `lookup` tool " +
+			"BEFORE writing the assertion.\n" +
+			"Be strict and literal — the test IS the spec made runnable. Output the pytest file only.",
+	},
 	code: {
 		thinking: "low",
 		tools: "read,grep,find,ls,write,edit,bash,lookup",
 		ext: [ext("mellum-nonblock.ts"), ext("mellum-guards.ts"), ext("mellum-surgical.ts"), ext("mellum-knowledge.ts")],
 		prompt:
-			"You are the CODER. Read TODO.md and specs/. Implement each unchecked `- [ ]` item in order " +
-			"and check it off (`- [x]`) once done. The suite ships NO tests, so when the spec requires " +
-			"tests you must WRITE them yourself under `tests/` (e.g. `tests/test_home.py`) with the exact " +
-			"assertions; `pytest` finding no tests is a FAILURE to fix by writing them. When you are " +
-			"unsure of a library's exact API — a signature, a DEFAULT value, behavior — use the `lookup` " +
-			"tool (it searches the installed packages) BEFORE guessing; do the same when a failure looks " +
-			"API-shaped (e.g. `TooManyRedirects` -> look up the redirect status default). Run the tests " +
-			"with `PYTHONPATH=. uv run --with pytest pytest -q` so `from app import ...` resolves; never " +
-			"start a server — use starlette.testclient.TestClient. Make every test pass. Address any " +
-			"reviewer feedback below.",
+			"You are the CODER. Read TODO.md and specs/. The acceptance test is ALREADY written for you " +
+			"at `tests/test_acceptance.py` — it is the definition of DONE. Do NOT edit, delete or weaken " +
+			"it; your job is to make it pass. Read it to see exactly what is required (exact keys, status " +
+			"codes, behaviours), implement each unchecked `- [ ]` item in order, and check it off " +
+			"(`- [x]`) once done. Run the tests with `PYTHONPATH=. uv run --with pytest pytest -q tests` " +
+			"so `from app import ...` resolves; never start a server — use starlette.testclient.TestClient. " +
+			"ALWAYS use the `lookup` tool before writing any unfamiliar or exact-contract API — a library " +
+			"signature or default, a database/migration API, exact behaviour — and whenever a failure " +
+			"looks API-shaped; do not guess an API you have not confirmed. Make the acceptance test pass. " +
+			"Address any reviewer feedback below.",
 	},
 	review_code: {
 		thinking: "high",
@@ -228,6 +251,12 @@ export function asTodo(reply: string): string {
 	return text.trimEnd() + "\n";
 }
 
+/** Extract a Python file from an examiner reply: take a fenced block if present, else the raw text. */
+export function asCode(reply: string): string {
+	const fence = reply.match(/```(?:python)?\s*\n([\s\S]*?)```/i);
+	return (fence ? fence[1] : reply).trim() + "\n";
+}
+
 export default function (pi: any): void {
 	const cwd = () => process.cwd();
 	const hasTodo = () => existsSync(join(cwd(), "TODO.md"));
@@ -267,6 +296,24 @@ export default function (pi: any): void {
 	});
 
 	pi.registerTool({
+		name: "examine",
+		label: "Examine",
+		description:
+			"Write the acceptance test — the executable definition of DONE — from the spec in TASK.md. " +
+			"Takes NO arguments. Call this AFTER review_plan and BEFORE code; the coder then builds to " +
+			"pass it, and it is the gate test() runs.",
+		parameters: { type: "object", properties: {}, additionalProperties: false },
+		async execute(_id: string, _params: any, signal: AbortSignal) {
+			const reply = await runSubagent("examine", readOr(join(cwd(), "TASK.md")), cwd(), signal);
+			const code = asCode(reply);
+			mkdirSync(join(cwd(), "tests"), { recursive: true });
+			writeFileSync(join(cwd(), "tests", "test_acceptance.py"), code);
+			writeFileSync(join(cwd(), ".mellum_gate.py"), code); // frozen: test() restores this, so the coder can't weaken the gate
+			return textResult(`Acceptance test written (${code.split("\n").length} lines). The coder must build to pass it.`);
+		},
+	});
+
+	pi.registerTool({
 		name: "code",
 		label: "Code",
 		description:
@@ -300,6 +347,12 @@ export default function (pi: any): void {
 		description: "Run the test suite (pytest) and report pass/fail with the output tail. Call after coding.",
 		parameters: { type: "object", properties: {}, additionalProperties: false },
 		async execute() {
+			// Restore the frozen acceptance test so the coder cannot have weakened its own gate.
+			const frozen = readOr(join(cwd(), ".mellum_gate.py"));
+			if (frozen) {
+				mkdirSync(join(cwd(), "tests"), { recursive: true });
+				writeFileSync(join(cwd(), "tests", "test_acceptance.py"), frozen);
+			}
 			const { ok, tail } = await runTests(cwd());
 			return textResult(`TESTS: ${ok ? "PASS" : "FAIL"}\n${tail}`, false);
 		},

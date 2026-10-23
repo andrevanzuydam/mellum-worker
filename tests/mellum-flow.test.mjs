@@ -1,7 +1,20 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { PHASES, finalText, asTodo } from "../extensions/mellum-flow.ts";
+import { PHASES, finalText, asTodo, asCode } from "../extensions/mellum-flow.ts";
+
+test("the examiner is read-only but has lookup, and writes the acceptance gate from the spec", () => {
+	assert.ok(!PHASES.examine.tools.includes("write"));
+	assert.ok(!PHASES.examine.tools.includes("bash"));
+	assert.ok(PHASES.examine.tools.includes("lookup"));
+	assert.ok(PHASES.examine.ext.some((e) => e.includes("mellum-knowledge")));
+	assert.match(PHASES.examine.prompt, /acceptance test|definition of DONE/i);
+});
+
+test("asCode extracts a fenced python block, else returns the raw text", () => {
+	assert.equal(asCode("```python\nimport x\nassert 1\n```"), "import x\nassert 1\n");
+	assert.equal(asCode("def test():\n    assert True"), "def test():\n    assert True\n");
+});
 
 test("finalText returns the LAST assistant text block from a json event stream", () => {
 	const events = [

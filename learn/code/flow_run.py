@@ -30,7 +30,7 @@ import loop_run as lr  # reuse pin_profile, fmt_event, stream_trace, emit, scori
 EXT = Path(__file__).resolve().parents[2] / "extensions"
 FLOW = EXT / "mellum-flow.ts"
 # The top agent gets ONLY the phase tools (+ read to peek). It orchestrates by calling them.
-TOP_TOOLS = "plan,review_plan,code,review_code,test,read"
+TOP_TOOLS = "plan,review_plan,examine,code,review_code,test,read"
 WORKFLOW = (
     "The task for this phase is in the file TASK.md. You COORDINATE building it by CALLING TOOLS. "
     "CRITICAL: every tool takes NO arguments — call them exactly as `plan()`, `review_plan()`, "
@@ -39,20 +39,22 @@ WORKFLOW = (
     "breaks the tool call.\n\n"
     "  plan()        — reads TASK.md, writes TODO.md (a `## North Star` goal + a checklist).\n"
     "  review_plan() — judges the plan; returns REVIEW: PASS or REVIEW: REDO.\n"
-    "  code()        — implements TODO.md (reads REVIEW.md for any feedback).\n"
+    "  examine()     — writes the acceptance test (the definition of DONE) from the spec.\n"
+    "  code()        — implements to PASS the acceptance test (reads REVIEW.md for feedback).\n"
     "  review_code() — judges the code; returns REVIEW: PASS or REVIEW: REDO.\n"
-    "  test()        — runs the suite; returns TESTS: PASS or TESTS: FAIL.\n\n"
+    "  test()        — runs the acceptance test; returns TESTS: PASS or TESTS: FAIL.\n\n"
     "Your VERY FIRST action is to call `plan()` — no arguments. Do not reply with prose.\n\n"
     "TERMINATION — overrides everything: `test` is the ONLY exit. The MOMENT test returns "
     "`TESTS: PASS`, you are DONE — stop and call NO further tool.\n\n"
     "Workflow:\n"
     "  1. plan()\n"
     "  2. review_plan(). On REDO, call plan() again (it re-reads the feedback); repeat until PASS.\n"
-    "  3. code()\n"
-    "  4. review_code(). On REDO, call code() again; repeat until PASS.\n"
-    "  5. test(). On TESTS: PASS, STOP. On TESTS: FAIL, call code() again then test() again; "
+    "  3. examine()  — write the acceptance test from the spec, BEFORE any coding.\n"
+    "  4. code()\n"
+    "  5. review_code(). On REDO, call code() again; repeat until PASS.\n"
+    "  6. test(). On TESTS: PASS, STOP. On TESTS: FAIL, call code() again then test() again; "
     "repeat until it passes.\n"
-    "Always plan before you code. Never call a tool after a passing test."
+    "Always plan, then examine, then code. Never call a tool after a passing test."
 )
 
 
