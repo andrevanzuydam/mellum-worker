@@ -4,6 +4,21 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Changed
+
+- The flow harness's self-written acceptance tests now **accumulate across phases**
+  instead of being overwritten each phase. The examiner freezes each phase's test
+  under `.mellum_gate/phase_<n>.py`, and both the `test` tool and the runner restore
+  the WHOLE frozen set into `tests/` (as `test_gate_phase_*.py`) before scoring — so
+  every earlier phase is re-run and a later phase can no longer pass by silently
+  regressing an earlier one. The examiner prompt is stricter too: it enumerates every
+  requirement for its phase and must assert the negative and edge cases (missing or
+  invalid input, empty, unauthorized, not-found, duplicates, exact error status and
+  message), not only the happy path; the coder is pointed at the cumulative gate and
+  told earlier phases must keep passing. This closes the visible-pass / hidden-grader
+  gap that came from each phase only being checked while it was the current one. The
+  worker still writes its own tests from the spec — nothing is injected or hand-authored.
+
 ### Added
 
 - Fix the orchestrator "stall": the phase task and reviewer feedback now flow

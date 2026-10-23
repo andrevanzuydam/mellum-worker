@@ -71,7 +71,7 @@ def tail_feed(path: Path, stop: threading.Event) -> None:
 
 
 def run_top(task: str, *, workspace: Path, profile: Path, recorder: Path, provider: str,
-            model: str, trace: Path, timeout: float, thinking: str) -> None:
+            model: str, trace: Path, timeout: float, thinking: str, phase: int = 1) -> None:
     subfeed = trace.parent / f"{trace.stem}.subfeed"
     subfeed.write_text("")
     argv = [
@@ -80,8 +80,11 @@ def run_top(task: str, *, workspace: Path, profile: Path, recorder: Path, provid
         "--tools", TOP_TOOLS, "-e", str(FLOW), "-e", str(recorder),
         "--system-prompt", WORKFLOW, task,
     ]
+    # MELLUM_PHASE tells the examiner which phase it is writing for, so each phase's
+    # acceptance test is frozen under its own name and the gate ACCUMULATES — a later
+    # phase can never pass by regressing an earlier one.
     env = {**os.environ, "PI_CODING_AGENT_DIR": str(profile), "MELLUM_TRACE_FILE": str(trace),
-           "MELLUM_FLOW_FEED": str(subfeed)}
+           "MELLUM_FLOW_FEED": str(subfeed), "MELLUM_PHASE": str(phase)}
     lr.emit(f"\n━━━ orchestrator (think={thinking}) ━━━")
     stop = threading.Event()
     feed = threading.Thread(target=lr.stream_trace, args=(trace, "[flow]", stop), daemon=True)
@@ -192,6 +195,22 @@ def promote(winner: Path, base: Path) -> None:
             shutil.copy2(item, base / item.name)
 
 
+def restore_gate(workspace: Path) -> None:
+    """Re-materialise EVERY frozen per-phase acceptance test into tests/ before the
+    authoritative scoring run. This makes the gate cumulative: a later phase cannot
+    pass by regressing an earlier one, and a coder that edited or deleted a gate file
+    gets it restored. The examiner froze each phase under .mellum_gate/phase_<n>.py."""
+    gate = workspace / ".mellum_gate"
+    if not gate.is_dir():
+        return  # single-phase easy runs may freeze a single file instead; nothing to do
+    tests = workspace / "tests"
+    tests.mkdir(exist_ok=True)
+    for stale in tests.glob("test_gate_phase_*.py"):
+        stale.unlink()
+    for frozen in sorted(gate.glob("phase_*.py")):
+        shutil.copy2(frozen, tests / f"test_gate_{frozen.stem}.py")
+
+
 def pin_temperature(profile_dir: Path, temp: float) -> None:
     """Set the sampling temperature in a per-attempt profile, to SPREAD the best-of-N samples:
     low temps write the by-the-book correct code, high temps explore out of a stuck solution."""
@@ -272,7 +291,8 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
             pin_temperature(prof, temp)
         run_top(orch_msg, workspace=aw, profile=prof, recorder=recorder, provider=provider,
                 model=model, trace=run / f"trace-p{pnum}-r{rnd}-{idx}.jsonl",
-                timeout=timeout, thinking=thinking)
+                timeout=timeout, thinking=thinking, phase=pnum)
+        restore_gate(aw)  # score against the cumulative gate — every prior phase must still pass
         ok, _ = lr.run_tests(aw, 120.0)
         return idx, ok, aw
 
@@ -306,7 +326,8 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
                 )
                 run_top(orch_msg + nudge, workspace=workspace, profile=run / "profile", recorder=recorder,
                         provider=provider, model=model, trace=run / f"trace-p{pnum}-{rnd}.jsonl",
-                        timeout=timeout, thinking=thinking)
+                        timeout=timeout, thinking=thinking, phase=pnum)
+                restore_gate(workspace)  # score against the cumulative gate — every prior phase must still pass
                 passed, _ = lr.run_tests(workspace, 120.0)
             else:
                 temps = temp_ladder(concurrency)

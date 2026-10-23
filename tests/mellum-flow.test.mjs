@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { PHASES, finalText, asTodo, asCode } from "../extensions/mellum-flow.ts";
+import { mkdtempSync, mkdirSync, writeFileSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+import { PHASES, finalText, asTodo, asCode, freezeName, gateTestName, GATE_DIR, materializeGate } from "../extensions/mellum-flow.ts";
 
 test("the examiner is read-only but has lookup, and writes the acceptance gate from the spec", () => {
 	assert.ok(!PHASES.examine.tools.includes("write"));
@@ -9,6 +13,46 @@ test("the examiner is read-only but has lookup, and writes the acceptance gate f
 	assert.ok(PHASES.examine.tools.includes("lookup"));
 	assert.ok(PHASES.examine.ext.some((e) => e.includes("mellum-knowledge")));
 	assert.match(PHASES.examine.prompt, /acceptance test|definition of DONE/i);
+});
+
+test("the examiner is told to be exhaustive and to cover negative/edge cases, not just the happy path", () => {
+	assert.match(PHASES.examine.prompt, /exhaustive/i);
+	assert.match(PHASES.examine.prompt, /negative|edge/i);
+	assert.match(PHASES.examine.prompt, /not just the happy path|only its happy path/i);
+	// It must know earlier phases are already frozen so it covers only this phase without contradicting them.
+	assert.match(PHASES.examine.prompt, /earlier phase|already frozen/i);
+});
+
+test("the coder is pointed at the cumulative gate and told earlier phases must keep passing", () => {
+	assert.match(PHASES.code.prompt, /test_gate_phase/);
+	assert.match(PHASES.code.prompt, /earlier phase/i);
+	assert.match(PHASES.code.prompt, /ALL|all pass|keep passing/i);
+});
+
+test("freezeName/gateTestName derive stable per-phase names so the gate accumulates", () => {
+	assert.equal(freezeName(1), "phase_1.py");
+	assert.equal(freezeName("2"), "phase_2.py");
+	assert.equal(freezeName(undefined ?? "1"), "phase_1.py");
+	assert.equal(gateTestName("phase_3"), "test_gate_phase_3.py");
+});
+
+test("materializeGate restores EVERY frozen phase into tests/ and clears stale gate files", () => {
+	const ws = mkdtempSync(join(tmpdir(), "mellum-gate-"));
+	mkdirSync(join(ws, GATE_DIR), { recursive: true });
+	mkdirSync(join(ws, "tests"), { recursive: true });
+	writeFileSync(join(ws, GATE_DIR, "phase_1.py"), "def test_p1():\n    assert 1\n");
+	writeFileSync(join(ws, GATE_DIR, "phase_2.py"), "def test_p2():\n    assert 2\n");
+	// a stale restored file from a dropped phase, and a coder's own test, must be handled correctly
+	writeFileSync(join(ws, "tests", "test_gate_phase_9.py"), "def test_stale():\n    assert 0\n");
+	writeFileSync(join(ws, "tests", "test_coder.py"), "def test_keep():\n    assert 1\n");
+
+	const n = materializeGate(ws);
+	const got = readdirSync(join(ws, "tests")).sort();
+
+	assert.equal(n, 2);
+	assert.deepEqual(got, ["test_coder.py", "test_gate_phase_1.py", "test_gate_phase_2.py"]);
+	assert.match(readFileSync(join(ws, "tests", "test_gate_phase_1.py"), "utf8"), /test_p1/);
+	rmSync(ws, { recursive: true, force: true });
 });
 
 test("asCode extracts a fenced python block, else returns the raw text", () => {
