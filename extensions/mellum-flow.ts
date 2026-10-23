@@ -74,7 +74,7 @@ export const PHASES: Record<string, Phase> = {
 		thinking: "high",
 		tools: "read,grep,find,ls",
 		ext: [],
-		maxTokens: 2048,
+		maxTokens: 8192,
 		prompt:
 			"You are the PLANNER. Read specs/ and the task below (specs/roadmap.md may list several " +
 			"phases — plan ONLY the phase(s) the task names). Your REPLY must be the TODO.md content " +
@@ -90,7 +90,7 @@ export const PHASES: Record<string, Phase> = {
 		thinking: "high",
 		tools: "read,grep,find,ls",
 		ext: [],
-		maxTokens: 2048,
+		maxTokens: 8192,
 		prompt:
 			"You are the PLAN REVIEWER — you only READ and judge; you cannot change files. Read specs/ " +
 			"and TODO.md. Check the plan (a) has a North Star near the top stating the task's goal that " +
@@ -165,7 +165,7 @@ export const PHASES: Record<string, Phase> = {
 		thinking: "high",
 		tools: "read,grep,find,ls",
 		ext: [],
-		maxTokens: 4096,
+		maxTokens: 8192,
 		prompt:
 			"You are the CODE REVIEWER — you only READ and judge; you cannot change files. Read specs/ " +
 			"and the code. Check (1) CONFORMANCE — every requirement of the task's phase(s) is actually " +
@@ -198,8 +198,9 @@ function runSubagent(phase: string, task: string, cwd: string, signal?: AbortSig
 	// Our operating guide first (focus/brevity), then the authoritative role prompt.
 	writeFileSync(promptFile, BASE_GUIDE + cfg.prompt);
 	// Per-phase max_tokens: pi has no CLI flag for it, so patch a copy of the inherited agent dir's
-	// models.json. The planner/reviewers get a tight cap (they can't bound their own reasoning and
-	// otherwise ramble to the per-attempt timeout); examine/code keep a generous cap.
+	// models.json. The planner/reviewers get a smaller cap than examine/code — but NOT a tight one:
+	// the model can't stop thinking, so too low (2048) spends the whole budget thinking and emits an
+	// EMPTY output. The cap is a runaway backstop; the BASE_GUIDE is the real brevity lever.
 	let env = process.env;
 	const baseAgent = process.env.PI_CODING_AGENT_DIR;
 	if (baseAgent && existsSync(join(baseAgent, "models.json"))) {

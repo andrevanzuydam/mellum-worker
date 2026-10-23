@@ -15,12 +15,16 @@ test("BASE_GUIDE restores structure generically without contradicting any role",
 	assert.ok(!/write (the )?(code|tests?|implementation)/i.test(BASE_GUIDE), "guide must not prescribe a role's output");
 });
 
-test("per-phase max_tokens: planner/reviewers capped tight, examine/code generous", () => {
-	assert.ok(PHASES.plan.maxTokens <= 2048, "plan must be capped to stop the ramble");
-	assert.ok(PHASES.review_plan.maxTokens <= 2048);
+test("per-phase max_tokens: planner/reviewers below examine/code, but not truncating", () => {
 	assert.equal(PHASES.examine.maxTokens, 16384); // a thorough test needs room
 	assert.equal(PHASES.code.maxTokens, 16384);
-	assert.ok(PHASES.review_code.maxTokens <= 8192);
+	for (const r of ["plan", "review_plan", "review_code"]) {
+		assert.ok(PHASES[r].maxTokens < PHASES.examine.maxTokens, `${r} capped below examine`);
+		// not so tight it truncates a thinking model before it writes its output: 2048 left the
+		// planner with an EMPTY TODO (all budget spent thinking). The cap is a runaway backstop;
+		// the BASE_GUIDE is the real brevity lever.
+		assert.ok(PHASES[r].maxTokens >= 8192, `${r} must fit think + output`);
+	}
 });
 
 test("flowBlock always allows test (the only exit) and read", () => {
