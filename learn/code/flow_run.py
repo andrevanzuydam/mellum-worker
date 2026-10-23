@@ -70,6 +70,17 @@ def tail_feed(path: Path, stop: threading.Event) -> None:
         time.sleep(0.4)
 
 
+def reap_group(pid: int) -> None:
+    """SIGKILL a child's process group, ignoring the cases where there is nothing to kill.
+    ProcessLookupError: the group already exited. PermissionError (EPERM): the child exited
+    and its pid was recycled into a group we do not own — killing it is neither possible nor
+    ours to do. Both are safe to ignore; letting EPERM escape crashed a whole best-of-N run."""
+    try:
+        os.killpg(pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        pass
+
+
 def run_top(task: str, *, workspace: Path, profile: Path, recorder: Path, provider: str,
             model: str, trace: Path, timeout: float, thinking: str, phase: int = 1) -> None:
     subfeed = trace.parent / f"{trace.stem}.subfeed"
@@ -95,16 +106,13 @@ def run_top(task: str, *, workspace: Path, profile: Path, recorder: Path, provid
     try:
         child.wait(timeout=timeout)
     except subprocess.TimeoutExpired:
-        os.killpg(child.pid, signal.SIGKILL)
+        reap_group(child.pid)
         child.wait()
     finally:
         stop.set()
         feed.join(timeout=2)
         subf.join(timeout=2)
-        try:
-            os.killpg(child.pid, signal.SIGKILL)  # reap any phase sub-agents
-        except ProcessLookupError:
-            pass
+        reap_group(child.pid)  # reap any phase sub-agents
 
 
 def decompose(task: str) -> list[str]:
