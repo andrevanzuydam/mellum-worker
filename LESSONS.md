@@ -550,3 +550,43 @@ harness affordance, not model capability. The model was never the limit.
   steps is how a run is understood — and it is what surfaced an unread-stderr pipe
   that deadlocked a coder for a whole timeout. A sub-process spawned with a piped but
   unread stderr fills the pipe buffer and hangs; always drain it.
+
+## Addendum — spec-driven examine, model parity, and killing the thrash (2026-10-23)
+
+**Proven (measured):**
+
+- **A spec-derived acceptance test cracks the rung both models fail.** AgentClinic
+  phase 1 (home page) ships NO visible test, so a direct worker has no target: Flint
+  thrashed to the deadline, Mellum shipped a wrong answer — both FAIL. The flow harness
+  PASSES it — `examine` writes the acceptance test from the spec (pinning the exact
+  tagline the fixture omits), the coder builds to it, the hidden grader is green. The
+  gap was never capability; it was a missing target, and the examiner supplies it.
+- **Flint and the fixed Mellum tie unmediated.** Both score 11/12 on rungs 1–12 in
+  direct mode, both failing only rung 6; neither needs mediation under the current
+  harness (guards + 16384 `max_tokens`). Style differs — Flint cleaner (fewer turns and
+  tool errors), Mellum scrappier but comparable wall-time. The old "unmediated Mellum =
+  0/3 on AgentClinic" was a weaker-harness result, not a model limit.
+- **A small output cap truncates a reasoning model.** 4096 `max_tokens` gave
+  `finish=length` fails on rungs 4–5 for BOTH models; 16384 fixed it. The cap must cover
+  reasoning *plus* content, not just content.
+- **A correct solution can FAIL on invalid checking — suspect the check first.** A flow
+  run passed the hidden grader yet scored FAIL, because the AgentClinic write-list flagged
+  the harness's OWN bookkeeping (`TASK.md`/`TODO.md`/`REVIEW.md`/gate) as out-of-scope
+  writes. Keep harness scaffolding out of the graded tree: contain it under `plan/` and
+  move it out before grading. When a correct-looking solution fails, read the check before
+  blaming the worker.
+- **Measure on the same instrument or it isn't a comparison.** The spec-driven harness and
+  the ladder were separate runners (suites vs rungs, different graders), so "does flow beat
+  direct?" was untestable until flow ran as a ladder `--mode flow` against the rung's own
+  hidden grader.
+
+**Theory (not yet measured):**
+
+- **examine-once + a per-phase tool-call cap kill the orchestration thrash.** A flow phase
+  burned the full 1200s re-running `examine` 5× and `review_code` 3× and never calling
+  `test`, on a solution it already had — the model sequencing its own phases loops. So
+  phases-as-tools is right, but the *sequence* must be bounded, not freely model-driven:
+  `examine` now runs once (its product is the frozen gate), and a cap stops the loop.
+  Expected a large wall-time cut on such phases; pending a measured re-run.
+- **The spec-driven paradigm clears the full end-to-end HARD suite.** Proven per-rung
+  (rung 6); the all-phases-from-scratch run, with every fix in place, is still owed.
