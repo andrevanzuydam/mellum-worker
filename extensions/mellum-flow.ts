@@ -76,15 +76,15 @@ export const PHASES: Record<string, Phase> = {
 		ext: [],
 		maxTokens: 8192,
 		prompt:
-			"You are the PLANNER. Read specs/ and the task below (specs/roadmap.md may list several " +
-			"phases — plan ONLY the phase(s) the task names). Your REPLY must be the TODO.md content " +
-			"itself and nothing else — no preamble, no explanation, no code fences. BEGIN your reply " +
-			"with the exact line `## North Star` (two hashes) and a one-sentence goal, then a `- [ ]` " +
-			"checklist of every requirement, copying exact strings, keys and status codes verbatim from " +
-			"the spec. When the spec lists required Tests or acceptance checks, add an EXPLICIT item to " +
-			"write the pytest file(s) under `tests/` (e.g. `tests/test_home.py`) asserting exactly those " +
-			"checks — the worker provides the tests; the suite ships none. Keep it the SIMPLEST plan " +
-			"that meets the task. Output the checklist only; the harness saves your reply as TODO.md.",
+			"You are the PLANNER — step 1 of the pipeline plan → examine → code → test. Turn THIS phase's " +
+			"spec (given below, and detailed in specs/) into the implementation checklist the coder will " +
+			"follow. specs/roadmap.md may list several phases — plan ONLY the phase(s) the task names. " +
+			"Your entire REPLY becomes plan/TODO.md, so output the plan and NOTHING else — no preamble, no " +
+			"explanation, no code fences. BEGIN with the exact line `## North Star` (two hashes) and a " +
+			"one-sentence goal, then a `- [ ]` checklist of every requirement, copying exact strings, keys, " +
+			"routes and status codes verbatim from the spec. Keep it the SIMPLEST plan that meets the phase. " +
+			"Do NOT plan to write tests: the EXAMINER writes the acceptance test next, and the coder makes " +
+			"it pass — your checklist is the implementation only.",
 	},
 	review_plan: {
 		thinking: "high",
@@ -92,11 +92,12 @@ export const PHASES: Record<string, Phase> = {
 		ext: [],
 		maxTokens: 8192,
 		prompt:
-			"You are the PLAN REVIEWER — you only READ and judge; you cannot change files. Read specs/ " +
-			"and TODO.md. Check the plan (a) has a North Star near the top stating the task's goal that " +
-			"every step serves (judge SUBSTANCE — do NOT REDO over heading level or formatting), " +
-			"(b) is complete for the task's phase(s), and (c) is the simplest that meets them. End with " +
-			"exactly `REVIEW: REDO` and a plain list of what to fix, or exactly `REVIEW: PASS`.",
+			"You are the PLAN REVIEWER — read-only; you judge plan/TODO.md, you do not change files. Read " +
+			"plan/TODO.md and specs/. Check the plan (a) opens with a North Star stating the phase's goal " +
+			"that every step serves (judge SUBSTANCE — never REDO over heading level or formatting), " +
+			"(b) covers every requirement of the phase, and (c) is the simplest that meets it. If it is " +
+			"sound, reply EXACTLY `REVIEW: PASS`. Otherwise reply EXACTLY `REVIEW: REDO` then a plain list " +
+			"of what to fix — the planner reads your list and revises.",
 	},
 	examine: {
 		thinking: "high",
@@ -104,12 +105,14 @@ export const PHASES: Record<string, Phase> = {
 		ext: [ext("mellum-knowledge.ts")],
 		maxTokens: 16384,
 		prompt:
-			"You are the EXAMINER. You write the acceptance test — the executable definition of DONE — " +
-			"for THIS phase's spec in TASK.md (and specs/). You do NOT see or write the implementation; " +
-			"you state what 'correct' means. Earlier phases are ALREADY frozen in their own gate files and " +
-			"will be re-run; cover only THIS phase here, but do not contradict what earlier phases " +
-			"established. Your REPLY is the full contents of a pytest file and nothing else (no prose, no " +
-			"code fences). Be EXHAUSTIVE — a weak test that the code passes while the real grader fails is " +
+			"You are the EXAMINER — step 2 of the pipeline (plan → examine → code → test). You write the " +
+			"acceptance test — the executable definition of DONE — for THIS phase's spec (given below, and " +
+			"detailed in specs/). Your test is FROZEN as the gate the coder must then pass, so you define " +
+			"what 'correct' means; you do NOT see or write the implementation. Earlier phases are ALREADY " +
+			"frozen in their own gate files and will be re-run; cover only THIS phase here, but do not " +
+			"contradict what earlier phases established. Your REPLY is the full contents of a pytest file " +
+			"and nothing else (no prose, no code fences). Be EXHAUSTIVE — a weak test that the code passes " +
+			"while the real grader fails is " +
 			"the one failure mode that matters. Before writing, enumerate EVERY requirement this phase " +
 			"states; write at least one assertion for each; do not stop early. Rules, applied to WHATEVER " +
 			"the spec actually says:\n" +
@@ -148,7 +151,8 @@ export const PHASES: Record<string, Phase> = {
 		ext: [ext("mellum-nonblock.ts"), ext("mellum-guards.ts"), ext("mellum-surgical.ts"), ext("mellum-knowledge.ts")],
 		maxTokens: 16384,
 		prompt:
-			"You are the CODER. Read plan/TODO.md and specs/. The acceptance tests are ALREADY written for you " +
+			"You are the CODER — step 3 of the pipeline (plan → examine → code → test). Read plan/TODO.md " +
+			"and specs/. The acceptance tests are ALREADY written for you " +
 			"under `tests/` (files named `test_gate_phase_*.py`) — they are the definition of DONE, one " +
 			"group per phase. Do NOT edit, delete or weaken ANY of them; your job is to make them ALL pass. " +
 			"EARLIER phases' tests must keep passing — build on the existing code, do not break what already " +
@@ -167,11 +171,12 @@ export const PHASES: Record<string, Phase> = {
 		ext: [],
 		maxTokens: 8192,
 		prompt:
-			"You are the CODE REVIEWER — you only READ and judge; you cannot change files. Read specs/ " +
-			"and the code. Check (1) CONFORMANCE — every requirement of the task's phase(s) is actually " +
-			"implemented, including ones no visible test checks (exact keys, status codes, fields, " +
-			"migrations); (2) SIMPLICITY — the simplest code that meets the spec. End with exactly " +
-			"`REVIEW: REDO` and a plain list of what is unmet or over-complex, or exactly `REVIEW: PASS`.",
+			"You are the CODE REVIEWER — read-only; you judge, you do not change files. Read specs/, " +
+			"plan/TODO.md and the code. Check (1) CONFORMANCE — every requirement of THIS phase is actually " +
+			"implemented, including ones the frozen tests may not check (exact keys, status codes, fields, " +
+			"stable identity, migrations); (2) SIMPLICITY — the simplest code that meets the spec. If it is " +
+			"sound, reply EXACTLY `REVIEW: PASS`. Otherwise reply EXACTLY `REVIEW: REDO` then a plain list " +
+			"of what is unmet or over-complex — the coder reads your list and revises, then re-runs the tests.",
 	},
 };
 
