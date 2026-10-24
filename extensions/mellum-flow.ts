@@ -143,6 +143,10 @@ export const PHASES: Record<string, Phase> = {
 			"- Drive a web app via `from app import app` + `starlette.testclient.TestClient` unless the " +
 			"spec says otherwise. If you are unsure of a library's exact API, call the `lookup` tool " +
 			"BEFORE writing the assertion.\n" +
+			"- REDIRECTS: TestClient follows redirects by default, so a plain `client.post(...)` returns " +
+			"the FINAL 200 page, not the 3xx — asserting `status_code == 303` on it fails a CORRECT " +
+			"handler. To assert a redirect, pass `follow_redirects=False` to that request, THEN assert the " +
+			"status (e.g. 303) and the `Location` header. Only disable it on the redirecting request itself.\n" +
 			"Be strict and literal — the test IS the spec made runnable. Output the pytest file only.",
 	},
 	code: {

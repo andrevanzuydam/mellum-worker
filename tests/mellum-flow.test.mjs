@@ -76,6 +76,15 @@ test("the examiner asserts exact strings only where the spec is verbatim, requir
 	assert.match(PHASES.examine.prompt, /brittleness/i);
 });
 
+test("the examiner must disable redirect-following when asserting a redirect status", () => {
+	// medium phase 3 looped forever: the examiner asserted `client.post(...).status_code == 303`,
+	// but starlette's TestClient follows redirects by default, so the response is the final 200 GET
+	// and `assert 200 == 303` fails a CORRECT 303 handler. A redirect assertion needs
+	// follow_redirects=False. The app was right; the gate was unpassable.
+	assert.match(PHASES.examine.prompt, /follow_redirects=False/);
+	assert.match(PHASES.examine.prompt, /follows redirects by default|would follow the redirect/i);
+});
+
 test("the examiner must assert stable identity for mutate-a-specific-record phases", () => {
 	// medium phase 4 failed the hidden grader because Complaint had no stable `id` field — the
 	// examiner tested resolve/reopen behaviour but not that identity is an explicit, stable field.

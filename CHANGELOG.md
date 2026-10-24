@@ -6,6 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- The flow examiner wrote redirect acceptance tests that a correct handler could never pass:
+  `starlette`'s `TestClient` follows redirects by default, so a plain `client.post(...)` returns
+  the final `200` page and `assert status_code == 303` fails a correct `303` handler. The medium
+  suite's "Add Complaint" phase looped to exhaustion on this — the app was right, the frozen gate
+  was unpassable. The examiner is now told to pass `follow_redirects=False` on the redirecting
+  request before asserting the status and `Location` header.
 - Removing Pi's base prompt (the `--system-prompt` fix) also removed the structure that kept the
   planner concise, so it rambled ~635s on a trivial plan and timed the fork out. Two fixes, since
   the model's reasoning can't be toggled off (neither `reasoning_effort` nor `enable_thinking` is
