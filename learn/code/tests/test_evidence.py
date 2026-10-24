@@ -26,6 +26,18 @@ def test_table_has_metrics_and_means(tmp_path):
     assert "| easy | worker | 1/2 | 3.0 | 1.0 | 2.0 | 200.0 | 6.0 | 20.0 |" in table
 
 
+def test_table_carries_the_nudge_fires(tmp_path):
+    _run(tmp_path, "a", suite="easy", arm="worker", passed=True,
+         failed_checks=0, turns=2, tool_errors=0, context=100,
+         wall=4.0, output_tokens=10, nudges=1)
+    _run(tmp_path, "b", suite="easy", arm="worker", passed=True,
+         failed_checks=0, turns=4, tool_errors=0, context=300,
+         wall=8.0, output_tokens=30, nudges=3)
+    table = evidence.render(tmp_path)
+    assert "| Passes | Turns | Failed checks | Tool errors | Context | Wall | Output tokens | Nudges |" in table
+    assert "| easy | worker | 2/2 | 3.0 | 0.0 | 0.0 | 200.0 | 6.0 | 20.0 | 2.0 |" in table
+
+
 def test_missing_metric_is_an_em_dash(tmp_path):
     _run(tmp_path, "a", suite="easy", arm="bare", passed=True,
          failed_checks=0, turns=1, tool_errors=0, context=None,

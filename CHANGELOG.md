@@ -6,6 +6,18 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- The suites harness now reports **nudge fires** beside the passes: it counts
+  an empty assistant turn that was followed by another request as a nudge and
+  one that ended the run as an empty final, printing them on the score line and
+  as a `Nudges` column in the evidence table. The lesson template requires the
+  fire count in Quality and budget, because a guard whose fires are invisible
+  cannot be told from a guard with nothing to do.
+
+- The preregistration for the first arm of the Lessons re-base:
+  [`2026-10-24-nudge-llamacpp-preregistration.md`](docs/superpowers/research/2026-10-24-nudge-llamacpp-preregistration.md)
+  fixes the arms (worker against no-nudge), n = 5, the easy→medium→hard
+  staircase and four decision rules before any run.
+
 - Paul's finding **Guards for empty turns and loops**: with the guard
   extension loaded A0 passed 15/15, and without it A1 passed 13/15 on the
   same oMLX rungs, where both failures are an empty final the bounded nudge

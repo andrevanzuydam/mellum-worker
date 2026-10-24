@@ -222,6 +222,7 @@ test("the lesson template asks for evidence and records the conventions", () => 
   assert.match(t, /^### Quality and budget$/m);
   assert.match(t, /^### What to try next$/m);
   assert.match(t, /^### The code$/m);
+  assert.match(t, /nudge fires/i);
   assert.ok(t.includes("```ts"), "template lacks a code sample");
   assert.match(t, /n = 1/);
   for (const text of ["### Repository conventions",

@@ -275,7 +275,8 @@ def report(run: Path) -> dict:
     inputs = []
     outputs = []
     times = []
-    for row in rows:
+    empties: list[int] = []
+    for index, row in enumerate(rows):
         if (when := _trace_time(row.get("timestamp"))) is not None:
             times.append(when)
         if row.get("type") != "message_end":
@@ -290,10 +291,20 @@ def report(run: Path) -> dict:
             outputs.append(value)
         if message.get("role") != "assistant":
             continue
-        for block in message.get("content") or []:
+        blocks = message.get("content") or []
+        said = any(b.get("type") == "text" and (b.get("text") or "").strip()
+                   for b in blocks)
+        called = any(b.get("type") == "toolCall" for b in blocks)
+        if not said and not called:
+            empties.append(index)
+            continue
+        for block in blocks:
             if block.get("type") == "text" and block.get("text"):
                 final = block["text"]
                 break
+    continued = sum(
+        any(later.get("type") == "provider_request" for later in rows[at + 1:])
+        for at in empties)
     return {
         "requests": sum(row.get("type") == "provider_request" for row in rows),
         "turns": sum(row.get("type") == "provider_request" for row in rows),
@@ -304,7 +315,10 @@ def report(run: Path) -> dict:
         "context": max(inputs) if inputs else None,
         "output_tokens": sum(outputs) if outputs else None,
         "wall": round((times[-1] - times[0]).total_seconds(), 3) if len(times) > 1 else None,
+        "nudges": continued,
+        "empty_finals": len(empties) - continued,
     }
+
 
 
 def score(run: Path, suite: Suite) -> tuple[bool, str]:
@@ -461,9 +475,11 @@ def _line(
     if contaminated:
         notes.append("grader touched")
     note = ("; " + ", ".join(notes)) if notes else ""
+    nudges = counts.get("nudges")
+    fires = "" if nudges is None else f", {nudges} nudges"
     return (f"{tag}: {label} ({n_text}run {run_dir}; "
             f"{counts['requests']} requests, {counts['tool_calls']} tool calls, "
-            f"{counts['tool_errors']} tool errors{deadline}{note})")
+            f"{counts['tool_errors']} tool errors{fires}{deadline}{note})")
 
 
 def _print_grades(grades: list[tuple[str, bool, str]]) -> None:

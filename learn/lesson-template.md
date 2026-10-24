@@ -56,14 +56,14 @@ easy/medium/hard. Use n = 3 for the baseline and for a claim you will state;
 a screen may use n = 1, must carry a `screen` badge and must not be worded as
 a rate.
 
-| Suite | Arm | Passes | Turns | Failed checks | Tool errors | Context | Wall | Output tokens |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| easy | before | | | | | | | |
-| easy | after | | | | | | | |
-| medium | before | | | | | | | |
-| medium | after | | | | | | | |
-| hard | before | | | | | | | |
-| hard | after | | | | | | | |
+| Suite | Arm | Passes | Turns | Failed checks | Tool errors | Context | Wall | Output tokens | Nudges |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| easy | before | | | | | | | | |
+| easy | after | | | | | | | | |
+| medium | before | | | | | | | | |
+| medium | after | | | | | | | | |
+| hard | before | | | | | | | | |
+| hard | after | | | | | | | | |
 
 A missing metric is `—`, never `0`. A code-only lesson may use Checks alone and
 say why there is no arm.
@@ -76,6 +76,13 @@ output tokens), and whether the change bought quality by spending more or
 held quality at lower cost. Say whether the difference is larger than the
 noise. Point at the column that carries the claim; do not repeat the whole
 table or introduce a number that is not in it.
+
+Report the **nudge fires** in the same breath as the passes. A nudge only
+fires on an empty turn, so the fire count is what separates "the guard was
+needed" from "the guard had nothing to do", and an arm table without it
+leaves the pathology it exists for invisible. If the run records no fire
+count, the cell is `—` and the page says the reading is missing rather than
+implying zero.
 
 ### Checks
 

@@ -194,7 +194,7 @@ def test_report_counts_the_trace(tmp_path):
     assert harness.report(run_dir) == {
         "requests": 2, "turns": 2, "tool_calls": 1, "tool_errors": 1,
         "final_reply": "done", "context": 1500, "output_tokens": 30,
-        "wall": 2.0,
+        "wall": 2.0, "nudges": 0, "empty_finals": 0,
     }
 
 
@@ -205,7 +205,27 @@ def test_report_without_text(tmp_path):
     assert harness.report(run_dir) == {
         "requests": 0, "turns": 0, "tool_calls": 0, "tool_errors": 0,
         "final_reply": "", "context": None, "output_tokens": None, "wall": None,
+        "nudges": 0, "empty_finals": 0,
     }
+
+
+def test_report_separates_a_nudge_from_an_empty_final(tmp_path):
+    run_dir = tmp_path / "r"
+    run_dir.mkdir()
+    empty = {"role": "assistant", "stopReason": "stop", "content": []}
+    _write_trace(run_dir, [
+        {"type": "instance_start"},
+        {"type": "provider_request", "request": 1},
+        {"type": "message_end", "message": empty},
+        {"type": "provider_request", "request": 2},
+        {"type": "message_end", "message": {"role": "assistant",
+                                            "content": [{"type": "text", "text": "ok"}]}},
+        {"type": "provider_request", "request": 3},
+        {"type": "message_end", "message": dict(empty, stopReason="length")},
+    ])
+    report = harness.report(run_dir)
+    assert report["nudges"] == 1
+    assert report["empty_finals"] == 1
 
 
 def test_score_details_counts_expected_failures(tmp_path):

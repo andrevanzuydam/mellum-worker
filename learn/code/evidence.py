@@ -10,7 +10,7 @@ from pathlib import Path
 SUITES = ("easy", "medium", "hard")
 ARMS = ("bare", "worker", "no-prompt", "no-nudge", "no-loop")
 COLUMNS = ("Passes", "Turns", "Failed checks", "Tool errors", "Context",
-           "Wall", "Output tokens")
+           "Wall", "Output tokens", "Nudges")
 
 
 def load(runs_dir: Path) -> list[dict]:
@@ -62,7 +62,7 @@ def render(runs_dir: Path, *, suite: str | None = None,
             values = [f"{passed}/{len(rows)}"]
             values += [_cell(_mean(rows, field)) for field in
                        ("turns", "failed_checks", "tool_errors", "context",
-                        "wall", "output_tokens")]
+                        "wall", "output_tokens", "nudges")]
             lines.append(f"| {suite_name} | {arm_name} | " + " | ".join(values) + " |")
     return "\n".join(lines) + "\n"
 
