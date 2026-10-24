@@ -87,3 +87,17 @@ A short narrative covering:
 - Which backend the evidence came from when it differs from the learner's (llama.cpp).
 - What is still open: the run that would upgrade the weakest badge, or the question the evidence cannot answer.
 - No new numbers. All data belongs in steps 1–5.
+
+---
+
+### Repository conventions
+
+- One lesson is one Markdown file under `learn/lessons/`.
+  Do not copy a production source file into the lesson; quote the smallest
+  real snippet and link to the exact file, commit and line range so the page
+  cannot drift with `main`.
+- Put a lesson's own test in `tests/lesson-<slug>.test.mjs`. The shared
+  `tests/learn-site.test.mjs` auto-discovers lesson pages and holds only
+  site-wide checks, so a lesson-specific test is not a shared-file edit.
+- Add the Lessons index link, the `zensical.toml` nav entry, the
+  `[Unreleased]` changelog entry and the roadmap update by hand.

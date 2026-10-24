@@ -141,6 +141,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- Lesson tests moved out of the shared suite into
+  `tests/lesson-<slug>.test.mjs`, and the site-wide test now discovers lesson
+  pages automatically, so parallel lesson branches no longer collide in
+  `tests/learn-site.test.mjs`. The lesson template records the convention,
+  including pinned code links and no copied production source.
+
 - The suite baseline now shows the actual TypeScript that activates the
   Baseline Worker: `setActiveTools`, `createGuardSet`, the request hook and the
   guard hooks, with a link to the full extension.

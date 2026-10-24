@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
@@ -21,10 +21,10 @@ const PAGES = [
   "getting-started/suite.md",
   "getting-started/worker-extension.md",
   "lessons/index.md",
-  "lessons/baseline.md",
-  "lessons/primary-agent.md",
-  "lessons/short-prompt.md",
-  "lessons/thinking-working-memory.md",
+  ...readdirSync(resolve(ROOT, "learn/lessons"))
+    .filter((f) => f.endsWith(".md") && f !== "index.md")
+    .sort()
+    .map((f) => `lessons/${f}`),
   "lesson-template.md",
   "project/index.md",
   "project/toolchain.md",
@@ -211,7 +211,7 @@ test("the Lessons index is grouped without Basic Remedies", () => {
   assert.match(index, /The runaway search/);
 });
 
-test("the lesson template asks for evidence of the solution", () => {
+test("the lesson template asks for evidence and records the conventions", () => {
   const t = page("lesson-template.md");
   assert.match(t, /^### Evidence of the solution$/m);
   for (const text of ["Passes", "Turns", "Failed checks", "Tool errors",
@@ -221,6 +221,10 @@ test("the lesson template asks for evidence of the solution", () => {
   assert.match(t, /^### The code$/m);
   assert.ok(t.includes("```ts"), "template lacks a code sample");
   assert.match(t, /n = 1/);
+  for (const text of ["### Repository conventions",
+    "tests/lesson-<slug>.test.mjs", "Do not copy a production source file",
+    "line range"])
+    assert.ok(t.includes(text), `template lacks ${text}`);
 });
 
 test("the ditch shows a claim that did not survive a check", () => {
@@ -250,24 +254,6 @@ test("the second findings lesson follows the six steps and names its badge", () 
   sections.forEach((s, i) => assert.equal(/\*\*Badge:\*\* `cited`/.test(s), i < 5, `step ${i + 1}`));
   assert.match(l, /weakest badge is `cited`/);
   assert.match(page("lessons/index.md"), /short-prompt\.md/);
-});
-
-test("the third findings lesson follows the six steps and names its badge", () => {
-  const l = page("lessons/thinking-working-memory.md");
-  const heads = [...l.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
-  assert.deepEqual(heads, ["Problem", "Eval case", "Evidence of the problem",
-    "Solution", "Validation", "Interpretation"]);
-  const sections = l.split(/^## /m).slice(1);
-  sections.forEach((s, i) => assert.equal(/\*\*Badge:\*\* `cited`/.test(s), i < 5, `step ${i + 1}`));
-  assert.match(l, /^### Evidence of the solution$/m);
-  const code = l.match(/```ts\n([\s\S]*?)```/)?.[1] ?? "";
-  assert.match(code, /const kept = msgs/);
-  assert.match(code, /\.map\(\(m\) =>/);
-  assert.match(l, /weakest badge is `cited`/);
-  assert.match(l, /^track: lessons$/m);
-  assert.match(l, /^position: 3$/m);
-  assert.match(l, /^backends: \[omlx\]$/m);
-  assert.match(page("lessons/index.md"), /thinking-working-memory\.md/);
 });
 
 test("learn/ never says tutorial or case study", () => {

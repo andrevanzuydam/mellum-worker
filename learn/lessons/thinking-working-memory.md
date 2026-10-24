@@ -56,7 +56,7 @@ would be made.
 
 ### The code
 
-From [`extensions/mellum-worker.ts`](https://github.com/pauleveritt/mellum-worker/blob/main/extensions/mellum-worker.ts#L107-L110),
+From [`extensions/mellum-worker.ts`](https://github.com/pauleveritt/mellum-worker/blob/a2dd2c2/extensions/mellum-worker.ts#L107-L110),
 lines 107–110:
 
 ```ts
