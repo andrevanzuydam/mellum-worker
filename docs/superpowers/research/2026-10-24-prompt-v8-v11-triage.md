@@ -1,8 +1,20 @@
-# Prompt v8–v11: triage
+# Prompt v6–v11: triage
 
 Date: 2026-10-24. Status: decision note, not a new measurement.
 
-## What the four commits do
+## Versions before v8
+
+| Version | Commit | Change | Disposition |
+| --- | --- | --- | --- |
+| v5 | current `main` | The 643-character task prompt; no guardrails | shipped Baseline Worker |
+| v6 | `be91ff6` | Keep every existing test; change only what the task requires | defer as a prompt arm; fold the pathology into test preservation |
+| v7 | `53728d4` | Test-driven: make one named failing test pass, read its spec, run only that test | keep as a ladder prompt; mediated-test lesson; not a suite prompt |
+
+v7 begins the test-driven line. It says “Run ONLY the test named in the task”
+and forbids editing it; v8 changes that to the whole test file. v7 is evidence
+for the mediated-test lesson, not a replacement for v5.
+
+## v8–v11
 
 | Commit | Change | Evidence in PR #1 |
 | --- | --- | --- |
@@ -25,20 +37,22 @@ named failing test; the hidden grader is not visible. Applying v11 to the
 suite harness would misframe the task. The hard spike also used a v9-like
 prompt and was worse, not better.
 
-Keep v5 as the suite/Baseline Worker prompt. Preserve v8/v9/v11 as a
+Keep v5 as the suite/Baseline Worker prompt. Preserve v7–v9 and v11 as a
 **ladder prompt catalogue** for test-driven rungs, with their original
-records. If we ever want a v11 suite arm, it needs a suite-shaped prompt and
+records. v6 is a separate completeness arm, not part of that catalogue. If we ever want a v11 suite arm, it needs a suite-shaped prompt and
 its own screen; it is not a drop-in.
 
 The v10 foreground-server **guard** is separable from the prompt. It blocks a
-bash command that starts a server in the foreground and is a candidate for a
-small guard PR, like workspace confinement. It is not accepted here; it would
-change the Baseline Worker and needs its own screen and re-baseline decision.
+bash command that starts a server in the foreground. Extract it as a dormant
+guard with its tests, like workspace confinement; do **not** enable it or
+change the Baseline Worker until a screen and re-baseline decision. The v10
+prompt line itself stays in the ladder catalogue.
 
 ## What follows
 
 - Baseline Worker stays on v5.
 - Flow/examine keeps its own orchestrator/examiner prompts; it does not inherit
   v11 by default.
-- The PR #1 source map marks prompt v8–v11 **deferred**, and the foreground
-  server guard **pending**.
+- The PR #1 source map marks prompt v7–v9/v11 **kept as ladder evidence**, v6
+  **deferred**, and the foreground-server guard **keeping dormant** pending a
+  screen.
