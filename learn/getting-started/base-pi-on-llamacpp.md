@@ -3,41 +3,55 @@ title: Base Pi on llama.cpp
 track: getting-started
 position: 1
 prerequisites: []
-authors: [Paul Everitt]
+authors: [Paul Everitt, Andre van Zuydam]
 backends: [llamacpp]
+music: [green day - boulevared of broken dreams, eagle eye cherry - save tonight, the killers - human, the goo goo dolls - iris]
 ---
 
 # Base Pi on llama.cpp
-
-By the end of this lesson, a machine that had no Python runs a local Mellum
-and answers a prompt through base Pi — Pi with no worker, no extensions and
-none of your own settings. It takes a few commands and one large download.
+Pi is a minimal agent harness with a feedback loop, tools and prompts already built in. It works out of the box for
+most large language models. By the end of this lesson, a machine that had no Python runs a local Mellum and answers a 
+prompt through base Pi — Pi with no worker, no extensions and none of your own settings or our enhancements. 
+It takes a few commands and one large download.
 
 Everything runs from a clone of `mellum-worker`, because the settings and the
-Pi profile are files in this repo; later lessons add the harness.
+Pi profile are files in this repo; later lessons we'll add our own harness and extensions.
 
 ## What you need
 
 - A terminal. The commands below are for macOS on Apple Silicon, where this
   repo has smoke-tested the backend. On Linux and Windows, install
-  `llama-server` from the llama.cpp releases and put it on `PATH`; the `uv`,
+  `llama-server` from the [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases) and put it on `PATH`; the `uv`,
   `uvx` and Pi commands are the same, with the PowerShell profile line in
   step 7.
 - About 10 GB free: the `Q4_K_M` weights are 8.1 GB, and the server peaked at
   8.38 GB with a 50,000-token context.
 
-## 1. Install uv
+## 1. Install uv & llama.cpp server 
 
-`uv` installs Python and runs the project's commands. It is the only tool
-this track asks you to install by hand.
+We need a server that can serve LLMs in an efficient way that works with a smaller memory format, cross-platform.
+For your convenience we have an installation script for Windows and for Linux / macOS linked below:
 
+**Linux / macOS**
+[install.sh](install.sh)
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
+bash install.sh
+```
+
+**Windows**
+[install.bat](install.bat)
+```cmd
+install.bat
+```
+
+After running the scripts - check that you have a working system
+
+```
+llama-server --version
 uv --version
 ```
 
-On Windows, use `winget install --id=astral-sh.uv` or the PowerShell
-installer from uv's site.
+If you get any errors you will have to [troubleshoot](troubleshoot.md) until you get it working.
 
 ## 2. Let `pyproject.toml` choose Python
 
@@ -63,18 +77,6 @@ top_k = 20
 the Pi profile are generated from it, so changing a value here changes every
 one of them together.
 
-## 3. Install llama.cpp
-
-```bash
-brew install llama.cpp
-llama-server --version
-```
-
-Linux builds from source or uses a release binary; Windows uses a release
-binary from the [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases).
-Whichever way, `llama-server` must be on `PATH` — the next command says so
-plainly if it is not.
-
 ## 4. Fetch the tools a later lesson grades with
 
 `uvx` runs a Python tool without installing it into the project:
@@ -89,10 +91,18 @@ lesson will not turn into a setup detour.
 
 ## 5. Start the server
 
+**Linux / macOs**
 ```bash
 uv run scripts/backend.py start
 uv run scripts/backend.py status
 ```
+
+**Windows**
+```cmd
+uv run scripts\backend.py start
+uv run scripts\backend.py status
+```
+
 
 The first `start` downloads `Q4_K_M` through llama.cpp's `-hf`, so it takes a
 while; the command waits for health and prints the pid and log path. `status`

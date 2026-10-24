@@ -3,25 +3,26 @@ title: The ditch
 track: getting-started
 position: 2
 prerequisites: [getting-started/base-pi-on-llamacpp]
-authors: [Paul Everitt]
+authors: [Paul Everitt, Andre van Zuydam]
 backends: [llamacpp]
+music: [fastball - the way]
 ---
 
-# The ditch
+# The Ditch
 
-Give a small model an open-ended job and it will drive. It is fast, and it
-will tell you it succeeded. This lesson is the ditch: one session, three
-prompts, and a final report that does not survive being checked.
+![img.png](img.png)
+
+Give a small model an open-ended job, and it will drive, just not where you want it to!. It is fast, and it
+will tell you it succeeded. This lesson is the ditch: one session, three prompts, and a final report that does 
+not survive being checked.
 
 ## The prompts
 
 One session, these three prompts in order:
 
-1. "Build AgentClinic: a small clinic appointment app. Patients book
-   appointments with doctors, and a doctor can see their day. Make it work."
-2. "Now add tests and make them pass."
-3. "Add a command-line tool that lists a doctor's appointments for a given
-   date."
+1. `Build AgentClinic: a small clinic appointment app. Patients book appointments with doctors, and a doctor can see their day. Make it work!`
+2. `Now add tests and make them pass`
+3. `Add a command-line tool that lists a doctor's appointments for a given date`
 
 Drive it however you like, as long as it is one session. From the repo:
 

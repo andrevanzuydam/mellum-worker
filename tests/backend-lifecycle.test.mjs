@@ -9,7 +9,9 @@ import assert from "node:assert/strict";
 const ROOT = resolve(import.meta.dirname, "..");
 const PID = join(tmpdir(), `mellum-test-${process.pid}.pid`);
 const LOG = join(tmpdir(), `mellum-test-${process.pid}.log`);
-const SLOW = join(tmpdir(), `mellum-slow-${process.pid}.sh`);
+// A server that never answers health: a shell script, or a batch file on Windows.
+const WIN = process.platform === "win32";
+const SLOW = join(tmpdir(), `mellum-slow-${process.pid}.${WIN ? "cmd" : "sh"}`);
 // Async on purpose: spawnSync blocks the event loop, and the fake server
 // below answers from that loop.
 const run = (...args) => new Promise((done) => {
@@ -45,9 +47,39 @@ test("start reports an already-running server instead of spawning one", async ()
   assert.equal(existsSync(PID), false);
 });
 
+// A fake llama-server: answers --version with `build`, otherwise waits 30 s.
+const fake = (path, build) => {
+  writeFileSync(path, WIN
+    ? `@if "%1"=="--version" (echo version: ${build} ^(fake^)& exit /b 0)\r\n@ping -n 31 127.0.0.1 >nul\r\n`
+    : `#!/bin/sh\n[ "$1" = --version ] && { echo "version: ${build} (fake)"; exit 0; }\nexec sleep 30\n`);
+  chmodSync(path, 0o755);
+};
+
+test("start refuses an llama-server older than the build that added mellum", async () => {
+  fake(SLOW, 7360);
+  const r = await run("start", "--port", "1", "--pidfile", PID, "--logfile", LOG,
+    "--server-binary", SLOW);
+  assert.equal(r.status, 2, r.stderr);
+  assert.match(r.stderr, /build 7360/);
+  assert.match(r.stderr, /9482/);
+  assert.equal(existsSync(PID), false, "no server started");
+  rmSync(SLOW, { force: true });
+});
+
+test("start will not launch a second server while the first is still starting", async () => {
+  // This test's own pid stands in for a live, not-yet-healthy server.
+  writeFileSync(PID, String(process.pid));
+  const r = await run("start", "--port", "1", "--pidfile", PID, "--logfile", LOG,
+    "--server-binary", "/nonexistent/llama-server");
+  assert.equal(r.status, 1, r.stderr);
+  assert.match(r.stderr, new RegExp(`still starting \\(pid ${process.pid}\\)`));
+  const s = await run("status", "--port", "1", "--pidfile", PID);
+  assert.match(s.stdout, new RegExp(`starting \\(pid ${process.pid}\\)`));
+  rmSync(PID, { force: true });
+});
+
 test("a start that times out keeps the pidfile for stop", async () => {
-  writeFileSync(SLOW, "#!/bin/sh\nexec sleep 30\n");
-  chmodSync(SLOW, 0o755);
+  fake(SLOW, 11669);
   const r = await run("start", "--port", "1", "--pidfile", PID, "--logfile", LOG,
     "--server-binary", SLOW, "--wait-seconds", "1");
   assert.equal(r.status, 1, r.stderr);
@@ -63,6 +95,23 @@ test("status reports a closed port as down", async () => {
   const r = await run("status", "--port", "1");
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, /down on 127\.0\.0\.1:1/);
+});
+
+test("status on a closed port says how to start the server", async () => {
+  const r = await run("status", "--port", "1");
+  assert.match(r.stdout, /start it: uv run scripts\/backend\.py start/);
+});
+
+test("start says what it launched, and shows the log when the server exits", async () => {
+  // node refuses llama-server's flags and exits: a cross-platform dying server.
+  const r = await run("start", "--port", "1", "--pidfile", PID,
+    "--logfile", LOG, "--server-binary", process.execPath);
+  assert.equal(r.status, 1, r.stderr);
+  assert.match(r.stderr, /starting .* on 127\.0\.0\.1:1 \(pid \d+\)/);
+  assert.match(r.stderr, /first start downloads the model/);
+  assert.match(r.stderr, /bad option: -hf/);
+  assert.equal(existsSync(PID), false);
+  rmSync(LOG, { force: true });
 });
 
 test("start without llama-server fails clearly and writes no pidfile", async () => {
