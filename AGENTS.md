@@ -45,6 +45,8 @@ and evidence with dated corrections; never edit archived plans.
   `trace.jsonl`, `stdout.txt` or `diff.patch`; raw evidence goes in a
   `research-YYYY-MM-DD` release.
 - `prompts/mellum-worker.md` is the only prompt source.
+- No draft PRs for extraction work. Keep each part on its own branch and record
+  it in the source map; close the source PR after the digest.
 - Never add a `build`, `prepare`, `prepack`, or `install` npm script; OpenCode
   installs from Git through pacote and that breaks the install.
 - A release is a tag that matches `package.json` and both README install

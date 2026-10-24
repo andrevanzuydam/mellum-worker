@@ -65,7 +65,7 @@ is not a Basic Remedy.
 
 | Phase | Ships | Excludes | Status |
 | --- | --- | --- | --- |
-| **INT.1** | Baseline Worker v2: the current Baseline Worker plus the workspace-confinement guard, then a fresh baseline. | Changing the worker without a pathological screen and a re-baseline; shipping a guard as a pass-rate claim. | candidate — guard is draft PR #6; [candidate review](docs/superpowers/research/2026-10-24-intermediate-candidates.md#int1--baseline-worker-v2). |
+| **INT.1** | Baseline Worker v2: the current Baseline Worker plus the workspace-confinement guard, then a fresh baseline. | Changing the worker without a pathological screen and a re-baseline; shipping a guard as a pass-rate claim. | candidate — guard is branch `lc11b-confinement` at `176922f`; [candidate review](docs/superpowers/research/2026-10-24-intermediate-candidates.md#int1--baseline-worker-v2). |
 | **INT.2** | Flow/examine: top orchestrator, examiner, frozen cumulative phase gates and hidden-grader final. A separate architecture and baseline. | Merging PR #1; the optional extensions; a lesson or Getting Started page before a hidden pass. | candidate — [triage](docs/superpowers/research/2026-10-24-flow-triage.md); needs spec and one hard llama.cpp run. |
 
 ## Gates

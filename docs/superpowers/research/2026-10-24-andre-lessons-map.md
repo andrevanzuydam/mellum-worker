@@ -32,7 +32,7 @@ evidence. Use both to map work; do not copy either into the Learning Center.
 | v7 | 60–62, 66; mediation addendum | “The mediated test clears the hard rungs” |
 | v8 | Mediation addendum: test subset / narrowing | “The worker moves its own goalposts” |
 | v9 | Mediation addendum: spec subset | “Implement the whole spec” |
-| v10 | Mediation addendum: foreground server | “The server that never returns”; guard extracted dormant `420ba1d`, draft PR #7 |
+| v10 | Mediation addendum: foreground server | “The server that never returns”; guard extracted dormant `420ba1d`, branch `lc11b-server-guard` |
 | v11 | Mediation addendum: self-check | “The rule it knew and skipped” |
 
 The addendum at lines 379–444 is the most directly usable source: it states

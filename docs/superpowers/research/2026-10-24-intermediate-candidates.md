@@ -13,7 +13,7 @@ research record.
 
 ### INT.1 — Baseline Worker v2
 
-The current Baseline Worker plus the workspace-confinement guard (PR #6). It
+The current Baseline Worker plus the workspace-confinement guard on branch `lc11b-confinement` (`176922f`). It
 changes the default worker, so it needs a re-baseline. Status: candidate; the
 guard is a draft and the pathological screen is still owed.
 
