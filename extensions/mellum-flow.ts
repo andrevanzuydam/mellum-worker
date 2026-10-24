@@ -103,7 +103,13 @@ export const PHASES: Record<string, Phase> = {
 		thinking: "high",
 		tools: "read,grep,find,ls,lookup",
 		ext: [ext("mellum-knowledge.ts")],
-		maxTokens: 16384,
+		// The examiner is a THINKING model whose reasoning cannot be capped (reasoning_effort and
+		// enable_thinking are both no-ops on oMLX — verified). On a complex phase it needs >16384
+		// tokens JUST to finish thinking, so at 16384 it emits ZERO output (finish_reason=length,
+		// content="") and no gate freezes — hard phase 5 (Archive & Audit) died on exactly this.
+		// Measured: at 16384 → empty; at 32000 → finishes thinking and emits a full 7-test file.
+		// The cap must leave room for think + the test, so examine gets the largest budget.
+		maxTokens: 32000,
 		prompt:
 			"You are the EXAMINER — step 2 of the pipeline (plan → examine → code → test). You write the " +
 			"acceptance test — the executable definition of DONE — for THIS phase's spec (given below, and " +
@@ -204,6 +210,26 @@ export function finalText(events: any[]): string {
 	return text;
 }
 
+/** The examiner is a tool-using agent: on complex phases it writes the test, then makes a
+ *  verifying tool call and ends on a short non-test message, so finalText (the LAST text) misses
+ *  the test and the gate never freezes — a whole round wasted (seen on hard phases 4 and 5). Scan
+ *  EVERY assistant text block, strip fences, and return the longest that looks like a real pytest
+ *  file; fall back to finalText when none does. */
+export function bestPytest(events: any[]): string {
+	let best = "";
+	for (const ev of events) {
+		if (ev?.type === "message_end" && ev.message?.role === "assistant") {
+			for (const block of ev.message.content ?? []) {
+				if (block?.type === "text" && block.text) {
+					const code = asCode(block.text);
+					if (looksLikePytest(code) && code.length > best.length) best = code;
+				}
+			}
+		}
+	}
+	return best || finalText(events);
+}
+
 /** Spawn an isolated `pi` sub-agent for a phase; resolve with its final text. */
 function runSubagent(phase: string, task: string, cwd: string, signal?: AbortSignal): Promise<string> {
 	const cfg = PHASES[phase];
@@ -285,7 +311,10 @@ function runSubagent(phase: string, task: string, cwd: string, signal?: AbortSig
 			clearInterval(beat);
 			signal?.removeEventListener("abort", abort);
 			feed(`  ━ ${phase} done (${events.length} events) ━`);
-			resolve(finalText(events) || "(the sub-agent produced no text output)");
+			// The examiner's whole job is to emit a pytest file; salvage it from any block it was
+			// written in (it often ends on verifying chatter). Other roles want their final message.
+			const out = phase === "examine" ? bestPytest(events) : finalText(events);
+			resolve(out || "(the sub-agent produced no text output)");
 		});
 		child.on("error", (e) => {
 			clearInterval(beat);

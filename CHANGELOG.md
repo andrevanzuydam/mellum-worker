@@ -6,6 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- The flow examiner is a thinking model whose reasoning cannot be capped, and on a complex phase it
+  needs more than 16384 tokens just to finish thinking — so at that cap it emitted an EMPTY test
+  (`finish_reason=length`, no content) and no gate froze. The hard "Archive & Audit" phase stalled
+  on exactly this. The examiner's `max_tokens` is raised to 32000 (measured: it then finishes
+  thinking and emits the full test), and `bestPytest` now salvages the test from any assistant
+  block when the examiner ends on verifying chatter rather than the test itself.
 - The flow now judges a phase on the frozen acceptance gate (`tests/test_gate_phase_*.py`) alone,
   not on the coder's own scratch tests. A brittle coder test — the hard "Resolve and Reopen"
   phase's list-equality order check, polluted by shared in-memory state — was failing a build that

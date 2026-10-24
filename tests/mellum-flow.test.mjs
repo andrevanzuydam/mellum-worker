@@ -5,7 +5,36 @@ import { mkdtempSync, mkdirSync, writeFileSync, readdirSync, readFileSync, rmSyn
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { PHASES, finalText, asTodo, asCode, looksLikePytest, freezeName, gateTestName, GATE_DIR, materializeGate, flowBlock, PHASE_CALL_CAP, BASE_GUIDE } from "../extensions/mellum-flow.ts";
+import { PHASES, finalText, bestPytest, asTodo, asCode, looksLikePytest, freezeName, gateTestName, GATE_DIR, materializeGate, flowBlock, PHASE_CALL_CAP, BASE_GUIDE } from "../extensions/mellum-flow.ts";
+
+const asstText = (t) => ({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: t }] } });
+
+test("bestPytest salvages a test written mid-transcript when the examiner ends on chatter", () => {
+	// hard phases 4 & 5: the examiner (a tool-using agent) wrote the test, then made a verifying
+	// tool call and ended with a short non-test message, so finalText (the LAST text) missed the
+	// test and the gate never froze — a whole round wasted. bestPytest scans every assistant block.
+	const events = [
+		asstText("Let me read the spec first."),
+		asstText("```python\nfrom app import app\ndef test_archive():\n    assert 1\n```"),
+		asstText("I've written the acceptance test above; it covers archive and audit."),
+	];
+	const code = bestPytest(events);
+	assert.ok(looksLikePytest(code), "must recover the real test");
+	assert.match(code, /def test_archive/);
+	assert.doesNotMatch(code, /written the acceptance test above/);
+});
+
+test("bestPytest prefers the longest complete test over a partial earlier block", () => {
+	const events = [
+		asstText("def test_a():\n    assert 1"),
+		asstText("from app import app\ndef test_a():\n    assert 1\ndef test_b():\n    assert 2\ndef test_c():\n    assert 3"),
+	];
+	assert.match(bestPytest(events), /test_c/); // the fuller block wins
+});
+
+test("bestPytest falls back to finalText when no block is a pytest file", () => {
+	assert.equal(bestPytest([asstText("no tests here"), asstText("still nothing")]), "still nothing");
+});
 
 test("BASE_GUIDE restores structure generically without contradicting any role", () => {
 	assert.match(BASE_GUIDE, /single-purpose|ONE job/i);
@@ -15,9 +44,13 @@ test("BASE_GUIDE restores structure generically without contradicting any role",
 	assert.ok(!/write (the )?(code|tests?|implementation)/i.test(BASE_GUIDE), "guide must not prescribe a role's output");
 });
 
-test("per-phase max_tokens: planner/reviewers below examine/code, but not truncating", () => {
-	assert.equal(PHASES.examine.maxTokens, 16384); // a thorough test needs room
-	assert.equal(PHASES.code.maxTokens, 16384);
+test("per-phase max_tokens: planner/reviewers below examine, but not truncating", () => {
+	// The examiner is a thinking model that can't be capped; on a complex phase it needs >16384
+	// tokens just to FINISH thinking, so 16384 emitted an EMPTY test (all budget spent thinking) and
+	// no gate froze — hard phase 5 died on this. Measured: 32000 lets it finish and emit. The
+	// examiner must have the most room of any role.
+	assert.equal(PHASES.examine.maxTokens, 32000);
+	assert.ok(PHASES.code.maxTokens >= 16384);
 	for (const r of ["plan", "review_plan", "review_code"]) {
 		assert.ok(PHASES[r].maxTokens < PHASES.examine.maxTokens, `${r} capped below examine`);
 		// not so tight it truncates a thinking model before it writes its output: 2048 left the
