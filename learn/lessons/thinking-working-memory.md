@@ -47,23 +47,29 @@ cheaper to send and more expensive to finish.
 
 Keep `reasoning_content` in the history. A hook may rewrite the system
 prompt and the messages after the mode marker, but it should leave the
-model's earlier reasoning alone. The shipped worker already does this; the
-extension records the reason in its header comment. The session keeps the
-whole history either way, so the hook is where the mistake would be made.
+model's earlier reasoning alone. The shipped worker does exactly that:
+`filterForMellum` slices to the messages after the marker and maps each one
+through unchanged unless it needs to append project facts. Nothing in that
+map removes `reasoning_content`, so an assistant message keeps it. The
+session keeps the whole history either way, so the hook is where the mistake
+would be made.
 
 ### The code
 
-From [`extensions/mellum-worker.ts`](https://github.com/pauleveritt/mellum-worker/blob/main/extensions/mellum-worker.ts#L20-L25),
-lines 20–25:
+From [`extensions/mellum-worker.ts`](https://github.com/pauleveritt/mellum-worker/blob/main/extensions/mellum-worker.ts#L107-L110),
+lines 107–110:
 
 ```ts
- * While on, before_provider_request rewrites the outgoing payload: the system message
- * becomes the worker prompt (prompts/mellum-worker.md, or $MELLUM_MODE_PROMPT), and the
- * messages are only those after the on-marker, minus Superpowers' bootstrap message.
- * Earlier turns' reasoning_content is left in place: removing it made runs 60% slower
- * (ladder A12). The session keeps everything; after /mellum off the parent is sent one
- * handoff block per finished span (task, files touched, last command output, final reply)
+const kept = msgs
+	.slice(start)
+	.filter((m) => !INSTRUCTION_ROLES.has(m.role ?? "") && !isMarker(m) && !isBootstrap(m))
+	.map((m) => (facts && m.role === "user" ? withFacts(m, facts) : m));
 ```
+
+Only a user message is copied with appended facts; every other message,
+including an assistant message carrying `reasoning_content`, passes through
+as `m`. `tests/mellum-worker.test.mjs` pins that behaviour with
+`out.messages[2].reasoning_content === "mine"`.
 
 ## Validation
 

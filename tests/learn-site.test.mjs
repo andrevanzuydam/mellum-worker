@@ -260,7 +260,9 @@ test("the third findings lesson follows the six steps and names its badge", () =
   const sections = l.split(/^## /m).slice(1);
   sections.forEach((s, i) => assert.equal(/\*\*Badge:\*\* `cited`/.test(s), i < 5, `step ${i + 1}`));
   assert.match(l, /^### Evidence of the solution$/m);
-  assert.match(l, /```ts/);
+  const code = l.match(/```ts\n([\s\S]*?)```/)?.[1] ?? "";
+  assert.match(code, /const kept = msgs/);
+  assert.match(code, /\.map\(\(m\) =>/);
   assert.match(l, /weakest badge is `cited`/);
   assert.match(l, /^track: lessons$/m);
   assert.match(l, /^position: 3$/m);
