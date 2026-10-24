@@ -5,18 +5,13 @@ position: 2
 prerequisites: [getting-started/base-pi-on-llamacpp]
 authors: [Paul Everitt, Andre van Zuydam]
 backends: [llamacpp]
-music: [fastball - the way, cat stevens - father and son, bob dylan - the times they are a changin']
-notes:
-  - Paul On my computer Pi decided that PHP was the language it should use to build the solutions - should we force python?
-  - Perhaps split out windows / linux/ mac
-  - It will be nice to have the commands ready to run - or do we start up an interactive Pi session instead of just running command by command
 ---
 
 # The Ditch
 
 ![img.png](img.png)
 
-Give a small model an open-ended job, and it will drive, just not where you want it to!. It is fast, and it
+Give a small model an open-ended job, and it will drive, just not where you want it to. It is fast, and it
 will tell you it succeeded. This lesson is the ditch: one session, three prompts, and a final report that does 
 not survive being checked.
 
@@ -30,9 +25,14 @@ One session, these three prompts in order:
 
 Drive it however you like, as long as it is one session. The session keeps track of the context for the build.
 
-From the repo run  the following command/s:
+The model chose Python in this run, and the checks below are Python. The
+language is not part of the prompt: if your run chooses another language,
+check its own test command and CLI, or append `Use Python.` to the first
+prompt for a comparable run.
 
-Linux /macOs
+From the repo, run the following commands:
+
+Linux / macOS
 ```bash
 export PI_CODING_AGENT_DIR=$PWD/learn/code/profile
 ```
@@ -70,7 +70,7 @@ pi -p --session-id clinic --session-dir "$env:TEMP\clinic-session" `
 
 ### Watching the outputs if you are impatient like we are ...
 
-**Linux /macOs**
+**Linux / macOS**
 
 ```bash
 tail -F "${TMPDIR:-/tmp}/llamacpp-mellum.log"

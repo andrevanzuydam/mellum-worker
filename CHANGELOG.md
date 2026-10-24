@@ -230,6 +230,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- Getting Started now has continuous lesson-1 steps 1–7, including
+  `complexipy` in the tool fetch; the troubleshooting page is in the nav,
+  linked from the track index and no longer has a self-prerequisite; the home
+  page links the Introduction and says five lessons; and the ditch drops its
+  author notes while explaining why its recorded run is Python.
+
 - The lesson harness uses one `F,E9` grade, excludes the workspace `.venv`,
   and runs `--suite all` easiest-first (easy, medium, hard).
 

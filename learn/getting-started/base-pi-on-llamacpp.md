@@ -5,7 +5,6 @@ position: 1
 prerequisites: []
 authors: [Paul Everitt, Andre van Zuydam]
 backends: [llamacpp]
-music: [green day - boulevared of broken dreams, eagle eye cherry - save tonight, the killers - human, the goo goo dolls - iris, rhcp - otherside]
 ---
 
 # Base Pi on llama.cpp
@@ -23,7 +22,7 @@ Pi profile are files in this repo; later lessons we'll add our own harness and e
   repo has smoke-tested the backend. On Linux and Windows, install
   `llama-server` from the [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases) and put it on `PATH`; the `uv`,
   `uvx` and Pi commands are the same, with the PowerShell profile line in
-  step 7.
+  step 6.
 - About 10 GB free: the `Q4_K_M` weights are 8.1 GB, and the server peaked at
   8.38 GB with a 50,000-token context.
 
@@ -45,11 +44,12 @@ bash ./learn/getting-started/install.sh
 .\learn\getting-started\install.bat
 ```
 
-After running the scripts - check that you have a working system
+After running the script, check that you have a working system
 
 ```
 llama-server --version
 uv --version
+npm --version
 pi --version
 ```
 
@@ -79,19 +79,20 @@ top_k = 20
 the Pi profile are generated from it, so changing a value here changes every
 one of them together.
 
-## 4. Fetch the tools a later lesson grades with
+## 3. Fetch the tools a later lesson grades with
 
 `uvx` runs a Python tool without installing it into the project:
 
 ```
 uvx ruff --version
 uvx pyrefly --version
+uvx complexipy --version
 ```
 
 That first run downloads and caches each tool, so the grading in a later
 lesson will not turn into a setup detour.
 
-## 5. Start the server
+## 4. Start the server
 
 ```
 uv run scripts/backend.py start
@@ -108,7 +109,7 @@ model name from `[tool.mellum]`. Everything else — the batch sizes, the
 `q8_0` KV cache, Metal offload — is the 16 GB profile written into
 `scripts/backend.py`, and `scripts/backend.py` is short enough to read.
 
-## 6. Chat once
+## 5. Chat once
 
 ```
 uv run scripts/backend.py chat "In one sentence, what makes a test useful?"
@@ -118,12 +119,12 @@ The reply goes to stdout; the model's thinking and the token count go to
 stderr. `temperature`, `top_p` and `top_k` are the values from
 `pyproject.toml`, not hidden defaults.
 
-## 7. Connect Pi
+## 6. Connect Pi
 
 The repo carries a private Pi profile at `learn/code/profile/`, generated
 from `[tool.mellum]`. Point Pi at it and ask for one line:
 
-Linux /macOs
+Linux / macOS
 ```bash
 export PI_CODING_AGENT_DIR=$PWD/learn/code/profile
 ```
@@ -151,7 +152,7 @@ The run is base Pi on the model: the baseline the next lessons build on.
 `--no-approve` is there because the profile is the only configuration this
 run should trust.
 
-## 8. Stop it
+## 7. Stop it
 
 ```bash
 uv run scripts/backend.py stop
