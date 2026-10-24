@@ -331,12 +331,18 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
             base_msg = (f"NORTH STAR: {north_star}\n\n"
                         f"YOUR TASK — phase 1 of {len(phases)}:\n\n{ptext}")
         else:
-            base_msg = (
-                f"NORTH STAR: {north_star}\n"
+            progress = (
                 f"PROGRESS SO FAR: already implemented and passing — {'; '.join(done)}.\n"
                 f"LAST PHASE: {done[-1]} — built, its tests pass; build on it, do not break it.\n\n"
-                f"YOUR TASK — phase {pnum} of {len(phases)}:\n\n{ptext}\n\n"
-                "Build on the existing workspace (app.py, models.py, templates/, tests/); keep "
+                if done else
+                "PROGRESS SO FAR: earlier phase(s) did NOT pass — implement this phase on the "
+                "workspace as it currently stands.\n\n"
+            )
+            base_msg = (
+                f"NORTH STAR: {north_star}\n"
+                + progress
+                + f"YOUR TASK — phase {pnum} of {len(phases)}:\n\n{ptext}\n\n"
+                + "Build on the existing workspace (app.py, models.py, templates/, tests/); keep "
                 "every existing route and test working, and do not rewrite what already passes."
             )
         # The phase task (north star + progress + spec) goes in plan/TASK.md — NOT a tool argument.
