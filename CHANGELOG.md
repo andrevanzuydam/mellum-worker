@@ -6,6 +6,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A prospective Pathologies lesson, **The runaway search**, with links to the
+  confinement guard and tests in PR #1; the worker-extension lesson now warns
+  against machine-wide searches and points at the same proposal.
+
 - A `zensical-glossary` build for `learn/glossary.md`: the page now has
   `###` entries for `screen`, `nudge`, `empty-final nudge`, `no-nudge`,
   `Baseline Worker`, `Baseline Pi`, `arm`, `ablation`, the telemetry columns

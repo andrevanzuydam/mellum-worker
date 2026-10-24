@@ -46,3 +46,7 @@ what it rests on now.
 17. **Documents and images as inputs** — Read the PDF, the spreadsheet or the screenshot the file tools cannot. *(Andre)*
 18. **Live control and replay** — Watch the turns, edit the prompt, replay a bad one, pause at a boundary. *(Andre)*
 19. **Next-concept verify** — Re-dispatch on the failing test functions, not the whole file. *(Andre)*
+
+## Pathologies
+
+20. **The runaway search** — A recursive search that leaves the workspace can hang the whole run; the guard is proposed in PR #1 ([code](https://github.com/pauleveritt/mellum-worker/blob/4dd58868e890a9fe292b2dcd3b57c51a5ab5bbc9/extensions/mellum-guards.ts#L203-L246), [tests](https://github.com/pauleveritt/mellum-worker/blob/4dd58868e890a9fe292b2dcd3b57c51a5ab5bbc9/tests/mellum-guards.test.mjs#L13-L44)). *(Andre)*

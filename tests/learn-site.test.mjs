@@ -166,13 +166,14 @@ test("the baseline shows the actual worker code", () => {
 test("the Lessons index is grouped without Basic Remedies", () => {
   const index = page("lessons/index.md");
   const items = index.match(/^\d+\. \*\*/gm) ?? [];
-  assert.equal(items.length, 19);
+  assert.equal(items.length, 20);
   assert.match(index, /\*\((Paul|Andre)\)\*$/m);
   assert.equal((index.match(/\*\(Paul\)\*/g) ?? []).length, 10);
-  assert.equal((index.match(/\*\(Andre\)\*/g) ?? []).length, 10);
+  assert.equal((index.match(/\*\(Andre\)\*/g) ?? []).length, 11);
   for (const text of ["Start here", "Prompt and project"])
     assert.ok(index.includes(text), `index lacks ${text}`);
   assert.ok(!index.includes("Basic Remedies"));
+  assert.match(index, /The runaway search/);
 });
 
 test("the lesson template asks for evidence of the solution", () => {
@@ -199,7 +200,7 @@ test("the worker-extension lesson teaches the extension mechanism", () => {
   const l = page("getting-started/worker-extension.md");
   for (const text of ["A Pi extension", "registerCommand", "pi.on",
     "before_provider_request", "tool_call", "agent_before_settle", "context",
-    "callback", "/mellum"])
+    "callback", "/mellum", "runaway search"])
     assert.ok(l.toLowerCase().includes(text.toLowerCase()), `worker lesson lacks ${text}`);
   assert.doesNotMatch(l, /assert True|Run it on the ditch|n = 1/);
   assert.match(page("getting-started/index.md"), /worker-extension\.md/);
