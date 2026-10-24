@@ -7,6 +7,6 @@ Start with the **Getting started** track: three lessons that go from llama.cpp t
 Each step of a lesson carries an [evidence badge](about/evidence.md) — from measured runs to reasoned conjecture — so you always know what is proven and what is still open.
 
 ## Tracks
-
+- [Introduction](introduction/index.md)- Demystifying agents and harnesses, the first principal, study the [terminology](introduction/terminology.md).
 - [Getting started](getting-started/index.md) — Set up a local model and build an eval harness. Fixed order.
 - [Lessons](lessons/index.md) — findings from the mellum-worker phases, its ablations, and Andre van Zuydam's pull requests. Each stands alone.
