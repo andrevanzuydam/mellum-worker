@@ -141,6 +141,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The Lessons index now marks the context/input workflows as INT.3
+  Intermediate candidates, and every scheduled lesson row links to the new
+  PR harvest index. The index joins the PR digests, prompt triage and source
+  map; it adds no run.
+
 - The lesson template now separates quality from budget in Validation and
   asks what to try next in Interpretation: a lesson must say which passes
   moved, which budget column paid for them, and which screen would improve

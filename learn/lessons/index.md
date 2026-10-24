@@ -41,6 +41,10 @@ what it rests on now.
 
 ## Context and inputs
 
+Entries #16–#20 are **Intermediate candidates** (INT.3), not scheduled
+Lessons; #15 remains a lesson candidate. Each needs a recorded screen before
+it becomes a lesson page.
+
 15. **Rungs 10–12: what the hard gates catch** — An archive decoy, a trap row and an overflowing file separate capability from completeness. *(Andre)*
 16. **Context search for large code** — Index and search the few relevant lines instead of loading whole files. *(Andre)*
 17. **Skeptical rethink** — Check a human's checkable claim before encoding the premise. *(Andre)*
