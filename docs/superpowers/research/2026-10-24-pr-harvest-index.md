@@ -38,7 +38,7 @@ records stay `screen` until their record lands on `main`.
 | A2 | Implement the whole spec | [Andre #2](2026-10-21-andre-follow-up-digest.md#2-implement-the-whole-spec) | LC.22 after LC.5 |
 | A3 | The mediated test clears rungs 6–9 | [Andre #3](2026-10-21-andre-follow-up-digest.md#3-the-mediated-test-clears-rungs-69) | LC.21 after LC.5 |
 | A4 | Mediation is a completeness gate | [Andre #4](2026-10-21-andre-follow-up-digest.md#4-mediation-is-a-completeness-gate) | LC.23 after LC.5 |
-| A5 | Rungs 10–12: what the hard gates catch | [Andre #5](2026-10-21-andre-follow-up-digest.md#5-rungs-1012-what-the-hard-gates-catch) | backlog; no phase |
+| A5 | Rungs 10–12: what the hard gates catch | [Andre #5](2026-10-21-andre-follow-up-digest.md#5-rungs-1012-what-the-hard-gates-catch) | [backlog](../../../BACKLOG.md); no phase |
 | A6 | Context search for large code | [Andre #6](2026-10-21-andre-follow-up-digest.md#6-context-search-for-large-code) | INT.3 candidate |
 | A7 | Skeptical rethink | [Andre #7](2026-10-21-andre-follow-up-digest.md#7-skeptical-rethink) | INT.3 candidate |
 | A8 | Documents and images as inputs | [Andre #8](2026-10-21-andre-follow-up-digest.md#8-documents-and-images-as-inputs) | INT.3 candidate |
@@ -63,10 +63,18 @@ not represented by L1–L10 or P1–P3 stay support or backlog, not lessons:
 
 ## Support and deferred
 
-- Dashboard, feed/replay, model halving and CI: backlog, not lessons.
-- Content-tool-call-assist extension: Intermediate/backlog candidate.
-- PR #3/#4 support items: keep the records on the PR branches; no page.
-- Rungs 10–12: a candidate, not a phase until a record lands on `main`.
+Every item here has a `BACKLOG.md` entry, not a lesson:
+
+- [PR measurement support](../../../BACKLOG.md): mlx-lm, effort ramp,
+  mediation scripts, rungs 10–12, `screen.sh`/`product.sh`, model halving,
+  CI.
+- [Dashboard and replay](../../../BACKLOG.md): the watch/steer surface.
+- [Content-tool-call assist](../../../BACKLOG.md): PR #2's extension.
+- [Experimental agent extensions](../../../BACKLOG.md): plan, surgical,
+  quality, NCM, loop, knowledge; context/rethink/files/vision route to INT.3.
+- [Tier-1 contract test](../../../BACKLOG.md): Flow's structural precursor.
+- PR #3/#4 records stay on the PR branches; no page until a record lands on
+  `main`.
 
 ## What would falsify this
 
