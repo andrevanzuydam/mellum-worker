@@ -223,6 +223,9 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- The lesson harness uses one `F,E9` grade, excludes the workspace `.venv`,
+  and runs `--suite all` easiest-first (easy, medium, hard).
+
 - The Lessons sidebar now lists the two completed findings lessons instead of
   only the index; a test requires every published lesson page to be in the
   nav.

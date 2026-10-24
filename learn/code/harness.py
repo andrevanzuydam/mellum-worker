@@ -220,33 +220,10 @@ def grade(workspace: Path) -> list[tuple[str, bool, str]]:
         return ["uvx", name, *args]
 
     commands = (
-        ("ruff", tool("ruff", "check", "--select", "F,E9", "--exclude", "tests", "--exclude", "grader_tests", ".")),
+        ("ruff", tool("ruff", "check", "--select", "F,E9", "--extend-exclude", "tests", "--extend-exclude", "grader_tests", ".")),
         ("pyrefly", tool("pyrefly", "check", ".")),
         ("complexipy", tool("complexipy", "--max-complexity-allowed", "10",
                             "--exclude", "tests", "--exclude", "grader_tests", ".")),
-    )
-    results = []
-    for name, command in commands:
-        result = subprocess.run(
-            command, cwd=workspace, capture_output=True, text=True, check=False,
-            env={**os.environ, "PYTHONPATH": str(workspace)},
-        )
-        output = [line for line in (result.stdout + result.stderr).splitlines()
-                  if line.strip()]
-        results.append((name, result.returncode == 0, output[0] if output else ""))
-    return results
-
-
-def grade(workspace: Path) -> list[tuple[str, bool, str]]:
-    workspace = Path(workspace)
-    (workspace / "pyrefly.toml").write_text(
-        'project-includes = [\n    "**/*.py",\n]\n'
-        'project-excludes = [\n    "tests/**",\n]\n')
-    commands = (
-        ("ruff", ["uvx", "ruff", "check", "--exclude", "tests", "."]),
-        ("pyrefly", ["uvx", "pyrefly", "check", "."]),
-        ("complexipy", ["uvx", "complexipy", "--max-complexity-allowed", "10",
-                        "--exclude", "tests", "."]),
     )
     results = []
     for name, command in commands:
@@ -432,10 +409,14 @@ def run_suites(
     deadline: float | None = 600,
     arm: str = "bare",
 ) -> tuple[int, int]:
+    order = {"easy": 0, "medium": 1, "hard": 2}
     available = sorted(
-        path.name for path in Path(suites_dir).iterdir()
-        if ((path / "grader").is_dir() or (path / "tests").is_dir())
-        and ((path / "task.md").exists() or (path / "prompts").is_dir())
+        (
+            path.name for path in Path(suites_dir).iterdir()
+            if ((path / "grader").is_dir() or (path / "tests").is_dir())
+            and ((path / "task.md").exists() or (path / "prompts").is_dir())
+        ),
+        key=lambda name: (order.get(name, len(order)), name),
     )
     if "all" in names:
         names = available

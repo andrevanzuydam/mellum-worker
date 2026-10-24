@@ -242,6 +242,31 @@ def test_run_sessions_writes_metrics(tmp_path):
     assert record["wall"] is None
 
 
+def test_grade_ignores_the_workspace_venv(tmp_path):
+    workspace = _workspace(
+        tmp_path, "def fizz(n: int) -> str:\n    return str(n)\n")
+    venv = workspace / ".venv"
+    venv.mkdir()
+    (venv / "bad.py").write_text("def broken():\n    return missing\n")
+    grades = {name: ok for name, ok, _ in harness.grade(workspace)}
+    assert grades["ruff"] is True
+
+
+def test_run_suites_orders_easy_medium_hard(tmp_path, capsys):
+    for name in ("hard", "easy", "medium"):
+        suite = tmp_path / "suites" / name
+        (suite / "tests").mkdir(parents=True)
+        (suite / "task.md").write_text("Write add.py with add(a, b).\n")
+        (suite / "tests" / "test_add.py").write_text(
+            "from add import add\n\ndef test_add():\n    assert add(2, 3) == 5\n")
+    harness.run_suites(
+        ["all"], suites_dir=tmp_path / "suites", runs_dir=tmp_path / "runs",
+        pi_binary=str(FIX / "fake-pi.sh"),
+    )
+    out = capsys.readouterr().out
+    assert out.index("easy") < out.index("medium") < out.index("hard")
+
+
 def test_suite_runs_every_named_task(tmp_path):
     passed, total = harness.run_suites(
         ["all"], suites_dir=SUITES, runs_dir=tmp_path / "runs",
