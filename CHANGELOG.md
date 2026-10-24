@@ -6,6 +6,16 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- The flow now judges a phase on the frozen acceptance gate (`tests/test_gate_phase_*.py`) alone,
+  not on the coder's own scratch tests. A brittle coder test — the hard "Resolve and Reopen"
+  phase's list-equality order check, polluted by shared in-memory state — was failing a build that
+  passed the authoritative gate. The gate is the definition of DONE; the coder's extra tests no
+  longer gate a correct, gate-passing solution.
+- The examiner could freeze a self-contradictory absence check: `assert "Resolve" not in html`
+  while the same test required the status "Resolved" present ("Resolve" is a substring of
+  "Resolved"), so no correct app could pass — the hard "Resolve and Reopen" phase looped on it.
+  The examiner is now told to target the specific control (its form `action=` URL or the exact
+  button) when checking an action is gone, never a bare substring of a word the page shows.
 - A dangling markdown fence in the examiner's reply (a trailing ` ``` ` with no opening fence, or
   an opening ` ```python ` with no close) survived into the frozen Python gate, so
   `phase_gate_ok`'s `compile()` rejected an otherwise-correct gate and the phase looped to

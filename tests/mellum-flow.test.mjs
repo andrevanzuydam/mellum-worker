@@ -76,6 +76,16 @@ test("the examiner asserts exact strings only where the spec is verbatim, requir
 	assert.match(PHASES.examine.prompt, /brittleness/i);
 });
 
+test("the examiner must not assert a bare substring absent when it is part of a legitimate word", () => {
+	// hard phase 4 could never pass: the examiner froze `assert "Resolve" not in html` while the
+	// same test required "Resolved" present — but "Resolve" is a substring of "Resolved", so the
+	// assertion is self-contradictory and no correct app satisfies it. Absence must target the
+	// specific action (its form action= URL / exact control), not a prefix of a word on the page.
+	assert.match(PHASES.examine.prompt, /substring of a (longer )?word|prefix of|"Resolve" is inside "Resolved"|part of another word/i);
+	assert.match(PHASES.examine.prompt, /not in|absent|absence/i);
+	assert.match(PHASES.examine.prompt, /form .*action|action=|specific (control|button|action)/i);
+});
+
 test("the examiner must disable redirect-following when asserting a redirect status", () => {
 	// medium phase 3 looped forever: the examiner asserted `client.post(...).status_code == 303`,
 	// but starlette's TestClient follows redirects by default, so the response is the final 200 GET

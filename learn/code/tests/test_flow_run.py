@@ -62,3 +62,25 @@ def test_phase_gate_ok_rejects_html_and_testless_files(tmp_path):
     assert flow_run.phase_gate_ok(tmp_path, 3) is False          # an HTML blob does not compile
     _freeze(tmp_path, 3, "import pytest\nX = 1  # no test functions\n")
     assert flow_run.phase_gate_ok(tmp_path, 3) is False          # compiles but defines no test
+
+
+def test_gate_files_selects_only_the_frozen_gate_not_the_coders_scratch_tests(tmp_path):
+    # hard phase 4: the coder's own test_app.py order test was brittle (list-equality vs shared
+    # in-memory state) and failed a CORRECT, gate-passing build. The phase is judged on the FROZEN
+    # gate — the definition of DONE — never on the coder's scratch tests.
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    (tests / "test_gate_phase_1.py").write_text("def test_g1():\n    assert 1\n")
+    (tests / "test_gate_phase_2.py").write_text("def test_g2():\n    assert 1\n")
+    (tests / "test_app.py").write_text("def test_coder():\n    assert 1\n")  # coder's own — excluded
+    (tests / "conftest.py").write_text("")  # not a gate file
+    got = sorted(p.name for p in flow_run.gate_files(tmp_path))
+    assert got == ["test_gate_phase_1.py", "test_gate_phase_2.py"]
+
+
+def test_gate_files_is_empty_when_no_cumulative_gate_was_frozen(tmp_path):
+    # the single-file easy gate freezes no plan/gate/phase_*.py, so there are no test_gate_phase_*
+    # files; callers fall back to running the whole suite in that case.
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "tests" / "test_home.py").write_text("def test_h():\n    assert 1\n")
+    assert flow_run.gate_files(tmp_path) == []

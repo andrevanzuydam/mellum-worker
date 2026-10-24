@@ -125,6 +125,11 @@ export const PHASES: Record<string, Phase> = {
 			"class list, whitespace or markup the spec did not give. Inventing exact strings the spec never " +
 			"stated is the brittleness that fails correct implementations — do not do it.\n" +
 			"- Assert each exact BEHAVIOUR the spec states (ordering, redirects, what is included or excluded).\n" +
+			"- ABSENCE checks: never assert a bare substring is absent when it is a substring of a word " +
+			"the page legitimately shows — `assert \"Resolve\" not in html` is self-contradictory when " +
+			"the status \"Resolved\" is present (\"Resolve\" is inside \"Resolved\"). To check an action is " +
+			"gone, target the specific control: assert its form `action=\"/...\"` URL is absent, or match " +
+			"the exact button, never a prefix of another word on the page.\n" +
 			"- Assert the NEGATIVE and EDGE cases the spec implies, not just the happy path: missing or " +
 			"invalid input, the empty case, unauthorized/forbidden access, not-found, duplicates, and each " +
 			"error case with its exact status and message. A phase is not DONE if only its happy path works.\n" +

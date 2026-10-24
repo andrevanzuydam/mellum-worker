@@ -219,6 +219,35 @@ def restore_gate(workspace: Path) -> None:
         shutil.copy2(frozen, tests / f"test_gate_{frozen.stem}.py")
 
 
+def gate_files(workspace: Path) -> list[Path]:
+    """The restored cumulative acceptance gate — tests/test_gate_phase_*.py — and nothing else.
+    The phase is judged on this, the frozen definition of DONE, never on the coder's own scratch
+    tests: a brittle coder test (e.g. a list-equality order check polluted by shared in-memory
+    state) must not fail a build that passes the authoritative gate. Empty when no cumulative gate
+    was frozen (the single-file easy gate), so callers fall back to the whole suite."""
+    tests = workspace / "tests"
+    return sorted(tests.glob("test_gate_phase_*.py")) if tests.is_dir() else []
+
+
+def run_gate(workspace: Path, timeout: float) -> tuple[bool, str]:
+    """Score the workspace against the frozen acceptance gate only (see gate_files). Falls back to
+    the whole suite when there is no cumulative gate. Mirrors loop_run.run_tests' env so
+    `from app import app` resolves exactly as the hidden grader sees it."""
+    gates = gate_files(workspace)
+    if not gates:
+        return lr.run_tests(workspace, timeout)
+    env = {**os.environ, "PYTHONPATH": str(workspace)}
+    cmd = ["uv", "run", "--with", "pytest", "pytest", "-q",
+           *[str(g.relative_to(workspace)) for g in gates]]
+    try:
+        proc = subprocess.run(cmd, cwd=workspace, capture_output=True, text=True,
+                              timeout=timeout, check=False, env=env)
+    except subprocess.TimeoutExpired:
+        return False, "gate tests timed out"
+    out = proc.stdout + proc.stderr
+    return proc.returncode == 0, "\n".join(out.splitlines()[-25:])
+
+
 def phase_gate_ok(workspace: Path, phase: int) -> bool:
     """A fork may only count as passing phase N if it actually FROZE a real acceptance
     test for phase N. Without this, a fork whose examiner produced nothing just inherits
@@ -318,7 +347,7 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
                 model=model, trace=run / f"trace-p{pnum}-r{rnd}-{idx}.jsonl",
                 timeout=timeout, thinking=thinking, phase=pnum)
         restore_gate(aw)  # score against the cumulative gate — every prior phase must still pass
-        ok, _ = lr.run_tests(aw, 120.0)
+        ok, _ = run_gate(aw, 120.0)
         ok = ok and phase_gate_ok(aw, pnum)  # and THIS phase must have frozen a real acceptance test
         return idx, ok, aw
 
@@ -361,7 +390,7 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
                         provider=provider, model=model, trace=run / f"trace-p{pnum}-{rnd}.jsonl",
                         timeout=timeout, thinking=thinking, phase=pnum)
                 restore_gate(workspace)  # score against the cumulative gate — every prior phase must still pass
-                passed, _ = lr.run_tests(workspace, 120.0)
+                passed, _ = run_gate(workspace, 120.0)
                 passed = passed and phase_gate_ok(workspace, pnum)  # and THIS phase must have frozen a real acceptance test
             else:
                 temps = temp_ladder(concurrency)
