@@ -24,6 +24,7 @@ const PAGES = [
   "lessons/baseline.md",
   "lessons/primary-agent.md",
   "lessons/short-prompt.md",
+  "lessons/thinking-working-memory.md",
   "lesson-template.md",
   "project/index.md",
   "project/toolchain.md",
@@ -249,6 +250,22 @@ test("the second findings lesson follows the six steps and names its badge", () 
   sections.forEach((s, i) => assert.equal(/\*\*Badge:\*\* `cited`/.test(s), i < 5, `step ${i + 1}`));
   assert.match(l, /weakest badge is `cited`/);
   assert.match(page("lessons/index.md"), /short-prompt\.md/);
+});
+
+test("the third findings lesson follows the six steps and names its badge", () => {
+  const l = page("lessons/thinking-working-memory.md");
+  const heads = [...l.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
+  assert.deepEqual(heads, ["Problem", "Eval case", "Evidence of the problem",
+    "Solution", "Validation", "Interpretation"]);
+  const sections = l.split(/^## /m).slice(1);
+  sections.forEach((s, i) => assert.equal(/\*\*Badge:\*\* `cited`/.test(s), i < 5, `step ${i + 1}`));
+  assert.match(l, /^### Evidence of the solution$/m);
+  assert.match(l, /```ts/);
+  assert.match(l, /weakest badge is `cited`/);
+  assert.match(l, /^track: lessons$/m);
+  assert.match(l, /^position: 3$/m);
+  assert.match(l, /^backends: \[omlx\]$/m);
+  assert.match(page("lessons/index.md"), /thinking-working-memory\.md/);
 });
 
 test("learn/ never says tutorial or case study", () => {

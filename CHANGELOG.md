@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- Paul's finding **Thinking is working memory**: stripping earlier turns'
+  `reasoning_content` cut prefill 57% and made the runs slower, on the cited
+  oMLX A3/A12 records. The lesson keeps the thinking in history, names the
+  open llama.cpp re-run, and adds `working memory` to the glossary.
+
 - Three prospective Pathologies lessons: **The runaway search**, with links to
   the confinement guard and tests in PR #1; **The server that never returns**,
   from prompt v10 and the dormant foreground-server guard; and **The rule it

@@ -33,7 +33,7 @@ what it rests on now.
 
 ## Loop and handoff
 
-10. **Thinking is working memory** — Stripping earlier thinking cuts prefill 57% and makes the run slower. *(Paul)*
+10. **[Thinking is working memory](thinking-working-memory.md)** — Stripping earlier thinking cuts prefill 57% and makes the run slower. *(Paul)*
 11. **Guards for empty turns and loops** — The empty-final nudge and the loop breaker take a 13/15 arm to 15/15. *(Paul)*
 12. **Who holds the loop** — Worker, Mode and a delegated child pass alike and cost differently. *(Paul)*
 13. **A prose brief stops at its first reply** — The same brief as one prompt loses four passes; as steps it costs 2.4× the time. *(Paul)*

@@ -283,6 +283,12 @@ Large language model: a model trained on large amounts of data to process and ge
 
 Information saved outside the model and retrieved for later use.
 
+### working memory
+
+The model's own earlier reasoning, replayed in the request, that it uses to
+keep a plan across tool calls. Removing it from the history makes the model
+re-derive that plan.
+
 ### Multimodal
 
 Able to process or generate more than one type of content, such as text, images, or audio.

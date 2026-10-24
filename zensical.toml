@@ -14,7 +14,8 @@ nav = [
     "getting-started/suite.md", "getting-started/worker-extension.md",
     "getting-started/troubleshoot.md"] },
   { "Lessons" = ["lessons/index.md", "lessons/baseline.md",
-    "lessons/primary-agent.md", "lessons/short-prompt.md"] },
+    "lessons/primary-agent.md", "lessons/short-prompt.md",
+    "lessons/thinking-working-memory.md"] },
   { "About" = [
     "about/index.md", "about/how-to-read.md",
     "about/evidence.md", "about/contributing.md",
