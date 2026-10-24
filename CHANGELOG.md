@@ -6,6 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- Paul's finding **Guards for empty turns and loops**: with the guard
+  extension loaded A0 passed 15/15, and without it A1 passed 13/15 on the
+  same oMLX rungs, where both failures are an empty final the bounded nudge
+  answers. The lesson quotes the shipped nudge, keeps the claim to one
+  benchmark, and names the open llama.cpp arm.
+
 - Paul's finding **Thinking is working memory**: stripping earlier turns'
   `reasoning_content` cut prefill 57% and made the runs slower, on the cited
   oMLX A3/A12 records. The lesson keeps the thinking in history, names the

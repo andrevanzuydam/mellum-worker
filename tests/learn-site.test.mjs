@@ -210,7 +210,7 @@ test("the Lessons index is grouped without Basic Remedies", () => {
   assert.ok(!index.includes("Basic Remedies"));
   assert.match(index, /The runaway search/);
   assert.match(index, /^3\. \*\*(?:\[Thinking is working memory\]|Thinking is working memory)/m);
-  assert.match(index, /^4\. \*\*Guards for empty turns and loops/m);
+  assert.match(index, /^4\. \*\*(?:\[Guards for empty turns and loops\]|Guards for empty turns and loops)/m);
 });
 
 test("the lesson template asks for evidence and records the conventions", () => {

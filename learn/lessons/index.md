@@ -21,7 +21,7 @@ what it rests on now.
 
 2. **[A short prompt, not a procedure](short-prompt.md)** — Prompt v5 is 643 characters, and each line it lost had a run behind it. *(Paul)*
 3. **[Thinking is working memory](thinking-working-memory.md)** — Stripping earlier thinking cuts prefill 57% and makes the run slower. *(Paul)*
-4. **Guards for empty turns and loops** — The empty-final nudge and the loop breaker take a 13/15 arm to 15/15. *(Paul)*
+4. **[Guards for empty turns and loops](guards-for-empty-turns.md)** — The empty-final nudge and the loop breaker take a 13/15 arm to 15/15. *(Paul)*
 5. **Project facts** — A 600-character facts section takes a four-phase build from 1/12 to 9/12. *(Paul)*
 6. **Write only the files you list** — Runs pass the hidden tests and still fail by writing outside the layout. *(Paul)*
 7. **Who holds the loop** — Worker, Mode and a delegated child pass alike and cost differently. *(Paul)*
