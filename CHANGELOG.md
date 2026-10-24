@@ -6,9 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
-- A prospective Pathologies lesson, **The runaway search**, with links to the
-  confinement guard and tests in PR #1; the worker-extension lesson now warns
-  against machine-wide searches and points at the same proposal.
+- Three prospective Pathologies lessons: **The runaway search**, with links to
+  the confinement guard and tests in PR #1; **The server that never returns**,
+  from prompt v10 and the dormant foreground-server guard; and **The rule it
+  knew and skipped**, from prompt v11's clause-by-clause self-check. The
+  worker-extension lesson now warns against machine-wide searches and points at
+  the confinement proposal.
 
 - A `zensical-glossary` build for `learn/glossary.md`: the page now has
   `###` entries for `screen`, `nudge`, `empty-final nudge`, `no-nudge`,
@@ -46,7 +49,7 @@ Versions match git tags; pin one in both install lines.
   (goalposts, the mediated test, v9, mediation as a completeness gate, rungs
   10–12, context, rethink, documents and images, live control, next-concept
   verify), each badged, with support items listed separately.
-- The Lessons index is one recommended list of twenty, each with a one-line
+- The Lessons index is one recommended list of twenty-two, each with a one-line
   description and an italic author tag, *(Paul)* or *(Andre)*.
 - A GitHub Actions workflow builds the Zensical site on pull requests and
   deploys it to Pages from `main`.

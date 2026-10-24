@@ -7,8 +7,12 @@ Date: 2026-10-24. Status: decision note, not a new measurement.
 | Version | Commit | Change | Disposition |
 | --- | --- | --- | --- |
 | v5 | current `main` | The 643-character task prompt; no guardrails | shipped Baseline Worker |
-| v6 | `be91ff6` | Keep every existing test; change only what the task requires | defer as a prompt arm; fold the pathology into test preservation |
+| v6 | `be91ff6` | Keep every existing test; change only what the task requires | drop as a prompt arm: no measured lift on the 2B, no regression; keep the evidence, write no lesson |
 | v7 | `53728d4` | Test-driven: make one named failing test pass, read its spec, run only that test | keep as a ladder prompt; mediated-test lesson; not a suite prompt |
+
+v6’s commit records a null result: “no measured lift on a 2B model and no
+regression.” That is not a lesson; the test-preservation pathology still needs
+a recorded failing run before it gets a page.
 
 v7 begins the test-driven line. It says “Run ONLY the test named in the task”
 and forbids editing it; v8 changes that to the whole test file. v7 is evidence

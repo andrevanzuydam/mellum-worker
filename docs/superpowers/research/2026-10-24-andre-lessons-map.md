@@ -28,12 +28,12 @@ evidence. Use both to map work; do not copy either into the Learning Center.
 | Version | LESSONS.md mapping | Destination |
 | --- | --- | --- |
 | v5 | Current `main`; prompt source discipline (65) | Baseline Worker / short-prompt lesson |
-| v6 | Keep existing tests (61, 63) | Fold into test-preservation / write-only pathology |
+| v6 | Keep existing tests (61, 63) | Drop as a prompt arm: null on the 2B; no lesson until a recorded run |
 | v7 | 60–62, 66; mediation addendum | “The mediated test clears the hard rungs” |
 | v8 | Mediation addendum: test subset / narrowing | “The worker moves its own goalposts” |
 | v9 | Mediation addendum: spec subset | “Implement the whole spec” |
-| v10 | Mediation addendum: foreground server | New “The server that never returns” |
-| v11 | Mediation addendum: self-check | New “The rule it knew and skipped” |
+| v10 | Mediation addendum: foreground server | “The server that never returns”; guard extracted dormant `420ba1d` |
+| v11 | Mediation addendum: self-check | “The rule it knew and skipped” |
 
 The addendum at lines 379–444 is the most directly usable source: it states
 the v8/v9/v11 pathologies, the remedies, and the measured lift. It is more
@@ -58,6 +58,7 @@ are explicitly unmeasured. Preserve that split.
 | Theory | Status | Use |
 | --- | --- | --- |
 | T8 mediated test rescues rungs 4/5 | marked untested, but the mediation addendum has later evidence | Update the status before citing; then map to mediated lesson |
+| v10 guard | kept dormant in `420ba1d`; not enabled | screen before INT.1 baseline |
 | T7 NCM gate cannot supply capability | screening | Defer; needs gate × model-size run |
 | T1–T6 context ordering, recency, retrieval, cache, rethink, vision/files | untested | Backlog; not lessons |
 | T8/T7 and the Flow addenda | not a curriculum | Candidate screens; promote only after a test |
