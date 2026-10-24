@@ -14,6 +14,8 @@ test("the third findings lesson follows the six steps and names its badge", () =
   const sections = l.split(/^## /m).slice(1);
   sections.forEach((s, i) => assert.equal(/\*\*Badge:\*\* `cited`/.test(s), i < 5, `step ${i + 1}`));
   assert.match(l, /^### Evidence of the solution$/m);
+  assert.match(l, /^### Quality and budget$/m);
+  assert.match(l, /^### What to try next$/m);
   const code = l.match(/```ts\n([\s\S]*?)```/)?.[1] ?? "";
   assert.match(code, /const kept = msgs/);
   assert.match(code, /\.map\(\(m\) =>/);

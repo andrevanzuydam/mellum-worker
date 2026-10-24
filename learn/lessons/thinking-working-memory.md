@@ -88,11 +88,13 @@ A12's reading also notes that oMLX's prefill is 86% cache hits.
 This is oMLX, and n is the record's fifteen runs per arm. Wall is the
 record's mean, which the record marks untrusted.
 
-### What the telemetry shows
+### Quality and budget
 
-The prefill column carries the saving; the output-token, nudge and
-empty-final columns carry the cost. A12 made fewer requests but generated
-much more, and one run still ended without a final answer.
+Quality fell by one pass: A12 lost a final, while A3 kept every pass. The
+budget moved the other way. Prefill dropped, but output tokens, nudges and
+wall rose, so A12 did not hold quality at lower cost; it spent more
+generation to send less context. The table's output-token and wall columns
+carry that cost, and the record marks wall untrusted.
 
 ## Interpretation
 
@@ -106,3 +108,13 @@ stable; generation is the expensive side.
 What would upgrade this: the same A3 and A12 arms on llama.cpp, where the KV
 cache and prefix reuse differ. That re-run is still open; until it lands,
 treat the result as a shape to recognise, not a rate to copy.
+
+### What to try next
+
+Keep the history. The cheaper lever is the prompt or the setup, not the
+model's memory: a screen that removes one prompt line or one tool fact and
+watches passes, output tokens and wall would show whether quality holds
+while generation falls. The quality risk is the pass A12 lost, so the
+screen has to keep every pass before it claims a budget win. The other open
+run is the same A3/A12 arms on llama.cpp, where the cache behaviour
+differs; that is the run that would upgrade the `cited` badge.

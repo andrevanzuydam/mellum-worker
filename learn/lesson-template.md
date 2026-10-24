@@ -68,12 +68,14 @@ a rate.
 A missing metric is `—`, never `0`. A code-only lesson may use Checks alone and
 say why there is no arm.
 
-### What the telemetry shows
+### Quality and budget
 
-Two or three sentences under the table: which suite separated, what the
-change cost in turns, context or wall, and whether the difference is larger
-than the n = 3 noise. Point at the column that carries the claim; do not
-repeat the whole table or introduce a number that is not in it.
+State them separately: which quality column moved (passes, failed checks,
+tool errors), which budget column carried the cost (turns, context, wall,
+output tokens), and whether the change bought quality by spending more or
+held quality at lower cost. Say whether the difference is larger than the
+noise. Point at the column that carries the claim; do not repeat the whole
+table or introduce a number that is not in it.
 
 ### Checks
 
@@ -87,6 +89,12 @@ A short narrative covering:
 - Which backend the evidence came from when it differs from the learner's (llama.cpp).
 - What is still open: the run that would upgrade the weakest badge, or the question the evidence cannot answer.
 - No new numbers. All data belongs in steps 1–5.
+
+### What to try next
+
+One or two changes that could improve the weaker side without giving back
+the other. For each, name the budget column it targets, the quality risk,
+and the screen or badge that would test it.
 
 ---
 

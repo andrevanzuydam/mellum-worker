@@ -217,7 +217,8 @@ test("the lesson template asks for evidence and records the conventions", () => 
   for (const text of ["Passes", "Turns", "Failed checks", "Tool errors",
     "Context", "Wall", "Output tokens"])
     assert.ok(t.includes(text), `template lacks ${text}`);
-  assert.match(t, /^### What the telemetry shows$/m);
+  assert.match(t, /^### Quality and budget$/m);
+  assert.match(t, /^### What to try next$/m);
   assert.match(t, /^### The code$/m);
   assert.ok(t.includes("```ts"), "template lacks a code sample");
   assert.match(t, /n = 1/);

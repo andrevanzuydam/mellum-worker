@@ -141,6 +141,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The lesson template now separates quality from budget in Validation and
+  asks what to try next in Interpretation: a lesson must say which passes
+  moved, which budget column paid for them, and which screen would improve
+  the weaker side. The Thinking lesson carries both analyses.
+
 - Lesson tests moved out of the shared suite into
   `tests/lesson-<slug>.test.mjs`, and the site-wide test now discovers lesson
   pages automatically, so parallel lesson branches no longer collide in
