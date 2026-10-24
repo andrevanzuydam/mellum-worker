@@ -4,6 +4,16 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Added
+
+- The flow examiner is given a general completeness rule for computed/report endpoints: seed
+  representative rows and assert the EXACT computed/grouped/sorted/filtered result, with a row
+  included AND one excluded by each filter or definition the spec states (including a definition
+  keyed off a specific column rather than the obvious field) — never accept a bare 200 or a
+  non-empty body, which a stub also returns. The schema rule now also asserts named migrations are
+  actually recorded/applied, not merely defined. These target the hard phase 6-7 hidden-oracle gap,
+  stated generally and derived from the spec, never from the hidden grader's values.
+
 ### Fixed
 
 - The flow examiner prompt was compressed (~4650 to ~2560 chars) without dropping any rule. Each

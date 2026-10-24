@@ -155,6 +155,18 @@ test("the examiner must assert stable identity for mutate-a-specific-record phas
 	assert.match(PHASES.examine.prompt, /distinct ids|DISTINCT ids/i);
 });
 
+test("the examiner must seed inputs and assert exact outputs for computed/report endpoints", () => {
+	// hard phases 6-7 passed the visible gate but failed the hidden oracle: /tickets reported wrong
+	// sums and /visits returned []. The gates accepted a 200 / empty body. A computed endpoint must
+	// be driven with seeded rows and checked against the EXACT expected result, with a row included
+	// AND one excluded by each filter/definition the spec gives, so a stub fails. General, spec-led.
+	assert.match(PHASES.examine.prompt, /seed|representative rows|given inputs/i);
+	assert.match(PHASES.examine.prompt, /exact (expected )?(result|output|value)|compute the expected/i);
+	assert.match(PHASES.examine.prompt, /included and (one )?excluded|include.*exclude|distinguishing/i);
+	// and migrations/named artifacts are asserted RECORDED/applied, not merely defined
+	assert.match(PHASES.examine.prompt, /recorded|applied/i);
+});
+
 test("the coder is pointed at the cumulative gate and told earlier phases must keep passing", () => {
 	assert.match(PHASES.code.prompt, /test_gate_phase/);
 	assert.match(PHASES.code.prompt, /earlier phase/i);
