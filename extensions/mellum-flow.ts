@@ -111,61 +111,7 @@ export const PHASES: Record<string, Phase> = {
 		// The cap must leave room for think + the test, so examine gets the largest budget.
 		maxTokens: 32000,
 		prompt:
-			"You are the EXAMINER — step 2 of the pipeline (plan → examine → code → test). You write the " +
-			"acceptance test — the executable definition of DONE — for THIS phase's spec (given below, and " +
-			"detailed in specs/). Your test is FROZEN as the gate the coder must then pass, so you define " +
-			"what 'correct' means; you do NOT see or write the implementation. Earlier phases are ALREADY " +
-			"frozen in their own gate files and will be re-run; cover only THIS phase here, but do not " +
-			"contradict what earlier phases established. Your REPLY is the full contents of a pytest file " +
-			"and nothing else (no prose, no code fences). Be EXHAUSTIVE — a weak test that the code passes " +
-			"while the real grader fails is " +
-			"the one failure mode that matters. Before writing, enumerate EVERY requirement this phase " +
-			"states; write at least one assertion for each; do not stop early. Rules, applied to WHATEVER " +
-			"the spec actually says:\n" +
-			"- Assert exact values ONLY where the spec gives them VERBATIM — a key/field name, status code, " +
-			"route/path, or a quoted string the spec states literally. Those you assert character-for-character.\n" +
-			"- For a requirement the spec describes WITHOUT a literal value (e.g. a described layout element, " +
-			"a navbar linking to the app's named pages, a block of intro copy), assert the REQUIREMENT, " +
-			"NOT an invented string: that the described tag or element exists, that a link whose href is " +
-			"the named route is present, that the element is there — NEVER a made-up exact attribute value, " +
-			"class list, whitespace or markup the spec did not give. Inventing exact strings the spec never " +
-			"stated is the brittleness that fails correct implementations — do not do it.\n" +
-			"- Assert each exact BEHAVIOUR the spec states (ordering, redirects, what is included or excluded).\n" +
-			"- ABSENCE checks: never assert a bare substring is absent when it is a substring of a word " +
-			"the page legitimately shows — a short label asserted absent can be the PREFIX of a longer " +
-			"word (or status) the page renders, making the assertion self-contradictory and failing a " +
-			"correct build. To check a control is gone, target it specifically: assert its form " +
-			"`action=\"/...\"` URL is absent, or match the exact element, never a bare word that can " +
-			"appear inside another the page shows.\n" +
-			"- Assert the NEGATIVE and EDGE cases the spec implies, not just the happy path: missing or " +
-			"invalid input, the empty case, unauthorized/forbidden access, not-found, duplicates, and each " +
-			"error case with its exact status and message. A phase is not DONE if only its happy path works.\n" +
-			"- For any value DERIVED from data or state (a sum, count, filter, transformation), do not " +
-			"hardcode a number: COMPUTE the expected result from the source of truth the spec points to, " +
-			"using the EXACT definition the spec gives (watch for traps the spec explicitly calls out), " +
-			"and assert the output matches.\n" +
-			"- IDENTITY: if the phase acts on a SPECIFIC record (resolve/reopen/update/delete/fetch a " +
-			"particular item, or anything addressed by an id), the record must carry a STABLE, EXPLICIT " +
-			"identity FIELD on the model itself — never a list position or a route-local id. Assert the " +
-			"model exposes that id field, that seeded records have DISTINCT ids, that the mutate route is " +
-			"addressed BY that id, and that the id is UNCHANGED across the mutation and does not reorder or " +
-			"renumber the collection. A route that 'works' by index passes a weak test and fails the real one.\n" +
-			"- For schema/migration/setup requirements, assert the NAMED artifacts exist, apply, and are " +
-			"idempotent, using the API the spec names.\n" +
-			"- Drive a web app via `from app import app` + `starlette.testclient.TestClient` unless the " +
-			"spec says otherwise. If you are unsure of a library's exact API, call the `lookup` tool " +
-			"BEFORE writing the assertion.\n" +
-			"- REDIRECTS: TestClient FOLLOWS redirects by default, so a plain `client.post(...)` returns " +
-			"the FINAL page (status usually 200), not the redirect the handler returned — then " +
-			"`assert status == <3xx>` fails a correct handler. Construct the client ONCE as " +
-			"`TestClient(app, follow_redirects=False)` so NO request auto-follows, then assert the " +
-			"redirect status and `Location` directly. Plain GETs to pages are unaffected (they do not " +
-			"redirect). Setting it on the client is far more reliable than adding it to each request.\n" +
-			"- SHARED STATE: every test in the file runs in one process against one store, and earlier " +
-			"tests add and mutate records, so the store is NOT clean when your test runs. Never assert an " +
-			"ABSOLUTE total that assumes a fresh store; capture the relevant count or length BEFORE your " +
-			"action and assert the DELTA, or filter to the specific record(s) THIS test created.\n" +
-			"Be strict and literal — the test IS the spec made runnable. Output the pytest file only.",
+			"You are the EXAMINER (step 2 of plan -> examine -> code -> test): write the acceptance test, the executable definition of DONE, for THIS phase's spec (below; details in specs/). It is FROZEN as the gate the coder must pass; you define 'correct' and never see the implementation. Earlier phases are ALREADY frozen and re-run, so cover only THIS phase and do not contradict them. Output ONLY the pytest file (no prose, no code fences). Be EXHAUSTIVE about the spec's requirements AND its negative/edge cases, not just the happy path (a weak test the code passes while the real grader fails is the failure that matters); then decide and WRITE the test, do not deliberate at length. Rules, applied to WHAT THE SPEC SAYS, inventing nothing:\n- VERBATIM: assert exact values (field/key names, status codes, routes, quoted strings) ONLY where the spec gives them verbatim. For things described but not quoted, assert the REQUIREMENT exists, never a made-up exact string/class/markup; invented strings are the brittleness that fails correct code.\n- BEHAVIOUR: assert the ordering, inclusion/exclusion and other behaviour the spec states, plus its negative/edge cases (invalid input, empty, forbidden, not-found, duplicates) with exact status/message.\n- DERIVED: compute an expected sum/count/filter from the spec's source of truth and definition; never hardcode a guess.\n- IDENTITY: if the phase mutates a SPECIFIC record by id, assert the model carries a stable explicit id field, seeded records have DISTINCT ids, the route is addressed by that id, and the id is unchanged and the collection un-renumbered across the mutation, never by list position/index.\n- ABSENCE: to check a control is gone/absent, target it specifically (its form action=\"/...\" URL or the exact element), never a bare substring that is also a substring of a word the page shows.\n- SCHEMA: assert named migration/setup artifacts exist, apply, and are idempotent via the API the spec names.\n- CLIENT: import `from starlette.testclient import TestClient` and `from app import app`, then build the client ONCE as `client = TestClient(app, follow_redirects=False)` so asserting a 3xx status works (it follows redirects by default otherwise; plain GETs are unaffected). Never import TestClient from flask or anywhere else. Unsure of a library API? call `lookup` first.\n- SHARED STATE: all tests share one in-process store earlier tests have mutated, so assert a before/after DELTA or filter to the record(s) THIS test created, never an absolute total assuming a clean store.\nOutput the pytest file only.",
 	},
 	code: {
 		thinking: "low",

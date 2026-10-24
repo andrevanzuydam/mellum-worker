@@ -6,6 +6,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- The flow examiner prompt was compressed (~4650 to ~2560 chars) without dropping any rule. Each
+  anti-brittleness rule added earlier had lengthened it, and because this thinking model's reasoning
+  cannot be capped, the longer prompt made it over-reason and emit NOTHING even at 32000 tokens on
+  the harder phases (hard phase 4's gate stopped freezing). Measured: with the leaner prompt the
+  phase-5 examine finishes thinking and emits a valid 7-test file that compiles. The rewrite also
+  re-states, tightly, that the client is imported from `starlette.testclient` (a first compression
+  pass dropped that and the model guessed `flask.testing`).
 - The flow examiner is now told to disable redirect-following ONCE on the test client
   (`TestClient(app, follow_redirects=False)`) rather than per request. The per-request rule kept
   slipping — the examiner applied it to some POSTs but forgot it on a setup POST and then asserted a
