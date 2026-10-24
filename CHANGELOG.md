@@ -43,6 +43,11 @@ Versions match git tags; pin one in both install lines.
   pinned tool versions the lessons need on macOS, Linux and Windows, and a `troubleshoot.md` for
   the install and backend failures met while checking the track on each platform.
   `scripts/backend.py` was reworked alongside so it starts and stops the server on all three.
+- `flow_run.py` can resume a run partway through: `--start-phase N --seed-from <a prior run's
+  workspace>` seeds the built app and the frozen per-phase gates (`plan/gate/phase_1..N-1.py`) from
+  that earlier run and runs only phases N..end. This makes iterating on a late phase cheap — no need
+  to re-run the earlier phases each time. It validates that every earlier gate exists in the seed,
+  and does not copy the seed's venv or traces (the venv is recreated by `uv sync`).
 
 - The flow examiner is given a general completeness rule for computed/report endpoints: seed
   representative rows and assert the EXACT computed/grouped/sorted/filtered result, with a row

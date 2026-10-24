@@ -2,6 +2,8 @@ import signal
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import flow_run
 
@@ -55,6 +57,56 @@ def test_phase_gate_ok_requires_a_real_frozen_test_for_this_phase(tmp_path):
     assert flow_run.phase_gate_ok(tmp_path, 3) is False          # phase 1 frozen, but not phase 3
     _freeze(tmp_path, 3, "def test_add():\n    assert 1\n")
     assert flow_run.phase_gate_ok(tmp_path, 3) is True           # phase 3 now has a real test
+
+
+def test_seeded_done_lists_the_phases_before_start(tmp_path):
+    # resuming at phase N treats phases 1..N-1 as already built — their titles seed `done` so the
+    # forward-context message lists them as implemented and passing.
+    titles = ["Home", "Board", "Add", "Resolve", "Archive"]
+    assert flow_run.seeded_done(titles, 1) == []
+    assert flow_run.seeded_done(titles, 5) == ["Home", "Board", "Add", "Resolve"]
+    assert flow_run.seeded_done(titles, 99) == titles  # clamped by the slice
+
+
+def _mk_seed(seed: Path, gates: range):
+    (seed / "plan" / "gate").mkdir(parents=True)
+    (seed / "templates").mkdir()
+    (seed / ".venv" / "bin").mkdir(parents=True)
+    (seed / "app.py").write_text("app = 1\n")
+    (seed / "models.py").write_text("complaints = []\n")
+    (seed / "data.db").write_bytes(b"\x00seed")
+    (seed / ".venv" / "bin" / "python").write_text("#!/stale/path\n")  # must NOT be copied
+    (seed / "trace-p1-0.jsonl").write_text("{}\n")  # trace must NOT be copied
+    for n in gates:
+        (seed / "plan" / "gate" / f"phase_{n}.py").write_text(f"def test_p{n}():\n    assert 1\n")
+
+
+def test_seed_from_bundle_copies_app_and_gates_but_not_venv_or_traces(tmp_path):
+    seed = tmp_path / "seed"
+    _mk_seed(seed, range(1, 5))  # phases 1-4 frozen
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    flow_run.seed_from_bundle(seed, ws, 5)  # resume at phase 5
+    assert (ws / "app.py").read_text() == "app = 1\n"
+    assert (ws / "models.py").is_file() and (ws / "data.db").is_file()
+    assert (ws / "plan" / "gate" / "phase_1.py").is_file()
+    assert (ws / "plan" / "gate" / "phase_4.py").is_file()
+    assert not (ws / ".venv").exists()          # stale venv excluded
+    assert not (ws / "trace-p1-0.jsonl").exists()  # traces excluded
+
+
+def test_seed_from_bundle_requires_every_earlier_gate(tmp_path):
+    seed = tmp_path / "seed"
+    _mk_seed(seed, range(1, 3))  # only phases 1-2 frozen
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    with pytest.raises(FileNotFoundError, match=r"phase\(s\) \[3, 4\]"):
+        flow_run.seed_from_bundle(seed, ws, 5)  # needs 1-4, 3 and 4 missing
+
+
+def test_seed_from_bundle_missing_seed_dir_raises(tmp_path):
+    with pytest.raises(FileNotFoundError, match="not found"):
+        flow_run.seed_from_bundle(tmp_path / "nope", tmp_path / "ws", 2)
 
 
 def test_phase_gate_ok_rejects_html_and_testless_files(tmp_path):

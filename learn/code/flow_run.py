@@ -282,15 +282,45 @@ def temp_ladder(n: int) -> list[float]:
     return [round(0.3 + 0.9 * i / (n - 1), 2) for i in range(n)]
 
 
+def seeded_done(titles: list[str], start_phase: int) -> list[str]:
+    """When resuming at `start_phase`, the earlier phases are assumed already built and passing.
+    Their titles seed the `done` list so the forward-context message lists them as implemented."""
+    return list(titles[: max(0, start_phase - 1)])
+
+
+def seed_from_bundle(seed: Path, workspace: Path, start_phase: int) -> None:
+    """Resume at phase `start_phase` by seeding `workspace` from a PRIOR run's `seed` workspace:
+    its built app (app.py, models.py, templates/, tests/, data.db, pyproject/uv.lock) and the
+    frozen per-phase gates under plan/gate/. The gates for phases 1..start_phase-1 MUST exist in
+    the seed — scoring phase N re-runs the whole cumulative gate. The venv, caches and traces are
+    NOT copied (a copied .venv carries stale absolute paths); `uv sync` recreates the venv."""
+    if not seed.is_dir():
+        raise FileNotFoundError(f"--seed-from workspace not found: {seed}")
+    missing = [n for n in range(1, start_phase)
+               if not (seed / "plan" / "gate" / f"phase_{n}.py").is_file()]
+    if missing:
+        raise FileNotFoundError(
+            f"seed {seed} has no frozen gate for phase(s) {missing}; cannot resume at phase {start_phase}")
+    shutil.copytree(seed, workspace, dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns(".venv", "__pycache__", "*.pyc",
+                                                  "trace*.jsonl", "*.subfeed", "node_modules"))
+
+
 def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, model_id: str,
-         thinking: str, attempts: int, concurrency: int) -> dict:
+         thinking: str, attempts: int, concurrency: int,
+         start_phase: int = 1, seed_from: Path | None = None) -> dict:
     suite = harness.load_suite(harness.SUITES, suite_name)
     run = harness.new_run(runs_dir, f"flow-{suite_name}")
     workspace = run / "workspace"
     workspace.mkdir()
     lr._FEED_PATH = run / "feed.log"
     started = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    if suite.root is not None and (suite.root / "base").is_dir():
+    if start_phase > 1:
+        if seed_from is None:
+            raise ValueError("--start-phase > 1 requires --seed-from <a prior run's workspace>")
+        seed_from_bundle(seed_from, workspace, start_phase)
+        lr.emit(f"  resuming at phase {start_phase}, seeded from {seed_from}")
+    elif suite.root is not None and (suite.root / "base").is_dir():
         shutil.copytree(suite.root / "base", workspace, dirs_exist_ok=True)
     shutil.copytree(harness.PROFILE, run / "profile")
     lr.pin_profile(run / "profile", base_url, model_id)
@@ -353,9 +383,11 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
 
     passed = False
     phase_results: list[bool] = []
-    done: list[str] = []
+    done: list[str] = seeded_done(titles, start_phase)  # earlier phases came from the seed
     for pnum, ptext in enumerate(phases, start=1):
         title = titles[pnum - 1]
+        if pnum < start_phase:
+            continue  # already built and frozen in the seeded workspace
         if pnum == 1:
             base_msg = (f"NORTH STAR: {north_star}\n\n"
                         f"YOUR TASK — phase 1 of {len(phases)}:\n\n{ptext}")
@@ -442,11 +474,17 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--runs-dir", type=Path, default=harness.RUNS / "flow")
     p.add_argument("--base-url", default="http://127.0.0.1:8001/v1")
     p.add_argument("--model", default="Mellum2.1-12B-A2.5B-Thinking-6bit")
+    p.add_argument("--start-phase", type=int, default=1,
+                   help="resume at this 1-indexed phase; phases before it are taken from --seed-from")
+    p.add_argument("--seed-from", type=Path, default=None,
+                   help="a prior run's workspace to seed the built app and earlier frozen gates from "
+                        "(required when --start-phase > 1)")
     args = p.parse_args(argv)
     for name in args.suite.split(","):
         loop(name.strip(), runs_dir=args.runs_dir, timeout=args.timeout,
              base_url=args.base_url, model_id=args.model, thinking=args.thinking,
-             attempts=args.attempts, concurrency=args.concurrency)
+             attempts=args.attempts, concurrency=args.concurrency,
+             start_phase=args.start_phase, seed_from=args.seed_from)
     return 0
 
 
