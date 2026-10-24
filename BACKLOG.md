@@ -196,6 +196,8 @@ arm can differ by one value ([spec](docs/superpowers/specs/2026-10-20-learning-c
 §12). *Reopens when* LC.3's harness can run a rung fixture twice with one
 parameter changed.
 
+**PR #1 prompt and guard extraction.** The prompt v6–v11 triage is recorded: v6 is a null arm, v7–v9/v11 are ladder evidence, and v10’s foreground-server guard is dormant in draft PR #7; workspace confinement is draft PR #6. No guard is enabled and Baseline Worker is unchanged. Prospective Lessons #20–#22 are index entries only, not phases. The source map is the decision ledger. *Reopens when* Getting Started is closed and a screen repeats a foreground-server or outside-workspace hang, or a prompt version has a suite-shaped arm worth measuring; enabling a guard needs a baseline v2 and re-baseline. [prompt triage](docs/superpowers/research/2026-10-24-prompt-v8-v11-triage.md), [PR #1 digest](docs/superpowers/research/2026-10-24-pr1-digest.md), [source map](docs/superpowers/research/2026-10-24-andre-lessons-map.md).
+
 **Pathologies page.** A reference in `learn/` of the ways small models fail:
 announce-and-stop, false success, test-command thrash, a bent project, long
 runs, servers, settings drift, empty finals, loops, writing outside the

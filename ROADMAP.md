@@ -10,7 +10,7 @@ One phase at a time; tangents go to the backlog, never into the current phase.
 **Shipped:** v0.1.8 (2026-10-13): A21 measured the README's lighter `## Mellum` section; see [`CHANGELOG.md`](CHANGELOG.md).
 **Next:** INT.2, the Flow/examine candidate, after LC.11B. LC.12 waits behind it.
 **After:** LC.12, LC.7A (Pathologies), then LC.13–LC.19. The M series is closed ([archive](ROADMAP-M.md)) and its last two phases are backlogged.
-**Parked:** OpenCode, Ollama, execution bounds, versioned assessments, the mediated test and one worker are [backlog entries](BACKLOG.md) with reopen conditions.
+**Parked:** OpenCode, Ollama, execution bounds, versioned assessments, the mediated test, one worker and the PR #1 prompt/guard extraction are [backlog entries](BACKLOG.md) with reopen conditions.
 
 ## Phases
 
