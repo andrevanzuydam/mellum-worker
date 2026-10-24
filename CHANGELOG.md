@@ -49,8 +49,10 @@ Versions match git tags; pin one in both install lines.
   (goalposts, the mediated test, v9, mediation as a completeness gate, rungs
   10–12, context, rethink, documents and images, live control, next-concept
   verify), each badged, with support items listed separately.
-- The Lessons index is one recommended list of twenty-two, each with a one-line
-  description and an italic author tag, *(Paul)* or *(Andre)*.
+- The Lessons index is one recommended list of twenty-three, each with a one-line
+  description and an italic author tag, *(Paul)* or *(Andre)*. It now includes
+  the missing "Guards for empty turns and loops" lesson, and says which entries
+  are scheduled and which are deferred candidates.
 - A GitHub Actions workflow builds the Zensical site on pull requests and
   deploys it to Pages from `main`.
 

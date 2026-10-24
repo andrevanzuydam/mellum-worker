@@ -200,9 +200,9 @@ test("the baseline shows the actual worker code", () => {
 test("the Lessons index is grouped without Basic Remedies", () => {
   const index = page("lessons/index.md");
   const items = index.match(/^\d+\. \*\*/gm) ?? [];
-  assert.equal(items.length, 22);
+  assert.equal(items.length, 23);
   assert.match(index, /\*\((Paul|Andre)\)\*$/m);
-  assert.equal((index.match(/\*\(Paul\)\*/g) ?? []).length, 10);
+  assert.equal((index.match(/\*\(Paul\)\*/g) ?? []).length, 11);
   assert.equal((index.match(/\*\(Andre\)\*/g) ?? []).length, 13);
   for (const text of ["Start here", "Prompt and project"])
     assert.ok(index.includes(text), `index lacks ${text}`);

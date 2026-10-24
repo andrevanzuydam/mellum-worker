@@ -1,11 +1,11 @@
 # Lessons
 
 Every findings lesson in one place: Paul's from the mellum-worker phases and
-ablations, Andre's from his pull requests. Each is one idea, follows the six
-steps, and is its own phase. Most are independent: each lists its
+ablations, Andre's from his pull requests. Each is one idea and follows the six
+steps. Scheduled lessons are their own phase; the deferred entries are
+candidates until their stated gate. Most are independent: each lists its
 prerequisites, [Getting started](../getting-started/index.md) is the only one
-unless a lesson says otherwise, and you can read them in any order. The Basic
-Remedies lessons share a control and are read as a module.
+unless a lesson says otherwise, and you can read them in any order.
 
 The order below is a recommendation, not a dependency chain: what the ditch
 teaches first, then the remedies, then the shapes. The author is in italics
@@ -34,21 +34,22 @@ what it rests on now.
 ## Loop and handoff
 
 10. **Thinking is working memory** — Stripping earlier thinking cuts prefill 57% and makes the run slower. *(Paul)*
-11. **Who holds the loop** — Worker, Mode and a delegated child pass alike and cost differently. *(Paul)*
-12. **A prose brief stops at its first reply** — The same brief as one prompt loses four passes; as steps it costs 2.4× the time. *(Paul)*
-13. **The intercom block is a prefill tax** — Off: the child prompt halves and prefill drops 20%, with the same passes. *(Paul)*
+11. **Guards for empty turns and loops** — The empty-final nudge and the loop breaker take a 13/15 arm to 15/15. *(Paul)*
+12. **Who holds the loop** — Worker, Mode and a delegated child pass alike and cost differently. *(Paul)*
+13. **A prose brief stops at its first reply** — The same brief as one prompt loses four passes; as steps it costs 2.4× the time. *(Paul)*
+14. **The intercom block is a prefill tax** — Off: the child prompt halves and prefill drops 20%, with the same passes. *(Paul)*
 
 ## Context and inputs
 
-14. **Rungs 10–12: what the hard gates catch** — An archive decoy, a trap row and an overflowing file separate capability from completeness. *(Andre)*
-15. **Context search for large code** — Index and search the few relevant lines instead of loading whole files. *(Andre)*
-16. **Skeptical rethink** — Check a human's checkable claim before encoding the premise. *(Andre)*
-17. **Documents and images as inputs** — Read the PDF, the spreadsheet or the screenshot the file tools cannot. *(Andre)*
-18. **Live control and replay** — Watch the turns, edit the prompt, replay a bad one, pause at a boundary. *(Andre)*
-19. **Next-concept verify** — Re-dispatch on the failing test functions, not the whole file. *(Andre)*
+15. **Rungs 10–12: what the hard gates catch** — An archive decoy, a trap row and an overflowing file separate capability from completeness. *(Andre)*
+16. **Context search for large code** — Index and search the few relevant lines instead of loading whole files. *(Andre)*
+17. **Skeptical rethink** — Check a human's checkable claim before encoding the premise. *(Andre)*
+18. **Documents and images as inputs** — Read the PDF, the spreadsheet or the screenshot the file tools cannot. *(Andre)*
+19. **Live control and replay** — Watch the turns, edit the prompt, replay a bad one, pause at a boundary. *(Andre)*
+20. **Next-concept verify** — Re-dispatch on the failing test functions, not the whole file. *(Andre)*
 
 ## Pathologies
 
-20. **The runaway search** — A recursive search that leaves the workspace can hang the whole run; the guard is proposed on branch `lc11b-confinement` ([code](https://github.com/pauleveritt/mellum-worker/blob/176922f05702d6f8e87a9b2570ed6fe9807db733/extensions/mellum-guards.ts#L145-L185), [tests](https://github.com/pauleveritt/mellum-worker/blob/176922f05702d6f8e87a9b2570ed6fe9807db733/tests/mellum-guards.test.mjs#L13-L40)). *(Andre)*
-21. **The server that never returns** — It started `uvicorn` in the foreground and burned the deadline; exercise the endpoint in process, or detach it and keep the pid ([guard](https://github.com/pauleveritt/mellum-worker/blob/420ba1d/extensions/mellum-guards.ts), [prompt v10](https://github.com/pauleveritt/mellum-worker/blob/4666612/prompts/mellum-worker.md)). *(Andre)*
-22. **The rule it knew and skipped** — It read the rule, then left the field `None` in one run of three; a clause-by-clause check against the spec closed it ([prompt v11](https://github.com/pauleveritt/mellum-worker/blob/da04888/prompts/mellum-worker.md)). *(Andre)*
+21. **The runaway search** — A recursive search that leaves the workspace can hang the whole run; the guard is proposed on branch `lc11b-confinement` ([code](https://github.com/pauleveritt/mellum-worker/blob/176922f05702d6f8e87a9b2570ed6fe9807db733/extensions/mellum-guards.ts#L145-L185), [tests](https://github.com/pauleveritt/mellum-worker/blob/176922f05702d6f8e87a9b2570ed6fe9807db733/tests/mellum-guards.test.mjs#L13-L40)). *(Andre)*
+22. **The server that never returns** — It started `uvicorn` in the foreground and burned the deadline; exercise the endpoint in process, or detach it and keep the pid ([guard](https://github.com/pauleveritt/mellum-worker/blob/420ba1d/extensions/mellum-guards.ts), [prompt v10](https://github.com/pauleveritt/mellum-worker/blob/4666612/prompts/mellum-worker.md)). *(Andre)*
+23. **The rule it knew and skipped** — It read the rule, then left the field `None` in one run of three; a clause-by-clause check against the spec closed it ([prompt v11](https://github.com/pauleveritt/mellum-worker/blob/da04888/prompts/mellum-worker.md)). *(Andre)*
