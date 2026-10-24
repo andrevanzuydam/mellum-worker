@@ -336,7 +336,13 @@ export function asTodo(reply: string): string {
 export function asCode(reply: string): string {
 	const py = reply.match(/```python\s*\n([\s\S]*?)```/i);
 	const any = reply.match(/```[a-z]*\s*\n([\s\S]*?)```/i);
-	return (py ? py[1] : any ? any[1] : reply).trim() + "\n";
+	const picked = py ? py[1] : any ? any[1] : reply;
+	// Safety net: a model can emit a dangling fence (a trailing ``` with no opening, or an opening
+	// ```python with no close), which neither regex above pairs, so the raw fence lands in the
+	// frozen Python gate and `phase_gate_ok`'s compile() rejects a correct gate — the phase then
+	// loops forever. Strip any line that is a lone fence marker; real Python never has one.
+	const cleaned = picked.replace(/^[ \t]*```[a-z]*[ \t]*$\n?/gim, "");
+	return cleaned.trim() + "\n";
 }
 
 /** Is this reply actually a pytest file? It must define a test, and must not be HTML/template

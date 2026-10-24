@@ -6,6 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- A dangling markdown fence in the examiner's reply (a trailing ` ``` ` with no opening fence, or
+  an opening ` ```python ` with no close) survived into the frozen Python gate, so
+  `phase_gate_ok`'s `compile()` rejected an otherwise-correct gate and the phase looped to
+  exhaustion. The hard suite's "Resolve and Reopen" phase died this way — a lone fence on the gate's
+  last line. `asCode` now strips any lone fence line as a safety net, so a fence can never reach the
+  gate file.
 - The flow examiner wrote redirect acceptance tests that a correct handler could never pass:
   `starlette`'s `TestClient` follows redirects by default, so a plain `client.post(...)` returns
   the final `200` page and `assert status_code == 303` fails a correct `303` handler. The medium

@@ -131,6 +131,17 @@ test("asCode extracts a fenced python block, else returns the raw text", () => {
 	assert.equal(asCode("def test():\n    assert True"), "def test():\n    assert True\n");
 });
 
+test("asCode strips a dangling fence with no matching pair (the hard phase-4 gate SyntaxError)", () => {
+	// hard phase 4 looped forever: the examiner emitted raw python then a trailing ``` with NO
+	// opening fence, so neither block regex matched and asCode returned it verbatim. The frozen
+	// gate ended on a lone ``` → SyntaxError → phase_gate_ok rejected a CORRECT gate and the phase
+	// could never pass. A lone fence line must never survive into the Python gate.
+	assert.equal(asCode("def test_x():\n    assert 1\n```"), "def test_x():\n    assert 1\n");
+	assert.equal(asCode("```python\ndef test_y():\n    assert 1"), "def test_y():\n    assert 1\n");
+	// and a fence line in the middle of otherwise-raw output is stripped, not left to break compile
+	assert.equal(asCode("import os\n```\ndef test_z():\n    assert 1"), "import os\ndef test_z():\n    assert 1\n");
+});
+
 test("asCode prefers a python block over an HTML block that appears first", () => {
 	const reply = "```html\n<div>complaints</div>\n```\nand the test:\n```python\ndef test_x():\n    assert 1\n```";
 	assert.equal(asCode(reply), "def test_x():\n    assert 1\n");
