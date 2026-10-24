@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Recover the small, useful parts of PR #1 into focused changes based on current `main`, then close PR #1 without merging its stale documentation or conflicting branch.
+**Goal:** Recover the small, useful parts of PR #1 into focused changes based on current `main`, then comment the digest on PR #1 and leave it open without merging its stale documentation or conflicting branch.
 
 **Architecture:** Treat PR #1 as a source of patches, not a branch to merge. Land harness fixes first, decide the guard and prompt changes separately, extract Flow/examine into its own design, and keep the current Getting Started docs.
 
@@ -92,12 +92,12 @@ Run `uvx pytest learn/code/tests -q --ignore=learn/code/tests/fixtures`.
 - [ ] **Step 4: Run one hard flow with visible and hidden results.**
 - [ ] **Step 5: Write the Flow spec/plan before any package or Getting Started change.**
 
-### Task 5: Close PR #1
+### Task 5: Comment on PR #1
 
 **Files:**
 - Update: `ROADMAP.md`, `CHANGELOG.md`, PR comment.
 
 - [ ] **Step 1: List the replacement commits/PRs for each accepted part.**
 - [ ] **Step 2: Comment on PR #1 with the split and archive links.**
-- [ ] **Step 3: Close PR #1; do not merge it.**
+- [ ] **Step 3: Leave PR #1 open; do not close or merge it.**
 - [ ] **Step 4: Update LC.11B with the result and move the next work to Flow/examine or LC.12.**
