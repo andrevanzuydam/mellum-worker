@@ -223,6 +223,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- Getting Started now has continuous lesson-1 steps 1–7, including
+  `complexipy` in the tool fetch; the troubleshooting page is in the nav and
+  no longer has a self-prerequisite; the home page links the Introduction and
+  says five lessons; and the ditch drops its author notes while explaining why
+  its recorded run is Python.
+
 - The Lessons sidebar now lists the two completed findings lessons instead of
   only the index; a test requires every published lesson page to be in the
   nav.

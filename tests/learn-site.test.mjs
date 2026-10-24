@@ -15,6 +15,7 @@ const PAGES = [
   "credits.md",
   "getting-started/index.md",
   "getting-started/base-pi-on-llamacpp.md",
+  "getting-started/troubleshoot.md",
   "getting-started/ditch.md",
   "getting-started/harness.md",
   "getting-started/suite.md",
@@ -83,6 +84,35 @@ test("the lesson template has the six steps in order, badges on 1-5", () => {
   const sections = t.split(/^## /m).slice(1);
   sections.forEach((s, i) =>
     assert.equal(/\*\*Badge:\*\*/.test(s), i < 5, `step ${i + 1} badge`));
+});
+
+test("lesson 1 numbers every step and fetches every grader", () => {
+  const l = page("getting-started/base-pi-on-llamacpp.md");
+  const numbers = [...l.matchAll(/^## (\d+)\./gm)].map((m) => Number(m[1]));
+  assert.deepEqual(numbers, [1, 2, 3, 4, 5, 6, 7]);
+  assert.match(l, /^## 3\. Fetch the tools/m);
+  assert.match(l, /uvx complexipy --version/);
+  assert.doesNotMatch(l, /PowerShell profile line in\s+step 7/);
+});
+
+test("troubleshooting is a standalone Getting Started page", () => {
+  const t = page("getting-started/troubleshoot.md");
+  assert.match(t, /^track: getting-started$/m);
+  assert.match(t, /^prerequisites: \[\]$/m);
+});
+
+test("the home page links the Introduction and counts five lessons", () => {
+  const index = page("index.md");
+  assert.match(index, /\[Introduction\]\(introduction\/index\.md\) — Demystifying/);
+  assert.match(index, /five lessons/);
+  assert.doesNotMatch(index, /three lessons/);
+});
+
+test("the ditch drops author notes and states why it checked Python", () => {
+  const l = page("getting-started/ditch.md");
+  assert.doesNotMatch(l, /^music:/m);
+  assert.doesNotMatch(l, /^notes:/m);
+  assert.match(l, /model chose Python|chose Python in this run/);
 });
 
 test("lesson 1 walks from uv to a base-Pi answer", () => {

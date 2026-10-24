@@ -5,11 +5,6 @@ position: 2
 prerequisites: [getting-started/base-pi-on-llamacpp]
 authors: [Paul Everitt, Andre van Zuydam]
 backends: [llamacpp]
-music: [fastball - the way, cat stevens - father and son, bob dylan - the times they are a changin']
-notes:
-  - Paul On my computer Pi decided that PHP was the language it should use to build the solutions - should we force python?
-  - Perhaps split out windows / linux/ mac
-  - It will be nice to have the commands ready to run - or do we start up an interactive Pi session instead of just running command by command
 ---
 
 # The Ditch
@@ -29,6 +24,11 @@ One session, these three prompts in order:
 3. `Add a command-line tool that lists a doctor's appointments for a given date`
 
 Drive it however you like, as long as it is one session. The session keeps track of the context for the build.
+
+The model chose Python in this run, and the checks below are Python. The
+language is not part of the prompt: if your run chooses another language,
+check its own test command and CLI, or append `Use Python.` to the first
+prompt for a comparable run.
 
 From the repo run  the following command/s:
 

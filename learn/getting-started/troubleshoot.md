@@ -1,8 +1,7 @@
 ---
-title: Trouble Shooting
+title: Troubleshooting
 track: getting-started
-position: 3
-prerequisites: [getting-started/troubleshoot]
+prerequisites: []
 authors: [Andre van Zuydam]
 backends: []
 ---

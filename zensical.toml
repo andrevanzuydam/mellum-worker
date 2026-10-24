@@ -11,7 +11,8 @@ nav = [
   { "Introduction" = "introduction/index.md" },
   { "Getting started" = ["getting-started/index.md", "getting-started/base-pi-on-llamacpp.md", "getting-started/ditch.md",
     "getting-started/harness.md",
-    "getting-started/suite.md", "getting-started/worker-extension.md"] },
+    "getting-started/suite.md", "getting-started/worker-extension.md",
+    "getting-started/troubleshoot.md"] },
   { "Lessons" = ["lessons/index.md", "lessons/baseline.md",
     "lessons/primary-agent.md", "lessons/short-prompt.md"] },
   { "About" = [
