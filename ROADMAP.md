@@ -8,8 +8,8 @@ One phase at a time; tangents go to the backlog, never into the current phase.
 
 **Active:** LC.11B, recovering the useful parts of PR #1 into focused changes; the harness fixes come first. LC.11A is closed. LC.5 waits on Andre.
 **Shipped:** v0.1.8 (2026-10-13): A21 measured the README's lighter `## Mellum` section; see [`CHANGELOG.md`](CHANGELOG.md).
-**Next:** LC.12, "Thinking is working memory", in the [LC phases](#learning-center-lc).
-**After:** LC.7A (Pathologies), then LC.13–LC.19. The M series is closed ([archive](ROADMAP-M.md)) and its last two phases are backlogged.
+**Next:** INT.2, the Flow/examine candidate, after LC.11B. LC.12 waits behind it.
+**After:** LC.12, LC.7A (Pathologies), then LC.13–LC.19. The M series is closed ([archive](ROADMAP-M.md)) and its last two phases are backlogged.
 **Parked:** OpenCode, Ollama, execution bounds, versioned assessments, the mediated test and one worker are [backlog entries](BACKLOG.md) with reopen conditions.
 
 ## Phases
@@ -57,6 +57,16 @@ authority.
 Each findings lesson is its own phase and cycle, numbered in track order from
 LC.10: one page, one plan, one badge set, one close. LC.4 and LC.5 write the
 digest or index and add those rows; neither writes a lesson.
+
+### Intermediate (INT)
+
+A workflow or baseline built after Getting Started. It is not a finding and it
+is not a Basic Remedy.
+
+| Phase | Ships | Excludes | Status |
+| --- | --- | --- | --- |
+| **INT.1** | Baseline Worker v2: the current Baseline Worker plus the workspace-confinement guard, then a fresh baseline. | Changing the worker without a pathological screen and a re-baseline; shipping a guard as a pass-rate claim. | candidate — guard is draft PR #6; [candidate review](docs/superpowers/research/2026-10-24-intermediate-candidates.md#int1--baseline-worker-v2). |
+| **INT.2** | Flow/examine: top orchestrator, examiner, frozen cumulative phase gates and hidden-grader final. A separate architecture and baseline. | Merging PR #1; the optional extensions; a lesson or Getting Started page before a hidden pass. | candidate — [triage](docs/superpowers/research/2026-10-24-flow-triage.md); needs spec and one hard llama.cpp run. |
 
 ## Gates
 
