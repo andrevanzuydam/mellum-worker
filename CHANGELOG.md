@@ -6,6 +6,14 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- The flow examiner is taught two more general testing-discipline rules, after a correct
+  implementation failed brittle gates: (1) every request whose redirect is asserted needs
+  `follow_redirects=False` (the examiner had applied it to some POSTs but not others, so TestClient
+  followed the redirect and a correct handler failed), and (2) assert RELATIVE deltas, not absolute
+  totals, because the tests share one in-memory store that earlier tests have already mutated. Both
+  rules are stated generally, with no suite-specific routes, fields or values — the examiner still
+  derives every assertion from the spec. The examiner prompt's remaining illustrative examples were
+  scrubbed of suite-specific names for the same reason.
 - The flow examiner is a thinking model whose reasoning cannot be capped, and on a complex phase it
   needs more than 16384 tokens just to finish thinking — so at that cap it emitted an EMPTY test
   (`finish_reason=length`, no content) and no gate froze. The hard "Archive & Audit" phase stalled

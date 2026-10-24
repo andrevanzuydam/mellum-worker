@@ -124,18 +124,19 @@ export const PHASES: Record<string, Phase> = {
 			"the spec actually says:\n" +
 			"- Assert exact values ONLY where the spec gives them VERBATIM — a key/field name, status code, " +
 			"route/path, or a quoted string the spec states literally. Those you assert character-for-character.\n" +
-			"- For a requirement the spec describes WITHOUT a literal value (e.g. 'a responsive viewport', " +
-			"'a navbar with links to Home and Complaints', 'a welcoming paragraph'), assert the REQUIREMENT, " +
-			"NOT an invented string: that a `<meta name=\"viewport\">` tag exists, that a link whose href is " +
+			"- For a requirement the spec describes WITHOUT a literal value (e.g. a described layout element, " +
+			"a navbar linking to the app's named pages, a block of intro copy), assert the REQUIREMENT, " +
+			"NOT an invented string: that the described tag or element exists, that a link whose href is " +
 			"the named route is present, that the element is there — NEVER a made-up exact attribute value, " +
 			"class list, whitespace or markup the spec did not give. Inventing exact strings the spec never " +
 			"stated is the brittleness that fails correct implementations — do not do it.\n" +
 			"- Assert each exact BEHAVIOUR the spec states (ordering, redirects, what is included or excluded).\n" +
 			"- ABSENCE checks: never assert a bare substring is absent when it is a substring of a word " +
-			"the page legitimately shows — `assert \"Resolve\" not in html` is self-contradictory when " +
-			"the status \"Resolved\" is present (\"Resolve\" is inside \"Resolved\"). To check an action is " +
-			"gone, target the specific control: assert its form `action=\"/...\"` URL is absent, or match " +
-			"the exact button, never a prefix of another word on the page.\n" +
+			"the page legitimately shows — a short label asserted absent can be the PREFIX of a longer " +
+			"word (or status) the page renders, making the assertion self-contradictory and failing a " +
+			"correct build. To check a control is gone, target it specifically: assert its form " +
+			"`action=\"/...\"` URL is absent, or match the exact element, never a bare word that can " +
+			"appear inside another the page shows.\n" +
 			"- Assert the NEGATIVE and EDGE cases the spec implies, not just the happy path: missing or " +
 			"invalid input, the empty case, unauthorized/forbidden access, not-found, duplicates, and each " +
 			"error case with its exact status and message. A phase is not DONE if only its happy path works.\n" +
@@ -155,9 +156,14 @@ export const PHASES: Record<string, Phase> = {
 			"spec says otherwise. If you are unsure of a library's exact API, call the `lookup` tool " +
 			"BEFORE writing the assertion.\n" +
 			"- REDIRECTS: TestClient follows redirects by default, so a plain `client.post(...)` returns " +
-			"the FINAL 200 page, not the 3xx — asserting `status_code == 303` on it fails a CORRECT " +
-			"handler. To assert a redirect, pass `follow_redirects=False` to that request, THEN assert the " +
-			"status (e.g. 303) and the `Location` header. Only disable it on the redirecting request itself.\n" +
+			"the FINAL page (its status, usually 200), not the redirect the handler returned. Whenever " +
+			"the spec says a request redirects, pass `follow_redirects=False` to THAT request before you " +
+			"assert its status or `Location` — on EVERY request whose redirect you assert, not just some. " +
+			"(A request used only as setup, whose response you do not assert, may follow the redirect.)\n" +
+			"- SHARED STATE: every test in the file runs in one process against one store, and earlier " +
+			"tests add and mutate records, so the store is NOT clean when your test runs. Never assert an " +
+			"ABSOLUTE total that assumes a fresh store; capture the relevant count or length BEFORE your " +
+			"action and assert the DELTA, or filter to the specific record(s) THIS test created.\n" +
 			"Be strict and literal — the test IS the spec made runnable. Output the pytest file only.",
 	},
 	code: {

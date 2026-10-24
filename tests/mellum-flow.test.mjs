@@ -119,6 +119,23 @@ test("the examiner must not assert a bare substring absent when it is part of a 
 	assert.match(PHASES.examine.prompt, /form .*action|action=|specific (control|button|action)/i);
 });
 
+test("the examiner must apply follow_redirects=False to EVERY redirecting POST, not just some", () => {
+	// hard phase 5: the examiner used follow_redirects=False on resolve/archive but FORGOT it on the
+	// add-complaint POST, then asserted 303 on it — TestClient followed to 200, so a correct app
+	// failed. Every mutation POST here redirects; the rule must say so, generally.
+	assert.match(PHASES.examine.prompt, /every|each|all/i);
+	assert.match(PHASES.examine.prompt, /redirect/i);
+});
+
+test("the examiner must assert relative deltas, not absolute totals, against shared state", () => {
+	// hard phase 5 test_stats asserted open==1, but the gate's own earlier tests had added
+	// complaints to the shared in-memory store, so the real count was higher — a correct app failed.
+	// Tests run in one process against shared state; assert before/after deltas or filter to this
+	// test's own records, never an absolute total that assumes a clean store.
+	assert.match(PHASES.examine.prompt, /shared|accumulat|earlier tests|other tests|clean (store|state|database)/i);
+	assert.match(PHASES.examine.prompt, /delta|before.*after|relative|count before/i);
+});
+
 test("the examiner must disable redirect-following when asserting a redirect status", () => {
 	// medium phase 3 looped forever: the examiner asserted `client.post(...).status_code == 303`,
 	// but starlette's TestClient follows redirects by default, so the response is the final 200 GET
