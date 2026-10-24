@@ -7,7 +7,7 @@ authors: [Paul Everitt, Andre van Zuydam]
 backends: [llamacpp]
 music: [fastball - the way, cat stevens - father and son, bob dylan - the times they are a changin']
 notes:
-  - @Paul On my computer Pi decided that PHP was the language it should use to build the solutions - should we force python?
+  - Paul On my computer Pi decided that PHP was the language it should use to build the solutions - should we force python?
   - Perhaps split out windows / linux/ mac
   - It will be nice to have the commands ready to run - or do we start up an interactive Pi session instead of just running command by command
 ---
