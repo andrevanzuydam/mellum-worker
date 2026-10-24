@@ -13,6 +13,14 @@ Versions match git tags; pin one in both install lines.
   non-empty body, which a stub also returns. The schema rule now also asserts named migrations are
   actually recorded/applied, not merely defined. These target the hard phase 6-7 hidden-oracle gap,
   stated generally and derived from the spec, never from the hidden grader's values.
+- The examiner is told to write SELF-CONTAINED tests (create the records they need, never assume a
+  seed record at a given id or state), to READ the earlier frozen gates and reuse their proven
+  conventions (client setup, whether a record is created with form `data=` or `json=`, field
+  names) rather than reinvent them, and to assert a before/after DELTA for any count or total the
+  app reports rather than an absolute equality. Measured against a known-correct implementation,
+  these took a regenerated phase-5 gate from 5 brittle failures to 1 (then the delta rule for the
+  remaining aggregate-count case). All stated generally; the examiner still derives specifics from
+  the spec and the earlier gates, not from the hidden grader.
 
 ### Fixed
 
