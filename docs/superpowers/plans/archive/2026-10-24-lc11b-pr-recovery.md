@@ -82,6 +82,8 @@ Run `uvx pytest learn/code/tests -q --ignore=learn/code/tests/fixtures`.
 
 ### Task 4: Extract Flow/examine
 
+Deferred to INT.2 on 2026-10-24; no Flow files were extracted here.
+
 **Files:**
 - Create from `pr-1`: `extensions/mellum-flow.ts`, `learn/code/flow_run.py`, `learn/code/tests/test_flow_run.py`, `tests/mellum-flow.test.mjs`
 - Create: a new spec/plan for Flow after exploring it.
@@ -97,7 +99,17 @@ Run `uvx pytest learn/code/tests -q --ignore=learn/code/tests/fixtures`.
 **Files:**
 - Update: `ROADMAP.md`, `CHANGELOG.md`, PR comment.
 
-- [ ] **Step 1: List the replacement commits/PRs for each accepted part.**
-- [ ] **Step 2: Comment on PR #1 with the split and archive links.**
-- [ ] **Step 3: Leave PR #1 open; do not close or merge it.**
-- [ ] **Step 4: Update LC.11B with the result and move the next work to Flow/examine or LC.12.**
+- [x] **Step 1: List the replacement commits/PRs for each accepted part.**
+- [x] **Step 2: Comment on PR #1 with the split and archive links.**
+- [x] **Step 3: Leave PR #1 open; do not close or merge it.**
+- [x] **Step 4: Update LC.11B with the result and move the next work to LC.12.**
+
+## Result
+
+Closed 2026-10-24. The harness fixes are `2d8a86e`; the source map,
+prompt triage, Flow triage and Intermediate candidates landed in `695adbf`.
+The confinement and server guards are dormant on branches `176922f` and
+`420ba1d`; no guard is enabled and the Baseline Worker is unchanged. The
+[PR #1 comment](https://github.com/pauleveritt/mellum-worker/pull/1#issuecomment-6389192337)
+was posted and the PR stays open. Flow/examine moved to INT.2. `npm test`
+343/343; docs caps 4/4.
