@@ -48,7 +48,7 @@ its own screen; it is not a drop-in.
 
 The v10 foreground-server **guard** is separable from the prompt. It blocks a
 bash command that starts a server in the foreground. Extracted as a
-dormant guard with its tests in `420ba1d`, like workspace confinement; it is
+dormant guard with its tests in `420ba1d` (draft PR #7), like workspace confinement; it is
 not enabled and Baseline Worker is unchanged. Enabling it needs a screen and
 a re-baseline decision. The v10 prompt line itself stays in the ladder
 catalogue.
