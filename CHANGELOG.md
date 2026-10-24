@@ -55,9 +55,10 @@ Versions match git tags; pin one in both install lines.
   10–12, context, rethink, documents and images, live control, next-concept
   verify), each badged, with support items listed separately.
 - The Lessons index is one recommended list of twenty-three, each with a one-line
-  description and an italic author tag, *(Paul)* or *(Andre)*. It now includes
-  the missing "Guards for empty turns and loops" lesson, and says which entries
-  are scheduled and which are deferred candidates.
+  description and an italic author tag, *(Paul)* or *(Andre)*. It now follows
+  the roadmap order, so "Guards for empty turns and loops" is lesson 4 rather
+  than 11, and says which entries are scheduled and which are deferred
+  candidates.
 - A GitHub Actions workflow builds the Zensical site on pull requests and
   deploys it to Pages from `main`.
 

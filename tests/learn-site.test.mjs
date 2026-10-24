@@ -205,10 +205,12 @@ test("the Lessons index is grouped without Basic Remedies", () => {
   assert.match(index, /\*\((Paul|Andre)\)\*$/m);
   assert.equal((index.match(/\*\(Paul\)\*/g) ?? []).length, 11);
   assert.equal((index.match(/\*\(Andre\)\*/g) ?? []).length, 13);
-  for (const text of ["Start here", "Prompt and project"])
+  for (const text of ["Start here", "Paul's lessons"])
     assert.ok(index.includes(text), `index lacks ${text}`);
   assert.ok(!index.includes("Basic Remedies"));
   assert.match(index, /The runaway search/);
+  assert.match(index, /^3\. \*\*(?:\[Thinking is working memory\]|Thinking is working memory)/m);
+  assert.match(index, /^4\. \*\*Guards for empty turns and loops/m);
 });
 
 test("the lesson template asks for evidence and records the conventions", () => {

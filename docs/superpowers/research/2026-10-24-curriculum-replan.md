@@ -47,10 +47,10 @@ wait on written consent and their own records.
 | --- | --- | --- |
 | baseline | The suite baseline | written |
 | 1–2 | Primary agent; short prompt | LC.10–LC.11, written |
-| 3–5 | Project facts; write-only; one spec | LC.14, LC.15, LC.19 |
-| 6–9 | Goalposts; mediated test; whole spec; completeness | LC.20–LC.23 after LC.5 |
-| 10–14 | Thinking; guards; loop; prose; intercom | LC.12, LC.13, LC.16–LC.18 |
-| 15–20 | Rungs 10–12; context; rethink; documents; replay; next-concept | deferred backlog |
+| 3–4 | Thinking; guards | LC.12–LC.13 |
+| 5–10 | Project facts; write-only; loop; prose; intercom; one spec | LC.14–LC.19 |
+| 11–14 | Goalposts; mediated test; whole spec; completeness | LC.20–LC.23 after LC.5 |
+| 15–20 | Rungs 10–12; context; rethink; documents; replay; next-concept | #16–#20 INT.3; #15 candidate |
 | 21–23 | Runaway search; server; skipped rule | LC.7A Pathologies page |
 
 LC.7A follows LC.19. It links the existing records and does not add a
