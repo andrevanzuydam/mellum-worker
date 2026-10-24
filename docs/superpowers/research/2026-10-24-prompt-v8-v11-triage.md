@@ -43,10 +43,11 @@ records. v6 is a separate completeness arm, not part of that catalogue. If we ev
 its own screen; it is not a drop-in.
 
 The v10 foreground-server **guard** is separable from the prompt. It blocks a
-bash command that starts a server in the foreground. Extract it as a dormant
-guard with its tests, like workspace confinement; do **not** enable it or
-change the Baseline Worker until a screen and re-baseline decision. The v10
-prompt line itself stays in the ladder catalogue.
+bash command that starts a server in the foreground. Extracted as a
+dormant guard with its tests in `420ba1d`, like workspace confinement; it is
+not enabled and Baseline Worker is unchanged. Enabling it needs a screen and
+a re-baseline decision. The v10 prompt line itself stays in the ladder
+catalogue.
 
 ## What follows
 
@@ -54,5 +55,5 @@ prompt line itself stays in the ladder catalogue.
 - Flow/examine keeps its own orchestrator/examiner prompts; it does not inherit
   v11 by default.
 - The PR #1 source map marks prompt v7–v9/v11 **kept as ladder evidence**, v6
-  **deferred**, and the foreground-server guard **keeping dormant** pending a
-  screen.
+  **deferred**, and the foreground-server guard **kept dormant** in `420ba1d`,
+  pending a screen.
