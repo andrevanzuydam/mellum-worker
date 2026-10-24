@@ -3,41 +3,57 @@ title: Base Pi on llama.cpp
 track: getting-started
 position: 1
 prerequisites: []
-authors: [Paul Everitt]
+authors: [Paul Everitt, Andre van Zuydam]
 backends: [llamacpp]
+music: [green day - boulevared of broken dreams, eagle eye cherry - save tonight, the killers - human, the goo goo dolls - iris, rhcp - otherside]
 ---
 
 # Base Pi on llama.cpp
-
-By the end of this lesson, a machine that had no Python runs a local Mellum
-and answers a prompt through base Pi — Pi with no worker, no extensions and
-none of your own settings. It takes a few commands and one large download.
+Pi is a minimal agent harness with a feedback loop, tools and prompts already built in. It works out of the box for
+most large language models. By the end of this lesson, a machine that had no Python runs a local Mellum and answers a 
+prompt through base Pi — Pi with no worker, no extensions and none of your own settings or our enhancements. 
+It takes a few commands and one large download.
 
 Everything runs from a clone of `mellum-worker`, because the settings and the
-Pi profile are files in this repo; later lessons add the harness.
+Pi profile are files in this repo; later lessons we'll add our own harness and extensions.
 
 ## What you need
 
 - A terminal. The commands below are for macOS on Apple Silicon, where this
   repo has smoke-tested the backend. On Linux and Windows, install
-  `llama-server` from the llama.cpp releases and put it on `PATH`; the `uv`,
+  `llama-server` from the [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases) and put it on `PATH`; the `uv`,
   `uvx` and Pi commands are the same, with the PowerShell profile line in
   step 7.
 - About 10 GB free: the `Q4_K_M` weights are 8.1 GB, and the server peaked at
   8.38 GB with a 50,000-token context.
 
-## 1. Install uv
+## 1. Install uv, npm, Pi & llama.cpp server 
 
-`uv` installs Python and runs the project's commands. It is the only tool
-this track asks you to install by hand.
+We need a server that can serve LLMs in an efficient way that works with a smaller memory format, cross-platform.
+Additionally, we need package managers for Python and Node.js, which run the tools we are going to use. Pi is also installed.
+For your convenience we have an installation script for Windows and for Linux / macOS linked below:
 
+**Linux / macOS**
+[install.sh](install.sh)
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-uv --version
+bash ./learn/getting-started/install.sh
 ```
 
-On Windows, use `winget install --id=astral-sh.uv` or the PowerShell
-installer from uv's site.
+**Windows**
+[install.bat](install.bat)
+```cmd
+.\learn\getting-started\install.bat
+```
+
+After running the scripts - check that you have a working system
+
+```
+llama-server --version
+uv --version
+pi --version
+```
+
+If you get any errors you will have to [troubleshoot](troubleshoot.md) until you get it working.
 
 ## 2. Let `pyproject.toml` choose Python
 
@@ -63,23 +79,11 @@ top_k = 20
 the Pi profile are generated from it, so changing a value here changes every
 one of them together.
 
-## 3. Install llama.cpp
-
-```bash
-brew install llama.cpp
-llama-server --version
-```
-
-Linux builds from source or uses a release binary; Windows uses a release
-binary from the [llama.cpp releases](https://github.com/ggml-org/llama.cpp/releases).
-Whichever way, `llama-server` must be on `PATH` — the next command says so
-plainly if it is not.
-
 ## 4. Fetch the tools a later lesson grades with
 
 `uvx` runs a Python tool without installing it into the project:
 
-```bash
+```
 uvx ruff --version
 uvx pyrefly --version
 ```
@@ -89,7 +93,7 @@ lesson will not turn into a setup detour.
 
 ## 5. Start the server
 
-```bash
+```
 uv run scripts/backend.py start
 uv run scripts/backend.py status
 ```
@@ -106,7 +110,7 @@ model name from `[tool.mellum]`. Everything else — the batch sizes, the
 
 ## 6. Chat once
 
-```bash
+```
 uv run scripts/backend.py chat "In one sentence, what makes a test useful?"
 ```
 
@@ -119,23 +123,33 @@ stderr. `temperature`, `top_p` and `top_k` are the values from
 The repo carries a private Pi profile at `learn/code/profile/`, generated
 from `[tool.mellum]`. Point Pi at it and ask for one line:
 
+Linux /macOs
 ```bash
-PI_CODING_AGENT_DIR=$PWD/learn/code/profile pi -p \
-  --provider llamacpp --model Mellum2.1-12B-A2.5B-Thinking \
-  --no-approve --no-extensions --no-skills --no-prompt-templates \
-  --no-themes --no-context-files --no-session \
-  "Say hello in one line."
+export PI_CODING_AGENT_DIR=$PWD/learn/code/profile
 ```
+Windows(cmd)
+```cmd
+set "PI_CODING_AGENT_DIR=%CD%\learn\code\profile"
+```
+
+Windows(Powershell)
+```powershell
+$env:PI_CODING_AGENT_DIR = "$PWD\learn\code\profile"
+```
+
+After setting the environment variable, run your first Pi command
+
+```
+pi -p --provider llamacpp --model Mellum2.1-12B-A2.5B-Thinking --no-approve --no-extensions --no-skills --no-prompt-templates --no-themes --no-context-files --no-session "Say hello in one line."
+```
+
+You should see "Hello" in response.
 
 What those flags buy you: your own `~/.pi` is neither read nor written, the
 repo's `AGENTS.md` does not load, and no extension or skill is discovered.
 The run is base Pi on the model: the baseline the next lessons build on.
 `--no-approve` is there because the profile is the only configuration this
 run should trust.
-
-On Windows PowerShell, set the profile with
-`$env:PI_CODING_AGENT_DIR = "$PWD\learn\code\profile"` and keep the same
-`pi` arguments.
 
 ## 8. Stop it
 

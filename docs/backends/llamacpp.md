@@ -42,6 +42,7 @@ uv run scripts/backend.py serve     # foreground
 uv run scripts/backend.py start     # background + pidfile + health wait
 uv run scripts/backend.py status    # up/down, and the server's n_ctx
 uv run scripts/backend.py stop
+uv run scripts/backend.py kill      # every llama-server, whatever started it
 uv run scripts/backend.py chat "prompt"   # one-shot; thinking to stderr
 ```
 
@@ -50,9 +51,14 @@ The command `start` runs:
 ```bash
 llama-server -hf JetBrains/Mellum2.1-12B-A2.5B-Thinking-GGUF:Q4_K_M \
   -a Mellum2.1-12B-A2.5B-Thinking --host 127.0.0.1 --port 8002 \
-  -c 50000 -np 1 -ngl 99 --jinja -fa auto -b 512 -ub 512 \
+  -c 50000 -np 1 --jinja -fa auto -b 512 -ub 512 \
   -ctk q8_0 -ctv q8_0
 ```
+
+There is no `-ngl`: llama.cpp's `--fit` puts as many layers on the GPU as
+free memory allows and keeps the rest on the CPU. On Apple Silicon that is
+every layer; on an 8 GB laptop GPU it is a split. `-c` is set, so `--fit`
+never lowers the context.
 
 2026-10-20: the Justfile that shipped in `b51a1e8` was retired before
 release for `scripts/backend.py`. The Learning Center's learner installs

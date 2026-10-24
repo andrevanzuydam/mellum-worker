@@ -401,6 +401,10 @@ Versions match git tags; pin one in both install lines.
   mediation). Adds a `verifyCommand` helper; the gate is inert unless `NCM_TEST`
   or `NCM_ALL` is set.
 
+- The suite baseline now shows the actual TypeScript that activates the
+  Baseline Worker: `setActiveTools`, `createGuardSet`, the request hook and the
+  guard hooks, with a link to the full extension.
+
 - The README builds the site with `uvx --with zensical-glossary zensical
   build`; a bare `zensical build` now fails because the glossary extension is
   required.
@@ -508,6 +512,16 @@ Versions match git tags; pin one in both install lines.
 
 - Fenced code blocks render again: adding the glossary extension had replaced
   Zensical’s default `pymdownx.superfences`; it is now enabled explicitly.
+
+- `scripts/backend.py start` no longer waits silently for up to 15 minutes.
+  It says what it launched and where the log is, warns that the first start
+  downloads about 7.7 GB, prints the download percentage (or the log's last
+  line) every 10 s, and shows the end of the log if llama-server exits.
+  `status` on a down server says how to start it.
+- `scripts/backend.py` works on Windows as well as Linux and macOS: Ctrl+C or
+  closing the terminal no longer kills a server started with `start`, and
+  `stop` no longer kills the server during its liveness check. On Windows,
+  `stop` uses `taskkill` to end the server and anything it started.
 
 ### Removed
 
