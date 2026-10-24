@@ -167,6 +167,15 @@ test("the examiner must seed inputs and assert exact outputs for computed/report
 	assert.match(PHASES.examine.prompt, /recorded|applied/i);
 });
 
+test("the examiner must write self-contained tests that create their own data, not assume seed ids/state", () => {
+	// strengthening for phases 6-7 regressed phase 5: the examiner assumed seed complaints at ids
+	// 2/3 in an OPEN state, but a prior test (shared store) had changed them, so a correct app
+	// (archive-open -> 400) saw 303 and `next(c.id==3)` hit StopIteration. Tests must create the
+	// records they need and never assume a seed record exists at a given id or in a given state.
+	assert.match(PHASES.examine.prompt, /self-contained|create the (records|rows|data) it needs|create its own/i);
+	assert.match(PHASES.examine.prompt, /never assume a seed|not assume.*seed|a given id|particular id|given state|particular state/i);
+});
+
 test("the coder is pointed at the cumulative gate and told earlier phases must keep passing", () => {
 	assert.match(PHASES.code.prompt, /test_gate_phase/);
 	assert.match(PHASES.code.prompt, /earlier phase/i);
