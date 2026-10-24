@@ -11,7 +11,7 @@ backends: [llamacpp]
 
 ![img.png](img.png)
 
-Give a small model an open-ended job, and it will drive, just not where you want it to!. It is fast, and it
+Give a small model an open-ended job, and it will drive, just not where you want it to. It is fast, and it
 will tell you it succeeded. This lesson is the ditch: one session, three prompts, and a final report that does 
 not survive being checked.
 
@@ -30,9 +30,9 @@ language is not part of the prompt: if your run chooses another language,
 check its own test command and CLI, or append `Use Python.` to the first
 prompt for a comparable run.
 
-From the repo run  the following command/s:
+From the repo, run the following commands:
 
-Linux /macOs
+Linux / macOS
 ```bash
 export PI_CODING_AGENT_DIR=$PWD/learn/code/profile
 ```
@@ -70,7 +70,7 @@ pi -p --session-id clinic --session-dir "$env:TEMP\clinic-session" `
 
 ### Watching the outputs if you are impatient like we are ...
 
-**Linux /macOs**
+**Linux / macOS**
 
 ```bash
 tail -F "${TMPDIR:-/tmp}/llamacpp-mellum.log"

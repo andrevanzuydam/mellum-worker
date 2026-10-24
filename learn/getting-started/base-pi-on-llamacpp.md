@@ -44,11 +44,12 @@ bash ./learn/getting-started/install.sh
 .\learn\getting-started\install.bat
 ```
 
-After running the scripts - check that you have a working system
+After running the script, check that you have a working system
 
 ```
 llama-server --version
 uv --version
+npm --version
 pi --version
 ```
 
@@ -123,7 +124,7 @@ stderr. `temperature`, `top_p` and `top_k` are the values from
 The repo carries a private Pi profile at `learn/code/profile/`, generated
 from `[tool.mellum]`. Point Pi at it and ask for one line:
 
-Linux /macOs
+Linux / macOS
 ```bash
 export PI_CODING_AGENT_DIR=$PWD/learn/code/profile
 ```

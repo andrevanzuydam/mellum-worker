@@ -137,6 +137,10 @@ test("lesson 1 walks from uv to a base-Pi answer", () => {
   assert.doesNotMatch(index, /coming/);
 });
 
+test("the Getting Started index points to troubleshooting", () => {
+  assert.match(page("getting-started/index.md"), /troubleshoot\.md/);
+});
+
 test("the project pages orient a maintainer and name the checks", () => {
   const index = page("project/index.md");
   for (const text of ["scripts/backend.py", "docs/sdd.md", "AGENTS.md"])
