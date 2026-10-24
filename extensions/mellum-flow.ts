@@ -155,11 +155,12 @@ export const PHASES: Record<string, Phase> = {
 			"- Drive a web app via `from app import app` + `starlette.testclient.TestClient` unless the " +
 			"spec says otherwise. If you are unsure of a library's exact API, call the `lookup` tool " +
 			"BEFORE writing the assertion.\n" +
-			"- REDIRECTS: TestClient follows redirects by default, so a plain `client.post(...)` returns " +
-			"the FINAL page (its status, usually 200), not the redirect the handler returned. Whenever " +
-			"the spec says a request redirects, pass `follow_redirects=False` to THAT request before you " +
-			"assert its status or `Location` — on EVERY request whose redirect you assert, not just some. " +
-			"(A request used only as setup, whose response you do not assert, may follow the redirect.)\n" +
+			"- REDIRECTS: TestClient FOLLOWS redirects by default, so a plain `client.post(...)` returns " +
+			"the FINAL page (status usually 200), not the redirect the handler returned — then " +
+			"`assert status == <3xx>` fails a correct handler. Construct the client ONCE as " +
+			"`TestClient(app, follow_redirects=False)` so NO request auto-follows, then assert the " +
+			"redirect status and `Location` directly. Plain GETs to pages are unaffected (they do not " +
+			"redirect). Setting it on the client is far more reliable than adding it to each request.\n" +
 			"- SHARED STATE: every test in the file runs in one process against one store, and earlier " +
 			"tests add and mutate records, so the store is NOT clean when your test runs. Never assert an " +
 			"ABSOLUTE total that assumes a fresh store; capture the relevant count or length BEFORE your " +

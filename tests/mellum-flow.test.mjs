@@ -119,11 +119,12 @@ test("the examiner must not assert a bare substring absent when it is part of a 
 	assert.match(PHASES.examine.prompt, /form .*action|action=|specific (control|button|action)/i);
 });
 
-test("the examiner must apply follow_redirects=False to EVERY redirecting POST, not just some", () => {
-	// hard phase 5: the examiner used follow_redirects=False on resolve/archive but FORGOT it on the
-	// add-complaint POST, then asserted 303 on it — TestClient followed to 200, so a correct app
-	// failed. Every mutation POST here redirects; the rule must say so, generally.
-	assert.match(PHASES.examine.prompt, /every|each|all/i);
+test("the examiner is told to set follow_redirects=False on the client, not per request", () => {
+	// Per-request follow_redirects=False kept slipping: the examiner applied it to some POSTs and
+	// forgot it on others (the add-complaint setup POST), then asserted 3xx on a plain POST that
+	// TestClient had followed to 200 — a correct app failed, twice. Setting it ONCE on the client
+	// eliminates the whole class. The rule must name the client-level construction.
+	assert.match(PHASES.examine.prompt, /TestClient\(\s*app\s*,\s*follow_redirects=False\s*\)/);
 	assert.match(PHASES.examine.prompt, /redirect/i);
 });
 

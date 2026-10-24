@@ -6,6 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- The flow examiner is now told to disable redirect-following ONCE on the test client
+  (`TestClient(app, follow_redirects=False)`) rather than per request. The per-request rule kept
+  slipping — the examiner applied it to some POSTs but forgot it on a setup POST and then asserted a
+  3xx that TestClient had already followed to 200, failing a correct handler on hard phases 4 and 5.
+  Setting it on the client eliminates the whole class (verified: the frozen phase-4 gate goes from 2
+  failures to all-pass against the correct app). Still general — no suite-specific routes or values.
 - The flow examiner is taught two more general testing-discipline rules, after a correct
   implementation failed brittle gates: (1) every request whose redirect is asserted needs
   `follow_redirects=False` (the examiner had applied it to some POSTs but not others, so TestClient
