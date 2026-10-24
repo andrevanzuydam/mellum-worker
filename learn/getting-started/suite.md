@@ -38,11 +38,11 @@ fails because of that, not because the harness withheld something.
 
 ## The three suites
 
-| Suite | Starts from | Requests | Graded on |
-| --- | --- | --- | --- |
-| **easy** | an empty AgentClinic project, with a hinted four-phase roadmap | one: phase 1 | the phase-1 grader |
-| **medium** | an empty AgentClinic project, with a user-story roadmap | four: one per phase | phases 1–4 |
-| **hard** | an empty AgentClinic project, with a user-story roadmap and `data.db` | eleven: seven phases, four migrations | phases 1–7, the reports and the migrations |
+| Suite      | Starts from                                                           | Requests                              | Graded on                                  |
+|------------|-----------------------------------------------------------------------|---------------------------------------|--------------------------------------------|
+| **easy**   | an empty AgentClinic project, with a hinted four-phase roadmap        | one: phase 1                          | the phase-1 grader                         |
+| **medium** | an empty AgentClinic project, with a user-story roadmap               | four: one per phase                   | phases 1–4                                 |
+| **hard**   | an empty AgentClinic project, with a user-story roadmap and `data.db` | eleven: seven phases, four migrations | phases 1–7, the reports and the migrations |
 
 The hard suite is the one that punishes assumptions: the same four phases as
 medium, then three more, with four migrations interleaved. The database schema
@@ -53,10 +53,10 @@ has to be discovered, and `archived_at IS NOT NULL` is not the same as
 
 The first four requests are medium's. The rest are:
 
-| Request | What it asks for |
-| --- | --- |
-| phase 5 | Archive only resolved complaints (open is a 400), hide them from the board but keep the rows, record every transition in `models.audit`, and return open counts from `/stats`. |
-| phase 6 | A `/report` over the `tickets` table: open, archived and all-time cents as integers. Archived means `archived_at IS NOT NULL`; every value is a bound parameter. |
+| Request | What it asks for                                                                                                                                                                                                                                                        |
+|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| phase 5 | Archive only resolved complaints (open is a 400), hide them from the board but keep the rows, record every transition in `models.audit`, and return open counts from `/stats`.                                                                                          |
+| phase 6 | A `/report` over the `tickets` table: open, archived and all-time cents as integers. Archived means `archived_at IS NOT NULL`; every value is a bound parameter.                                                                                                        |
 | phase 7 | `/visits`: filter `visits` by an inclusive `from`/`to` range and `min_minutes`, group by agent, and return count, total minutes and average minutes. Sort by total descending, then agent name, and apply `limit`. Counts and totals are integers; averages are floats. |
 
 The migrations run against `data.db` between phases: the

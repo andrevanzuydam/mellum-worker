@@ -8,6 +8,7 @@ learner can read every value the server and the request receive. Stdlib only.
 from __future__ import annotations
 
 import argparse
+import csv
 import glob
 import hashlib
 import json
@@ -60,7 +61,9 @@ def serve_argv(
     return [
         binary, "-hf", settings["model"], "-a", ALIAS,
         "--host", host, "--port", str(port),
-        "-c", str(settings["context"]), "-np", "1", "-ngl", "99",
+        # No -ngl: llama.cpp's --fit then splits the model between GPU and CPU
+        # to fit free device memory. -c is set, so --fit never shrinks it.
+        "-c", str(settings["context"]), "-np", "1",
         "--jinja", "-fa", "auto", "-b", "512", "-ub", "512",
         "-ctk", "q8_0", "-ctv", "q8_0",
     ]
@@ -123,6 +126,15 @@ def progress_line(log: str) -> str | None:
     return lines[-1]
 
 
+def progress_report(tick: int, line: str | None, previous: str | None, changed_at: int) -> str:
+    """One progress line; a log line seen last time is reported as quiet, not repeated."""
+    if line is None:
+        return f"[{tick}s] waiting for output"
+    if line == previous:
+        return f"[{tick}s] no new output for {tick - changed_at}s; last: {line}"
+    return f"[{tick}s] {line}"
+
+
 def parse_build(text: str) -> int | None:
     """The build number from `llama-server --version`: newer builds print
     "version: 0.7.0-dev (build 11829, commit 184f65360)", older ones
@@ -147,6 +159,41 @@ def version_problem(build: int) -> str | None:
     return (f"llama-server build {build} is too old for Mellum: llama.cpp added the "
             f"mellum architecture in build {MIN_BUILD} (tested on {TESTED_BUILD}); "
             f"{UPGRADE}")
+
+
+def on_path(binary: str) -> list[str]:
+    """Every `binary` on PATH, in the order the shell tries them; an explicit path as is."""
+    if os.path.dirname(binary):
+        found = shutil.which(binary)
+        return [found] if found else []
+    hits, seen = [], set()
+    for folder in os.environ.get("PATH", "").split(os.pathsep):
+        hit = folder and shutil.which(binary, path=folder)
+        if hit and (key := os.path.normcase(os.path.abspath(hit))) not in seen:
+            seen.add(key)
+            hits.append(hit)
+    return hits
+
+
+def choose_server(found: list) -> tuple[str | None, int | None, list[str]]:
+    """The first llama-server on PATH new enough for Mellum, its build, and notes.
+
+    An old one earlier on PATH is skipped and named, since it would otherwise
+    win and fail to load the model. One whose build can't be read is tried.
+    """
+    notes = []
+    for path, build in found:
+        if build is None:
+            notes.append(f"could not read a build number from {path} --version; trying it anyway")
+            return path, None, notes
+        if build >= MIN_BUILD:
+            return path, build, notes
+        notes.append(f"skipping {path} (build {build}, too old for Mellum); "
+                     f"remove {os.path.dirname(path)} from PATH so it stops coming first")
+    first = found[0][1] if found else 0
+    notes = [version_problem(first) or "", "found on PATH:"]
+    notes += [f"  {path} (build {build})" for path, build in found]
+    return None, None, notes
 
 
 def diagnose(log: str) -> list[str]:
@@ -261,16 +308,16 @@ def start(settings: dict, host: str, port: int, pidfile: Path, logfile: Path,
         _say(f"llama-server is still starting (pid {pid}); not starting a second one")
         _say(f"watch: uv run scripts/backend.py status   stop: {STOP_CMD}")
         return 1
-    path = shutil.which(binary)
-    if path is None:
+    found = [(path, server_build(path)) for path in on_path(binary)]
+    if not found:
         print(MISSING, file=sys.stderr)
         return 2
-    build = server_build(path)
-    if build is None:
-        _say(f"could not read a build number from {binary} --version; trying anyway")
-    elif (problem := version_problem(build)) is not None:
-        _say(f"{problem}\n  found: {path}")
+    path, build, notes = choose_server(found)
+    for note in notes:
+        _say(note)
+    if path is None:
         return 2
+    binary = path
     logfile.parent.mkdir(parents=True, exist_ok=True)
     offset = logfile.stat().st_size if logfile.exists() else 0
     # Detach the server so Ctrl+C here, or closing this terminal, leaves it running.
@@ -289,6 +336,7 @@ def start(settings: dict, host: str, port: int, pidfile: Path, logfile: Path,
     say("the first start downloads the model (about 7.7 GB) and can take minutes; "
         f"progress every {PROGRESS_EVERY}s, Ctrl+C stops waiting, not the server")
     started = time.monotonic()
+    previous, changed_at = None, 0
     try:
         for tick in range(1, wait + 1):
             if health(host, port) is not None:
@@ -304,8 +352,10 @@ def start(settings: dict, host: str, port: int, pidfile: Path, logfile: Path,
                 _explain_failure(logfile, offset)
                 return 1
             if tick % PROGRESS_EVERY == 0:
-                line = progress_line(_log_tail(logfile, offset)) or "waiting for output"
-                say(f"[{tick}s] {line}")
+                line = progress_line(_log_tail(logfile, offset))
+                say(progress_report(tick, line, previous, changed_at))
+                if line != previous:
+                    previous, changed_at = line, tick
             time.sleep(1)
     except KeyboardInterrupt:
         say(f"stopped waiting; the server keeps starting (pid {process.pid}).")
@@ -327,13 +377,61 @@ def stop(pidfile: Path) -> int:
         pidfile.unlink(missing_ok=True)
         print("not running")
         return 0
+    _end(pid)
+    pidfile.unlink(missing_ok=True)
+    print(f"stopped pid {pid}")
+    return 0
+
+
+def _end(pid: int, force: bool = False) -> None:
     if os.name == "nt":
         # Windows has no SIGTERM; end the process and anything it started.
         subprocess.run(["taskkill", "/T", "/F", "/PID", str(pid)], capture_output=True)
-    else:
-        os.kill(pid, signal.SIGTERM)
+        return
+    try:
+        os.kill(pid, signal.SIGKILL if force else signal.SIGTERM)
+    except ProcessLookupError:
+        pass
+
+
+def server_pids(name: str) -> list[int]:
+    """Every running process called `name` (llama-server.exe on Windows)."""
+    if os.name == "nt":
+        out = subprocess.run(
+            ["tasklist", "/FI", f"IMAGENAME eq {name}.exe", "/FO", "CSV", "/NH"],
+            capture_output=True, text=True,
+        ).stdout
+        return [int(row[1]) for row in csv.reader(out.splitlines())
+                if len(row) > 1 and row[1].isdigit()]
+    out = subprocess.run(["pgrep", "-x", name], capture_output=True, text=True).stdout
+    return [int(pid) for pid in out.split()]
+
+
+def kill_all(name: str, pidfile: Path, grace: int = 5) -> int:
+    """End every `name` process, whatever started it: a lost pidfile, a `serve`
+    in another terminal, or a second server still downloading."""
     pidfile.unlink(missing_ok=True)
-    print(f"stopped pid {pid}")
+    pids = server_pids(name)
+    if not pids:
+        print(f"no {name} running")
+        return 0
+    for pid in pids:
+        _end(pid)
+    for _ in range(grace * 10):
+        if not set(pids) & set(server_pids(name)):
+            break
+        time.sleep(0.1)
+    else:
+        for pid in set(pids) & set(server_pids(name)):
+            _end(pid, force=True)
+    left = set(pids) & set(server_pids(name))
+    for pid in pids:
+        if pid not in left:
+            print(f"killed {name} pid {pid}")
+    if left:
+        _say(f"could not end {name} pid(s) {', '.join(map(str, sorted(left)))}; "
+             "they may belong to another user")
+        return 1
     return 0
 
 
@@ -492,6 +590,12 @@ def main(argv: list[str] | None = None) -> int:
             cmd.add_argument("--server-binary", default="llama-server")
             cmd.add_argument("--wait-seconds", type=int, default=900)
 
+    kill = sub.add_parser(
+        "kill", help="end every llama-server process, not just the one in the pidfile")
+    kill.add_argument("--name", default="llama-server",
+                      help="the process name to end (default: llama-server)")
+    kill.add_argument("--pidfile", type=Path, default=PIDFILE)
+
     check = sub.add_parser(
         "verify", help="check the downloaded model against Hugging Face's sha256")
     check.add_argument("--model-file", type=Path,
@@ -514,6 +618,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "status":
         return status(args.host, args.port, args.pidfile, args.logfile)
+    if args.command == "kill":
+        return kill_all(args.name, args.pidfile)
     if args.command == "verify":
         return verify(settings, args.model_file, args.logfile, args.delete)
     if args.command == "stop":

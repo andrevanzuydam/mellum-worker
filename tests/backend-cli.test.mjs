@@ -15,7 +15,7 @@ const run = (...args) => {
 const ARGV = [
   "llama-server", "-hf", "JetBrains/Mellum2.1-12B-A2.5B-Thinking-GGUF:Q4_K_M",
   "-a", "Mellum2.1-12B-A2.5B-Thinking", "--host", "127.0.0.1", "--port", "8002",
-  "-c", "50000", "-np", "1", "-ngl", "99", "--jinja", "-fa", "auto",
+  "-c", "50000", "-np", "1", "--jinja", "-fa", "auto",
   "-b", "512", "-ub", "512", "-ctk", "q8_0", "-ctv", "q8_0",
 ];
 
@@ -57,6 +57,14 @@ const call = (fn, ...args) => {
   return JSON.parse(r.stdout);
 };
 
+test("a progress line that has not changed says how long the log has been quiet", () => {
+  assert.equal(call("progress_report", 10, "loading", null, 0), "[10s] loading");
+  assert.equal(call("progress_report", 20, "downloading 5%", "loading", 10), "[20s] downloading 5%");
+  assert.equal(call("progress_report", 30, "loading", "loading", 10),
+    "[30s] no new output for 20s; last: loading");
+  assert.equal(call("progress_report", 10, null, null, 0), "[10s] waiting for output");
+});
+
 test("the build number comes from llama-server --version", () => {
   assert.equal(call("parse_build", "load_backend: x\nversion: 7360 (53ecd4fdb)\nbuilt with Clang"), 7360);
   assert.equal(call("parse_build", "version: 0.7.0-dev (build 11829, commit 184f65360)\n"), 11829);
@@ -70,6 +78,31 @@ test("an old llama-server is named with the build that added mellum", () => {
   assert.match(msg, /build 7360/);
   assert.match(msg, /9482/);
   assert.match(msg, /docs\/backends\/llamacpp\.md/);
+});
+
+test("start uses the first new-enough llama-server on PATH and names any it skips", () => {
+  const [path, build, notes] = call("choose_server", [["/old/llama-server", 7360], ["/new/llama-server", 11829]]);
+  assert.equal(path, "/new/llama-server");
+  assert.equal(build, 11829);
+  assert.match(notes.join("\n"), /skipping \/old\/llama-server \(build 7360/);
+  assert.match(notes.join("\n"), /remove \/old from PATH/);
+  assert.deepEqual(call("choose_server", [["/new/llama-server", 11829]]), ["/new/llama-server", 11829, []]);
+});
+
+test("with only old llama-servers on PATH, none is chosen and each is listed", () => {
+  const [path, , notes] = call("choose_server", [["/a/llama-server", 7360], ["/b/llama-server", 9000]]);
+  assert.equal(path, null);
+  const text = notes.join("\n");
+  assert.match(text, /9482/);
+  assert.match(text, /\/a\/llama-server \(build 7360\)/);
+  assert.match(text, /\/b\/llama-server \(build 9000\)/);
+});
+
+test("a llama-server whose build cannot be read is tried, with a warning", () => {
+  const [path, build, notes] = call("choose_server", [["/a/llama-server", null]]);
+  assert.equal(path, "/a/llama-server");
+  assert.equal(build, null);
+  assert.match(notes[0], /could not read a build/);
 });
 
 test("a log that names an unknown architecture says to upgrade llama.cpp", () => {
