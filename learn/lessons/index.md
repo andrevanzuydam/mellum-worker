@@ -28,7 +28,7 @@ what it rests on now.
 
 6. **The worker moves its own goalposts** — It narrows pytest to one test function, passes that, and calls the file done. *(Andre)*
 7. **The mediated test clears the hard rungs** — A frozen test the worker cannot weaken, re-dispatched: rungs 6–9 at 12/12, rung 9 cracked. *(Andre)*
-8. **Implement the whole spec** — v9 closes the phase-4 id miss: 3/3 on the rung no other arm moved. *(Andre)*
+8. **Implement the whole spec** — v9 lifts the phase-4 id miss from 0 to 2/3; v11's self-check takes it to 3/3. *(Andre)*
 9. **Mediation is a completeness gate** — It leaves the rung the worker can do alone and drags it back only when it stops short. *(Andre)*
 
 ## Loop and handoff
