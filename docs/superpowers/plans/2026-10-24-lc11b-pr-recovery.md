@@ -64,21 +64,21 @@ Run `uvx pytest learn/code/tests -q --ignore=learn/code/tests/fixtures`.
 - Test: `tests/mellum-guards.test.mjs`
 - Record: `docs/superpowers/research/2026-10-24-workspace-confinement-screen.md`
 
-- [ ] **Step 1: Apply the guard alone on a branch, with its tests.**
+- [x] **Step 1: Apply the guard alone on a branch, with its tests.** (`176922f`, draft PR #6)
 - [ ] **Step 2: Run a small screen on one easy and one hard session.**
 - [ ] **Step 3: If kept, re-baseline the Baseline Worker and update the worker page.**
 - [ ] **Step 4: If rejected, record why and close the guard part.**
 
-### Task 3: Decide prompt v8–v11
+### Task 3: Decide prompt v6–v11
 
 **Files:**
 - Compare: `prompts/mellum-worker.md` at `pr-1`
-- Record: `docs/superpowers/research/2026-10-24-prompt-v11-screen.md`
+- Record: `docs/superpowers/research/2026-10-24-prompt-v8-v11-triage.md`
 
-- [ ] **Step 1: Diff v5 against v11 and list every behavioral change.**
-- [ ] **Step 2: Run a ladder screen on the rung that motivated each line.**
-- [ ] **Step 3: Keep v11 only if its evidence survives; do not copy its AgentClinic-specific examples into a generic prompt.**
-- [ ] **Step 4: If kept, re-baseline the Baseline Worker.**
+- [x] **Step 1: Diff v5 against v11 and list every behavioral change.** v6–v11 mapped.
+- [x] **Step 2: Check the existing ladder evidence for each change.** v7–v11 are ladder evidence; v6 is a recorded null; the foreground-server guard is extracted dormant in `420ba1d` / draft PR #7.
+- [x] **Step 3: Keep v11 only if its evidence survives; do not copy its AgentClinic-specific examples into a generic prompt.** Kept as ladder catalogue and lessons, not as the Baseline Worker.
+- [ ] **Step 4: If kept, re-baseline the Baseline Worker.** Not triggered: Baseline Worker stays on v5.
 
 ### Task 4: Extract Flow/examine
 
