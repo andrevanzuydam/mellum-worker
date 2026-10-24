@@ -72,6 +72,19 @@ without making a tool call would catch it, but it is a guard change on a
 single observed miss in 30 Mode runs (A14, A17). *Reopens when* a second
 announce-and-stop miss is recorded in a ladder phase or a run record.
 
+**The worker refuses compaction, so a long suite run overflows.** While the
+worker is on, `session_before_compact` refuses Pi's auto-compaction, so a run
+whose history outgrows the window has no way down. On the easy suite against
+llama.cpp at `n_ctx` 50,176, three of ten sessions in the LC.13A guard arm
+ended with an `error` final: `request (51697 tokens) exceeds the available
+context size (50176 tokens), try increasing it`. The empty-final nudge cannot
+answer these — it continues only a `stop` turn — and the same refusal will
+truncate every later arm. *Reopens when* an easy-suite run is expected to
+finish on the taught backend: choose a window the task fits inside, or a
+compaction policy that does not refuse while the mode is on, then re-baseline
+the suite, because the change moves a setting the baseline was measured with.
+[arm record](docs/superpowers/research/2026-10-24-nudge-llamacpp-screen.md).
+
 **Write-only guard: refuse writes outside the facts block's list.** Mode
 forwards the `## Mellum` section's `Write only:` line as text; nothing
 enforces it. On AgentClinic rungs 6–9 the text was enough: with the section

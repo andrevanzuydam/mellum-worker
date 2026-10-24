@@ -5,6 +5,10 @@ Date: 2026-10-24. Preregistered in
 before the run. This is the record of what happened, including the part
 that voids the arm's question.
 
+**Outcome.** The arm is closed. It is void for its question: no nudge
+fired in either arm, so the two policies were identical in behaviour, and
+medium was not run because the staircase's majority gate was not met.
+
 **What is measured.** Two arms on the easy suite, five sessions each,
 llama.cpp on this machine: `worker` (prompt v5, seven tools, nudge capped
 at 3, loop breaker on) and `no-nudge` (`MELLUM_GUARDS='{"loopBreaker":true}'`).
@@ -86,6 +90,35 @@ wrong. Either changes the reading above; neither is measured here.
 One task, ten sessions, one machine. The overflow is a property of this
 suite on this window, not of Mellum. Nothing here transfers to oMLX, and
 nothing here is a rate: 2/5 and 3/5 are counts of sessions.
+
+## What Andre saw, and how this differs
+
+Andre's records and this screen are not the same instrument, so they do not
+compare as rates.
+
+- **Instrument.** His mediate rungs 6–12: AgentClinic builds with a hidden
+  cumulative oracle and a frozen acceptance test, n = 3 per rung, with a
+  re-dispatch loop. His prompts are v7, v9 and v11. This arm runs the easy
+  suite, one clinic prompt, n = 5, no mediation, prompt v5.
+- **Failure shape.** His dominant failure is completeness: the worker writes
+  its own test from the spec's `Tests:` line, passes it and stops, and the
+  phase-4 `id` is the recurring miss. Rungs 6–9 capped at 9/12 until the
+  mediated loop and v9's "implement the whole spec". Today's failures are
+  outside that taxonomy: a context overflow and two output caps. No
+  mediation and no prompt rewording would have changed them.
+- **Empty turns.** Where Andre recorded empty turns, they were a tooling
+  artifact, not a model lapse: PR idea 9 stripped the native tool field on
+  Gemma E2B, tool results rendered against tools the template no longer
+  knew, and the model returned empty turns — 0/15 against 5/15, reverted.
+  The nudge's justification was Mellum on oMLX at v3, a model lapse. Today
+  neither appeared.
+- **Overflow.** Overflow is a deliberate gate in his later rungs — a file
+  larger than the window, to test chunking. Here it is an accident of the
+  window and the compaction refusal, so it says nothing about capability.
+- **Overlapping remedies.** His effort ramp and re-dispatch answer "gave up
+  early", which is the nudge's purpose approached from the other side. That
+  makes mediation the alternative worth measuring on the suites, not a
+  second guard.
 
 ## Next
 
