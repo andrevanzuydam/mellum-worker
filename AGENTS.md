@@ -44,6 +44,16 @@ and evidence with dated corrections; never edit archived plans.
   `uv run python -m ladder.run_ladder --help` for runs. Never commit
   `trace.jsonl`, `stdout.txt` or `diff.patch`; raw evidence goes in a
   `research-YYYY-MM-DD` release.
+- **Run standard — use the two scripts, don't hand-assemble flags.**
+  `scripts/screen.sh <rung> <model-id>` is the measurement rig (direct, mediated:
+  `tuned`, repeat 3, redispatch 5, effort-ramp, thinking off, **guards on**, the
+  default prompt, the mediated tool set, `--model omlx/<model-id>`).
+  `scripts/product.sh <rung>` is the shipped worker (`--mode mode`, guards and
+  facts on). Both write to `runs/` (git-ignored) and want
+  `ladder/scripts/watch_ladder.py` alongside; promote a kept run to
+  `docs/ladder/<date-topic>/` with the raw stripped. Per-run
+  `--prompt`/`--tools`/`--thinking` tweaks or source edits are ablations,
+  recorded as such — not how a standard run is made.
 - `prompts/mellum-worker.md` is the only prompt source.
 - Never add a `build`, `prepare`, `prepack`, or `install` npm script; OpenCode
   installs from Git through pacote and that breaks the install.
@@ -64,6 +74,21 @@ a term is linked automatically. Do not hand-link a term.
 - Borrow shared terms from `../satyrn-evals/_engine/glossary.md` when they
   mean the same thing (`guard`, `finish nudge`), but define the local meaning
   rather than copying a Satyrn-specific contract.
+
+## Driving the worker: don't trust its self-exit (a lead under test)
+
+The worker decides when it is done, and a run can exit confident on an
+incomplete, self-authored test — the Phase 4 id miss. The direction being
+measured is to define "done" with an acceptance test that is **external** (the
+worker did not write it), **complete** (the whole spec, not the subset the
+worker chose) and **unweakenable** (the worker cannot edit or delete it), and
+to verify a run by re-running that test and re-dispatching its failure, never
+by the worker's final message. This is the mediated test plus the
+freeze-the-oracle guard; the rung 9 results behind it are screens, so treat it
+as the lead it is, not a settled rule. See the
+[exit-gate note](docs/superpowers/research/2026-10-18-harness-exit-gate.md), the
+M.11 row in [`ROADMAP-M.md`](ROADMAP-M.md) and the BACKLOG entries "The mediated
+test" and "Freeze-the-oracle exit gate".
 
 ## Keep the changelog current
 

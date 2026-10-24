@@ -442,6 +442,14 @@ the numbering runs straight through.
   backstop for when even that slips. Measured: bare un-mediated ladder 6/12 →
   11/12 (v8), then rung 9 0 → 2/3 (v9) → 3/3 (v11 self-check + the server guard).
 
+  *Correction 2026-10-24:* "measured" here means ladder screens: n = 1 per rung
+  for the 6/12 and 11/12, n = 1 to 3 on rung 9, and none of them has a
+  `docs/ladder/` record or a `research-*` release yet, so they are leads, not
+  rates. The v9 commit message (`18f9425`) says rung 9 went to 3/3 under v9
+  ("n=3 confirming"); this entry and the v11 commit (`da04888`) say 2/3, and 2/3
+  is the figure that stands. v10 and v11 each changed together with the
+  foreground-server guard, so the 3/3 is not attributable to the prompt alone.
+
 ## Addendum — the harness as a habit formula, and its ceiling (2026-10-22)
 
 - **The premise: a harness is a habit-building formula that lets a weaker model
@@ -487,6 +495,16 @@ the full harness. It did not hold the way it read. A tool-based, decomposed,
 best-of-N, examiner-gated harness cleared all seven phases of the hard suite's
 *visible* tests (up from a 4/7 ceiling) — and every gap that remained was a
 harness affordance, not model capability. The model was never the limit.
+
+*Correction 2026-10-24:* the "all seven phases" above was overstated when it was
+written (11:57 on 2026-10-23). Later that day `433157e` found the flow counted a
+phase as passed whenever pytest passed, even when the examiner had frozen no gate
+for it, and best-of-N promoted exactly that fork: on hard, phases 3–7 reported
+PASS while only phases 1–2 were built. Requiring a real, compiling phase-N gate
+fixed the count. The first end-to-end visible pass with every phase gated came on
+2026-10-24 (n = 1), with the hidden grader at 29/34
+([note](docs/superpowers/research/2026-10-24-flow-hard-visible-pass-hidden-gap.md)).
+The bullets below on what the harness lacked still stand.
 
 - **The "stall" was a serving-format bug, not a model refusal.** On a non-trivial
   task the agent emitted nothing and stopped. Cause: oMLX's tool-call parser drops
@@ -552,6 +570,10 @@ harness affordance, not model capability. The model was never the limit.
   unread stderr fills the pipe buffer and hangs; always drain it.
 
 ## Addendum — spec-driven examine, model parity, and killing the thrash (2026-10-23)
+
+*Correction 2026-10-24:* "Proven (measured)" below means single ladder runs
+(n = 1), not preregistered rates, and none has a `docs/ladder/` record yet,
+including the Flint and Mellum 11/12 parity. Read each as a screen.
 
 **Proven (measured):**
 

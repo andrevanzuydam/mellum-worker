@@ -38,11 +38,11 @@ For a fair "halved" comparison, convert from the original fp16/bf16 weights.
    cd ladder && uv run python -m ladder.run_ladder \
      --mode direct --profile tuned --rung 9 --repeat 3 \
      --acceptance-test <path>/test_phase4.py --redispatch 5 --effort-ramp \
-     --model-id <the-halved-model-id> \
+     --model omlx/<the-halved-model-id> \
      --out ../docs/ladder/<date>-halved-rung9
    ```
-   (`--model-id` sets the id the request carries, so it matches what oMLX
-   serves.) Watch it live with `python scripts/watch_ladder.py`.
+   (`--model` sets the provider and the id the request carries, so it matches
+   what oMLX serves.) Watch it live with `python scripts/watch_ladder.py`.
 3. **Compare** 6-bit against the halved run mechanically:
    ```bash
    uv run python scripts/compare_runs.py <6bit-record> <halved-record>

@@ -6,6 +6,44 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `run_ladder --acceptance-test <file>` (direct or `--mode mode`): places a
+  hand-written failing test, named `test_*.py` so pytest collects it, in the
+  workspace's `tests/` before the baseline and makes the task "make tests/<name>
+  pass" (verify with that test, don't start servers). Because the test is in the
+  baseline, the existing-tests scorer freezes it, so the worker cannot weaken it —
+  the mediated-test screen. `--redispatch N` (direct) adds the verify-and-re-hand
+  loop: re-run the frozen test after a run and, on failure, hand the failure to a
+  fresh worker on the same workspace, up to N times; the record names the number
+  of re-dispatches. Screens only so far (rungs 6–9 12/12 mediated, Mode rung 9
+  0/3 → 3/3).
+- `run_ladder --effort-ramp` (with `--redispatch`, opt-in): the first attempt runs
+  quick (Pi thinking off, 2k `max_tokens`) and re-dispatches escalate to medium/8k
+  and high/16k only while the frozen test keeps failing; the record names each
+  attempt's level and budget. On a known-hard rung a fixed high budget was faster
+  (v7 ablation), so it is not a default.
+- `run_ladder --pi-extension <path>` (direct or `--mode mode`, repeatable) loads an
+  extra Pi extension with `-e`, so an extension such as `extensions/mellum-ncm.ts`
+  can be measured without shipping it.
+- `run_ladder --temperature` / `--top-p` (direct) override the greedy request
+  values for sampling screens, not measured claims. A server other than oMLX is
+  reached through `--provider`, `--base-url` and `--model provider/id`;
+  `docs/backends/mlx-lm.md` is the recipe for a plain `mlx_lm.server`.
+- **The run standard**: `scripts/screen.sh <rung> <model-id>` (the measurement
+  rig — direct, mediated, `tuned`, repeat 3, redispatch 5, effort-ramp, thinking
+  off, guards on) and `scripts/product.sh <rung>` (the shipped worker, `--mode
+  mode`). Two fixed shapes so runs compare like-for-like instead of
+  hand-assembled flags; both write to `runs/` (git-ignored). The dashboard's rung
+  picker starts a run through them.
+
+- An Introduction page, `learn/introduction/index.md`, ahead of the Getting started track: what a
+  language model, a prompt, context, tools, a harness, an agent and a feedback loop are, so a
+  newcomer has the vocabulary before the first lesson.
+
+- Getting started gains `learn/getting-started/install.sh` and `install.bat`, which install the
+  pinned tool versions the lessons need on macOS, Linux and Windows, and a `troubleshoot.md` for
+  the install and backend failures met while checking the track on each platform.
+  `scripts/backend.py` was reworked alongside so it starts and stops the server on all three.
+
 - The flow examiner is given a general completeness rule for computed/report endpoints: seed
   representative rows and assert the EXACT computed/grouped/sorted/filtered result, with a row
   included AND one excluded by each filter or definition the spec states (including a definition
@@ -13,6 +51,7 @@ Versions match git tags; pin one in both install lines.
   non-empty body, which a stub also returns. The schema rule now also asserts named migrations are
   actually recorded/applied, not merely defined. These target the hard phase 6-7 hidden-oracle gap,
   stated generally and derived from the spec, never from the hidden grader's values.
+
 - The examiner is told to write SELF-CONTAINED tests (create the records they need, never assume a
   seed record at a given id or state), to READ the earlier frozen gates and reuse their proven
   conventions (client setup, whether a record is created with form `data=` or `json=`, field
@@ -22,97 +61,13 @@ Versions match git tags; pin one in both install lines.
   remaining aggregate-count case). All stated generally; the examiner still derives specifics from
   the spec and the earlier gates, not from the hidden grader.
 
-### Fixed
-
-- The flow examiner prompt was compressed (~4650 to ~2560 chars) without dropping any rule. Each
-  anti-brittleness rule added earlier had lengthened it, and because this thinking model's reasoning
-  cannot be capped, the longer prompt made it over-reason and emit NOTHING even at 32000 tokens on
-  the harder phases (hard phase 4's gate stopped freezing). Measured: with the leaner prompt the
-  phase-5 examine finishes thinking and emits a valid 7-test file that compiles. The rewrite also
-  re-states, tightly, that the client is imported from `starlette.testclient` (a first compression
-  pass dropped that and the model guessed `flask.testing`).
-- The flow examiner is now told to disable redirect-following ONCE on the test client
-  (`TestClient(app, follow_redirects=False)`) rather than per request. The per-request rule kept
-  slipping — the examiner applied it to some POSTs but forgot it on a setup POST and then asserted a
-  3xx that TestClient had already followed to 200, failing a correct handler on hard phases 4 and 5.
-  Setting it on the client eliminates the whole class (verified: the frozen phase-4 gate goes from 2
-  failures to all-pass against the correct app). Still general — no suite-specific routes or values.
-- The flow examiner is taught two more general testing-discipline rules, after a correct
-  implementation failed brittle gates: (1) every request whose redirect is asserted needs
-  `follow_redirects=False` (the examiner had applied it to some POSTs but not others, so TestClient
-  followed the redirect and a correct handler failed), and (2) assert RELATIVE deltas, not absolute
-  totals, because the tests share one in-memory store that earlier tests have already mutated. Both
-  rules are stated generally, with no suite-specific routes, fields or values — the examiner still
-  derives every assertion from the spec. The examiner prompt's remaining illustrative examples were
-  scrubbed of suite-specific names for the same reason.
-- The flow examiner is a thinking model whose reasoning cannot be capped, and on a complex phase it
-  needs more than 16384 tokens just to finish thinking — so at that cap it emitted an EMPTY test
-  (`finish_reason=length`, no content) and no gate froze. The hard "Archive & Audit" phase stalled
-  on exactly this. The examiner's `max_tokens` is raised to 32000 (measured: it then finishes
-  thinking and emits the full test), and `bestPytest` now salvages the test from any assistant
-  block when the examiner ends on verifying chatter rather than the test itself.
-- The flow now judges a phase on the frozen acceptance gate (`tests/test_gate_phase_*.py`) alone,
-  not on the coder's own scratch tests. A brittle coder test — the hard "Resolve and Reopen"
-  phase's list-equality order check, polluted by shared in-memory state — was failing a build that
-  passed the authoritative gate. The gate is the definition of DONE; the coder's extra tests no
-  longer gate a correct, gate-passing solution.
-- The examiner could freeze a self-contradictory absence check: `assert "Resolve" not in html`
-  while the same test required the status "Resolved" present ("Resolve" is a substring of
-  "Resolved"), so no correct app could pass — the hard "Resolve and Reopen" phase looped on it.
-  The examiner is now told to target the specific control (its form `action=` URL or the exact
-  button) when checking an action is gone, never a bare substring of a word the page shows.
-- A dangling markdown fence in the examiner's reply (a trailing ` ``` ` with no opening fence, or
-  an opening ` ```python ` with no close) survived into the frozen Python gate, so
-  `phase_gate_ok`'s `compile()` rejected an otherwise-correct gate and the phase looped to
-  exhaustion. The hard suite's "Resolve and Reopen" phase died this way — a lone fence on the gate's
-  last line. `asCode` now strips any lone fence line as a safety net, so a fence can never reach the
-  gate file.
-- The flow examiner wrote redirect acceptance tests that a correct handler could never pass:
-  `starlette`'s `TestClient` follows redirects by default, so a plain `client.post(...)` returns
-  the final `200` page and `assert status_code == 303` fails a correct `303` handler. The medium
-  suite's "Add Complaint" phase looped to exhaustion on this — the app was right, the frozen gate
-  was unpassable. The examiner is now told to pass `follow_redirects=False` on the redirecting
-  request before asserting the status and `Location` header.
-- Removing Pi's base prompt (the `--system-prompt` fix) also removed the structure that kept the
-  planner concise, so it rambled ~635s on a trivial plan and timed the fork out. Two fixes, since
-  the model's reasoning can't be toggled off (neither `reasoning_effort` nor `enable_thinking` is
-  honored — verified): (1) a project operating guide (`BASE_GUIDE`) is prepended to every role —
-  focus, brevity ("be decisive, do not deliberate"), tool-use, output-only — replacing Pi's
-  structure in our own voice, generic so it contradicts no role; (2) per-phase `max_tokens` — the
-  planner and reviewers capped below examine/code (8192) — small enough to bound a runaway, large enough not to truncate a thinking model (2048 emptied the plan),
-  examine and code kept generous (16384). `max_tokens` is the only lever that bounds reasoning here.
-- Flow phase sub-agents appended their role prompt to Pi's base coding-agent prompt
-  (`--append-system-prompt`), leaving Pi's generic "thorough coding agent" framing on top of
-  every tightly-scoped role — diluting them and pushing the examiner to over-assert. They now
-  REPLACE it (`--system-prompt`), matching the orchestrator and the direct worker; only the
-  role prompt governs each phase.
-- The flow examiner invented exact strings the spec never gave (e.g. a viewport
-  `initial-scale=1.0`, exact nav markup), producing brittle gates that a correct
-  implementation can't match — even the home page failed. It now asserts exact values ONLY
-  where the spec is verbatim, and asserts the requirement (a viewport meta exists, a link to
-  the named route is present) — not an invented string — for loosely-described requirements.
-- The flow examiner under-specified identity, so a multi-phase run could pass its own gate
-  while the hidden grader failed. Medium went visible=PASS / hidden=FAIL because the worker
-  gave `Complaint` no stable `id` field (resolve/reopen worked by list index), and the
-  examiner never asserted identity. `examine` now requires, for any phase that acts on a
-  specific record (resolve/reopen/update/delete/fetch by id), a stable explicit id FIELD on
-  the model — distinct per record, addressed by id, unchanged across the mutation, no
-  reordering — closing the visible/hidden gap on that class of phase.
-- The flow orchestrator could loop a phase to the deadline: a rung-6 run re-ran the
-  (expensive) `examine` tool 5×, `review_code` 3×, and never called `test`, burning the whole
-  1200s budget on a solution it already had. `examine` now runs **once per phase** — once its
-  gate is frozen, re-calls are blocked with a pointer to `code()`/`test()` — and a per-phase
-  tool-call cap (`PHASE_CALL_CAP`, 16) stops the orchestrator thrashing, while always leaving
-  `test` (the only exit) callable.
-
-### Added
-
 - A `flow` mode for the ladder (`run_ladder --mode flow`): runs the spec-driven flow
   orchestrator (mellum-flow.ts — plan/review/examine/code/test, the examiner writing the
   acceptance test from the spec) on a rung's fixture and scores it with the rung's own hidden
   grader, so the spec-driven paradigm is measured on the same rungs as the direct baseline.
   It cleared rung 6 (AgentClinic phase 1), which both models fail in direct mode because the
   fixture ships no visible test — the examiner supplies the missing target.
+
 - The flow harness now keeps its bookkeeping (`TASK.md`, `TODO.md`, `REVIEW.md`, the frozen
   gate) under a single `plan/` folder instead of the workspace root, so it never mixes with
   the solution tree; the ladder's flow mode moves `plan/` out of the workspace before grading
@@ -124,39 +79,6 @@ Versions match git tags; pin one in both install lines.
   paths under it. A worker had run `grep -rl pattern /Users /var /tmp …`, which crawls the
   whole machine and hangs the run for minutes; the guard stops that and tells the worker to
   search within its workspace.
-
-### Fixed
-
-- The flow harness counted a phase as passed whenever pytest passed — even when the
-  examiner had produced no acceptance test for that phase. A fork whose examiner output
-  was dropped or malformed then inherited only the earlier phases' gate and passed
-  trivially, and best-of-N (promote the first fork to pass) actively selected that
-  weakest fork. On a hard run this meant phases 3–7 reported PASS while only phases 1–2
-  were built. A fork now counts as passing phase N only when it froze a real acceptance
-  test for N: `.mellum_gate/phase_<n>.py` must exist, compile as Python (an examiner that
-  emitted an HTML/template blob is rejected) and define at least one test. The examiner
-  also validates its own output, retries once on a non-pytest reply, and refuses to
-  freeze a junk gate; `asCode` now prefers a ```python block over any other fenced block.
-- `run_top` crashed a whole best-of-N run when reaping a child process group raised
-  `PermissionError` (EPERM) — a pid recycled into a group the process no longer owns. The
-  reap now ignores both `ProcessLookupError` and `PermissionError`.
-
-### Changed
-
-- The flow harness's self-written acceptance tests now **accumulate across phases**
-  instead of being overwritten each phase. The examiner freezes each phase's test
-  under `.mellum_gate/phase_<n>.py`, and both the `test` tool and the runner restore
-  the WHOLE frozen set into `tests/` (as `test_gate_phase_*.py`) before scoring — so
-  every earlier phase is re-run and a later phase can no longer pass by silently
-  regressing an earlier one. The examiner prompt is stricter too: it enumerates every
-  requirement for its phase and must assert the negative and edge cases (missing or
-  invalid input, empty, unauthorized, not-found, duplicates, exact error status and
-  message), not only the happy path; the coder is pointed at the cumulative gate and
-  told earlier phases must keep passing. This closes the visible-pass / hidden-grader
-  gap that came from each phase only being checked while it was the current one. The
-  worker still writes its own tests from the spec — nothing is injected or hand-authored.
-
-### Added
 
 - Fix the orchestrator "stall": the phase task and reviewer feedback now flow
   through files (`TASK.md`, `TODO.md`, `REVIEW.md`) and every phase tool is called
@@ -313,8 +235,10 @@ Versions match git tags; pin one in both install lines.
   (goalposts, the mediated test, v9, mediation as a completeness gate, rungs
   10–12, context, rethink, documents and images, live control, next-concept
   verify), each badged, with support items listed separately.
+
 - The Lessons index is one recommended list of twenty, each with a one-line
   description and an italic author tag, *(Paul)* or *(Andre)*.
+
 - A GitHub Actions workflow builds the Zensical site on pull requests and
   deploys it to Pages from `main`.
 
@@ -333,6 +257,7 @@ Versions match git tags; pin one in both install lines.
   seeded demo data, so the vehicle is not yet the remedy. The extension also
   falls back to the session's Mellum model when the oMLX one is absent, which
   is what makes it usable on llama.cpp.
+
 - Getting started lesson 2, "The ditch": one open-ended AgentClinic session
   whose final report claims a working app and a passing test run; checking
   both shows four failing tests and a missing date filter. The harness gains
@@ -396,7 +321,168 @@ Versions match git tags; pin one in both install lines.
   AgentClinic phase 4 id miss follows the one-file roadmap (5 of 6 runs,
   against 1 of 6 with one spec file per phase). Exploratory, n = 3 per arm.
 
+- A **foreground-server guard** in `extensions/mellum-guards.ts` (on with
+  `--guards`): blocks a bash command that would start a server in the foreground
+  (`uvicorn`, `gunicorn`, `flask run`, `python -m http.server`, `manage.py
+  runserver`, `npm start`, …) and tells the worker to use `TestClient` in
+  process, or to start it detached (`nohup … & echo $!`) so it returns at once
+  with a pid to kill later. Reads/searches that merely mention a server
+  (`grep uvicorn`, `cat app.py`) and already-backgrounded commands are allowed.
+  The enforcement behind prompt v10.
+
+- Ladder rungs 10–12 (AgentClinic phases 5–7): rung 10 Archive & Audit (with a
+  destructive-archive decoy off the write-list), rung 11 reporting over a
+  pre-filled database (with an archived-but-open trap row), rung 12 summing two
+  columns of a file far larger than the context window (must be streamed). Each
+  is scored by the hidden cumulative oracle plus a committed frozen acceptance
+  test. The 6-bit clears all three 3/3 mediated — recorded in
+  `docs/ladder/2026-10-21-rungs-10-12-6bit/`.
+
+- `extensions/mellum-override.ts` — edit the system prompt the worker is fed,
+  live, from a file (`$MELLUM_PROMPT_OVERRIDE`): `system` replaces it, `append`
+  adds to it, applied at the next turn boundary. The dashboard writes the file,
+  so you can change the prompt while a run is in flight. Self-contained; pure
+  core unit-tested.
+
+- Dashboard upgrades (`dashboard/`): click a rung to drill into its **past runs
+  and summaries** (verdict, the task sentence, the diff, wall time); an
+  **intelligence centre** panel that shows the told-vs-truth contradictions
+  `mellum-rethink` finds; a **system-prompt editor** that saves an override the
+  worker picks up next turn (via `mellum-override`); the prompt panel now shows
+  the **full context** being fed, not a teaser; and the rung grid is
+  data-driven over rungs 1–12, so a rung is shown as idle rather than hidden
+  when it has no result. `serve.py` gains `/rung`, `/override` (GET + POST)
+  endpoints and an `intel` feed, all dependency-free stdlib.
+
+- `extensions/mellum-vision.ts` — let the worker see: describe images and
+  screenshots, or read the text out of them, with a small local vision model
+  (JetBrains ships none — Mellum is code and text only). Default
+  `empero-ai/Qwen3.8-2B-Distill` (~2 B, a Qwen3.5 VLM) served through MLX; the
+  model id is a Hugging Face repo id, so `mlx_vlm` downloads it automatically on
+  first use when missing (set `MELLUM_VISION_MODEL` to a local 4-bit copy for a
+  smaller, faster load). Its partner is `mellum-files`: a
+  scanned/image-only page routes here. Descriptions are indexed into
+  `mellum-context`. Command `/see <image> [question]` and a `describe_image`
+  tool. Config: `MELLUM_VISION_MODEL`, `MELLUM_VISION_PYTHON`. Pure core
+  unit-tested; verified end-to-end against the local model.
+
+- `extensions/mellum-files.ts` — document understanding for PDF, Word (.docx)
+  and Excel (.xlsx), plus plain text. Office files are read with a small
+  pure-Node zip reader (the central directory, so Office's streamed files work)
+  and `node:zlib`; PDF text is pulled best-effort from the page content streams
+  (FlateDecode inflated, text operators read). No npm dependency and no external
+  tool. Extracted text is indexed into the `mellum-context` store so a large
+  document becomes searchable context. A scanned, image-only PDF has no text to
+  pull — that routes to `mellum-vision`. Command `/read-file <path>` and a
+  model-callable `read_document` tool. Self-contained; pure core unit-tested.
+
+- `extensions/mellum-rethink.ts` — a skeptical "stop and pause, rethink" gate.
+  It parses the claims a human makes in the task (the tests already pass, a file
+  was already changed), checks the cheap, checkable ones against ground truth
+  (does the acceptance test actually pass, did the file actually change), and
+  when a claim contradicts reality it pushes the worker back at settle — a note
+  naming the contradiction, asking it to re-examine rather than encode a false
+  premise. Each contradiction is also written to the feed (kind `rethink`) for
+  the dashboard. Config: `RETHINK_TEST`, `RETHINK_PYTEST`. Self-contained
+  (Node + Pi hooks); pure core unit-tested.
+
+- `extensions/mellum-context.ts` — context intelligence over a local SQLite
+  FTS5 index (built-in `node:sqlite`, no npm dep). It chunks files into
+  overlapping line windows, ranks passages by BM25 with a recency boost
+  (temporal ranking), and can return them in chronological order (temporal
+  sequencing) so the worker applies context in the order it happened. Large
+  code and large data are leaned on through the index — the worker searches for
+  the few relevant lines instead of loading the whole file into the prompt.
+  Commands `/index <path>` and `/context <query>`, plus a model-callable
+  `context_search` tool where Pi supports it. Config: `MELLUM_CONTEXT_DB`,
+  `MELLUM_CONTEXT_HALFLIFE_MS`. Self-contained (Node + Pi hooks); pure core unit-tested.
+
+- A live worker observability + control set (agnostic Pi extensions, loaded with
+  Pi's `-e`, each self-contained — Node + Pi hooks, no framework coupling):
+  `extensions/mellum-feed.ts` emits an NDJSON feed of the worker's turns, tool
+  calls and the prompts it was sent; `extensions/mellum-replay.ts` adds a
+  `/replay <adjustment>` that re-sends the last captured prompt to the model
+  with a slight system-prompt tweak; `extensions/mellum-control.ts` holds the
+  worker at the turn boundary while paused and resumes on play. A local
+  `dashboard/` (a dependency-free `serve.py` relay over SSE + a reactive page)
+  shows the rung grid, the prompts fed to the model, and the live feed. Pure
+  cores are unit-tested; the live Pi-driving is verified separately.
+
+- `extensions/mellum-ncm.ts` — a next-concept-modelling verify gate, loaded
+  with Pi's `-e` (not shipped by default). At settle it re-runs the named
+  acceptance test and, while it is red, sends the worker back naming the **unmet
+  concepts** (the failing test functions), up to `NCM_MAX`. It brings the
+  ladder's direct-only verify/re-dispatch into any Pi session — Mellum Mode
+  included — at the concept grain, reusing the `agent_before_settle -> continue`
+  pattern from the empty-final nudge; self-contained (Node + Pi hooks, no
+  Pi-internal imports). Config: `NCM_TEST`, `NCM_MAX` (default 5), `NCM_PYTEST`.
+
+- `docs/ladder/2026-10-20-mediated-6-9-v7/` records the measured pass: Mellum on
+  AgentClinic rungs 6–9, n=3, mediated (frozen phase tests) with the v7 prompt +
+  focused command + trimmed tools + fail-fast ramp — **12/12**, rung 9 (the
+  phase-4 wall, best-ever 2/3) now **3/3**, clearing the historical 9/12 ceiling.
+  Note:
+  [`research/2026-10-20-mediated-6-9-v7.md`](docs/superpowers/research/2026-10-20-mediated-6-9-v7.md).
+
+- `extensions/content-tool-call-assist/` — a Pi extension that lets a small open
+  model drive the loop when it emits its tool call in the message content (a
+  fenced JSON `{"tool","args"}`/`{"name","arguments"}` block, or a Hermes/Qwen
+  `<function=…>` XML block) instead of the structured `tool_calls` field. It
+  promotes the content call into a real one, gated on the real tool names and a
+  present arguments key so model data (e.g. a cart item `{"name":"Widget A"}`)
+  is never mistaken for a call. `ASSIST_FORCE_TOOLS=1` adds a nudge and a
+  seed/temperature retry; `ASSIST_BASE_URL`/`ASSIST_MODEL_ID` point it at any
+  OpenAI-compatible server. `scripts/patch-pi.sh [PI_DIR]` installs it into a Pi
+  checkout (its imports resolve only there); load it with Pi's `-e`.
+
+- `EXAMPLE.md`: a worked, example-driven guide to using Mellum — one-shot
+  `/mellum`, multi-task spans, handing it a failing test (the reliable pattern),
+  project facts, `/mellum check`/`last`, and measuring via the ladder's mlx-lm
+  backend.
+
+- `LESSONS.md`: 100 lessons from the small-model-as-worker effort (plus a dated
+  addendum), and
+  `docs/superpowers/research/2026-10-19-small-model-tool-presentation.md`
+  recording a negative result — stripping a model's native tool field regresses
+  tool-calling (fix the chat template's line feeds instead).
+
 ### Changed
+
+- A mediated direct run (`--acceptance-test`) gives the worker five tools,
+  `read, ls, bash, edit, write`, and verifies with a focused `pytest
+  tests/<the-test>`: offline, `grep`/`find` shell out to the missing `fd`/`rg`,
+  and under v6 the whole-directory command sent the worker chasing unrelated
+  tests (a 93-turn spin on rung 6). An unmediated direct run keeps the measured
+  seven tools.
+- `--redispatch` varies the sampling on each retry instead of re-running the same
+  greedy decode: the temperature grows by `--redispatch-temperature-step`
+  (default 0.25) up to `--redispatch-temperature-cap` (default 0.5) and the seed
+  moves with the attempt, so retries diverge without going hot (a 0→1.0 ramp ran
+  44 tool errors in 121 requests). A timed-out attempt also re-dispatches. The
+  ramp is unmeasured; nothing yet shows a retry passing because of it.
+
+- The five flow role prompts are rewritten as one plan → examine → code → test pipeline: each
+  names its step and hand-off, file paths are consistent (`plan/TASK.md`, `plan/TODO.md`,
+  `plan/REVIEW.md`, `tests/test_gate_phase_*.py`), and reviewers share one PASS/REDO shape. It
+  removes a contradiction left from before the examiner: the planner had told the coder to write
+  the pytest file, which is now the examiner's job.
+
+- The Learning Center's terminology lives in the glossary: the short-lived
+  `learn/introduction/terminology.md` page was folded into `learn/glossary.md`, so every term
+  links to one definition.
+
+- The flow harness's self-written acceptance tests now **accumulate across phases**
+  instead of being overwritten each phase. The examiner freezes each phase's test
+  under `.mellum_gate/phase_<n>.py`, and both the `test` tool and the runner restore
+  the WHOLE frozen set into `tests/` (as `test_gate_phase_*.py`) before scoring — so
+  every earlier phase is re-run and a later phase can no longer pass by silently
+  regressing an earlier one. The examiner prompt is stricter too: it enumerates every
+  requirement for its phase and must assert the negative and edge cases (missing or
+  invalid input, empty, unauthorized, not-found, duplicates, exact error status and
+  message), not only the happy path; the coder is pointed at the cumulative gate and
+  told earlier phases must keep passing. This closes the visible-pass / hidden-grader
+  gap that came from each phase only being checked while it was the current one. The
+  worker still writes its own tests from the spec — nothing is injected or hand-authored.
 
 - The eval harness runs suites easiest-first (`easy`, `medium`, `hard`) rather
   than alphabetical, so a slow hard suite never blocks the quicker ones;
@@ -503,7 +589,178 @@ Versions match git tags; pin one in both install lines.
   Pi's (`--prompt-mode replace`), which is what the shipped agent file does;
   `--prompt-mode append` is still there for comparing with phases 0–2.
 
+- Worker prompt v7 → v11, hardenings against "self-certifying against a subset".
+  Each was found by reading what the worker actually ran; the passes cited are ladder
+  screens (n = 1 to 3) with no `docs/ladder/` record yet:
+  - **v8 (run the whole test file):** the "how to check" step now tells the
+    worker to run the whole named test file (e.g. `pytest -v test_export.py`) and
+    pass every test in it, never a single `::test_function`, and not to stop after
+    one test passes. Fixes the self-narrowing that failed rungs 4/5 (bare
+    un-mediated ladder 6/12 → 11/12).
+  - **v9 (implement the whole spec):** the "what to build" step now says the spec
+    is the full contract — implement every requirement, such as automatically
+    assigned unique ids, defaults and status rules, even when no visible test
+    checks it. Fixes rung 9's Phase-4 id miss (the worker passed every visible
+    test but left `id = 0`, which only the hidden oracle caught).
+  - **v10 (never start a server):** the check step now says never start a server
+    (`uvicorn`, `flask run`, `http.server`, the app) — it blocks forever and
+    burns the time budget — and to exercise an endpoint in process with
+    `TestClient` the way the tests do. Fixes a rung-9 deadline failure where the
+    worker ran `uvicorn app:app` and hung until the deadline.
+  - **v11 (verify against the spec before finishing):** a final self-check step —
+    re-read the spec clause by clause and confirm the code meets each one, above
+    all a data-model rule the visible tests do not exercise ("assigned
+    automatically" means the constructor sets the id from a counter, never
+    `None`/`0`). This closed rung 9's probabilistic id miss: with v11 (plus the
+    server guard) the bare 6-bit reached **rung 9 = 3/3** un-mediated.
+  - The run recorder's prompt-version marker tracks v11.
+
+- Worker prompt **v7** specializes to the "make one failing test pass" shape:
+  read the named test *and* any spec it references, create the module the test
+  imports if missing, run *only* the named test, never edit that test or add
+  other test files. This is Mellum's best-measured usage (see the 2026-10-20
+  record) — narrower than v6's general guidance. The v6 keep-every-test guardrail folds in.
+
+- Worker prompt v6 adds a keep-every-existing-test guardrail (add new tests
+  alongside the existing ones; change only what the task requires). It is
+  spec-aligned guidance; on a 2B model it showed no measured lift (the model
+  ignores it) and no regression — see the 2026-10-19 research note — so it is
+  kept as guidance for more capable workers, not as a measured improvement.
+
 ### Fixed
+
+- `scripts/screen.sh`, `scripts/product.sh` and the dashboard's Start button work
+  again: the 2026-10-22 upstream merge had dropped the ladder flags they call
+  (`--acceptance-test`, `--redispatch`, `--effort-ramp`, `--pi-extension`). The
+  flags are restored on the current runner, with oMLX selected by `--model
+  omlx/<id>` in place of the earlier `--model-id`.
+- `--effort-ramp` no longer crashes with `ProfileMismatch`: the effective-params
+  check is skipped while the ramp owns `max_tokens`.
+- The re-dispatch retry message carries the real test failure: it runs `pytest -q
+  -p no:warnings --tb=short` and sends the FAILURES section instead of a tail of
+  deprecation warnings.
+
+- `flow_run` no longer crashes when an early phase fails: the forward-context line read the
+  last passed phase as `done[-1]`, which raised `IndexError` when phase 1 had failed and ended
+  the whole run. It now says no phase has passed yet and moves on to the next phase.
+
+- The flow orchestrator no longer loops plan → review_plan → REDO forever. Review gating was
+  fail-closed (pass only on an exact `REVIEW: PASS`), and a thinking-model reviewer rambles or
+  truncates before writing it, so every review read as REDO and no gate was ever written.
+  Reviews now fail open: only an explicit `REVIEW: REDO` loops back. They are advisory; the
+  examiner's frozen gate and the hidden grader are the real checks.
+
+- The flow examiner prompt was compressed (~4650 to ~2560 chars) without dropping any rule. Each
+  anti-brittleness rule added earlier had lengthened it, and because this thinking model's reasoning
+  cannot be capped, the longer prompt made it over-reason and emit NOTHING even at 32000 tokens on
+  the harder phases (hard phase 4's gate stopped freezing). Measured: with the leaner prompt the
+  phase-5 examine finishes thinking and emits a valid 7-test file that compiles. The rewrite also
+  re-states, tightly, that the client is imported from `starlette.testclient` (a first compression
+  pass dropped that and the model guessed `flask.testing`).
+
+- The flow examiner is now told to disable redirect-following ONCE on the test client
+  (`TestClient(app, follow_redirects=False)`) rather than per request. The per-request rule kept
+  slipping — the examiner applied it to some POSTs but forgot it on a setup POST and then asserted a
+  3xx that TestClient had already followed to 200, failing a correct handler on hard phases 4 and 5.
+  Setting it on the client eliminates the whole class (verified: the frozen phase-4 gate goes from 2
+  failures to all-pass against the correct app). Still general — no suite-specific routes or values.
+
+- The flow examiner is taught two more general testing-discipline rules, after a correct
+  implementation failed brittle gates: (1) every request whose redirect is asserted needs
+  `follow_redirects=False` (the examiner had applied it to some POSTs but not others, so TestClient
+  followed the redirect and a correct handler failed), and (2) assert RELATIVE deltas, not absolute
+  totals, because the tests share one in-memory store that earlier tests have already mutated. Both
+  rules are stated generally, with no suite-specific routes, fields or values — the examiner still
+  derives every assertion from the spec. The examiner prompt's remaining illustrative examples were
+  scrubbed of suite-specific names for the same reason.
+
+- The flow examiner is a thinking model whose reasoning cannot be capped, and on a complex phase it
+  needs more than 16384 tokens just to finish thinking — so at that cap it emitted an EMPTY test
+  (`finish_reason=length`, no content) and no gate froze. The hard "Archive & Audit" phase stalled
+  on exactly this. The examiner's `max_tokens` is raised to 32000 (measured: it then finishes
+  thinking and emits the full test), and `bestPytest` now salvages the test from any assistant
+  block when the examiner ends on verifying chatter rather than the test itself.
+
+- The flow now judges a phase on the frozen acceptance gate (`tests/test_gate_phase_*.py`) alone,
+  not on the coder's own scratch tests. A brittle coder test — the hard "Resolve and Reopen"
+  phase's list-equality order check, polluted by shared in-memory state — was failing a build that
+  passed the authoritative gate. The gate is the definition of DONE; the coder's extra tests no
+  longer gate a correct, gate-passing solution.
+
+- The examiner could freeze a self-contradictory absence check: `assert "Resolve" not in html`
+  while the same test required the status "Resolved" present ("Resolve" is a substring of
+  "Resolved"), so no correct app could pass — the hard "Resolve and Reopen" phase looped on it.
+  The examiner is now told to target the specific control (its form `action=` URL or the exact
+  button) when checking an action is gone, never a bare substring of a word the page shows.
+
+- A dangling markdown fence in the examiner's reply (a trailing ` ``` ` with no opening fence, or
+  an opening ` ```python ` with no close) survived into the frozen Python gate, so
+  `phase_gate_ok`'s `compile()` rejected an otherwise-correct gate and the phase looped to
+  exhaustion. The hard suite's "Resolve and Reopen" phase died this way — a lone fence on the gate's
+  last line. `asCode` now strips any lone fence line as a safety net, so a fence can never reach the
+  gate file.
+
+- The flow examiner wrote redirect acceptance tests that a correct handler could never pass:
+  `starlette`'s `TestClient` follows redirects by default, so a plain `client.post(...)` returns
+  the final `200` page and `assert status_code == 303` fails a correct `303` handler. The medium
+  suite's "Add Complaint" phase looped to exhaustion on this — the app was right, the frozen gate
+  was unpassable. The examiner is now told to pass `follow_redirects=False` on the redirecting
+  request before asserting the status and `Location` header.
+
+- Removing Pi's base prompt (the `--system-prompt` fix) also removed the structure that kept the
+  planner concise, so it rambled ~635s on a trivial plan and timed the fork out. Two fixes, since
+  the model's reasoning can't be toggled off (neither `reasoning_effort` nor `enable_thinking` is
+  honored — verified): (1) a project operating guide (`BASE_GUIDE`) is prepended to every role —
+  focus, brevity ("be decisive, do not deliberate"), tool-use, output-only — replacing Pi's
+  structure in our own voice, generic so it contradicts no role; (2) per-phase `max_tokens` — the
+  planner and reviewers capped below examine/code (8192) — small enough to bound a runaway, large enough not to truncate a thinking model (2048 emptied the plan),
+  examine and code kept generous (16384; examine later raised to 32000, below). `max_tokens` is the only lever that bounds reasoning here.
+  The base prompt itself was later restored (next entry), so `BASE_GUIDE` now sits between
+  Pi's base prompt and the role.
+
+- Flow phase sub-agents keep Pi's base coding-agent prompt and append `BASE_GUIDE` and their
+  role (`--append-system-prompt`). Replacing it (`--system-prompt`) was tried, because Pi's
+  generic "thorough coding agent" framing diluted the tightly-scoped roles and pushed the
+  examiner to over-assert; but without Pi's base prompt the planner thought without bound and
+  never wrote a plan (an empty `TODO.md` even at 16384 tokens, failing every medium run), so it
+  was reverted. Pi's base prompt is what keeps this model producing a final answer; the
+  de-brittled examiner rules stay to offset its "be thorough" nudge.
+
+- The flow examiner invented exact strings the spec never gave (e.g. a viewport
+  `initial-scale=1.0`, exact nav markup), producing brittle gates that a correct
+  implementation can't match — even the home page failed. It now asserts exact values ONLY
+  where the spec is verbatim, and asserts the requirement (a viewport meta exists, a link to
+  the named route is present) — not an invented string — for loosely-described requirements.
+
+- The flow examiner under-specified identity, so a multi-phase run could pass its own gate
+  while the hidden grader failed. Medium went visible=PASS / hidden=FAIL because the worker
+  gave `Complaint` no stable `id` field (resolve/reopen worked by list index), and the
+  examiner never asserted identity. `examine` now requires, for any phase that acts on a
+  specific record (resolve/reopen/update/delete/fetch by id), a stable explicit id FIELD on
+  the model — distinct per record, addressed by id, unchanged across the mutation, no
+  reordering — closing the visible/hidden gap on that class of phase.
+
+- The flow orchestrator could loop a phase to the deadline: a rung-6 run re-ran the
+  (expensive) `examine` tool 5×, `review_code` 3×, and never called `test`, burning the whole
+  1200s budget on a solution it already had. `examine` now runs **once per phase** — once its
+  gate is frozen, re-calls are blocked with a pointer to `code()`/`test()` — and a per-phase
+  tool-call cap (`PHASE_CALL_CAP`, 16) stops the orchestrator thrashing, while always leaving
+  `test` (the only exit) callable.
+
+- The flow harness counted a phase as passed whenever pytest passed — even when the
+  examiner had produced no acceptance test for that phase. A fork whose examiner output
+  was dropped or malformed then inherited only the earlier phases' gate and passed
+  trivially, and best-of-N (promote the first fork to pass) actively selected that
+  weakest fork. On a hard run this meant phases 3–7 reported PASS while only phases 1–2
+  were built. A fork now counts as passing phase N only when it froze a real acceptance
+  test for N: `.mellum_gate/phase_<n>.py` must exist, compile as Python (an examiner that
+  emitted an HTML/template blob is rejected) and define at least one test. The examiner
+  also validates its own output, retries once on a non-pytest reply, and refuses to
+  freeze a junk gate; `asCode` now prefers a ```python block over any other fenced block.
+
+- `run_top` crashed a whole best-of-N run when reaping a child process group raised
+  `PermissionError` (EPERM) — a pid recycled into a group the process no longer owns. The
+  reap now ignores both `ProcessLookupError` and `PermissionError`.
 
 - The lesson-suite grader (`learn/code/harness.py`) no longer lints the
   workspace's `.venv`. ruff's `--exclude` REPLACES its built-in excludes (which
@@ -516,8 +773,6 @@ Versions match git tags; pin one in both install lines.
   only the index; a test requires every published lesson page to be in the
   nav.
 
-### Fixed
-
 - Fenced code blocks render again: adding the glossary extension had replaced
   Zensical’s default `pymdownx.superfences`; it is now enabled explicitly.
 
@@ -526,6 +781,7 @@ Versions match git tags; pin one in both install lines.
   downloads about 7.7 GB, prints the download percentage (or the log's last
   line) every 10 s, and shows the end of the log if llama-server exits.
   `status` on a down server says how to start it.
+
 - `scripts/backend.py` works on Windows as well as Linux and macOS: Ctrl+C or
   closing the terminal no longer kills a server started with `start`, and
   `stop` no longer kills the server during its liveness check. On Windows,
@@ -538,11 +794,13 @@ Versions match git tags; pin one in both install lines.
   check, the package's `main` and OpenCode keyword, and their tests and
   fixtures. The package is Pi-only; the measured OpenCode rows stay as
   history.
+
 - The pi-subagents Worker: its agent template, the setup skill's worker
   phase, the intercom option, the `kind: "worker"` run-record writer and the
   `learn`/`last` readers, their fixtures and tests, and the ladder's
   `delegated` mode. Old record files on disk are untouched; the code stops
   writing and reading them.
+
 - The ladder's rejected research modes and hooks: `--mode chunked` and
   `--mode brief` with `ladder/ladder/briefs/` (A15/A16, not adopted),
   `--strip-thinking` (A12, reverted) and `--budget-hook` (A13, inert), and

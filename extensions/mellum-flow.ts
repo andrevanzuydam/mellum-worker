@@ -46,12 +46,13 @@ interface Phase {
 	maxTokens: number;
 }
 
-// Our own operating guide, prepended to every role. It REPLACES the structure Pi's base prompt
-// used to give (focus, brevity, tool-use, output-only) now that we send --system-prompt instead
-// of --append — WITHOUT Pi's "thorough coding agent" framing that made the examiner over-assert,
-// and WITHOUT contradicting any role (it governs HOW to operate, never WHAT to produce). The
-// "be decisive, do not deliberate at length" line is the direct counter to the planner rambling
-// for 600s on a trivial plan once Pi's base prompt was removed.
+// Our own operating guide, appended with each role under Pi's base prompt (--append-system-prompt;
+// see runSubagent). It adds focus, brevity, tool-use and output-only discipline on top of Pi's
+// "thorough coding agent" framing, which pushed the examiner to over-assert, WITHOUT contradicting
+// any role (it governs HOW to operate, never WHAT to produce). It was written while Pi's base
+// prompt was briefly replaced (--system-prompt), when the planner rambled for 600s on a trivial
+// plan; "be decisive, do not deliberate at length" is the counter to that, and it stays useful
+// now that the base prompt is back.
 export const BASE_GUIDE =
 	"You are a single-purpose sub-agent in an automated build. Your ONE job is defined under " +
 	"YOUR ROLE below; do exactly that and nothing else. Operate with discipline:\n" +

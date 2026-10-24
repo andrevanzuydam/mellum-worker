@@ -4,12 +4,14 @@
 # compare like-for-like. Don't hand-assemble ladder flags; use this.
 #
 # Usage:
-#   scripts/screen.sh <rung 6-9> <model-id> [acceptance-test] [out-dir]
+#   scripts/screen.sh <rung 6-12> <model-id> [acceptance-test] [out-dir]
 #
 # Fixed:  --mode direct --profile tuned --repeat 3 --redispatch 5 --effort-ramp
-#         --thinking off --guards, plus the default v7 prompt and tools.
+#         --thinking off --guards, plus the default prompt (prompts/mellum-worker.md)
+#         and tools, served by oMLX (the model goes out as omlx/<model-id>).
 # Knobs:  rung, model-id, acceptance-test (default: the committed frozen phase
-#         test for the rung), out (default: runs/<date>-screen-<model>-rung<N>).
+#         test for rungs 6-9; pass one for 10-12), out (default:
+#         runs/<date>-screen-<model>-rung<N>).
 #
 # Guards are ON (the loop breaker fails a stuck worker fast — see the run
 # standard). Runs land in runs/ (git-ignored); record a kept run into
@@ -46,4 +48,4 @@ cd ladder
 exec uv run python -m ladder.run_ladder \
   --mode direct --profile tuned --repeat 3 \
   --acceptance-test "../${ACC}" --redispatch 5 --effort-ramp --thinking off --guards \
-  --rung "${RUNG}" --model-id "${MODEL}" --out "../${OUT}"
+  --rung "${RUNG}" --model "omlx/${MODEL}" --out "../${OUT}"

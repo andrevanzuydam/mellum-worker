@@ -30,11 +30,8 @@ its imports resolve only inside a Pi checkout, install it there:
 scripts/patch-pi.sh [PI_DIR]        # PI_DIR defaults to $PI_DIR or ~/projects/pi
 ```
 
-Then the ladder loads it in direct mode:
-
-```sh
-ASSIST_FORCE_TOOLS=1 ASSIST_BASE_URL=http://127.0.0.1:PORT/v1 ASSIST_MODEL_ID=<id> \
-  uv run python -m ladder.run_ladder --mode direct --profile tuned --rung 1 \
-    --model-spec content-assist/<id> \
-    --pi-extension <PI_DIR>/packages/coding-agent/examples/extensions/content-tool-call-assist
-```
+The ladder used to load it in direct mode with `--model-spec content-assist/<id>`
+and `--pi-extension <PI_DIR>/packages/coding-agent/examples/extensions/content-tool-call-assist`.
+`--model-spec` (Pi's `--model` set apart from the provider the ladder writes) was
+not restored to the ladder on 2026-10-24; the code is at `da04888` if a
+small-model screen needs it again. `--pi-extension` is available.

@@ -46,6 +46,10 @@ FLOW_EXT = REPO_ROOT / "extensions" / "mellum-flow.ts"
 MODEL = "omlx/Mellum2.1-12B-A2.5B-Thinking-6bit"
 MODEL_ID = MODEL.split("/", 1)[1]
 TOOLS = "read,grep,find,ls,bash,edit,write"
+# A mediated run (--acceptance-test) drops grep and find: offline they shell out to
+# fd/rg, which are missing, and under v6 the worker spent turns on them chasing
+# unrelated tests. The measured default keeps all seven.
+MEDIATED_TOOLS = "read,ls,bash,edit,write"
 
 # The spec-driven flow orchestrator (mellum-flow.ts): Pi coordinates the phase tools, which
 # each run as an isolated sub-agent. The examiner writes the acceptance test FROM the spec, so
@@ -105,6 +109,8 @@ def build_pi_direct_args(
     prompt_mode: str = "replace",
     thinking: str = "high",
     model: str = MODEL,
+    extra_extensions: tuple[Path, ...] = (),
+    tools: str = TOOLS,
 ) -> list[str]:
     """The worker alone. `replace` (the default) sends the worker prompt only, which is what
     the shipped agent file does; `append` keeps Pi's base prompt under it (phases 0-2)."""
@@ -129,13 +135,17 @@ def build_pi_direct_args(
         "--model",
         model,
         "--tools",
-        TOOLS,
+        tools,
         *prompt_args,
         "-e",
         str(RECORD_EXT),
     ]
     if guards:
         args += ["-e", str(GUARDS_EXT)]
+    # Extra extensions (e.g. a tool-call-assist plugin so a small model that
+    # emits tool calls in its content can drive the loop) load alongside --no-extensions.
+    for ext in extra_extensions:
+        args += ["-e", str(ext)]
     return [*args, sentence]
 
 
@@ -275,16 +285,18 @@ def build_pi_primary_args(sentence: str, plain: bool = False) -> list[str]:
     ]
 
 
-def build_pi_mode_args(sentence: str) -> list[str]:
+def build_pi_mode_args(sentence: str, extra_extensions: tuple[Path, ...] = ()) -> list[str]:
     """Mellum mode: the operator's own profile with the mode extension forced on.
 
     Superpowers, pi-subagents and the skills catalog load as they do for the
     operator; the mode's before_provider_request hook then sends Mellum the
     worker prompt and only the messages since the mode began. The shipped mode
     runs the guard set itself, so no guards file is passed; the recorder loads
-    after the mode so the trace shows what was sent.
+    after the mode so the trace shows what was sent. `extra_extensions`
+    (--pi-extension) load alongside — e.g. the NCM verify gate, so the mediation
+    reaches Mode.
     """
-    return [
+    args = [
         "pi",
         "-p",
         "--mode",
@@ -296,8 +308,10 @@ def build_pi_mode_args(sentence: str) -> list[str]:
         str(MODE_EXT),
         "-e",
         str(RECORD_EXT),
-        sentence,
     ]
+    for ext in extra_extensions:
+        args += ["-e", str(ext)]
+    return [*args, sentence]
 
 
 def parse_parent_json(stdout: str) -> dict:
@@ -429,6 +443,7 @@ def prepare_workspace(
     strip_facts_section: bool = False,
     facts_section: str = "fixture",
     roadmap: str = "phase-files",
+    acceptance_test: Path | None = None,
 ) -> Path:
     ws = copy_fixture(rung.fixture, scratch / f"rung{rung.number}")
     agents = ws / "AGENTS.md"
@@ -441,6 +456,11 @@ def prepare_workspace(
         for spec in (ws / "specs").glob("phase-*.md"):
             spec.unlink()
         (ws / "specs" / "roadmap.md").write_text(one_file_roadmap())
+    # Place the mediated acceptance test in the baseline, so the worker must
+    # make it pass and the existing_tests_kept scorer freezes it (unweakenable).
+    if acceptance_test is not None:
+        (ws / "tests").mkdir(exist_ok=True)
+        shutil.copy(acceptance_test, ws / "tests" / acceptance_test.name)
     git(ws, "init", "-q")
     git(ws, "add", "-A")
     git(
@@ -480,6 +500,75 @@ def read_events(trace: Path) -> list[dict]:
     return [json.loads(line) for line in trace.read_text().splitlines() if line.strip()]
 
 
+def redispatch_message(test_rel: str, test_output: str) -> str:
+    """The task handed to a fresh worker when the frozen acceptance test still fails."""
+    # Keep the part that says WHAT failed — the FAILURES section (tracebacks and
+    # assertions) — not a blind tail that can be all warnings and the summary.
+    marker = test_output.find("FAILURES")
+    detail = (test_output[marker:] if marker != -1 else test_output[-1800:])[:1800]
+    return (
+        f"The acceptance test {test_rel} still fails:\n{detail}\n"
+        f"Fix the code and make {test_rel} pass. "
+        f"Test command: uv run --offline python -m pytest {test_rel}"
+    )
+
+
+def redispatch_overrides(
+    base_overrides: dict | None,
+    attempt: int,
+    temp_step: float,
+    temp_cap: float = 1.0,
+) -> dict:
+    """Request overrides for re-dispatch ``attempt`` (1-based).
+
+    A greedy (temperature 0) re-dispatch re-runs the same deterministic decode,
+    so a retry must change the sampling to explore a different path. We grow the
+    temperature by ``temp_step`` per attempt up to ``temp_cap`` and move the seed
+    by the attempt number. Past the cap the temperature holds but the seed keeps
+    moving, so retries keep diverging (reproducibly) without going hot — high
+    temperature corrupts a tool-calling worker's JSON, so the cap stays low.
+    """
+    out = dict(base_overrides or {})
+    base_temp = out.get("temperature") or 0
+    base_seed = out.get("seed", 42)
+    out["temperature"] = round(min(temp_cap, base_temp + attempt * temp_step), 4)
+    out["seed"] = base_seed + attempt
+    return out
+
+
+def redispatch_effort(attempt: int, total: int) -> dict:
+    """Effort for attempt ``attempt`` of an effort-ramped run (0 = the initial try).
+
+    Start quick and cheap, escalate only as the frozen test keeps failing: early
+    attempts run with thinking off and a small token budget (sub-second on an easy
+    fix), the middle with moderate thinking, the last at full thinking and budget.
+    The frozen test gates it — a quick slice that passes stops the ladder, so
+    compute is spent in proportion to measured difficulty.
+    """
+    frac = attempt / max(total, 1)
+    if frac < 0.34:
+        return {"thinking": "off", "max_tokens": 2048}
+    if frac < 0.67:
+        return {"thinking": "medium", "max_tokens": 8192}
+    return {"thinking": "high", "max_tokens": 16384}
+
+
+def run_acceptance(ws: Path, test_rel: str) -> tuple[int, str]:
+    """Run the frozen acceptance test in the workspace: (exit code, combined output)."""
+    proc = subprocess.run(
+        # -p no:warnings: deprecation warnings drowned the real failure and pushed
+        # it out of the message window. --tb=short keeps the assertion, compactly.
+        ["uv", "run", "--offline", "python", "-m", "pytest", test_rel, "-q",
+         "-p", "no:warnings", "--tb=short"],
+        cwd=ws,
+        capture_output=True,
+        text=True,
+        timeout=300,
+        check=False,
+    )
+    return proc.returncode, (proc.stdout + proc.stderr).strip()
+
+
 def run_once(
     rung: Rung,
     mode: str,
@@ -502,8 +591,23 @@ def run_once(
     base_url: str = "http://127.0.0.1:8001/v1",
     model: str = MODEL,
     context_window: int = 56000,
+    request_overrides: dict | None = None,
+    acceptance_test: Path | None = None,
+    redispatch: int = 0,
+    redispatch_temperature_step: float = 0.25,
+    redispatch_temperature_cap: float = 0.5,
+    effort_ramp: bool = False,
+    extra_extensions: tuple[Path, ...] = (),
 ) -> dict:
     rung = variant_rung(rung, roadmap)
+    if acceptance_test is not None:
+        rung = replace(
+            rung,
+            sentence=f"Make tests/{acceptance_test.name} pass. "
+            "Verify only with the test command; do not run the app or start "
+            "servers — they block. "
+            f"Test command: uv run --offline python -m pytest tests/{acceptance_test.name}",
+        )
     scratch = Path(tempfile.mkdtemp(prefix="ladder-"))
     ws = prepare_workspace(
         rung,
@@ -511,6 +615,7 @@ def run_once(
         strip_facts_section=strip_facts_section,
         facts_section=facts_section,
         roadmap=roadmap,
+        acceptance_test=acceptance_test,
     )
     paths, lines = baseline_index(ws)
     trace = scratch / "trace.jsonl"
@@ -530,7 +635,7 @@ def run_once(
         env = mode_env(
             dict(os.environ), trace, agent_dir, scratch, facts=mode_facts == "on"
         )
-        args = build_pi_mode_args(rung.sentence)
+        args = build_pi_mode_args(rung.sentence, extra_extensions=extra_extensions)
         guards = True  # the mode always loads the guard extension
     elif mode == "flow":
         provider_name, model_id = model.split("/", 1)
@@ -548,14 +653,24 @@ def run_once(
         args = build_pi_flow_args(thinking, model, guards)
     else:
         provider_name, model_id = model.split("/", 1)
+        # Effort ramp: the initial attempt (0) starts quick — thinking off, small
+        # budget — and re-dispatches escalate it (see the loop below).
+        init_thinking = thinking
+        init_overrides = request_overrides
+        if effort_ramp:
+            eff0 = redispatch_effort(0, redispatch)
+            init_thinking = eff0["thinking"]
+            init_overrides = {**(request_overrides or {}), "max_tokens": eff0["max_tokens"]}
         agent_dir = direct_agent_dir(
             scratch / "pi-agent", prof, base_url,
             provider=provider_name, model_id=model_id,
             context_window=context_window,
+            request_overrides=init_overrides,
         )
         env = child_env(dict(os.environ), str(trace), agent_dir, offline=True)
         args = build_pi_direct_args(rung.sentence, guards, prompt, prompt_mode,
-                                    thinking, model)
+                                    init_thinking, model, extra_extensions=extra_extensions,
+                                    tools=MEDIATED_TOOLS if acceptance_test else TOOLS)
     selected_pi = versions.get("pi_launch") or resolve_pi(pi_executable)
     env, environment = workspace_preflight(ws, rung.fixture, env)
     launch = {"cwd": str(ws), "pi": selected_pi, **environment}
@@ -564,43 +679,98 @@ def run_once(
     launch["argv"] = argv
     started = time.time()
     monotonic_started = time.monotonic()
-    returncode = None
-    process_stdout = ""
-    stderr = ""
-    deadline_hit = False
-    stdout = ""
-    try:
-        proc = subprocess.run(
-            argv,
-            cwd=ws,
-            env=env,
-            stdin=subprocess.DEVNULL,
-            capture_output=True,
-            text=True,
-            timeout=deadline,
-            check=False,
-        )
-        returncode = proc.returncode
-        process_stdout = proc.stdout
-        stderr = proc.stderr
-        stdout = proc.stdout + ("\n[stderr]\n" + proc.stderr if proc.stderr else "")
-    except subprocess.TimeoutExpired as error:
-        deadline_hit = True
-        captured = error.stdout or b""
-        process_stdout = (
-            captured.decode(errors="replace")
-            if isinstance(captured, bytes)
-            else str(captured)
-        )
-        stdout = process_stdout
-        captured_stderr = error.stderr or b""
-        stderr = (
-            captured_stderr.decode(errors="replace")
-            if isinstance(captured_stderr, bytes)
-            else str(captured_stderr)
-        )
-        if captured_stderr:
-            stdout += "\n[stderr]\n" + stderr
+
+    def _launch(launch_argv, launch_env=env):
+        try:
+            proc = subprocess.run(
+                launch_argv,
+                cwd=ws,
+                env=launch_env,
+                stdin=subprocess.DEVNULL,
+                capture_output=True,
+                text=True,
+                timeout=deadline,
+                check=False,
+            )
+            return proc.returncode, proc.stdout, proc.stderr, False
+        except subprocess.TimeoutExpired as error:
+            captured = error.stdout or b""
+            out = (
+                captured.decode(errors="replace")
+                if isinstance(captured, bytes)
+                else str(captured)
+            )
+            captured_stderr = error.stderr or b""
+            err = (
+                captured_stderr.decode(errors="replace")
+                if isinstance(captured_stderr, bytes)
+                else str(captured_stderr)
+            )
+            return None, out, err, True
+
+    returncode, process_stdout, stderr, deadline_hit = _launch(argv)
+    stdout = process_stdout + ("\n[stderr]\n" + stderr if stderr else "")
+    # Re-dispatch (direct + mediated only): re-run the frozen test and, on failure,
+    # hand the failure to a fresh worker on the same workspace, up to `redispatch` times.
+    redispatch_attempts = 0
+    redispatch_schedule: list[dict] = []
+    if acceptance_test is not None and redispatch and mode == "direct":
+        test_rel = f"tests/{acceptance_test.name}"
+        for _ in range(redispatch):
+            # A timed-out attempt is still a failing frozen test, so retry on it
+            # too — a fresh, hotter worker on the same (cumulative) workspace,
+            # not a give-up. Keep the per-attempt --deadline small to bound cost.
+            code, acc_out = run_acceptance(ws, test_rel)
+            if code == 0:
+                break
+            redispatch_attempts += 1
+            # Grow temperature + move the seed so the retry explores a new path
+            # instead of re-running the same greedy decode. Rebuild the agent dir
+            # (it bakes the request params) and point Pi at it for this attempt.
+            overrides = redispatch_overrides(
+                request_overrides,
+                redispatch_attempts,
+                redispatch_temperature_step,
+                temp_cap=redispatch_temperature_cap,
+            )
+            entry = {
+                "attempt": redispatch_attempts,
+                "temperature": overrides["temperature"],
+                "seed": overrides["seed"],
+            }
+            # Effort ramp: escalate thinking + token budget as the test keeps failing.
+            re_thinking = thinking
+            if effort_ramp:
+                eff = redispatch_effort(redispatch_attempts, redispatch)
+                re_thinking = eff["thinking"]
+                overrides["max_tokens"] = eff["max_tokens"]
+                entry["thinking"] = eff["thinking"]
+                entry["max_tokens"] = eff["max_tokens"]
+            redispatch_schedule.append(entry)
+            re_agent_dir = direct_agent_dir(
+                scratch / f"pi-agent-redispatch-{redispatch_attempts}",
+                prof, base_url,
+                provider=provider_name, model_id=model_id,
+                context_window=context_window,
+                request_overrides=overrides,
+            )
+            re_env = child_env(dict(os.environ), str(trace), re_agent_dir, offline=True)
+            reargs = build_pi_direct_args(
+                redispatch_message(test_rel, acc_out),
+                guards,
+                prompt,
+                prompt_mode,
+                re_thinking,
+                model,
+                extra_extensions=extra_extensions,
+                tools=MEDIATED_TOOLS,
+            )
+            returncode, process_stdout, stderr, deadline_hit = _launch(
+                [selected_pi["executable"], *reargs[1:]], re_env
+            )
+            stdout += "\n[re-dispatch]\n" + process_stdout + (
+                "\n[stderr]\n" + stderr if stderr else ""
+            )
     wall = time.time() - started
     # Servers Mellum started with `&` outlive Pi; stop them before staging the
     # workspace so they neither hold ports for later runs nor write after it.
@@ -650,6 +820,19 @@ def run_once(
         else None,
         "prompt_mode": prompt_mode if mode == "direct" else None,
         "thinking": thinking if mode == "direct" else None,
+        "request_overrides": request_overrides if mode == "direct" else None,
+        "acceptance_test": acceptance_test.name
+        if (acceptance_test is not None and mode == "direct")
+        else None,
+        "redispatch_attempts": redispatch_attempts if mode == "direct" else None,
+        "redispatch_temperature_step": redispatch_temperature_step
+        if (redispatch and mode == "direct")
+        else None,
+        "redispatch_temperature_cap": redispatch_temperature_cap
+        if (redispatch and mode == "direct")
+        else None,
+        "effort_ramp": effort_ramp if (redispatch and mode == "direct") else None,
+        "redispatch_schedule": redispatch_schedule if mode == "direct" else None,
         "versions": versions,
         "launch": launch,
         "telemetry": telemetry,
@@ -806,23 +989,102 @@ def build_parser() -> argparse.ArgumentParser:
                         help="provider/model, e.g. llamacpp/Mellum2.1-12B-A2.5B-Thinking")
     parser.add_argument("--context-window", type=int, default=56000,
                         help="the model's context window in the direct profile")
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=None,
+        help="direct mode: override the request temperature (default greedy 0). The ladder is greedy by design, so this is for sampling screens, not measured claims",
+    )
+    parser.add_argument(
+        "--top-p",
+        type=float,
+        default=None,
+        help="direct mode: override the request top_p (default 1)",
+    )
+    parser.add_argument(
+        "--acceptance-test",
+        type=Path,
+        default=None,
+        help="direct or mode: a hand-written failing test placed in the workspace's tests/ before the baseline; the task becomes 'make tests/<name> pass' and the existing-tests scorer freezes it (the mediated-test screen, M.11)",
+    )
+    parser.add_argument(
+        "--redispatch",
+        type=int,
+        default=0,
+        help="direct mode, with --acceptance-test: after a run, re-run the frozen test and, on failure, hand the failure to a fresh worker on the same workspace, up to N times (the verify-and-re-hand loop)",
+    )
+    parser.add_argument(
+        "--redispatch-temperature-step",
+        type=float,
+        default=0.25,
+        help="with --redispatch: how much to grow the request temperature per retry (the seed moves with the attempt regardless), so a retry explores a new path instead of re-running the same greedy decode. 0 keeps every retry greedy. Unmeasured (conjecture)",
+    )
+    parser.add_argument(
+        "--redispatch-temperature-cap",
+        type=float,
+        default=0.5,
+        help="with --redispatch: ceiling for the temperature ramp. Past it the temperature holds and only the seed moves, so retries keep diverging without going hot (high temperature corrupts the worker's JSON tool calls)",
+    )
+    parser.add_argument(
+        "--effort-ramp",
+        action="store_true",
+        help="with --redispatch: start quick (thinking off, small token budget) and escalate thinking off->medium->high and max_tokens 2k->16k as the frozen test keeps failing. Opt-in; on a known-hard rung a fixed high budget was faster (v7 ablation)",
+    )
+    parser.add_argument(
+        "--pi-extension",
+        action="append",
+        default=[],
+        help="direct or mode: an extra Pi extension to load with -e (repeatable), e.g. extensions/mellum-ncm.ts, so an extension can be measured without shipping it",
+    )
     return parser
+
+
+def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    """Cross-argument constraints, split out of main() so they are unit-testable."""
+    if (args.facts_section != "fixture" or args.roadmap != "phase-files") and any(
+        RUNGS[n].fixture not in AGENTCLINIC_FIXTURES for n in args.rung
+    ):
+        parser.error("--facts-section and --roadmap apply only to the AgentClinic rungs 6-9")
+    direct_only = {
+        "--temperature": args.temperature is not None,
+        "--top-p": args.top_p is not None,
+    }
+    if args.mode != "direct" and any(direct_only.values()):
+        used = ", ".join(name for name, on in direct_only.items() if on)
+        parser.error(f"{used} apply only to --mode direct")
+    if args.acceptance_test is not None and not (
+        args.acceptance_test.name.startswith("test_")
+        and args.acceptance_test.suffix == ".py"
+    ):
+        parser.error(
+            "--acceptance-test must be a pytest file named test_*.py, or "
+            "`pytest tests` will not collect it and the worker never sees it"
+        )
+    if args.redispatch and args.acceptance_test is None:
+        parser.error("--redispatch requires --acceptance-test")
+    # The verify-and-re-dispatch loop and its effort ramp are implemented for direct
+    # mode only; Mellum Mode can be handed the frozen test but not yet re-dispatched.
+    if (args.redispatch or args.effort_ramp) and args.mode != "direct":
+        parser.error("--redispatch and --effort-ramp apply only to --mode direct")
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
-    if (args.facts_section != "fixture" or args.roadmap != "phase-files") and any(
-        RUNGS[n].fixture not in AGENTCLINIC_FIXTURES for n in args.rung
-    ):
-        parser.error("--facts-section and --roadmap apply only to the AgentClinic rungs 6-9")
+    validate_args(args, parser)
+    request_overrides = {
+        key: value
+        for key, value in (("temperature", args.temperature), ("top_p", args.top_p))
+        if value is not None
+    } or None
     # Absolute, so the record's prompt_file is relative to REPO_ROOT; run from ladder/,
     # `prompts/ablation/v4a-no-procedure.md` is ladder/prompts/ablation/....
     args.prompt = args.prompt.resolve()
     install_signal_handlers()
 
     selected_pi = resolve_pi(args.pi_executable)
-    versions = {"pi": selected_pi["version"], "pi_launch": selected_pi}
+    versions = {"pi": selected_pi["version"], "pi_launch": selected_pi,
+                "request_overrides": request_overrides}
     args.out.mkdir(parents=True, exist_ok=True)
     table = args.out / "table.md"
     if not table.exists():
@@ -869,14 +1131,24 @@ def main(argv: list[str] | None = None) -> None:
                     base_url=args.base_url,
                     model=args.model,
                     context_window=args.context_window,
+                    request_overrides=request_overrides,
+                    acceptance_test=args.acceptance_test,
+                    redispatch=args.redispatch,
+                    redispatch_temperature_step=args.redispatch_temperature_step,
+                    redispatch_temperature_cap=args.redispatch_temperature_cap,
+                    effort_ramp=args.effort_ramp,
+                    extra_extensions=tuple(Path(p) for p in args.pi_extension),
                 )
                 row = table_row(record)
                 with table.open("a") as stream:
                     stream.write(row)
                 if (args.mode == "direct" and args.provider == "omlx"
+                        and not args.effort_ramp
                         and record["score"]["effective_params"]):
                     check_effective_params(
-                        record["score"]["effective_params"], args.profile
+                        record["score"]["effective_params"],
+                        args.profile,
+                        request_overrides,
                     )
                 print(row, end="", flush=True)
 

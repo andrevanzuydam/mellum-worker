@@ -185,6 +185,31 @@ candidate implementation (`--acceptance-test`; an n = 1 rung 9 screen on
 mlx-lm, [digest](docs/superpowers/research/2026-10-20-pr-digest.md)).
 *Reopens when* someone can run the rung 9 screen and wants the result; the
 closed phase and its design inputs are in [`ROADMAP-M.md`](ROADMAP-M.md).
+2026-10-24, on Andre's fork: `--acceptance-test` and `--redispatch` are on
+`main` again after a merge dropped them ([LEARNING](LEARNING.md) §VII.1).
+
+**Freeze-the-oracle exit gate.** Make "done" an external test the worker cannot
+weaken, instead of its own final message. Promote the ladder's scorer checks
+(`existing_tests_kept`, `outside_write_list`) into a runtime guard on the
+worker, and gate the exit on an actual run of the frozen acceptance test with
+the failure re-dispatched as the next "make this pass". The mediated test
+supplies the external, complete test; the unweakenable half is here
+([note](docs/superpowers/research/2026-10-18-harness-exit-gate.md)).
+*Reopens when* a mediated run moves rung 9 and a trace shows a worker editing or
+deleting a test to exit, or writing outside the allowed paths, on a run that
+then scored as done. 2026-10-24: restored after a merge dropped it; rung 9 has
+moved (screens), but no such trace is recorded yet.
+
+**Benchmark a plain mlx_lm.server against oMLX.** The ladder reaches any
+OpenAI-compatible server (`--provider`, `--base-url`, `--model provider/id`;
+[recipe](docs/backends/mlx-lm.md)), but no oMLX-vs-mlx-lm runs have been made.
+The servers cannot be made byte-identical: `thinking_budget`,
+`max_tool_result_tokens` and penalty handling are oMLX server-only with no
+mlx_lm.server equivalent, so a result is a harness finding about servers, not a
+claim about the shipped worker. Sampling sweeps belong to "Model-parameter
+impact on eval results". *Reopens when* someone runs a screen (a few rungs, a
+research note naming the server's launch flags and n); a measured claim needs a
+preregistered run with the server differences pinned.
 
 **One worker.** Retire the pi-subagents Worker (agent template, child-only
 guard loading, Worker run records, the setup skill's agent-file and intercom

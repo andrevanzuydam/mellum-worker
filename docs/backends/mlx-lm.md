@@ -1,9 +1,15 @@
-# Backend: a plain mlx_lm.server (the `--backend mlx-lm` ladder path)
+# Backend: a plain mlx_lm.server (a non-oMLX `--provider` ladder path)
 
 An alternative to oMLX for running and measuring Mellum on Apple Silicon: a
-plain, fully scriptable `mlx_lm.server`, driven by the ladder's
-`--backend mlx-lm` path (no oMLX admin API, so the server's launch flags, not
-the ladder, set the server-only values). This file records how to run it and
+plain, fully scriptable `mlx_lm.server`, driven by the ladder with a non-oMLX
+`--provider` (no oMLX admin API, so the server's launch flags, not the ladder,
+set the server-only values).
+
+Changed 2026-10-24: this path was first built as `--backend mlx-lm` plus
+`--model-id`. Those flags were lost from `main` in the 2026-10-22 upstream
+merge, and Paul's LC.3B `--provider`, `--base-url` and `--model provider/id`
+do the same job, so the restore uses them. The commands below are updated; the
+history in the sections that follow is kept as it was found. This file records how to run it and
 the issues hit the first time, so the next person does not rediscover them.
 
 Verified once, as a smoke (not the measured suite): rung 1, direct mode,
@@ -48,15 +54,15 @@ crawls on multi-turn agent loops):
 - **`--max-tokens 16384`** — the per-turn generation cap, matching the ladder's
   `tuned` profile so the server does not truncate a long thinking turn.
 
-Then run the ladder against it, passing `--model-id` = that served id:
+Then run the ladder against it, passing that served id after `mlx-lm/` in `--model`:
 
 ```bash
 cd ladder
 SERVED=$(curl -s http://127.0.0.1:11500/v1/models | python -c \
   "import sys,json;print(json.load(sys.stdin)['data'][0]['id'])")
 uv run --offline python -m ladder.run_ladder \
-  --mode direct --backend mlx-lm --base-url http://127.0.0.1:11500/v1 \
-  --model-id "$SERVED" --profile tuned --rung 1 --repeat 1 --out ../docs/ladder/<name>
+  --mode direct --provider mlx-lm --base-url http://127.0.0.1:11500/v1 \
+  --model "mlx-lm/$SERVED" --profile tuned --rung 1 --repeat 1 --out ../docs/ladder/<name>
 ```
 
 ## Issues hit, and the fix
@@ -94,6 +100,9 @@ uv run --offline python -m ladder.run_ladder \
    `/v1/chat/completions` (the ladder and Pi do) to get parsed `tool_calls`.
 
 ## Resolved: the `--model-id` override
+
+*Now `--model provider/id` (2026-10-24).* The id after the first `/` is what the
+request carries, so `--model mlx-lm//abs/path/Mellum-x` sends `/abs/path/Mellum-x`.
 
 The ladder used to hardcode the model id it sends (`MODEL_ID`), so a real
 `mlx_lm.server` — which serves under whatever id it canonicalised, usually a

@@ -272,7 +272,7 @@ def launch_run(n, model):
         proc = subprocess.Popen(
             ["uv", "run", "python", "-m", "ladder.run_ladder", "--mode", "direct",
              "--profile", "tuned", "--repeat", "1", "--thinking", "off", "--guards",
-             "--rung", str(n), "--model-id", model, "--out", "../" + relout],
+             "--rung", str(n), "--model", "omlx/" + model, "--out", "../" + relout],
             cwd=os.path.join(REPO, "ladder"), stdout=log, stderr=subprocess.STDOUT,
         )
         mediated = False
@@ -301,9 +301,9 @@ def launch_all(model):
     inner = (
         "for rung in 1 2 3 4 5 6 7 8 9 10 11 12; do "
         "uv run python -m ladder.run_ladder --mode direct --profile tuned --repeat 1 "
-        "--thinking off --guards --rung $rung --model-id {model} --pi-extension {feed} "
+        "--thinking off --guards --rung $rung --model {model} --pi-extension {feed} "
         "--out ../{out} || true; done"
-    ).format(model=shlex.quote(model), feed=shlex.quote(feed_ext), out=shlex.quote(relout))
+    ).format(model=shlex.quote("omlx/" + model), feed=shlex.quote(feed_ext), out=shlex.quote(relout))
     proc = subprocess.Popen(
         ["bash", "-c", inner], cwd=os.path.join(REPO, "ladder"),
         stdout=log, stderr=subprocess.STDOUT, env=os.environ.copy(),
