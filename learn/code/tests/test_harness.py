@@ -445,3 +445,46 @@ def test_the_recorder_loads_after_the_worker_extension():
         extension=harness.arm_settings("worker")["extension"],
     )
     assert argv.index(str(harness.arm_settings("worker")["extension"])) < argv.index("rec.mjs")
+
+
+def _trace(*rows):
+    return "".join(json.dumps(dict(traceSchema=1, timestamp="2026-10-24T00:00:0%dZ" % i, **r)) + "\n"
+                   for i, r in enumerate(rows))
+
+
+def test_an_empty_final_at_a_prompt_boundary_is_not_a_nudge(tmp_path):
+    # Medium and hard run one Pi process per prompt. An empty turn that ends one
+    # prompt is followed by the next prompt's request, which is not a nudge.
+    run = tmp_path / "run"
+    run.mkdir()
+    (run / "trace.jsonl").write_text(_trace(
+        {"type": "instance_start"},
+        {"type": "provider_request", "request": 1},
+        {"type": "message_end", "message": {"role": "assistant", "content": []}},
+        {"type": "agent_settled", "aborted": False},
+        {"type": "instance_start"},
+        {"type": "provider_request", "request": 1},
+        {"type": "message_end", "message": {"role": "assistant",
+         "content": [{"type": "text", "text": "done"}]}},
+        {"type": "agent_settled", "aborted": False},
+    ))
+    counts = harness.report(run)
+    assert counts["nudges"] == 0
+    assert counts["empty_finals"] == 1
+
+
+def test_an_empty_turn_inside_one_prompt_is_a_nudge(tmp_path):
+    run = tmp_path / "run"
+    run.mkdir()
+    (run / "trace.jsonl").write_text(_trace(
+        {"type": "instance_start"},
+        {"type": "provider_request", "request": 1},
+        {"type": "message_end", "message": {"role": "assistant", "content": []}},
+        {"type": "provider_request", "request": 2},
+        {"type": "message_end", "message": {"role": "assistant",
+         "content": [{"type": "text", "text": "done"}]}},
+        {"type": "agent_settled", "aborted": False},
+    ))
+    counts = harness.report(run)
+    assert counts["nudges"] == 1
+    assert counts["empty_finals"] == 0

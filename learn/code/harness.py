@@ -312,8 +312,20 @@ def report(run: Path) -> dict:
             if block.get("type") == "text" and block.get("text"):
                 final = block["text"]
                 break
+    # A nudge continues a run: the empty turn is followed by another request in
+    # the same Pi process. Medium and hard start one process per prompt, so an
+    # empty turn that ends a prompt is an empty final, not a nudge, however many
+    # requests the next prompt makes.
+    starts = [index for index, row in enumerate(rows)
+              if row.get("type") == "instance_start"]
+
+    def segment_end(at: int) -> int:
+        later = [start for start in starts if start > at]
+        return later[0] if later else len(rows)
+
     continued = sum(
-        any(later.get("type") == "provider_request" for later in rows[at + 1:])
+        any(later.get("type") == "provider_request"
+            for later in rows[at + 1:segment_end(at)])
         for at in empties)
     return {
         "requests": sum(row.get("type") == "provider_request" for row in rows),

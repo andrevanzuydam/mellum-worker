@@ -6,6 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The suites harness counts a **nudge** only when an empty assistant turn is
+  continued inside the same Pi process. Medium and hard start one process per
+  prompt, and the old rule counted the empty final that ended one prompt as
+  continued by the next prompt's request, inflating the column on exactly the
+  suites where it matters.
+
 - The roadmap's vocabulary now separates the two things it used to call a
   "phase": **`LC` is the phase**, and **each row is a feature cycle** that runs
   brainstorm → spec → plan → execute → close. A feature cycle delivers one
