@@ -488,3 +488,48 @@ def test_an_empty_turn_inside_one_prompt_is_a_nudge(tmp_path):
     counts = harness.report(run)
     assert counts["nudges"] == 1
     assert counts["empty_finals"] == 0
+
+
+def _write(root, rel, text="x\n"):
+    path = root / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text)
+
+
+def test_layout_report_names_created_and_modified_files_outside_it(tmp_path):
+    root = tmp_path / "workspace"
+    _write(root, "app.py", "one\n")
+    _write(root, "tests/test_home.py", "pass\n")
+    pristine = harness.file_hashes(root)
+    _write(root, "app.py", "two\n")            # modified, allowed
+    _write(root, "templates/home.html")        # created, allowed
+    _write(root, "notes.txt")                  # created, outside the layout
+    _write(root, "tests/test_extra.py")        # created, allowed by tests/**
+    _write(root, ".venv/lib/python3.14/x.py")  # ignored
+    _write(root, "app.log")                    # ignored
+    layout = {"allow": ["app.py", "templates/**", "tests/**"],
+              "ignore": [".venv/**", "*.log"]}
+    report = harness.layout_report(root, pristine, layout)
+    assert report["modified"] == ["app.py"]
+    assert "templates/home.html" in report["created"]
+    assert "tests/test_extra.py" in report["created"]
+    assert report["out_of_layout"] == ["notes.txt"]
+
+
+def test_a_clean_workspace_has_nothing_outside_its_layout(tmp_path):
+    root = tmp_path / "workspace"
+    _write(root, "app.py", "one\n")
+    pristine = harness.file_hashes(root)
+    _write(root, "app.py", "two\n")
+    report = harness.layout_report(root, pristine, {"allow": ["app.py"], "ignore": []})
+    assert report["out_of_layout"] == []
+    assert report["modified"] == ["app.py"]
+
+
+def test_loading_a_suite_reads_its_layout(tmp_path):
+    suite_dir = tmp_path / "suites" / "demo"
+    (suite_dir / "prompts").mkdir(parents=True)
+    (suite_dir / "prompts" / "01.md").write_text("do it")
+    (suite_dir / "layout.json").write_text(json.dumps({"allow": ["a.py"], "ignore": []}))
+    suite = harness.load_suite(tmp_path / "suites", "demo")
+    assert suite.layout == {"allow": ["a.py"], "ignore": []}

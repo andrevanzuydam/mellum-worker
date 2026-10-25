@@ -9,6 +9,8 @@ the child has exited, and the run lives outside the repo.
 from __future__ import annotations
 
 import argparse
+import fnmatch
+import hashlib
 import json
 import os
 import shlex
@@ -49,6 +51,7 @@ class Suite:
     expected: tuple[str, ...] = ()
     canary: str | None = None
     root: Path | None = None
+    layout: dict | None = None
 
     @property
     def prompt(self) -> str:
@@ -80,6 +83,9 @@ def load_suite(suites_dir: Path, name: str) -> Suite:
     if (grader / "canary").is_file():
         canary = (grader / "canary").read_text().strip() or None
     start = base / "start"
+    layout = None
+    if (base / "layout.json").is_file():
+        layout = json.loads((base / "layout.json").read_text())
     return Suite(
         name=name,
         prompts=prompts,
@@ -88,6 +94,7 @@ def load_suite(suites_dir: Path, name: str) -> Suite:
         expected=expected,
         canary=canary,
         root=base,
+        layout=layout,
     )
 
 
@@ -119,6 +126,44 @@ def arm_settings(arm: str) -> dict:
     elif arm == "no-facts":
         env["MELLUM_MODE_FACTS"] = "0"
     return {"extension": EXTENSION, "env": env}
+
+
+def file_hashes(root: Path) -> dict[str, str]:
+    """Every file under root by relative posix path, with its sha256."""
+    hashes: dict[str, str] = {}
+    for path in sorted(Path(root).rglob("*")):
+        if not path.is_file():
+            continue
+        rel = path.relative_to(root).as_posix()
+        try:
+            hashes[rel] = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError:
+            continue
+    return hashes
+
+
+def _matches(rel: str, patterns: list[str]) -> bool:
+    return any(fnmatch.fnmatch(rel, pattern) for pattern in patterns)
+
+
+def layout_report(root: Path, pristine: dict[str, str],
+                  layout: dict) -> dict:
+    """What the run created or modified, and which of it the layout does not allow.
+
+    A run can pass every hidden test and still write files the project did not
+    ask for. This is the check for that, and it is deliberately about paths, not
+    behaviour: allowed patterns and ignored artefacts come from the suite.
+    """
+    now = file_hashes(root)
+    allow = list(layout.get("allow") or [])
+    ignore = list(layout.get("ignore") or [])
+    created = sorted(p for p in set(now) - set(pristine)
+                     if not _matches(p, ignore))
+    modified = sorted(p for p in now
+                      if p in pristine and now[p] != pristine[p]
+                      and not _matches(p, ignore))
+    outside = sorted(p for p in created + modified if not _matches(p, allow))
+    return {"created": created, "modified": modified, "out_of_layout": outside}
 
 
 def pi_argv(
@@ -168,6 +213,7 @@ def run_suite(
         shutil.copytree(suite.root / "base", workspace, dirs_exist_ok=True)
     if suite.start is not None:
         shutil.copytree(suite.start, workspace, dirs_exist_ok=True)
+    pristine = file_hashes(workspace) if suite.layout is not None else None
     (run / "prompt.txt").write_text("\n\n".join(suite.prompts) + "\n")
     trace = run / "trace.jsonl"
     trace.touch()
@@ -207,6 +253,9 @@ def run_suite(
             child.wait()
             (run / "deadline").write_text("hit\n")
             break
+    if pristine is not None and suite.layout is not None:
+        (run / "layout.json").write_text(
+            json.dumps(layout_report(workspace, pristine, suite.layout), indent=2) + "\n")
     if grader_touched(run, suite):
         (run / "contaminated").write_text("grader touched\n")
     return run
@@ -401,6 +450,9 @@ def _run_sessions(
         contaminated = (run_dir / "contaminated").exists()
         passed = tests_passed and quality_ok and not contaminated
         metrics = report(run_dir)
+        layout_file = run_dir / "layout.json"
+        if layout_file.is_file():
+            metrics["out_of_layout"] = json.loads(layout_file.read_text())["out_of_layout"]
         record = {
             "suite": suite.name,
             "arm": arm,

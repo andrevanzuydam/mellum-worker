@@ -28,6 +28,15 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A **file-set check** in the suites harness: each suite declares `allow` and
+  `ignore` globs in `layout.json`, the run's workspace is hashed before and
+  after the child, and anything created or modified outside the layout is
+  reported as `out_of_layout` in `run.json`. A run can pass every hidden test
+  and still leave the project as it did not ask.
+
+- Lesson 6, **[Write only the files you list](learn/lessons/write-only-listed.md)**:
+  the check on three easy sessions, where no session wrote outside the layout.
+
 - Lesson 5, **[Project facts](learn/lessons/project-facts.md)**: the facts arm
   measured on llama.cpp, where the block reaches the model on every request
   and did not move the easy suite at n=3. The page states the null with the

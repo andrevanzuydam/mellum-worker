@@ -23,7 +23,7 @@ what it rests on now.
 3. **[Thinking is working memory](thinking-working-memory.md)** — The strip-thinking arm has no instrument on llama.cpp; thinking spends the output budget. *(Paul)*
 4. **[Guards for empty turns and loops](guards-for-empty-turns.md)** — The nudge never fired in ten easy sessions: no empty turn had the shape it answers. *(Paul)*
 5. **[Project facts](project-facts.md)** — The block reaches the model in every request and did not move easy at n = 3. A null, with a lead. *(Paul)*
-6. **Write only the files you list** — Runs pass the hidden tests and still fail by writing outside the layout. *(Paul)*
+6. **[Write only the files you list](write-only-listed.md)** — A file-set check now runs after every session; easy showed no writes outside the layout. *(Paul)*
 7. **Who holds the loop** — Worker, Mode and a delegated child pass alike and cost differently. *(Paul)*
 8. **A prose brief stops at its first reply** — The same brief as one prompt loses four passes; as steps it costs 2.4× the time. *(Paul)*
 9. **The intercom block is a prefill tax** — Off: the child prompt halves and prefill drops 20%, with the same passes. *(Paul)*

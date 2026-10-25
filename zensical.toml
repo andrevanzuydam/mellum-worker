@@ -17,7 +17,7 @@ nav = [
     "lessons/primary-agent.md", "lessons/short-prompt.md",
     "lessons/thinking-working-memory.md",
     "lessons/guards-for-empty-turns.md",
-    "lessons/project-facts.md"] },
+    "lessons/project-facts.md", "lessons/write-only-listed.md"] },
   { "About" = [
     "about/index.md", "about/how-to-read.md",
     "about/evidence.md", "about/contributing.md",
