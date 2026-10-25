@@ -109,6 +109,42 @@ def test_seed_from_bundle_missing_seed_dir_raises(tmp_path):
         flow_run.seed_from_bundle(tmp_path / "nope", tmp_path / "ws", 2)
 
 
+def test_restore_fixture_data_puts_rows_back_keeping_migrated_schema(tmp_path):
+    import sqlite3
+    base = tmp_path / "base"
+    base.mkdir()
+    # pristine fixture: 3 ticket rows
+    src = sqlite3.connect(base / "data.db")
+    src.execute("CREATE TABLE tickets (id INTEGER PRIMARY KEY, cents INTEGER)")
+    src.executemany("INSERT INTO tickets (id, cents) VALUES (?, ?)", [(1, 100), (2, 200), (3, 300)])
+    src.commit()
+    src.close()
+    # workspace db: coder added a migration column (note), and a gate DELETEd the rows + inserted junk
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    dst = sqlite3.connect(ws / "data.db")
+    dst.execute("CREATE TABLE tickets (id INTEGER PRIMARY KEY, cents INTEGER, note TEXT)")  # migrated schema
+    dst.execute("INSERT INTO tickets (id, cents, note) VALUES (99, 9999, 'junk')")  # test leftover
+    dst.commit()
+    dst.close()
+
+    restored = flow_run.restore_fixture_data(ws, base)
+    assert restored == ["data.db"]
+    out = sqlite3.connect(ws / "data.db")
+    assert out.execute("SELECT COUNT(*), SUM(cents) FROM tickets").fetchone() == (3, 600)  # fixture rows back
+    cols = [r[1] for r in out.execute("PRAGMA table_info(tickets)")]
+    assert "note" in cols  # migrated schema preserved
+    assert out.execute("SELECT note FROM tickets WHERE id=1").fetchone()[0] is None  # new col keeps default
+    out.close()
+
+
+def test_restore_fixture_data_noop_without_base_or_db(tmp_path):
+    assert flow_run.restore_fixture_data(tmp_path / "ws", tmp_path / "nobase") == []
+    (tmp_path / "base").mkdir()
+    (tmp_path / "ws").mkdir()
+    assert flow_run.restore_fixture_data(tmp_path / "ws", tmp_path / "base") == []  # no *.db
+
+
 def test_phase_gate_ok_rejects_html_and_testless_files(tmp_path):
     _freeze(tmp_path, 3, "templates/complaints.html\n{% extends 'base.html' %}\n<div>hi</div>\n")
     assert flow_run.phase_gate_ok(tmp_path, 3) is False          # an HTML blob does not compile

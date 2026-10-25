@@ -104,3 +104,32 @@ READ what is there and compute the expected from it; never DELETE/overwrite it;
 roll back any row you add. This is general test discipline, derived from the
 spec's "from the database", not from the hidden grader's values. (Migration
 recording is tracked separately; re-check after the data-destruction fix.)
+
+### Deeper layer (same day): the small examiner/coder don't GROUND in the fixture
+
+Prompt-only non-destruction did not land — a re-run's phase-6 gate still ran
+`DELETE FROM tickets`. So the robust fix moved to the harness:
+`flow_run.restore_fixture_data` puts each fixture table's ROWS back from the
+pristine base before the authoritative grade, keeping the workspace's migrated
+schema (column intersection, so a renamed/extended schema doesn't crash it).
+
+Restoring the rows then exposed the NEXT layer, the same root cause one level
+down: the coder had **invented a `visited_at` column** for `/visits` (and a
+migration to add it) when the fixture `visits` table already ships a populated
+`date` column — so `/visits` read an all-NULL column and returned nothing. And
+`/report` defines "open" as `status='open'` where the spec's open is "not
+archived". Both are *grounding* failures: the small examiner and coder invent a
+schema/definition instead of reading the data that is actually there.
+
+Agnostic fix added: the coder is told to inspect an existing table's real
+columns/rows (`PRAGMA table_info`, a `SELECT`) and use what is there — never
+invent a column or assume a name the data does not use. The examiner's
+compute-from-existing rule is the examiner-side counterpart.
+
+**Honest read:** on the database/report phases this is a *grounding ceiling* for
+the small models — each layer fixed (destruction → schema invention → "open"
+definition) reveals another, and prompt rules land only unreliably. The harness
+restore is a durable guarantee; the grounding rules raise the odds but do not
+make it certain. A hidden pass on 6–7 likely needs either a more capable model
+for those phases or a harness that grounds the examiner/coder in the real schema
+(e.g. injecting the fixture's `PRAGMA table_info` into the task), not more prose.

@@ -187,6 +187,14 @@ test("the examiner must write self-contained tests that create their own data, n
 	assert.match(PHASES.examine.prompt, /never assume a seed|not assume.*seed|a given id|particular id|given state|particular state/i);
 });
 
+test("the coder must ground in the real fixture schema, not invent columns", () => {
+	// hard phase 7: the fixture `visits` table has a populated `date` column, but the coder invented
+	// a `visited_at` column (NULL for every fixture row) and queried that, so /visits returned empty.
+	// The coder must inspect the actual columns of existing data and use them, never invent one.
+	assert.match(PHASES.code.prompt, /PRAGMA table_info|inspect its real columns|columns that are actually there|already exists/i);
+	assert.match(PHASES.code.prompt, /never invent|do not invent|not .*assume a name|existing column already holds/i);
+});
+
 test("the coder is pointed at the cumulative gate and told earlier phases must keep passing", () => {
 	assert.match(PHASES.code.prompt, /test_gate_phase/);
 	assert.match(PHASES.code.prompt, /earlier phase/i);

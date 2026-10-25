@@ -306,6 +306,49 @@ def seed_from_bundle(seed: Path, workspace: Path, start_phase: int) -> None:
                                                   "trace*.jsonl", "*.subfeed", "node_modules"))
 
 
+def restore_fixture_data(workspace: Path, base_dir: Path) -> list[str]:
+    """Before the authoritative grade, put each fixture table's ROWS back from the suite's pristine
+    base database into the workspace database, keeping the workspace's (migrated) schema. A test
+    that mutated the fixture — e.g. `DELETE FROM tickets` in a report gate — otherwise corrupts the
+    very data the spec's 'report from the database' and the hidden grader read. Columns the fixture
+    lacks (added by the coder's migrations) keep their defaults. Agnostic: it mirrors whatever
+    tables the base fixture ships, nothing suite-specific. Returns the names of restored dbs."""
+    import sqlite3
+    restored: list[str] = []
+    if not base_dir.is_dir():
+        return restored
+    for base_db in sorted(base_dir.glob("*.db")):
+        ws_db = workspace / base_db.name
+        if not ws_db.is_file():
+            continue
+        src = sqlite3.connect(base_db)
+        dst = sqlite3.connect(ws_db)
+        try:
+            tables = [r[0] for r in src.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
+            ws_tables = {r[0] for r in dst.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'")}
+            for t in tables:
+                if t not in ws_tables:
+                    continue  # a table the workspace dropped — leave the grade to judge that
+                base_cols = [r[1] for r in src.execute(f"PRAGMA table_info({t})")]
+                ws_cols = {r[1] for r in dst.execute(f"PRAGMA table_info({t})")}
+                cols = [c for c in base_cols if c in ws_cols]  # intersection: tolerate a migrated/renamed schema
+                if not cols:
+                    continue
+                rows = src.execute(f"SELECT {','.join(cols)} FROM {t}").fetchall()
+                dst.execute(f"DELETE FROM {t}")
+                if rows:
+                    ph = ",".join("?" * len(cols))
+                    dst.executemany(f"INSERT INTO {t} ({','.join(cols)}) VALUES ({ph})", rows)
+            dst.commit()
+            restored.append(base_db.name)
+        finally:
+            src.close()
+            dst.close()
+    return restored
+
+
 def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, model_id: str,
          thinking: str, attempts: int, concurrency: int,
          start_phase: int = 1, seed_from: Path | None = None) -> dict:
@@ -448,6 +491,13 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
         if passed:
             done.append(title)
 
+    # A report gate can mutate the fixture db (DELETE/INSERT); put the fixture rows back before the
+    # authoritative grade so it reads the real data the spec reports "from the database", not a
+    # test's leftovers. Keeps the coder's migrated schema.
+    if suite.root is not None:
+        restored = restore_fixture_data(workspace, suite.root / "base")
+        if restored:
+            lr.emit(f"  restored fixture data before grading: {', '.join(restored)}")
     graded, _ = harness.score_workspace(workspace, suite)
     todo = (workspace / "plan" / "TODO.md").exists()
     result = {

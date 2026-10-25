@@ -131,7 +131,7 @@ export const PHASES: Record<string, Phase> = {
 			"so `from app import ...` resolves; never start a server — use starlette.testclient.TestClient. " +
 			"ALWAYS use the `lookup` tool before writing any unfamiliar or exact-contract API — a library " +
 			"signature or default, a database/migration API, exact behaviour — and whenever a failure " +
-			"looks API-shaped; do not guess an API you have not confirmed. Make the acceptance test pass. " +
+			"looks API-shaped; do not guess an API you have not confirmed. When you read from data that ALREADY EXISTS (a table or database the feature reports 'from'), FIRST inspect its real columns and rows (e.g. `PRAGMA table_info`, a `SELECT`) and use the columns that are actually there — never invent a new column, or add one to hold what an existing column already holds, or assume a name the data does not use. Make the acceptance test pass." +
 			"Address any reviewer feedback below.",
 	},
 	review_code: {
