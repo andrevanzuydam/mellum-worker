@@ -4,6 +4,12 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Fixed
+
+- `learn/project/index.md` named `extensions/mellum-mode.ts` and the retired
+  `templates/` agent files, two cycles after LC.8 renamed the former and
+  removed the latter.
+
 ### Changed
 
 - The Lessons track is re-based on llama.cpp. `primary-agent`, `short-prompt`,
