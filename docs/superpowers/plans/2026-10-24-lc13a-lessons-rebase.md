@@ -122,6 +122,19 @@ Easy first, n = 3; medium only on a majority; hard only on a majority of
 medium, and skipped when medium shows no headroom. Each arm gets its own
 preregistration and record, and its page is rewritten as it lands.
 
+**Arm 1, project facts (done, null).** [Preregistration](2026-10-24-project-facts-preregistration.md),
+[record](2026-10-24-project-facts-screen.md). `worker` 1/2 valid against
+`no-facts` 0/3, with the block injected in 26/26, 22/22 and 11/11 requests and
+in none of `no-facts`; one `worker` session invalid on contamination. Null on
+passes at n=3, no medium run. The lead is unregistered and belongs to LC.7A:
+all three `no-facts` sessions hung on a foreground server command
+(`uvicorn app:app --reload` twice, `python app.py` once) after 143–460 s of
+silence, and the removed bullet is `- Do not: start servers`.
+
+**Next arm:** the foreground-server pathology, preregistered with hung tool
+calls as its reading — worker against the same block minus that one bullet,
+before any other lesson arm. Lessons 1 and 2 follow on easy+medium.
+
 ### Task 5: Close
 
 **Output:** Status cell, `## Now`, this plan's `## Result`, archived.

@@ -13,11 +13,18 @@ Versions match git tags; pin one in both install lines.
   compaction is only visible with the recorder loaded before the worker,
   which costs payload fidelity — that split is backlogged.
 
-- The preregistration and record for the context-budget arm:
+- The preregistration and record for the **context-budget** arm:
   [`2026-10-24-context-budget-preregistration.md`](docs/superpowers/research/2026-10-24-context-budget-preregistration.md)
   and its [record](docs/superpowers/research/2026-10-24-context-budget-screen.md).
   The arm is void — peak demand of 857–4,699 tokens never approached either
   window — but it fixes the shipped 50,000 wherever a lesson quotes easy.
+
+- The preregistration and record for the **project facts** arm:
+  [`2026-10-24-project-facts-preregistration.md`](docs/superpowers/research/2026-10-24-project-facts-preregistration.md)
+  and its [record](docs/superpowers/research/2026-10-24-project-facts-screen.md).
+  Passes are null at n=3, the block injects in every `worker` request, and the
+  record carries the lead that all three `no-facts` sessions hung on a
+  foreground server once the `Do not: start servers` bullet was gone.
 
 - The suites harness now reports **nudge fires** beside the passes: it counts
   an empty assistant turn that was followed by another request as a nudge and
