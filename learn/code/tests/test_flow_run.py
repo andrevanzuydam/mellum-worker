@@ -230,3 +230,102 @@ def test_gate_files_is_empty_when_no_cumulative_gate_was_frozen(tmp_path):
     (tmp_path / "tests").mkdir()
     (tmp_path / "tests" / "test_home.py").write_text("def test_h():\n    assert 1\n")
     assert flow_run.gate_files(tmp_path) == []
+
+
+# --- free flow arm: the two invariants, as pure functions -----------------------------------
+# INVARIANT 1 — a frozen external acceptance test exists BEFORE any build (freeze the oracle).
+# INVARIANT 2 — exit is verified, never self-declared: the harness re-runs the frozen gate and
+#               re-dispatches the agent on failure, bounded by the retry budget.
+
+def test_ensure_gate_frozen_runs_examine_until_a_real_gate_exists():
+    # the examiner writes the gate; the build may not start until one is frozen. One corrective
+    # retry covers a dropped/mis-formatted reply that froze nothing (seen on hard phases 4 and 5).
+    frozen = {"n": 0}
+
+    def examine_ok():
+        frozen["n"] += 1  # freezes on the first pass
+
+    assert flow_run.ensure_gate_frozen(examine_ok, lambda: frozen["n"] >= 1, retries=1) is True
+    assert frozen["n"] == 1  # no wasted retry once it froze
+
+    calls = {"n": 0}
+
+    def examine_second():
+        calls["n"] += 1
+
+    # never freezes → exhausts retries+1 attempts and reports no gate (the build must not proceed)
+    assert flow_run.ensure_gate_frozen(examine_second, lambda: False, retries=1) is False
+    assert calls["n"] == 2  # first try + one corrective retry
+
+    late = {"n": 0}
+    assert flow_run.ensure_gate_frozen(
+        lambda: late.__setitem__("n", late["n"] + 1), lambda: late["n"] >= 2, retries=1) is True
+    assert late["n"] == 2  # froze on the corrective retry
+
+
+def test_drive_free_coder_redispatches_with_feedback_until_the_gate_passes():
+    # the agent builds; the frozen gate decides. On a fail it is re-dispatched WITH the failure
+    # text ("sorry, you didn't pass — here's what failed, try again"); 'done' is never the agent's
+    # own word. Records how many rounds it took, so a run can report whether it ever solved it.
+    seen: list[tuple[int, str]] = []
+    checks = iter([(False, "E   assert 0  # /visits missing"), (True, "")])
+
+    def dispatch(rnd, feedback):
+        seen.append((rnd, feedback))
+
+    solved, rounds = flow_run.drive_free_coder(dispatch, lambda: next(checks), attempts=5)
+    assert solved is True and rounds == 2
+    assert seen[0] == (0, "")                                   # first dispatch: no feedback yet
+    assert seen[1] == (1, "E   assert 0  # /visits missing")    # second carries the gate's failure
+
+
+def test_drive_free_coder_is_bounded_and_records_an_unsolved_run():
+    # max retries are X (the budget); if the gate never passes, the run is recorded as NOT solved —
+    # the harness removes obstacles, it cannot force a correct build out of a fixed model.
+    dispatched = {"n": 0}
+
+    def dispatch(rnd, feedback):
+        dispatched["n"] += 1
+
+    solved, rounds = flow_run.drive_free_coder(
+        dispatch, lambda: (False, "still failing"), attempts=3)
+    assert solved is False and rounds == 3  # exhausted the budget
+    assert dispatched["n"] == 3             # one dispatch per allowed retry, no more
+
+
+def _patch_free(monkeypatch, *, gate_freezes, gate_results):
+    """Patch the pi-spawn and gate checks so drive_phase_free runs with no model/GPU. Records each
+    run_top call's label; `gate_freezes` drives phase_gate_ok, `gate_results` drives run_gate."""
+    calls: list[str] = []
+    monkeypatch.setattr(flow_run, "run_top", lambda *a, **k: calls.append(k.get("label", "")))
+    monkeypatch.setattr(flow_run, "restore_gate", lambda ws: None)
+    monkeypatch.setattr(flow_run, "phase_gate_ok", lambda ws, ph: next(gate_freezes))
+    monkeypatch.setattr(flow_run, "run_gate", lambda ws, to, ph: next(gate_results))
+    return calls
+
+
+def test_drive_phase_free_never_builds_without_a_frozen_gate(tmp_path, monkeypatch):
+    # INVARIANT 1 end-to-end: if the examiner freezes no gate, there is no definition of DONE —
+    # the coder must NEVER be dispatched. run_gate raises if the glue ever reaches a build.
+    def boom(*a, **k):
+        raise AssertionError("run_gate must not be called when no gate froze")
+
+    calls = _patch_free(monkeypatch, gate_freezes=iter([False, False]), gate_results=iter([]))
+    monkeypatch.setattr(flow_run, "run_gate", boom)
+    solved, rounds = flow_run.drive_phase_free(
+        3, workspace=tmp_path, profile=tmp_path, recorder=tmp_path, provider="p", model="m",
+        run=tmp_path, timeout=10.0, thinking="off", attempts=5)
+    assert solved is False and rounds == 0
+    assert all("examiner" in c for c in calls)  # only examiner pass(es), no coder dispatch
+    assert len(calls) == 2                        # first examine + one corrective retry
+
+
+def test_drive_phase_free_builds_once_the_gate_is_frozen_and_passes(tmp_path, monkeypatch):
+    # gate freezes, coder passes on the first round → solved in 1, examiner then coder ran.
+    calls = _patch_free(
+        monkeypatch, gate_freezes=iter([True, True]), gate_results=iter([(True, "")]))
+    solved, rounds = flow_run.drive_phase_free(
+        1, workspace=tmp_path, profile=tmp_path, recorder=tmp_path, provider="p", model="m",
+        run=tmp_path, timeout=10.0, thinking="off", attempts=5)
+    assert solved is True and rounds == 1
+    assert "examiner" in calls[0] and "free coder" in calls[1]  # freeze first, THEN build

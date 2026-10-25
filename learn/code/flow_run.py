@@ -57,6 +57,38 @@ WORKFLOW = (
     "Always plan, then examine, then code. Never call a tool after a passing test."
 )
 
+# --- FREE arm --------------------------------------------------------------------------------
+# The harness enforces only two invariants (a frozen external acceptance test before any build,
+# and a verified exit) and lets the agent decide every step between them. The examine-only pass
+# freezes the gate; the free coder then solves with ordinary tools and the harness — not the
+# agent — decides "done" by re-running that gate. See docs/superpowers/research/
+# 2026-10-25-agent-decided-flow.md.
+EXAMINE_ONLY_TOOLS = "examine,read"
+EXAMINE_MSG = (
+    "Write the acceptance test for THIS phase — the executable definition of DONE — by calling "
+    "`examine()` with NO arguments. It reads the spec in plan/TASK.md itself. Call `examine()` now, "
+    "once; when it reports the gate is written, STOP and call no further tool."
+)
+# The free coder gets ordinary coding tools — NO phase tools, no forced step order. It runs pytest
+# itself through `bash` (`uv run python -m pytest -q tests/`). The frozen gate is already under
+# tests/; the coder reads it as the definition of DONE and cannot weaken it (the harness restores
+# the canonical frozen copy before the authoritative gate run, whatever the coder did to tests/).
+FREE_CODER_TOOLS = "read,edit,write,bash,ls,find,grep,lookup"
+FREE_WORKFLOW = (
+    "You are a coding agent. Your task for this phase is in plan/TASK.md; read it first, and read "
+    "specs/ for detail. The acceptance test — the definition of DONE — is ALREADY written under "
+    "tests/ as `test_gate_phase_*.py`; read the newest one to see EXACTLY what this phase requires. "
+    "You decide how to build it: plan in your head, read the existing app (app.py, models.py, "
+    "templates/, tests/), edit or write files, and run the gate yourself with "
+    "`uv run python -m pytest -q tests/` until it passes. Keep every earlier gate passing — build "
+    "on the existing app, do not rewrite what already works. When you read from data that ALREADY "
+    "EXISTS (a table the feature reports 'from'), FIRST inspect its real columns and rows "
+    "(`PRAGMA table_info`, a `SELECT`) and use the columns that are actually there — never invent a "
+    "column or assume a name the data does not use. Do NOT edit, weaken or delete the "
+    "`test_gate_phase_*.py` files — they are the gate you must pass, not change. Stop when the gate "
+    "passes."
+)
+
 
 def tail_feed(path: Path, stop: threading.Event) -> None:
     """Tail the sub-agent feed file the extension appends to, printing each new line."""
@@ -82,21 +114,28 @@ def reap_group(pid: int) -> None:
 
 
 def run_top(task: str, *, workspace: Path, profile: Path, recorder: Path, provider: str,
-            model: str, trace: Path, timeout: float, thinking: str, phase: int = 1) -> None:
+            model: str, trace: Path, timeout: float, thinking: str, phase: int = 1,
+            tools: str = TOP_TOOLS, system_prompt: str = WORKFLOW, load_flow: bool = True,
+            label: str = "orchestrator") -> None:
+    """Spawn ONE pi over the workspace. Defaults drive the FORCED flow (the phase tools + the
+    workflow prompt, FLOW loaded). The FREE arm reuses the same shipped spawn path with a different
+    tool set and prompt (`load_flow=False` for the free coder, which gets ordinary coding tools and
+    no phase tools; `load_flow=True` for the examine-only pass, which needs the examine tool)."""
     subfeed = trace.parent / f"{trace.stem}.subfeed"
     subfeed.write_text("")
     argv = [
         "pi", *harness.FLAGS, "--provider", provider, "--model", model,
         "--thinking", thinking, "--no-session",
-        "--tools", TOP_TOOLS, "-e", str(FLOW), "-e", str(recorder),
-        "--system-prompt", WORKFLOW, task,
+        "--tools", tools,
+        *(["-e", str(FLOW)] if load_flow else []), "-e", str(recorder),
+        "--system-prompt", system_prompt, task,
     ]
     # MELLUM_PHASE tells the examiner which phase it is writing for, so each phase's
     # acceptance test is frozen under its own name and the gate ACCUMULATES — a later
     # phase can never pass by regressing an earlier one.
     env = {**os.environ, "PI_CODING_AGENT_DIR": str(profile), "MELLUM_TRACE_FILE": str(trace),
            "MELLUM_FLOW_FEED": str(subfeed), "MELLUM_PHASE": str(phase)}
-    lr.emit(f"\n━━━ orchestrator (think={thinking}) ━━━")
+    lr.emit(f"\n━━━ {label} (think={thinking}) ━━━")
     stop = threading.Event()
     feed = threading.Thread(target=lr.stream_trace, args=(trace, "[flow]", stop), daemon=True)
     feed.start()
@@ -273,6 +312,37 @@ def round_concurrency(rnd: int, concurrency: int, retry_concurrency: int) -> int
     return concurrency if rnd == 0 else retry_concurrency
 
 
+def ensure_gate_frozen(examine, is_frozen, retries: int = 1) -> bool:
+    """Free-arm INVARIANT 1 — a frozen external acceptance test exists BEFORE any build. Run the
+    examiner, then verify it froze a real gate; one corrective retry covers a dropped or
+    mis-formatted reply that froze nothing (seen on hard phases 4 and 5). Returns whether a gate is
+    now frozen; a False means the build must not proceed — this phase has no definition of DONE yet.
+    Pure of the model: `examine` runs one examiner pass, `is_frozen` re-checks the frozen file."""
+    for _ in range(retries + 1):
+        examine()
+        if is_frozen():
+            return True
+    return False
+
+
+def drive_free_coder(dispatch, check, attempts: int) -> tuple[bool, int]:
+    """Free-arm INVARIANT 2 — exit is verified, never self-declared. The agent builds freely; the
+    harness re-runs the FROZEN gate (`check`) and, on a fail, re-dispatches the agent WITH the
+    failure text ("sorry, you didn't pass — here's what failed, try again"), bounded by `attempts`
+    (the max-retries budget). 'Done' is the harness's word, not the agent's. Returns (solved, rounds)
+    so a run records whether the fixed model was EVER able to pass and how many rounds it took.
+      dispatch(rnd, feedback) -> None   runs the coder once on the shared workspace
+      check() -> (ok: bool, output: str)  re-runs the frozen gate; output is the next feedback"""
+    feedback = ""
+    for rnd in range(attempts):
+        dispatch(rnd, feedback)
+        ok, output = check()
+        if ok:
+            return True, rnd + 1
+        feedback = output
+    return False, attempts
+
+
 def gate_files(workspace: Path, phase: int | None = None) -> list[Path]:
     """The restored frozen acceptance gate — tests/test_gate_phase_*.py — and nothing else. The
     phase is judged on this, the frozen definition of DONE, never on the coder's own scratch tests.
@@ -435,10 +505,56 @@ def restore_fixture_data(workspace: Path, base_dir: Path) -> list[str]:
     return restored
 
 
+def drive_phase_free(pnum: int, *, workspace: Path, profile: Path, recorder: Path, provider: str,
+                     model: str, run: Path, timeout: float, thinking: str,
+                     attempts: int) -> tuple[bool, int]:
+    """Drive ONE phase the FREE way: freeze the gate (invariant 1), then let the agent build and
+    verify the exit by re-running that gate (invariant 2), re-dispatching with the failure text on
+    each fail. Returns (solved, rounds) — whether the fixed model was EVER able to pass, and how
+    many rounds it took. The forced step order is gone; the two invariants are all the harness
+    enforces. Uses the same shipped spawn path (`run_top`) as the forced flow, so the guards,
+    recorder and feed are identical — only the tools and prompt differ."""
+    # INVARIANT 1 — a frozen external acceptance test must exist before any build.
+    def examine() -> None:
+        run_top("Call examine() now — no arguments.", workspace=workspace, profile=profile,
+                recorder=recorder, provider=provider, model=model,
+                trace=run / f"trace-p{pnum}-examine.jsonl", timeout=min(timeout, 180.0),
+                thinking=thinking, phase=pnum, tools=EXAMINE_ONLY_TOOLS,
+                system_prompt=EXAMINE_MSG, load_flow=True, label=f"examiner p{pnum}")
+
+    if not ensure_gate_frozen(examine, lambda: phase_gate_ok(workspace, pnum), retries=1):
+        lr.emit(f"  phase {pnum}: examiner froze no gate — no definition of DONE, skipping")
+        return False, 0
+    restore_gate(workspace)  # materialize the frozen gate under tests/ so the coder can read it
+    lr.emit(f"  phase {pnum}: gate frozen — free coder may build (max {attempts} round(s))")
+
+    # INVARIANT 2 — exit is verified by the harness, never self-declared by the agent.
+    def dispatch(rnd: int, feedback: str) -> None:
+        if rnd == 0:
+            msg = ("Build the task in plan/TASK.md so the frozen acceptance test under tests/ "
+                   "passes. Run it yourself with `uv run python -m pytest -q tests/`.")
+        else:
+            msg = ("Your previous attempt did NOT pass the acceptance test. Here is what still "
+                   f"failed:\n\n{feedback}\n\nFix it and make the gate pass; continue from the "
+                   "current workspace, do not start over.")
+        run_top(msg, workspace=workspace, profile=profile, recorder=recorder, provider=provider,
+                model=model, trace=run / f"trace-p{pnum}-free-{rnd}.jsonl", timeout=timeout,
+                thinking=thinking, phase=pnum, tools=FREE_CODER_TOOLS,
+                system_prompt=FREE_WORKFLOW, load_flow=False, label=f"free coder p{pnum} r{rnd + 1}")
+
+    def check() -> tuple[bool, str]:
+        restore_gate(workspace)  # canonical frozen gate — undo any coder tampering before judging
+        ok, out = run_gate(workspace, 120.0, pnum)
+        ok = ok and phase_gate_ok(workspace, pnum)
+        return ok, out[-2000:]  # the tail of the gate output becomes the next round's feedback
+
+    return drive_free_coder(dispatch, check, attempts)
+
+
 def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, model_id: str,
          thinking: str, attempts: int, concurrency: int,
          start_phase: int = 1, seed_from: Path | None = None, context_window: int = 56000,
-         retry_concurrency: int | None = None) -> dict:
+         retry_concurrency: int | None = None, flow_mode: str = "forced") -> dict:
     retry_concurrency = retry_concurrency or concurrency  # retries escalate to this (default: same)
     suite = harness.load_suite(harness.SUITES, suite_name)
     run = harness.new_run(runs_dir, f"flow-{suite_name}")
@@ -515,6 +631,7 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
 
     passed = False
     phase_results: list[bool] = []
+    phase_rounds: list[int] = []  # free mode: how many rounds each phase took (0 = no gate frozen)
     done: list[str] = seeded_done(titles, start_phase)  # earlier phases came from the seed
     for pnum, ptext in enumerate(phases, start=1):
         title = titles[pnum - 1]
@@ -545,6 +662,25 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
         (workspace / "plan" / "REVIEW.md").unlink(missing_ok=True)  # fresh feedback per phase
         lr.emit(f"\n========== PHASE {pnum}/{len(phases)}: {title} ==========")
         passed = False
+        if flow_mode == "free":
+            # FREE arm: freeze the gate, then let the agent self-drive with a harness-verified exit
+            # (re-run the frozen gate; re-dispatch on failure, bounded). No forced step order.
+            passed, rnds = drive_phase_free(
+                pnum, workspace=workspace, profile=run / "profile", recorder=recorder,
+                provider=provider, model=model, run=run, timeout=timeout, thinking=thinking,
+                attempts=attempts)
+            phase_rounds.append(rnds)
+            if passed:
+                git_checkpoint(workspace, f"phase {pnum}: {title} — PASS (free, {rnds} round(s))")
+                lr.emit(f"  phase {pnum}: SOLVED in {rnds} round(s)")
+                done.append(title)
+            elif not app_compiles(workspace):  # never carry a broken app into later phases/the grade
+                git_revert_to_checkpoint(workspace)
+                lr.emit(f"  phase {pnum}: not solved in {attempts} round(s) — reverted broken app")
+            else:
+                lr.emit(f"  phase {pnum}: not solved in {attempts} round(s) — continuing")
+            phase_results.append(passed)
+            continue
         for rnd in range(attempts):
             # Escalate-on-retry: the first try runs at `concurrency` (default 1, cheap — most phases
             # pass round 1); retries escalate to `retry_concurrency` so best-of-N samples are spent
@@ -608,9 +744,10 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
     graded, _ = harness.score_workspace(workspace, suite)
     todo = (workspace / "plan" / "TODO.md").exists()
     result = {
-        "suite": suite_name, "visible": passed, "graded": graded, "todo": todo,
-        "phases": len(phases), "phase_results": phase_results, "north_star": north_star,
-        "model": model_id, "thinking": thinking, "started": started,
+        "suite": suite_name, "flow_mode": flow_mode, "visible": passed, "graded": graded,
+        "todo": todo, "phases": len(phases), "phase_results": phase_results,
+        "phase_rounds": phase_rounds,  # free mode: rounds each phase took (0 = no gate frozen)
+        "north_star": north_star, "model": model_id, "thinking": thinking, "started": started,
         "finished": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
     }
     (run / "result.json").write_text(json.dumps(result, indent=2) + "\n")
@@ -644,13 +781,19 @@ def main(argv: list[str] | None = None) -> int:
                    help="best-of-N concurrency for RETRY rounds (rounds 2+); defaults to --concurrency. "
                         "Set e.g. --concurrency 1 --retry-concurrency 2 to try singles first and spend "
                         "parallel samples only on phases that actually retry (the hard ones).")
+    p.add_argument("--flow-mode", choices=["forced", "free"], default="forced",
+                   help="forced (default): the fixed six-step pipeline (plan→review→examine→code→"
+                        "review→test) as ordered tools. free: the harness freezes the gate, then the "
+                        "agent self-drives with ordinary tools and a harness-verified exit (re-run the "
+                        "frozen gate; re-dispatch on failure, bounded by --attempts).")
     args = p.parse_args(argv)
     for name in args.suite.split(","):
         loop(name.strip(), runs_dir=args.runs_dir, timeout=args.timeout,
              base_url=args.base_url, model_id=args.model, thinking=args.thinking,
              attempts=args.attempts, concurrency=args.concurrency,
              start_phase=args.start_phase, seed_from=args.seed_from,
-             context_window=args.context_window, retry_concurrency=args.retry_concurrency)
+             context_window=args.context_window, retry_concurrency=args.retry_concurrency,
+             flow_mode=args.flow_mode)
     return 0
 
 

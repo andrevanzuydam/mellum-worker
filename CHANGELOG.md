@@ -6,6 +6,15 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `flow_run --flow-mode free`: an agent-decided flow alongside the default forced pipeline. Forced
+  mode drives a fixed six-step order (plan → review → examine → code → review → test) as ordered
+  tools; free mode enforces only two invariants and lets the agent decide every step between them —
+  (1) a frozen external acceptance test exists BEFORE any build (one examine pass writes it, the
+  harness freezes it, the agent cannot weaken it), and (2) the exit is verified by the harness, not
+  self-declared: it re-runs the frozen gate and, on a fail, re-dispatches the agent with the failure
+  text ("didn't pass — here's what failed, try again"), bounded by `--attempts`. Each phase records
+  whether the fixed model was EVER able to solve it and how many rounds it took (`phase_rounds` in
+  `result.json`). The default is unchanged (`forced`).
 - The flow harness now puts the workspace under git and checkpoints it after each PASSING phase, so
   a later breaking change can be reverted to the last known-good phase and redone instead of
   poisoning the accumulated work. If a round leaves the app uncompilable (e.g. a phase-7 attempt
