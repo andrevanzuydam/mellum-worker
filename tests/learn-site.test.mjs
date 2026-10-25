@@ -33,7 +33,7 @@ const PAGES = [
 test("zensical.toml points docs_dir at learn/", () => {
   const toml = readFileSync(resolve(ROOT, "zensical.toml"), "utf8");
   assert.match(toml, /^docs_dir = "learn"$/m);
-  assert.match(toml, /^site_name = "Andre\/Paul Learning Center"$/m);
+  assert.match(toml, /^site_name = "Small AI Learning Center"$/m);
 });
 
 test("every required page exists and is in the nav", () => {
