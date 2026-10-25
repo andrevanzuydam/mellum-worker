@@ -383,7 +383,7 @@ def restore_fixture_data(workspace: Path, base_dir: Path) -> list[str]:
 
 def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, model_id: str,
          thinking: str, attempts: int, concurrency: int,
-         start_phase: int = 1, seed_from: Path | None = None) -> dict:
+         start_phase: int = 1, seed_from: Path | None = None, context_window: int = 56000) -> dict:
     suite = harness.load_suite(harness.SUITES, suite_name)
     run = harness.new_run(runs_dir, f"flow-{suite_name}")
     workspace = run / "workspace"
@@ -398,7 +398,7 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
     elif suite.root is not None and (suite.root / "base").is_dir():
         shutil.copytree(suite.root / "base", workspace, dirs_exist_ok=True)
     shutil.copytree(harness.PROFILE, run / "profile")
-    lr.pin_profile(run / "profile", base_url, model_id)
+    lr.pin_profile(run / "profile", base_url, model_id, context_window)
     recorder = run / "record-pi.mjs"
     shutil.copy2(harness.RECORDER, recorder)
     provider, model = harness.profile_pin(run / "profile")
@@ -562,12 +562,17 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--seed-from", type=Path, default=None,
                    help="a prior run's workspace to seed the built app and earlier frozen gates from "
                         "(required when --start-phase > 1)")
+    p.add_argument("--context-window", type=int, default=56000,
+                   help="pinned context window; smaller reserves less KV per request so --concurrency "
+                        ">1 (best-of-N) fits under the oMLX memory guard. Keep above the largest "
+                        "context a phase reaches or it truncates.")
     args = p.parse_args(argv)
     for name in args.suite.split(","):
         loop(name.strip(), runs_dir=args.runs_dir, timeout=args.timeout,
              base_url=args.base_url, model_id=args.model, thinking=args.thinking,
              attempts=args.attempts, concurrency=args.concurrency,
-             start_phase=args.start_phase, seed_from=args.seed_from)
+             start_phase=args.start_phase, seed_from=args.seed_from,
+             context_window=args.context_window)
     return 0
 
 

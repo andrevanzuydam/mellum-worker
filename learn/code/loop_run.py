@@ -258,13 +258,16 @@ def run_tests(workspace: Path, timeout: float) -> tuple[bool, str]:
     return proc.returncode == 0, "\n".join(out.splitlines()[-25:])
 
 
-def pin_profile(profile_dir: Path, base_url: str, model_id: str) -> None:
+def pin_profile(profile_dir: Path, base_url: str, model_id: str, context_window: int = 56000) -> None:
     mp = profile_dir / "models.json"
     data = json.loads(mp.read_text())
     _, prov = next(iter(data["providers"].items()))
     prov["baseUrl"] = base_url
     prov["models"][0]["id"] = model_id
-    prov["models"][0]["contextWindow"] = 56000
+    # A smaller window reserves less KV per request, so best-of-N (--concurrency N) fits under the
+    # oMLX memory guard — each concurrent request costs model + KV(window), and the guard rejects
+    # the overflow. Keep it above the largest context a phase actually reaches or it truncates.
+    prov["models"][0]["contextWindow"] = context_window
     mp.write_text(json.dumps(data, indent=2) + "\n")
 
 
