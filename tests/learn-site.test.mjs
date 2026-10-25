@@ -186,8 +186,10 @@ test("the first findings lesson follows the six steps and names its badge", () =
   assert.deepEqual(heads, ["Problem", "Eval case", "Evidence of the problem",
     "Solution", "Validation", "Interpretation"]);
   const sections = l.split(/^## /m).slice(1);
-  sections.forEach((s, i) => assert.equal(/\*\*Badge:\*\* `cited`/.test(s), i < 5, `step ${i + 1}`));
-  assert.match(l, /weakest badge here is `cited`/);
+  const badge = (s) => /^\*\*Badge:\*\* `(reference-run|cited|screen|conjecture)`$/m.test(s);
+  sections.forEach((s, i) => assert.equal(badge(s), i < 5, `step ${i + 1}`));
+  assert.match(l, /weakest badge (?:here )?is `(?:reference-run|cited|screen|conjecture)`/);
+  assert.ok(!/docs\/ladder\//.test(l), "lesson links a ladder record");
   assert.match(page("lessons/index.md"), /primary-agent\.md/);
 });
 
@@ -255,8 +257,10 @@ test("the second findings lesson follows the six steps and names its badge", () 
   assert.deepEqual(heads, ["Problem", "Eval case", "Evidence of the problem",
     "Solution", "Validation", "Interpretation"]);
   const sections = l.split(/^## /m).slice(1);
-  sections.forEach((s, i) => assert.equal(/\*\*Badge:\*\* `cited`/.test(s), i < 5, `step ${i + 1}`));
-  assert.match(l, /weakest badge is `cited`/);
+  const badge = (s) => /^\*\*Badge:\*\* `(reference-run|cited|screen|conjecture)`$/m.test(s);
+  sections.forEach((s, i) => assert.equal(badge(s), i < 5, `step ${i + 1}`));
+  assert.match(l, /weakest badge is `(?:reference-run|cited|screen|conjecture)`/);
+  assert.ok(!/docs\/ladder\//.test(l), "lesson links a ladder record");
   assert.match(page("lessons/index.md"), /short-prompt\.md/);
 });
 

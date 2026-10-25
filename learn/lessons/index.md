@@ -15,19 +15,23 @@ what it rests on now.
 ## Start here
 
 - **[The suite baseline](baseline.md)** — Baseline Pi and the Baseline Worker on easy, medium and hard, n = 3, on llama.cpp. *(Paul)*
-1. **[The primary agent is the wrong worker](primary-agent.md)** — Mellum as the main agent passes 8 of 15; bounded, it passes 15. *(Paul)*
+1. **[The primary agent is the wrong worker](primary-agent.md)** — An unbounded Pi passed 1 of 3 easy sessions; the baseline separates them on medium. *(Paul)*
 
 ## Paul's lessons
 
-2. **[A short prompt, not a procedure](short-prompt.md)** — Prompt v5 is 643 characters, and each line it lost had a run behind it. *(Paul)*
-3. **[Thinking is working memory](thinking-working-memory.md)** — Stripping earlier thinking cuts prefill 57% and makes the run slower. *(Paul)*
-4. **[Guards for empty turns and loops](guards-for-empty-turns.md)** — The empty-final nudge and the loop breaker take a 13/15 arm to 15/15. *(Paul)*
-5. **Project facts** — A 600-character facts section takes a four-phase build from 1/12 to 9/12. *(Paul)*
+2. **[A short prompt, not a procedure](short-prompt.md)** — Prompt v5 is 643 characters, and on easy it did not move a pass: a null at n = 3. *(Paul)*
+3. **[Thinking is working memory](thinking-working-memory.md)** — The strip-thinking arm has no instrument on llama.cpp; thinking spends the output budget. *(Paul)*
+4. **[Guards for empty turns and loops](guards-for-empty-turns.md)** — The nudge never fired in ten easy sessions: no empty turn had the shape it answers. *(Paul)*
+5. **Project facts** — An arm is measured: the block reaches the model in every request and did not move easy at n = 3. *(Paul)*
 6. **Write only the files you list** — Runs pass the hidden tests and still fail by writing outside the layout. *(Paul)*
 7. **Who holds the loop** — Worker, Mode and a delegated child pass alike and cost differently. *(Paul)*
 8. **A prose brief stops at its first reply** — The same brief as one prompt loses four passes; as steps it costs 2.4× the time. *(Paul)*
 9. **The intercom block is a prefill tax** — Off: the child prompt halves and prefill drops 20%, with the same passes. *(Paul)*
 10. **One spec file per phase** — A one-file roadmap misses the last phase's id in 5 of 6 runs; n = 3. *(Paul)*
+
+Lessons 5–10 still carry the wording their digest gave them. Each is a
+feature cycle that re-measures it on llama.cpp when its page is written; the
+numbers above are the plan, not a citation.
 
 ## Andre's mediation
 

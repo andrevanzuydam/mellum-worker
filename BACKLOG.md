@@ -23,6 +23,18 @@ a lessons re-base: its record would have no page to land on.
 foreground server again and the arm's three-way question (facts bullet, dormant
 guard, both) can land on a page.
 
+**Medium does not finish inside the harness deadline.** Every medium session
+in LC.13A's lesson arms — both `bare` and `worker`, three each — ran the full
+600 s and was killed while still issuing requests, walls 557–600 s. The
+45-session record ran medium `bare` at 359 s and `worker` at 204 s, so the
+machine was 1.7–3× slower that day. No medium claim may be made from a
+session that a deadline ended, and a bare/worker contrast there would measure
+the deadline. `--deadline` already exists; the open question is what value
+medium needs and whether a machine-speed note belongs in every record.
+*Reopens when* a medium arm is wanted for LC.16–LC.19 or the foreground-server
+arm: time one medium session first, set the deadline from it in the
+preregistration, and say so in the record.
+
 **Recorded wall under-reports a stalled request.** `report()` in
 `learn/code/harness.py` derives wall from trace timestamps, and a request that
 never returns writes no rows: one session killed at the 600 s deadline

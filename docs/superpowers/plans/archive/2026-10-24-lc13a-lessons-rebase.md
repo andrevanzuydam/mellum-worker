@@ -2,7 +2,7 @@
 phase: LC
 feature_cycle: LC.13A
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # LC.13A: the Lessons re-base on llama.cpp
@@ -132,13 +132,24 @@ all three `no-facts` sessions hung on a foreground server command
 (`uvicorn app:app --reload` twice, `python app.py` once) after 143–460 s of
 silence, and the removed bullet is `- Do not: start servers`.
 
-**Next arm:** the foreground-server pathology, preregistered with hung tool
-calls as its reading. The pathology is Andre's (P2, "The server that never
-returns", from his PR #1 and prompt v10, deferred to LC.7A) and the bullet is
-Paul's, in the suites' own `AGENTS.md`, so the arm is three-way: the facts
-bullet as shipped, the dormant guard at `420ba1d` (branch `lc11b-server-guard`),
-or both. It runs before any other lesson arm, and nothing from it publishes as
-Andre's page before LC.5. Lessons 1 and 2 follow on easy+medium.
+**Arm 2, lessons 1 and 2 (done, both null).** [Preregistration](2026-10-24-lessons-1-2-preregistration.md),
+[record](2026-10-24-lessons-1-2-screen.md). Easy at n=3: `bare` 1/3,
+`worker` 2/3, `no-prompt` 1/3. `bare` passing a session means the
+primary-agent contrast does not re-base — the page retires the 8/15 instead.
+The prompt stays a null, one session apart, as the 45-session record found.
+Medium took `worker`'s majority and then proved unmeasurable: all six sessions
+in both arms ran the full 600 s deadline while still working. The arm also
+found and fixed a nudge-counting bug: a prompt boundary is not a nudge.
+
+**Booked, not run:** the foreground-server arm. The pathology is Andre's (P2,
+from his PR #1 and prompt v10, deferred to LC.7A) and the bullet is Paul's, so
+a three-way arm (facts bullet, the dormant guard at `420ba1d`, or both) waits
+for LC.5 and lands on LC.7A's page.
+
+**Pages (done).** All four rewritten: `primary-agent`, `short-prompt`,
+`thinking-working-memory`, `guards-for-empty-turns`, plus the index's
+one-liners. No page links `docs/ladder/`, two are honest nulls, one is a void
+arm, and lesson 3 says plainly that it has no instrument here.
 
 ### Task 5: Close
 
@@ -153,3 +164,31 @@ Confirm every page's claim against its record, run
 No page under `learn/lessons/` cites an oMLX record; every page states the
 backend and settings its evidence came from and links its record; every
 number on a page appears in that record; and the four checks pass.
+
+## Result
+
+**Closed 2026-10-24.** Infrastructure cycle, not a lesson: it re-based the
+Lessons track on llama.cpp and built the arms the later lesson cycles need.
+
+- **Four arms closed.** Guard: void, zero nudge fires in ten easy sessions.
+  Context: void, peak demand 857–4,699 against windows of 50,176 and 56,064,
+  no setting changed. Facts: null on passes, block injected in every `worker`
+  request, plus the foreground-server lead booked to LC.7A. Lessons 1 and 2:
+  both null at n=3; `bare` passed a session, so lesson 1's contrast retires
+  rather than re-bases.
+- **Pages re-based.** `primary-agent`, `short-prompt`,
+  `thinking-working-memory` and `guards-for-empty-turns` no longer cite an
+  oMLX record; the index's one-liners match them. Two pages are nulls, one a
+  void arm, one an explicit missing instrument.
+- **Instrument.** `no-facts` became an arm; the four arm knobs are cleared
+  from the inherited environment; a nudge is counted only inside one prompt;
+  a `before_compact` row exists when a compaction is allowed; the recorder
+  loads after the worker again, because Pi lets each handler replace the
+  payload.
+- **Measured, not used.** Medium is unmeasurable at the 600 s deadline today
+  for every arm tried, on a machine 1.7–3× slower than the 45-session
+  record's. No medium claim is made anywhere.
+- **Owed.** The `research-2026-10-24` raw-evidence release (run JSON, traces,
+  stdout, patches from `/tmp/mellum-eval-runs`).
+- **Checks.** `node --test tests/docs-caps.test.mjs` 4/4, `npm test` 349/349,
+  `learn/code/tests` 42/42, `zensical build` clean.

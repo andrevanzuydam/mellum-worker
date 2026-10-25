@@ -6,6 +6,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The Lessons track is re-based on llama.cpp. `primary-agent`, `short-prompt`,
+  `thinking-working-memory` and `guards-for-empty-turns` no longer cite oMLX
+  ladder records: lesson 1 retires its 8/15 because an unbounded Pi passed a
+  session, lesson 2 is a null at n=3, lesson 4 is a void arm (the nudge never
+  fired), and lesson 3 states that the strip-thinking arm has no instrument
+  on this backend.
+
 - The suites harness counts a **nudge** only when an empty assistant turn is
   continued inside the same Pi process. Medium and hard start one process per
   prompt, and the old rule counted the empty final that ended one prompt as
