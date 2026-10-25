@@ -6,26 +6,38 @@ A ladder run writes its worker transcript to a fresh `trace.jsonl` per rung
 thinking and tool calls as they happen, switching to the next rung's trace
 automatically — so every rung is watchable in a terminal while the run goes.
 
-Usage:  python scripts/watch_ladder.py        (Ctrl-C to stop)
+Usage:  uv run python scripts/watch_ladder.py [extra_dir]   (Ctrl-C to stop)
+
+`extra_dir` is an optional workspace/runs root to also watch for `trace.jsonl`,
+for when a run writes traces outside the system temp dir.
 """
 import glob
 import json
 import os
 import sys
+import tempfile
 import time
 
-GLOBS = [
-    "/private/var/folders/*/*/T/ladder-*/trace.jsonl",
-    "/private/var/folders/*/*/T/ladder-*/*/trace.jsonl",
-    "/tmp/ladder-*/trace.jsonl",
-    "/tmp/ladder-*/*/trace.jsonl",
-]
+
+def _globs() -> list[str]:
+    # Derive from the ACTUAL temp dir so this works wherever tempfile puts ladder-*/ (not just
+    # /tmp or /private/var/folders); keep the historical paths; add any dir given on the CLI.
+    roots = [tempfile.gettempdir(), "/tmp", "/private/var/folders/*/*/T"]
+    roots += [a for a in sys.argv[1:] if not a.startswith("-")]
+    pats: list[str] = []
+    for r in roots:
+        pats += [f"{r}/ladder-*/trace.jsonl", f"{r}/ladder-*/*/trace.jsonl",
+                 f"{r}/**/trace.jsonl"]
+    return pats
+
+
+GLOBS = _globs()
 
 
 def newest_trace():
     files = []
     for g in GLOBS:
-        files += glob.glob(g)
+        files += glob.glob(g, recursive=True)
     files = [f for f in files if os.path.exists(f)]
     return max(files, key=os.path.getmtime) if files else None
 
