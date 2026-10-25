@@ -153,6 +153,31 @@ def test_fixture_schema_note_lists_real_columns(tmp_path):
     assert "do not invent" in note.lower()
 
 
+def test_app_compiles_detects_a_broken_module(tmp_path):
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    (ws / "app.py").write_text("x = 1\n")
+    (ws / "models.py").write_text("y = 2\n")
+    assert flow_run.app_compiles(ws) is True
+    (ws / "app.py").write_text('cur.execute("""\nunterminated\n')  # the clean1 failure mode
+    assert flow_run.app_compiles(ws) is False
+
+
+def test_git_checkpoint_then_revert_restores_last_good(tmp_path):
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    (ws / "app.py").write_text("good = 1\n")
+    flow_run.git_init_workspace(ws)                 # base checkpoint
+    (ws / "app.py").write_text("good = 2\n")
+    flow_run.git_checkpoint(ws, "phase 1: PASS")    # known-good anchor
+    (ws / "app.py").write_text("BROKEN (((\n")       # a breaking change
+    (ws / "junk.py").write_text("stray\n")           # an untracked stray file
+    flow_run.git_revert_to_checkpoint(ws)
+    assert (ws / "app.py").read_text() == "good = 2\n"   # reverted to last checkpoint
+    assert not (ws / "junk.py").exists()                  # stray cleaned
+    assert ".venv/" in (ws / ".gitignore").read_text()    # venv ignored, never tracked
+
+
 def test_round_concurrency_escalates_only_on_retry(tmp_path):
     # first try cheap (round 0 = concurrency); retries throw best-of-N at the stuck phase.
     assert flow_run.round_concurrency(0, 1, 2) == 1   # round 0: single

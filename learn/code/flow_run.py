@@ -219,6 +219,53 @@ def restore_gate(workspace: Path) -> None:
         shutil.copy2(frozen, tests / f"test_gate_{frozen.stem}.py")
 
 
+def _git(workspace: Path, *args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(["git", "-C", str(workspace), *args],
+                          capture_output=True, text=True, check=False)
+
+
+def git_init_workspace(workspace: Path) -> None:
+    """Put the workspace under git so each PASSING phase is a checkpoint a later breaking change can
+    be reverted to and redone — a broken phase must not poison the accumulated good work or the
+    grade. The venv, caches and run traces are ignored so only the app + gates are tracked."""
+    gi = workspace / ".gitignore"
+    text = gi.read_text() if gi.is_file() else ""
+    for pat in (".venv/", "__pycache__/", "*.pyc", "*.subfeed", "trace*.jsonl"):
+        if pat not in text:
+            text += ("\n" if text and not text.endswith("\n") else "") + pat + "\n"
+    gi.write_text(text)
+    _git(workspace, "init", "-q")
+    _git(workspace, "config", "user.email", "flow@harness.local")
+    _git(workspace, "config", "user.name", "flow-harness")
+    git_checkpoint(workspace, "base")
+
+
+def git_checkpoint(workspace: Path, msg: str) -> None:
+    """Commit the workspace as a per-phase checkpoint (no-op safe if nothing changed)."""
+    _git(workspace, "add", "-A")
+    _git(workspace, "commit", "-q", "--allow-empty", "-m", msg)
+
+
+def git_revert_to_checkpoint(workspace: Path) -> None:
+    """Roll the workspace back to the last checkpoint (the last passing phase), discarding a broken
+    attempt — the harness's 'revert the breaking change' so the next round redoes from known-good."""
+    _git(workspace, "reset", "--hard", "-q", "HEAD")
+    _git(workspace, "clean", "-fdq", "-e", ".venv")
+
+
+def app_compiles(workspace: Path) -> bool:
+    """True if every top-level app module compiles. A failed phase can leave app.py with a syntax
+    error (e.g. an unterminated string), which would make the whole app un-importable and sink the
+    grade; when this is false the harness reverts to the last checkpoint instead of grading rubble."""
+    import py_compile
+    for p in sorted(workspace.glob("*.py")):
+        try:
+            py_compile.compile(str(p), doraise=True)
+        except py_compile.PyCompileError:
+            return False
+    return True
+
+
 def round_concurrency(rnd: int, concurrency: int, retry_concurrency: int) -> int:
     """First try (round 0) uses `concurrency` (default 1, cheap); retries (rounds 1+) escalate to
     `retry_concurrency`, so best-of-N parallel samples are spent only on rounds that actually retry
@@ -419,6 +466,7 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
     subprocess.run(["uv", "sync", "--frozen"], cwd=workspace, capture_output=True, timeout=300, check=False)
     subprocess.Popen(["python3", str(docs_lookup), "--rebuild", "warmup"], cwd=workspace,
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    git_init_workspace(workspace)  # checkpoint per passing phase; revert a breaking change, redo
 
     # Decompose into phases and drive ONE at a time over the shared workspace, so each
     # orchestrator run gets a small, answerable task. Each phase carries a small, constant
@@ -529,15 +577,27 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
                     promote(winner, workspace)
                     passed = True
             if passed:
+                git_checkpoint(workspace, f"phase {pnum}: {title} — PASS")  # known-good anchor
                 lr.emit(f"  phase {pnum}: tests PASS")
                 break
             lr.emit(f"  phase {pnum} round {rnd + 1}/{attempts}: no pass — retrying")
+            if not app_compiles(workspace):  # a round left the app broken — revert, redo from last good
+                git_revert_to_checkpoint(workspace)
+                lr.emit(f"  phase {pnum}: app did not compile — reverted to last checkpoint")
         if not passed:
+            if not app_compiles(workspace):  # never carry a broken app into later phases or the grade
+                git_revert_to_checkpoint(workspace)
+                lr.emit(f"  phase {pnum}: still FAIL — reverted the broken attempt to last checkpoint")
             lr.emit(f"  phase {pnum}: still FAIL after {attempts} round(s) — continuing")
         phase_results.append(passed)
         if passed:
             done.append(title)
 
+    # Never grade a broken app: if the final state does not compile (a last failed phase left it so),
+    # revert to the last known-good checkpoint so the hidden grade scores coherent work, not rubble.
+    if not app_compiles(workspace):
+        git_revert_to_checkpoint(workspace)
+        lr.emit("  final app did not compile — reverted to last checkpoint before grading")
     # A report gate can mutate the fixture db (DELETE/INSERT); put the fixture rows back before the
     # authoritative grade so it reads the real data the spec reports "from the database", not a
     # test's leftovers. Keeps the coder's migrated schema.

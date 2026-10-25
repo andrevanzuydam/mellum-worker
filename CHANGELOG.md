@@ -4,6 +4,16 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Added
+
+- The flow harness now puts the workspace under git and checkpoints it after each PASSING phase, so
+  a later breaking change can be reverted to the last known-good phase and redone instead of
+  poisoning the accumulated work. If a round leaves the app uncompilable (e.g. a phase-7 attempt
+  that left `app.py` with an unterminated string — the clean-run failure that sank a whole grade to
+  zero), the harness reverts to the last checkpoint and redoes from there; and it never grades a
+  broken app — it reverts first. The venv, caches and traces are git-ignored so only the app and
+  gates are tracked.
+
 ### Fixed
 
 - The flow examiner's report gates destructively reseeded the fixture database (`DELETE FROM
