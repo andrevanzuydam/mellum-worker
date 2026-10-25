@@ -29,3 +29,10 @@ test("the recorder keeps the run's shape", () => {
     assert.ok(Number.isFinite(Date.parse(row.timestamp)));
   }
 });
+
+test("the recorder notes an attempted compaction", () => {
+  const { handlers: h, rows } = capture();
+  h.session_before_compact({ reason: "threshold" });
+  assert.deepEqual(rows.map((r) => r.type), ["instance_start", "before_compact"]);
+  assert.equal(rows[1].reason, "threshold");
+});

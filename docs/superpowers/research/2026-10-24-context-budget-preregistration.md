@@ -49,9 +49,25 @@ void for C.
 
 **Instrument check, before any arm (n = 1, no claim).** One easy session at
 `A-50k` with the recorder watching for a compaction event, read from the
-trace and `stdout.txt`. Its outcome decides whether C runs. Its numbers are
-not evidence for anything else: it is a screen, n = 1, and carries a `screen`
-badge if it is cited at all.
+trace and `stdout.txt`. Its numbers are not evidence for anything else: it is
+a screen, n = 1, and carries a `screen` badge if it is cited at all.
+
+**Amended 2026-10-24, before the arms ran.** The check is **inconclusive** and
+C's fate moves to the arms. It ran one session: PASS, 33 requests, peak input
+**1,639 tokens**, and zero `before_compact` rows. That is not evidence that Pi
+never attempts compaction, because Pi's threshold is
+`contextWindow - reserveTokens` — 50,000 - 16,384 = **33,616** by default
+(Pi's own `docs/compaction.md`) — and this session
+never came near it. So a null at n=1 cannot separate "never attempted" from
+"never needed".
+
+Two consequences, fixed before the arms. First, **C runs if any `A-50k` or
+`B-56k` session records a `before_compact` row**; if none does, C is recorded
+as unreachable in practice at this n and dropped. Second, the check's own
+number is a warning about the control: 1,639 tokens here against the screen's
+51,697 on the same suite and window means easy's demand varies by more than
+an order of magnitude between sessions, so a window that "fits" at n=3 may be
+fitting a short run rather than a bounded one.
 
 **Reading.** Per arm: passes out of n; the peak input tokens over the
 session's requests; how many requests exceeded 50,000 and 56,000; empty
@@ -76,7 +92,11 @@ inherits whatever the passes say.
 4. A and B both fail and C never ran: the budget is unsettled, Task 4 does
    not start, and the finding is the peak demand with the reason it cannot
    be paid.
-5. A session whose served `n_ctx` disagrees with its arm, whose profile
+5. No session in either arm records a `before_compact` row: the compaction
+   refusal is unreachable in this path at this n, recorded as such, and the
+   window is the only budget in question here — the refusal stays and is not
+   described as the overflow's cause.
+6. A session whose served `n_ctx` disagrees with its arm, whose profile
    `contextWindow` disagrees with the arm, or whose workspace was
    contaminated is invalid: excluded and named.
 

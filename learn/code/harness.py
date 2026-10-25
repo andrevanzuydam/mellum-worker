@@ -133,9 +133,11 @@ def pi_argv(
         else []
     )
     extra = ["-e", str(extension)] if extension is not None else []
+    # The recorder goes first so it sees events the worker's handlers cancel,
+    # notably a compaction the worker refuses while the mode is on.
     return [
         pi_binary, *FLAGS, "--provider", provider, "--model", model,
-        *session, *extra, "-e", str(recorder), prompt,
+        *session, "-e", str(recorder), *extra, prompt,
     ]
 
 
