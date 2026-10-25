@@ -153,6 +153,15 @@ def test_fixture_schema_note_lists_real_columns(tmp_path):
     assert "do not invent" in note.lower()
 
 
+def test_round_concurrency_escalates_only_on_retry(tmp_path):
+    # first try cheap (round 0 = concurrency); retries throw best-of-N at the stuck phase.
+    assert flow_run.round_concurrency(0, 1, 2) == 1   # round 0: single
+    assert flow_run.round_concurrency(1, 1, 2) == 2   # round 1: escalate
+    assert flow_run.round_concurrency(3, 1, 3) == 3   # later retries: full best-of-N
+    assert flow_run.round_concurrency(0, 2, 2) == 2   # if concurrency already 2, round 0 is 2
+    assert flow_run.round_concurrency(2, 2, 2) == 2   # default: same every round
+
+
 def test_fixture_schema_note_empty_without_db(tmp_path):
     (tmp_path / "ws").mkdir()
     assert flow_run.fixture_schema_note(tmp_path / "ws") == ""

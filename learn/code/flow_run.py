@@ -219,6 +219,13 @@ def restore_gate(workspace: Path) -> None:
         shutil.copy2(frozen, tests / f"test_gate_{frozen.stem}.py")
 
 
+def round_concurrency(rnd: int, concurrency: int, retry_concurrency: int) -> int:
+    """First try (round 0) uses `concurrency` (default 1, cheap); retries (rounds 1+) escalate to
+    `retry_concurrency`, so best-of-N parallel samples are spent only on rounds that actually retry
+    — the hard phases — not on phases that pass first try. Agnostic: no hardcoded phase numbers."""
+    return concurrency if rnd == 0 else retry_concurrency
+
+
 def gate_files(workspace: Path, phase: int | None = None) -> list[Path]:
     """The restored frozen acceptance gate — tests/test_gate_phase_*.py — and nothing else. The
     phase is judged on this, the frozen definition of DONE, never on the coder's own scratch tests.
@@ -383,7 +390,9 @@ def restore_fixture_data(workspace: Path, base_dir: Path) -> list[str]:
 
 def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, model_id: str,
          thinking: str, attempts: int, concurrency: int,
-         start_phase: int = 1, seed_from: Path | None = None, context_window: int = 56000) -> dict:
+         start_phase: int = 1, seed_from: Path | None = None, context_window: int = 56000,
+         retry_concurrency: int | None = None) -> dict:
+    retry_concurrency = retry_concurrency or concurrency  # retries escalate to this (default: same)
     suite = harness.load_suite(harness.SUITES, suite_name)
     run = harness.new_run(runs_dir, f"flow-{suite_name}")
     workspace = run / "workspace"
@@ -489,7 +498,12 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
         lr.emit(f"\n========== PHASE {pnum}/{len(phases)}: {title} ==========")
         passed = False
         for rnd in range(attempts):
-            if concurrency <= 1:
+            # Escalate-on-retry: the first try runs at `concurrency` (default 1, cheap — most phases
+            # pass round 1); retries escalate to `retry_concurrency` so best-of-N samples are spent
+            # only where retries actually happen (the hard phases), not on phases that pass first
+            # try. Agnostic — it adapts to where the model struggles, with no hardcoded phase numbers.
+            eff_conc = round_concurrency(rnd, concurrency, retry_concurrency)
+            if eff_conc <= 1:
                 nudge = "" if rnd == 0 else (
                     " Work from a previous attempt may already be in the workspace — continue toward "
                     "passing tests; call plan() only if TODO.md is missing."
@@ -501,11 +515,11 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
                 passed, _ = run_gate(workspace, 120.0, pnum)  # a brittle earlier gate must not poison this phase
                 passed = passed and phase_gate_ok(workspace, pnum)  # and THIS phase must have frozen a real acceptance test
             else:
-                temps = temp_ladder(concurrency)
-                lr.emit(f"  phase {pnum} round {rnd + 1}: {concurrency} parallel attempts, temps {temps}")
+                temps = temp_ladder(eff_conc)
+                lr.emit(f"  phase {pnum} round {rnd + 1}: {eff_conc} parallel attempts, temps {temps}")
                 winner = None
-                with cf.ThreadPoolExecutor(max_workers=concurrency) as ex:
-                    futs = [ex.submit(one_attempt, pnum, rnd, i, temps[i]) for i in range(concurrency)]
+                with cf.ThreadPoolExecutor(max_workers=eff_conc) as ex:
+                    futs = [ex.submit(one_attempt, pnum, rnd, i, temps[i]) for i in range(eff_conc)]
                     for fut in cf.as_completed(futs):
                         i, ok, aw = fut.result()
                         lr.emit(f"  phase {pnum} try{i} (t={temps[i]}): {'PASS' if ok else 'fail'}")
@@ -566,13 +580,17 @@ def main(argv: list[str] | None = None) -> int:
                    help="pinned context window; smaller reserves less KV per request so --concurrency "
                         ">1 (best-of-N) fits under the oMLX memory guard. Keep above the largest "
                         "context a phase reaches or it truncates.")
+    p.add_argument("--retry-concurrency", type=int, default=None,
+                   help="best-of-N concurrency for RETRY rounds (rounds 2+); defaults to --concurrency. "
+                        "Set e.g. --concurrency 1 --retry-concurrency 2 to try singles first and spend "
+                        "parallel samples only on phases that actually retry (the hard ones).")
     args = p.parse_args(argv)
     for name in args.suite.split(","):
         loop(name.strip(), runs_dir=args.runs_dir, timeout=args.timeout,
              base_url=args.base_url, model_id=args.model, thinking=args.thinking,
              attempts=args.attempts, concurrency=args.concurrency,
              start_phase=args.start_phase, seed_from=args.seed_from,
-             context_window=args.context_window)
+             context_window=args.context_window, retry_concurrency=args.retry_concurrency)
     return 0
 
 
