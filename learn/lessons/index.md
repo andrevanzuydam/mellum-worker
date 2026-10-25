@@ -28,7 +28,9 @@ what it rests on now.
    delegated child; LC.8 renamed Mode to Worker and removed the delegated child,
    so there is no second policy left to compare. The number is kept so the other
    entries stay stable. *(Paul)*
-8. **A prose brief stops at its first reply** — The same brief as one prompt loses four passes; as steps it costs 2.4× the time. *(Paul)*
+8. **[A prose brief stops at its first reply](prose-brief.md)** — One brief against four:
+   both passed the hidden tests, and the one-brief arm used a third of the
+   context. A `screen` at n = 1, against the old claim. *(Paul)*
 9. **The intercom block is a prefill tax** — *re-scoped 2026-10-24.* LC.8 removed
    the block, so the page states the reason it went rather than a measured tax.
    *(Paul)*

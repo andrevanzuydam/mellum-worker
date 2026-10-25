@@ -2,7 +2,7 @@
 phase: LC
 feature_cycle: LC.17
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # LC.17: A prose brief stops at its first reply
@@ -115,3 +115,24 @@ entry, the changelog, the Status cell, `## Now`, `## Result`, archive, merge.
 test failing because `tests/learn-site.test.mjs` still asserts the old name;
 the machine-calibration decision (A+C: calibration tokens/second per run);
 and LC.19 (ladder rungs 6–9 on llama.cpp), approved but not started.
+
+## Result
+
+**Closed 2026-10-25.** Lesson 8, **A prose brief stops at its first reply**,
+plus three instrument changes.
+
+- **Instrument.** `--single-prompt` (one brief, not steps), `machine` and
+  `deadline` in `run.json`, and the process sweep that ends what a run leaves
+  behind and records it as `leaked`. 49 harness tests, including an end-to-end
+  check that a backgrounded sleeper is found and killed.
+- **Screen.** Steps: tests pass, lint fails (`F401`), 53 requests, peak 11,369,
+  894 s. One brief: **passes**, 52 requests, peak 3,761, 961 s — both on an
+  M1 Pro, 32 GiB, 1,800 s deadline.
+- **The direction reversed.** The pathology did not appear; the only failing
+  arm was the stepped one, and its failure was an unused import rather than a
+  missing phase. The lesson's old claim (four passes lost, 2.4× the time) is
+  retired and the page says so.
+- **Shipped.** Page, lesson test, index link, nav entry, changelog.
+- **Checks.** `learn/code/tests` 49/49, `docs-caps` 4/4, `npm test` 356/357 with
+  the one failure belonging to the uncommitted site-name rename in the shared
+  worktree, not to this cycle.

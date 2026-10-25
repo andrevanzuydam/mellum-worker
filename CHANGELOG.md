@@ -55,6 +55,20 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- The suites harness records **which machine and which deadline** produced a
+  run (`machine`, `deadline` in `run.json`). Peak token counts transfer between
+  machines and walls do not, so a record that names neither invites a
+  comparison nobody can make.
+
+- `--single-prompt` sends a suite's own prompts as one brief instead of steps,
+  so "one prose brief" and "the same brief as steps" differ by exactly one
+  thing: the base, the grader and the brief text stay identical.
+
+- Lesson 8, **[A prose brief stops at its first reply](learn/lessons/prose-brief.md)**:
+  a screen at n = 1 where both shapes passed the hidden tests and the
+  one-brief arm used a third of the context — against the claim the lesson used
+  to make, which is retired.
+
 - The suites harness **sweeps what a run leaves running**. A child that
   backgrounds `python app.py &` and then settles used to leave its server
   holding a port — five such processes were still listening hours later. The
