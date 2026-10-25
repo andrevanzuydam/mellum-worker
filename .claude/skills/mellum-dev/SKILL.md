@@ -135,7 +135,7 @@ watches it happen:
   (`uv run python -m pytest -v`, per-test names; `npm test`).
 - **A ladder run** (`run_ladder`) prints only its final row, so it is not
   watchable on its own. **Default, every run, no exceptions:** start
-  `python scripts/watch_ladder.py` in a Terminal tab and `show_pane` it
+  `uv run python scripts/watch_ladder.py` in a Terminal tab and `show_pane` it
   *before* launching the run. It follows the newest per-rung `trace.jsonl` and
   prints each worker turn (thinking + tool calls) live, switching to the next
   rung's trace automatically — so **every rung**, not just the first, streams in
@@ -200,3 +200,50 @@ is recorded **in the repo** before (or with) its PR — never left in `/tmp`:
 
 The win/loss PR (§10) carries the record and the note. A claim with no committed
 record behind it is a lead, not a result.
+
+## 12. Run everything through `uv run`
+
+Never invoke `python`/`python3` directly in this repo — always `uv run python …`
+(and `uv run python -m ladder.run_ladder …`, `uv run python scripts/…`). The
+pinned env and lockfile are what make a run reproducible; a bare interpreter uses
+whatever happens to be on PATH and is not a result we trust. The `npm test` node
+suite is the one exception (it is node, not Python).
+
+## 13. Flow harness: the methodology that held up
+
+Lessons the flow work (`flow_run.py` + `extensions/mellum-flow.ts`) earned, stated
+so they are not dropped:
+
+- **The hidden grader is the oracle; a self-authored gate is a proxy.** The
+  examiner's frozen gate is a convenience target; the suite's own hidden grader is
+  the truth. A brittle gate can *false-fail* a correct build (and must not cascade
+  — score each phase on its OWN gate), and a weak gate can pass a wrong one. Judge
+  by the hidden grade, never the examiner's gate alone.
+- **Keep it agnostic — never code to the eval.** Every fix is general test or
+  harness discipline, derived from the spec and from how tests should behave, with
+  **no suite-specific route, table, column or expected value**. Reading the hidden
+  grader to *diagnose* is fine; encoding its answers into the examiner/coder is
+  not. Audit new examiner/prompt text for suite-specific leakage.
+- **For a fixed small model, prefer harness guarantees over prompt rules.** A
+  prose rule lands only unreliably on a small model; the durable fixes are
+  harness-level and don't depend on the model behaving — restore the fixture before
+  grading, score per-phase, inject the real schema, git-checkpoint each passing
+  phase and revert a breaking change. Reach for a guarantee before another
+  sentence in a prompt.
+- **Never blame the model; state only what is proven.** The model is fixed, so a
+  gap is the harness's job. Verify the app directly before calling a failure the
+  model's; label a screen as a lead, a measured result as a result.
+
+## 14. Git discipline (ours and the harness's)
+
+- **Atomic, pushed commits.** One change, one reason, test shown to fail first;
+  commit and push so every change is individually revertible (`git revert <hash>`,
+  `git bisect` to find a regression). The history is the incremental trail.
+- **Checkpoint tags at known-good milestones** — `checkpoint-YYYY-MM-DD-<what>`,
+  a clear revert anchor, never a release tag (those match `package.json`).
+- **The harness checkpoints too.** The flow git-inits the workspace and commits
+  after each passing phase, so a later breaking change (e.g. an uncompilable
+  `app.py`) reverts to the last good phase and is redone rather than poisoning the
+  run or the grade. Leverage this, don't fight it.
+- End commit messages and PR bodies with the attribution lines the session
+  specifies. Keep the framework name out of every commit, PR and doc.

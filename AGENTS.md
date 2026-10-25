@@ -55,10 +55,35 @@ and evidence with dated corrections; never edit archived plans.
   `--prompt`/`--tools`/`--thinking` tweaks or source edits are ablations,
   recorded as such — not how a standard run is made.
 - `prompts/mellum-worker.md` is the only prompt source.
+- **Run Python through `uv run`, never a bare `python`/`python3`** — the pinned
+  env and lockfile are what make a run reproducible. (`npm test` is the one
+  non-Python exception.)
 - Never add a `build`, `prepare`, `prepack`, or `install` npm script; OpenCode
   installs from Git through pacote and that breaks the install.
 - A release is a tag that matches `package.json` and both README install
   lines, with a `CHANGELOG.md` section.
+- **Git discipline.** Atomic, pushed commits (one change, one reason, test shown
+  to fail first), so any change is individually revertible; tag known-good
+  milestones `checkpoint-YYYY-MM-DD-<what>` (never a release tag). The flow
+  harness also checkpoints the workspace per passing phase and reverts a
+  breaking change rather than carrying it forward.
+
+## Flow harness: the hidden grade is the oracle, and keep it agnostic
+
+The spec-driven flow (`learn/code/flow_run.py` + `extensions/mellum-flow.ts`)
+drives the fixed model through a suite; the lessons that held up:
+
+- **The suite's hidden grader is the oracle; the examiner's self-authored gate is
+  a proxy.** A brittle gate can false-fail a correct build (score each phase on
+  its own gate so one can't cascade); a weak gate can pass a wrong one. Judge by
+  the hidden grade.
+- **Agnostic — never code to the eval.** Fixes are general test/harness
+  discipline with no suite-specific route, table, column or expected value;
+  reading the grader to diagnose is fine, encoding its answers is not.
+- **For a fixed small model, prefer harness guarantees over prompt rules** — a
+  prose rule lands unreliably; restore the fixture before grading, score
+  per-phase, inject the real schema, git-checkpoint each phase. These don't
+  depend on the model behaving.
 
 ## Glossary
 
