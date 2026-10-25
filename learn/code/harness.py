@@ -139,11 +139,13 @@ def pi_argv(
         else []
     )
     extra = ["-e", str(extension)] if extension is not None else []
-    # The recorder goes first so it sees events the worker's handlers cancel,
-    # notably a compaction the worker refuses while the mode is on.
+    # The recorder goes last: Pi runs before_provider_request handlers in load
+    # order and each may replace the payload, so a recorder placed first would
+    # log the messages before the worker appends its facts block. The cost is
+    # that a compaction the worker refuses is not visible from here.
     return [
         pi_binary, *FLAGS, "--provider", provider, "--model", model,
-        *session, "-e", str(recorder), *extra, prompt,
+        *session, *extra, "-e", str(recorder), prompt,
     ]
 
 

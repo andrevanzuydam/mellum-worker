@@ -79,6 +79,18 @@ goes to the backlog as a harness fix (`wall` from process lifetime, or a
 tool calls — `uv install`, `uv --help`, `inspect` on two libraries — are
 ordinary probing, not the cause.
 
+**Correction, 2026-10-24.** The `before_compact` rows above were produced with
+the recorder loaded *before* the worker extension, and that placement is
+what made a refused attempt visible. It also made every `provider_request`
+row the **pre-rewrite** payload, because Pi runs those handlers in load order
+and each may replace the payload: the facts arm then counted zero injected
+facts blocks in 79 requests, all of which were logged before the worker
+appended them. The recorder is back after the worker, so payloads are the
+final ones and the zero above still holds for the build that measured it,
+but a *refused* compaction is no longer observable. Splitting a compaction
+watcher out of the payload recorder is a backlog entry; it is not patched
+here, mid-arm.
+
 ## What this means for the phase
 
 **Task 4 is no longer blocked on the context budget.** `A-50k` passed 3/3 at

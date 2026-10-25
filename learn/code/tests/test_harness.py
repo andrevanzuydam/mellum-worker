@@ -434,3 +434,14 @@ def test_the_arm_owns_the_facts_knob(tmp_path, monkeypatch):
 
     assert seen("no-facts") == "MELLUM_MODE_FACTS=0"
     assert seen("worker") == "MELLUM_MODE_FACTS="
+
+
+def test_the_recorder_loads_after_the_worker_extension():
+    # Pi runs before_provider_request handlers in extension load order and each
+    # may replace the payload, so a recorder placed first sees the messages
+    # before the worker appends its facts block.
+    argv = harness.pi_argv(
+        "pi", PROFILE, Path("rec.mjs"), "llamacpp", "model", "task",
+        extension=harness.arm_settings("worker")["extension"],
+    )
+    assert argv.index(str(harness.arm_settings("worker")["extension"])) < argv.index("rec.mjs")

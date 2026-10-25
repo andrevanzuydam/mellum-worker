@@ -6,11 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
-- The suites harness records **attempted compaction**: the recorder writes a
-  `before_compact` row and is loaded ahead of the worker extension, so an
-  attempt the worker refuses while the mode is on is still visible in the
-  trace. It is what let the context-budget arm say that compaction was never
-  asked for, rather than merely never happened.
+- The suites harness records **attempted compaction** as a `before_compact`
+  trace row, and a `no-facts` arm sets `MELLUM_MODE_FACTS=0`; the harness now
+  clears all four arm knobs from the inherited environment first, so an
+  exported value cannot quietly make two arms the same policy. A refused
+  compaction is only visible with the recorder loaded before the worker,
+  which costs payload fidelity — that split is backlogged.
 
 - The preregistration and record for the context-budget arm:
   [`2026-10-24-context-budget-preregistration.md`](docs/superpowers/research/2026-10-24-context-budget-preregistration.md)

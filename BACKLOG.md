@@ -21,6 +21,17 @@ test and a re-read of the records that quote a wall, not a mid-arm patch.
 *Reopens when* a page or an arm quotes a wall for a session that hit its
 deadline, or when the harness report is next changed.
 
+**The recorder cannot have the payload and the refusal at once.** Pi runs
+`before_provider_request` handlers in extension load order and each may
+replace the payload, so a recorder loaded first sees messages before the
+worker appends its facts block (79 requests counted zero injected blocks,
+[record](docs/superpowers/research/2026-10-24-context-budget-screen.md)), and
+a recorder loaded last never sees a compaction the worker cancels. The split
+is a second, tiny watcher extension for `session_before_compact` alone, with
+its own trace file so the two writers do not share a `seq` counter.
+*Reopens when* an arm needs both a payload reading and a refused-compaction
+count in one session, or when the recorder is next changed.
+
 **Discovery/output policy beyond M.7E.** Seven tools do not prevent shell
 dependency scans. Throwaway discovery interception blocked scans, but its
 compact-output branch had no model-run evidence and its heuristics can block
