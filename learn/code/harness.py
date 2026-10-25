@@ -584,6 +584,7 @@ def run_suites(
     repeat: int = 1,
     deadline: float | None = 600,
     arm: str = "bare",
+    single_prompt: bool = False,
 ) -> tuple[int, int]:
     order = {"easy": 0, "medium": 1, "hard": 2}
     available = sorted(
@@ -606,6 +607,7 @@ def run_suites(
         results = _run_sessions(
             suite, runs_dir=runs_dir, pi_binary=pi_binary,
             repeat=repeat, grade_run=grade_run, deadline=deadline, arm=arm,
+            single_prompt=single_prompt,
         )
         sessions_passed += _print_task(suite, results, repeat)
         sessions_total += len(results)
