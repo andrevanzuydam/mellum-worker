@@ -29,7 +29,11 @@ SUITES = CODE / "suites"
 RECORDER = CODE / "record-pi.mjs"
 PROFILE = CODE / "profile"
 EXTENSION = CODE.parents[1] / "extensions" / "mellum-worker.ts"
-ARMS = ("bare", "worker", "no-prompt", "no-nudge", "no-loop")
+ARMS = ("bare", "worker", "no-prompt", "no-nudge", "no-loop", "no-facts")
+# Every knob an arm may set. A run clears them from the inherited environment
+# first, so an exported value cannot make two arms the same policy.
+ARM_ENV_KEYS = ("MELLUM_MODE", "MELLUM_GUARDS", "MELLUM_WORKER_PROMPT",
+                "MELLUM_MODE_FACTS")
 FLAGS = [
     "-p", "--no-approve", "--no-extensions", "--no-skills",
     "--no-prompt-templates", "--no-themes", "--no-context-files",
@@ -112,6 +116,8 @@ def arm_settings(arm: str) -> dict:
         env["MELLUM_GUARDS"] = json.dumps({"loopBreaker": True})
     elif arm == "no-loop":
         env["MELLUM_GUARDS"] = json.dumps({"emptyFinalNudge": 3})
+    elif arm == "no-facts":
+        env["MELLUM_MODE_FACTS"] = "0"
     return {"extension": EXTENSION, "env": env}
 
 
@@ -173,7 +179,7 @@ def run_suite(
         "PI_CODING_AGENT_DIR": str(run / "profile"),
         "MELLUM_TRACE_FILE": str(trace),
     }
-    for key in ("MELLUM_MODE", "MELLUM_GUARDS", "MELLUM_WORKER_PROMPT"):
+    for key in ARM_ENV_KEYS:
         env.pop(key, None)
     env.update(settings["env"])
     started = time.monotonic()

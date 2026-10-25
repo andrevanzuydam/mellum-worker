@@ -419,3 +419,18 @@ def test_qualify_proves_both_directions():
     ok, results = harness.qualify(suite)
     assert ok
     assert results == {"known-good": True, "known-broken": False}
+
+
+def test_the_arm_owns_the_facts_knob(tmp_path, monkeypatch):
+    task = harness.load_suite(SUITES, "add")
+    monkeypatch.setenv("MELLUM_MODE_FACTS", "1")
+
+    def seen(arm):
+        run_dir = harness.run_suite(
+            task, runs_dir=tmp_path / arm, profile=PROFILE,
+            pi_binary=str(FIX / "fake-pi-env.sh"), arm=arm,
+        )
+        return (run_dir / "workspace" / "env.txt").read_text().strip()
+
+    assert seen("no-facts") == "MELLUM_MODE_FACTS=0"
+    assert seen("worker") == "MELLUM_MODE_FACTS="
