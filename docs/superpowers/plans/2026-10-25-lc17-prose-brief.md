@@ -38,6 +38,11 @@ Bounded, and the design was approved in conversation on 2026-10-25:
 - `harness.py run --single-prompt`.
 - One test: with the flag, a two-prompt suite is invoked **once** and its log
   contains both briefs; without it, twice.
+- `sweep_group`: after the last prompt, every process the run left in its
+  group is ended and recorded as `leaked` in `run.json`. Two tests, and an
+  end-to-end check that a backgrounded sleeper is found and killed.
+- `machine` and `deadline` in `run.json`, because an M1 Pro wall and an M5 Max
+  wall are not the same number even when they are the same session.
 
 ## Inputs
 

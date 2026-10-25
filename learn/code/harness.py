@@ -129,6 +129,56 @@ def arm_settings(arm: str) -> dict:
     return {"extension": EXTENSION, "env": env}
 
 
+def group_members(pgid: int) -> list[tuple[int, str]]:
+    """Every live process in one process group, by pid and command line."""
+    out = subprocess.run(["ps", "-A", "-o", "pid=,pgid=,command="],
+                         capture_output=True, text=True, check=False).stdout
+    members = []
+    for line in out.splitlines():
+        parts = line.split(None, 2)
+        if len(parts) != 3:
+            continue
+        pid, group, command = parts
+        if pid.isdigit() and group.isdigit() and int(group) == pgid and int(pid) != os.getpid():
+            members.append((int(pid), command.strip()))
+    return members
+
+
+def sweep_group(pgid: int, grace: float = 1.0) -> list[tuple[int, str]]:
+    """End everything still running in a run's process group, and report it.
+
+    The harness kills the group when a deadline expires, but a child that
+    backgrounds a server and then settles leaves it holding a port. That has
+    happened: five servers from earlier runs were still listening hours later.
+    """
+    found = group_members(pgid)
+    if not found:
+        return []
+
+    def signal_all(signal_number: int) -> None:
+        # killpg is the right call, but a sandboxed or re-parented group can
+        # refuse it, so fall back to each pid. The sweep must never raise.
+        try:
+            os.killpg(pgid, signal_number)
+            return
+        except OSError:
+            pass
+        for pid, _ in group_members(pgid):
+            try:
+                os.kill(pid, signal_number)
+            except OSError:
+                pass
+
+    for signal_number in (signal.SIGTERM, signal.SIGKILL):
+        signal_all(signal_number)
+        deadline = time.monotonic() + grace
+        while time.monotonic() < deadline:
+            if not group_members(pgid):
+                return found
+            time.sleep(0.05)
+    return found
+
+
 def machine_label() -> str:
     """What this run ran on: enough to tell an M1 Pro from an M5 Max.
 
@@ -254,6 +304,7 @@ def run_suite(
         env.pop(key, None)
     env.update(settings["env"])
     started = time.monotonic()
+    groups: list[int] = []
     for prompt in prompts:
         remaining = None if deadline is None else deadline - (time.monotonic() - started)
         if remaining is not None and remaining <= 0:
@@ -267,6 +318,7 @@ def run_suite(
         try:
             child = subprocess.Popen(argv, cwd=workspace, env=env,
                                      start_new_session=True)
+            groups.append(child.pid)
         except FileNotFoundError:
             raise SystemExit(f"pi not found: {pi_binary}; install Pi before running a suite")
         try:
@@ -276,6 +328,11 @@ def run_suite(
             child.wait()
             (run / "deadline").write_text("hit\n")
             break
+    leaked: list[dict] = []
+    for pgid in groups:
+        leaked.extend({"pid": pid, "pgid": pgid, "command": command}
+                      for pid, command in sweep_group(pgid))
+    (run / "leaked.json").write_text(json.dumps(leaked, indent=2) + "\n")
     if pristine is not None and suite.layout is not None:
         (run / "layout.json").write_text(
             json.dumps(layout_report(workspace, pristine, suite.layout), indent=2) + "\n")
@@ -475,6 +532,9 @@ def _run_sessions(
         contaminated = (run_dir / "contaminated").exists()
         passed = tests_passed and quality_ok and not contaminated
         metrics = report(run_dir)
+        leaked_file = run_dir / "leaked.json"
+        if leaked_file.is_file():
+            metrics["leaked"] = json.loads(leaked_file.read_text())
         layout_file = run_dir / "layout.json"
         if layout_file.is_file():
             metrics["out_of_layout"] = json.loads(layout_file.read_text())["out_of_layout"]

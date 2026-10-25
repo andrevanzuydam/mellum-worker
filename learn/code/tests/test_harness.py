@@ -1,4 +1,5 @@
 import json
+import time
 import re
 import os
 import shutil
@@ -564,3 +565,24 @@ def test_a_record_says_which_machine_and_deadline_it_ran_on(tmp_path):
     assert record["deadline"] == 600
     assert record["machine"] == harness.machine_label()
     assert record["machine"], "machine label is empty"
+
+
+def test_a_run_sweeps_the_processes_it_leaves_behind():
+    # A worker that backgrounds `python app.py &` and then settles leaves a
+    # server holding a port. The sweep finds it and ends it, and the run record
+    # names what it found.
+    child = subprocess.Popen(["sleep", "30"], start_new_session=True)
+    try:
+        time.sleep(0.2)
+        found = harness.sweep_group(child.pid)
+        assert any("sleep 30" in command for _, command in found), found
+        child.wait(timeout=5)  # killed by the sweep, not by us
+    finally:
+        if child.poll() is None:
+            child.kill()
+
+
+def test_a_group_with_nothing_left_reports_nothing(tmp_path):
+    child = subprocess.Popen(["sh", "-c", "true"], start_new_session=True)
+    child.wait(timeout=5)
+    assert harness.sweep_group(child.pid) == []

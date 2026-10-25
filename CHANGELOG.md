@@ -47,6 +47,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- The suites harness **sweeps what a run leaves running**. A child that
+  backgrounds `python app.py &` and then settles used to leave its server
+  holding a port — five such processes were still listening hours later. The
+  sweep ends the run's process group, falls back to per-pid signals when the
+  group refuses, and records what it found as `leaked` in `run.json`.
+
 - A **file-set check** in the suites harness: each suite declares `allow` and
   `ignore` globs in `layout.json`, the run's workspace is hashed before and
   after the child, and anything created or modified outside the layout is
