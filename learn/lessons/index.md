@@ -29,7 +29,9 @@ what it rests on now.
    so there is no second policy left to compare. The number is kept so the other
    entries stay stable. *(Paul)*
 8. **A prose brief stops at its first reply** — The same brief as one prompt loses four passes; as steps it costs 2.4× the time. *(Paul)*
-9. **The intercom block is a prefill tax** — Off: the child prompt halves and prefill drops 20%, with the same passes. *(Paul)*
+9. **The intercom block is a prefill tax** — *re-scoped 2026-10-24.* LC.8 removed
+   the block, so the page states the reason it went rather than a measured tax.
+   *(Paul)*
 10. **One spec file per phase** — A one-file roadmap misses the last phase's id in 5 of 6 runs; n = 3. *(Paul)*
 
 Lessons 5–10 still carry the wording their digest gave them. Each is a
