@@ -123,6 +123,8 @@ and no window we can serve (56,000 is the model's own maximum) would survive
 it. The `length` failures from the guard screen — an output cap, not a
 window — remain untouched and are a different budget.
 
-**Raw evidence.** Per-run `run.json`, `trace.jsonl`, `stdout.txt` and
-`diff.patch` are under `/tmp/mellum-eval-runs` on this machine and go to a
-`research-2026-10-24` release after review, never into git.
+**Raw evidence.** Published: [research-2026-10-24](https://github.com/pauleveritt/mellum-worker/releases/tag/research-2026-10-24) holds 34 run
+directories — `run.json`, `trace.jsonl`, the `layout.json` reading where the
+file-set check ran, and `prompt.txt` — with `workspace/` and `profile/`
+excluded, because the first is a copied virtualenv and the second holds local
+credentials. Nothing is committed to git.

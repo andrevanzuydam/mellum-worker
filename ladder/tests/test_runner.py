@@ -336,7 +336,7 @@ def test_worker_run_records_stay_under_each_runs_scratch(tmp_path):
     agent = tmp_path / "agent"
     envs = {
         "direct": child_env(parent, str(trace), agent, offline=True),
-        "delegated": child_env(parent, str(trace), agent),
+        "child": child_env(parent, str(trace), agent),
         "mode": mode_env(parent, trace, agent, tmp_path),
     }
     for name, env in envs.items():

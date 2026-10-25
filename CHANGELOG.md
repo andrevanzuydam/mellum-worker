@@ -4,6 +4,19 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Removed
+
+- The ladder's dead **delegated** reporting: `parse_parent_json` analysed a
+  `subagent` tool call that no shipped worker can make, the run record carried
+  a `parent` that was always `None`, and the results table had two columns
+  (`deleg`, `brief_chars`) that were therefore always empty. Left over from
+  LC.8's retirement of the delegated child.
+
+- Lesson 7, **Who holds the loop**, from the Lessons track. It compared worker,
+  Mode and a delegated child; LC.8 renamed Mode to Worker and removed the
+  delegated child, so there is no second policy left to compare. The index keeps
+  the number so the other entries and the roadmap rows stay stable.
+
 ### Fixed
 
 - `learn/project/index.md` named `extensions/mellum-mode.ts` and the retired

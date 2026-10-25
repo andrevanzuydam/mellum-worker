@@ -111,6 +111,8 @@ machine's speed drifted during the run itself, which is why the medium column
 is reported and not used. Nothing here transfers to the hard suite, to oMLX, or
 to a rate.
 
-**Raw evidence.** Per-run `run.json`, `trace.jsonl`, `stdout.txt` and
-`diff.patch` are under `/tmp/mellum-eval-runs` and go to a
-`research-2026-10-24` release after review, never into git.
+**Raw evidence.** Published: [research-2026-10-24](https://github.com/pauleveritt/mellum-worker/releases/tag/research-2026-10-24) holds 34 run
+directories — `run.json`, `trace.jsonl`, the `layout.json` reading where the
+file-set check ran, and `prompt.txt` — with `workspace/` and `profile/`
+excluded, because the first is a copied virtualenv and the second holds local
+credentials. Nothing is committed to git.

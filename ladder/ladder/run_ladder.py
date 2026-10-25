@@ -57,7 +57,7 @@ def prompt_version(prompt: Path) -> str:
 
 HEADER = (
     "| rung | profile | mode | rep | result | tests_unchanged | requests | tool_errors | anchor_fail | "
-    "noop_edit | write_existing | write_shrink | bash_mut | max_streak | largest_prompt_chars | nudges | stop | final_chars | reentries | deadline | wall_s (untrusted) | deleg | brief_chars |\n"
+    "noop_edit | write_existing | write_shrink | bash_mut | max_streak | largest_prompt_chars | nudges | stop | final_chars | reentries | deadline | wall_s (untrusted) |\n"
     "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n"
 )
 
@@ -223,37 +223,6 @@ def build_pi_mode_args(sentence: str) -> list[str]:
         str(RECORD_EXT),
         sentence,
     ]
-
-
-def parse_parent_json(stdout: str) -> dict:
-    """What the parent did: whether it launched the worker, the brief it wrote, its final text."""
-    brief, final, messages, calls = "", "", 0, 0
-    for line in stdout.splitlines():
-        if not line.startswith("{"):
-            continue
-        try:
-            event = json.loads(line)
-        except ValueError:
-            continue
-        message = event.get("message") or {}
-        if event.get("type") != "message_end" or message.get("role") != "assistant":
-            continue
-        messages += 1
-        blocks = [b for b in (message.get("content") or []) if isinstance(b, dict)]
-        final = "".join(b.get("text", "") for b in blocks if b.get("type") == "text")
-        for block in blocks:
-            if block.get("type") == "toolCall" and block.get("name") == "subagent":
-                arguments = block.get("arguments") or {}
-                if arguments.get("agent") == "mellum-worker" and arguments.get("task"):
-                    calls += 1
-                    brief = brief or str(arguments["task"])
-    return {
-        "delegated": calls > 0,
-        "brief": brief,
-        "parent_final_chars": len(final.strip()),
-        "parent_messages": messages,
-        "subagent_calls": calls,
-    }
 
 
 def parse_pi_json(stdout: str, with_reentries: bool = False):
@@ -576,7 +545,6 @@ def run_once(
         "final_text_chars": len(final_text),
         "thinking_reentries": thinking_reentries,
         "final_text_is": "worker",
-        "parent": None,
         "baseline_lines": lines,
         "check": asdict(rung.check(ws, FIXTURES / rung.fixture)),
         "score": score(events, paths, lines).as_row(),
@@ -606,15 +574,12 @@ def run_once(
 def table_row(record: dict) -> str:
     s, c = record["score"], record["check"]
     result = "pass" if c["passed"] else "FAIL"
-    parent = record.get("parent") or {}
-    deleg = parent.get("delegated", "") if parent else ""
-    brief_chars = len(parent.get("brief", "")) if parent else ""
     return (
         f"| {record['rung']} | {record['profile']}{'+guards' if record['guards'] else ''} | {record['mode']} | "
         f"{record['repeat']} | {result} | {c['tests_unchanged']} | {s['requests']} | {s['tool_errors']} | "
         f"{s['edit_anchor_failures']} | {s['noop_edits']} | {s['write_existing']} | {s['write_shrink']} | {s['bash_file_mutations']} | "
         f"{s['max_identical_streak']} | {s['largest_prompt_chars']} | {s.get('nudges', 0)} | {record['stop_reason']} | {record['final_text_chars']} | {record.get('thinking_reentries', '')} | {record['deadline_hit']} | "
-        f"{record['wall_seconds_untrusted']} | {deleg} | {brief_chars} |\n"
+        f"{record['wall_seconds_untrusted']} |\n"
     )
 
 

@@ -24,7 +24,10 @@ what it rests on now.
 4. **[Guards for empty turns and loops](guards-for-empty-turns.md)** — The nudge never fired in ten easy sessions: no empty turn had the shape it answers. *(Paul)*
 5. **[Project facts](project-facts.md)** — The block reaches the model in every request and did not move easy at n = 3. A null, with a lead. *(Paul)*
 6. **[Write only the files you list](write-only-listed.md)** — A file-set check now runs after every session; easy showed no writes outside the layout. *(Paul)*
-7. **Who holds the loop** — Worker, Mode and a delegated child pass alike and cost differently. *(Paul)*
+7. **Who holds the loop** — *retired 2026-10-24.* It compared worker, Mode and a
+   delegated child; LC.8 renamed Mode to Worker and removed the delegated child,
+   so there is no second policy left to compare. The number is kept so the other
+   entries stay stable. *(Paul)*
 8. **A prose brief stops at its first reply** — The same brief as one prompt loses four passes; as steps it costs 2.4× the time. *(Paul)*
 9. **The intercom block is a prefill tax** — Off: the child prompt halves and prefill drops 20%, with the same passes. *(Paul)*
 10. **One spec file per phase** — A one-file roadmap misses the last phase's id in 5 of 6 runs; n = 3. *(Paul)*
