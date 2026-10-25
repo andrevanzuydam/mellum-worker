@@ -153,3 +153,16 @@ Next agnostic fix (implementing): inject the workspace's real fixture schema
 (`<db>.<table>(cols…)`) into the phase task, so the coder/examiner see the
 actual `date` column rather than relying on a prose "inspect the schema" rule
 the small model ignores. Grounding by construction, not by instruction.
+
+### Schema injection landed in the task, but the resume test was confounded
+
+The task now carries `data.db.visits(id, agent, date, minutes, ticket_id)`
+verbatim, yet a resume-at-6 run still finished 31/34 with the workspace `visits`
+holding `visited_at` and no `date`. Cause: the resume seed (g34g's workspace)
+carries a `migrations.py` whose `add_visited_at_column` a PRIOR coder invented —
+this coder inherited it and recreated `visits` with `visited_at` instead of the
+fixture's `date`. So the resume cannot fairly test schema injection: the
+invented column is baked into the seed. The fair test is a full run from phase 1
+with all fixes, where phases 6–7 are built fresh with the schema in view. Also
+still open: `test_all_migrations_are_recorded` (not all four registered) — a
+separate migration-registration gap, to diagnose after the clean run.
