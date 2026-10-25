@@ -138,6 +138,26 @@ def test_restore_fixture_data_puts_rows_back_keeping_migrated_schema(tmp_path):
     out.close()
 
 
+def test_fixture_schema_note_lists_real_columns(tmp_path):
+    import sqlite3
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    con = sqlite3.connect(ws / "data.db")
+    con.execute("CREATE TABLE visits (id INTEGER PRIMARY KEY, agent TEXT, date TEXT, minutes INTEGER)")
+    con.execute("CREATE TABLE tickets (id INTEGER PRIMARY KEY, cents INTEGER)")
+    con.commit()
+    con.close()
+    note = flow_run.fixture_schema_note(ws)
+    assert "data.db.visits(id, agent, date, minutes)" in note
+    assert "data.db.tickets(id, cents)" in note
+    assert "do not invent" in note.lower()
+
+
+def test_fixture_schema_note_empty_without_db(tmp_path):
+    (tmp_path / "ws").mkdir()
+    assert flow_run.fixture_schema_note(tmp_path / "ws") == ""
+
+
 def test_restore_fixture_data_noop_without_base_or_db(tmp_path):
     assert flow_run.restore_fixture_data(tmp_path / "ws", tmp_path / "nobase") == []
     (tmp_path / "base").mkdir()

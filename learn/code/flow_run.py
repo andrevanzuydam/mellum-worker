@@ -306,6 +306,33 @@ def seed_from_bundle(seed: Path, workspace: Path, start_phase: int) -> None:
                                                   "trace*.jsonl", "*.subfeed", "node_modules"))
 
 
+def fixture_schema_note(workspace: Path) -> str:
+    """Ground the phase on the REAL fixture schema: list each persistent table's actual columns, so
+    the examiner and coder USE the columns that exist (e.g. a report's real `date` column) instead
+    of inventing or renaming one — a prose 'inspect the schema' rule the small model ignores. Empty
+    when the workspace ships no database. Agnostic: reflects whatever *.db tables are present."""
+    import sqlite3
+    lines: list[str] = []
+    for db in sorted(workspace.glob("*.db")):
+        try:
+            con = sqlite3.connect(db)
+            try:
+                tables = [r[0] for r in con.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
+                for t in tables:
+                    cols = [r[1] for r in con.execute(f"PRAGMA table_info({t})")]
+                    if cols:
+                        lines.append(f"  {db.name}.{t}({', '.join(cols)})")
+            finally:
+                con.close()
+        except sqlite3.Error:
+            continue
+    if not lines:
+        return ""
+    return ("\n\nEXISTING DATABASE SCHEMA — use these REAL columns; do not invent, rename or assume "
+            "a column the data does not have:\n" + "\n".join(lines))
+
+
 def restore_fixture_data(workspace: Path, base_dir: Path) -> list[str]:
     """Before the authoritative grade, put each fixture table's ROWS back from the suite's pristine
     base database into the workspace database, keeping the workspace's (migrated) schema. A test
@@ -450,8 +477,9 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
                 "every existing route and test working, and do not rewrite what already passes."
             )
         # The phase task (north star + progress + spec) goes in plan/TASK.md — NOT a tool argument.
+        # Append the REAL fixture schema so the coder/examiner use the columns that exist.
         (workspace / "plan").mkdir(exist_ok=True)
-        (workspace / "plan" / "TASK.md").write_text(base_msg)
+        (workspace / "plan" / "TASK.md").write_text(base_msg + fixture_schema_note(workspace))
         (workspace / "plan" / "REVIEW.md").unlink(missing_ok=True)  # fresh feedback per phase
         lr.emit(f"\n========== PHASE {pnum}/{len(phases)}: {title} ==========")
         passed = False

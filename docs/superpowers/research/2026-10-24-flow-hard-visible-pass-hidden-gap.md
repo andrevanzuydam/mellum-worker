@@ -133,3 +133,23 @@ restore is a durable guarantee; the grounding rules raise the odds but do not
 make it certain. A hidden pass on 6–7 likely needs either a more capable model
 for those phases or a harness that grounds the examiner/coder in the real schema
 (e.g. injecting the fixture's `PRAGMA table_info` into the task), not more prose.
+
+### Measured after the harness restore + grounding rule: 29 → 31 / 34
+
+A resume run (`--start-phase 6` from a clean seed with a pristine `data.db`) with
+`restore_fixture_data` wired in and the coder-grounding rule reached visible=PASS
+and hidden **31/34** (was 29). The restore CLEARED both phase-6 failures
+(`test_report_exact_sums`, `test_archived_defined_by_archived_at`) — on the
+restored fixture the coder's `/report` computes the right sums. Three remain:
+
+- `test_visits_filter_sort_and_limit` and `_range_is_inclusive_and_minutes_bound`:
+  the coder's `visits` table has **no `date` column** — it invented `visited_at`
+  (NULL) and the migration dropped/omitted the fixture's `date`, so the report
+  reads nothing. The restore can't reinstate a column the schema lacks; the prose
+  grounding rule did not stop the invention.
+- `test_all_migrations_are_recorded`: not all four migrations are registered.
+
+Next agnostic fix (implementing): inject the workspace's real fixture schema
+(`<db>.<table>(cols…)`) into the phase task, so the coder/examiner see the
+actual `date` column rather than relying on a prose "inspect the schema" rule
+the small model ignores. Grounding by construction, not by instruction.
