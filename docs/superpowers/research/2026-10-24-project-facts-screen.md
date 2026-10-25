@@ -97,8 +97,19 @@ the natural hypothesis is that the missing bullet is
 machine that was also running slower than earlier in the day. What the record
 supports is a preregistration, not a claim: an arm whose reading is hung tool
 calls, where the `worker` block is compared against the same block with only
-that bullet removed. It belongs with LC.7A's pathologies, and index #22 is
-already its page.
+that bullet removed.
+
+**Attribution, because it decides a gate.** The pathology is **Andre's**:
+index P2, "The server that never returns" ([lesson map](2026-10-24-pr-harvest-index.md)),
+from his PR #1 via prompt v10 `4666612` ("never start a foreground server; use
+`TestClient`"), and it is deferred to **LC.7A**. The bullet this arm removed
+is **Paul's** — it sits in the suites' own `AGENTS.md` from the LC.3A
+fixtures — and the measurement above is this phase's. So the arm may run now
+as evidence, but nothing here may publish as Andre's page before LC.5 records
+his linkable consent, and LC.7A is scheduled after LC.19. A purpose-built
+foreground-server guard already exists and is dormant (`420ba1d`, branch
+`lc11b-server-guard`), which makes the next arm three-way: the facts bullet as
+shipped, that guard, or both.
 
 ## A gap in the preregistration
 

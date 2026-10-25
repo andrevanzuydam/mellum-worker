@@ -132,8 +132,12 @@ all three `no-facts` sessions hung on a foreground server command
 silence, and the removed bullet is `- Do not: start servers`.
 
 **Next arm:** the foreground-server pathology, preregistered with hung tool
-calls as its reading — worker against the same block minus that one bullet,
-before any other lesson arm. Lessons 1 and 2 follow on easy+medium.
+calls as its reading. The pathology is Andre's (P2, "The server that never
+returns", from his PR #1 and prompt v10, deferred to LC.7A) and the bullet is
+Paul's, in the suites' own `AGENTS.md`, so the arm is three-way: the facts
+bullet as shipped, the dormant guard at `420ba1d` (branch `lc11b-server-guard`),
+or both. It runs before any other lesson arm, and nothing from it publishes as
+Andre's page before LC.5. Lessons 1 and 2 follow on easy+medium.
 
 ### Task 5: Close
 
