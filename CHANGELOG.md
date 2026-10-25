@@ -25,6 +25,14 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The Learning Center builds from the project virtualenv: `zensical` and
+  `zensical-glossary` are `dev` dependencies in `pyproject.toml`, and the
+  README, the toolchain page and CI all use `uv run zensical build` instead of
+  `uvx --with zensical-glossary zensical build`. `uvx` supplied the extension
+  only to the process it launched, so `zensical serve` — which re-launches a
+  reload worker with the same interpreter — died with `No module named
+  'zensical_glossary'`. `uv run zensical serve` now previews the site.
+
 - The Lessons track is re-based on llama.cpp. `primary-agent`, `short-prompt`,
   `thinking-working-memory` and `guards-for-empty-turns` no longer cite oMLX
   ladder records: lesson 1 retires its 8/15 because an unbounded Pi passed a

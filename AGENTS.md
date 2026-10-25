@@ -60,7 +60,9 @@ a term is linked automatically. Do not hand-link a term.
   glossary before finishing the page.
 - Check the page’s first occurrences after a build; the extension skips code,
   headings and links by design.
-- Build with `uvx --with zensical-glossary zensical build`; CI does the same.
+- Build with `uv run zensical build` (preview with `uv run zensical serve`); CI
+  does the same. Both packages are `dev` dependencies, so run `uv sync` after
+  pulling a change to `pyproject.toml` or `uv.lock`.
 - Borrow shared terms from `../satyrn-evals/_engine/glossary.md` when they
   mean the same thing (`guard`, `finish nudge`), but define the local meaning
   rather than copying a Satyrn-specific contract.

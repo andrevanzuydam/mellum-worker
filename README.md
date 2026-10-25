@@ -307,10 +307,20 @@ harness, with every claim labelled by the evidence behind it:
 
 All findings lessons are in [Lessons](learn/lessons/index.md). The site builds on
 pull requests and deploys to GitHub Pages from `main`
-(`.github/workflows/docs.yml`). Run the harness with `uv run learn/code/harness.py run --suite all --grade`; build
-the site with `uvx --with zensical-glossary zensical build` (output in
-`site/`). The glossary extension is required; a bare `zensical build`
-fails without it.
+(`.github/workflows/docs.yml`). Run the harness with `uv run learn/code/harness.py run --suite all --grade`.
+
+Build and preview the site from the project virtualenv:
+
+```bash
+uv sync                 # creates .venv with zensical and zensical-glossary
+uv run zensical build   # writes site/
+uv run zensical serve   # live preview on http://localhost:8000
+```
+
+Run these from the repository root. `uv` puts both packages in `.venv`, so the
+glossary extension is importable by every process the build starts — including
+the reload worker behind `zensical serve`. A bare `zensical` outside `uv run`
+still fails.
 
 ## Requirements
 

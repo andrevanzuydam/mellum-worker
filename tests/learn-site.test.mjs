@@ -57,10 +57,26 @@ test("the glossary is parsed by zensical-glossary", () => {
     assert.match(glossary, new RegExp(`^### ${term}$`, "m"));
 });
 
-test("the README builds with the glossary extension", () => {
+test("the site build runs from the project virtualenv", () => {
   const readme = readFileSync(resolve(ROOT, "README.md"), "utf8");
-  assert.match(readme, /uvx --with zensical-glossary zensical build/);
-  assert.doesNotMatch(readme, /uvx zensical build/);
+  assert.match(readme, /uv run zensical build/);
+  assert.match(readme, /uv run zensical serve/);
+  assert.doesNotMatch(readme, /uvx[^\n]*zensical/);
+});
+
+test("the glossary extension is a declared dev dependency", () => {
+  const pyproject = readFileSync(resolve(ROOT, "pyproject.toml"), "utf8");
+  const group = pyproject.match(/^\[dependency-groups\]\n([\s\S]*?)(?=^\[|\Z)/m);
+  assert.ok(group, "pyproject.toml declares no [dependency-groups]");
+  for (const dep of ["\"zensical\"", "\"zensical-glossary\""])
+    assert.ok(group[1].includes(dep), `dev group lacks ${dep}`);
+});
+
+test("CI builds the site with uv run, not uvx", () => {
+  const ci = readFileSync(resolve(ROOT, ".github/workflows/docs.yml"), "utf8");
+  assert.match(ci, /uv run zensical build/);
+  assert.doesNotMatch(ci, /uvx/);
+  assert.match(ci, /pyproject\.toml/);
 });
 
 test("credits name both authors and Tina4", () => {
@@ -149,7 +165,7 @@ test("the project pages orient a maintainer and name the checks", () => {
   const toolchain = page("project/toolchain.md");
   for (const text of ["pyproject.toml", "[tool.mellum]",
     "uv run scripts/backend.py", "PI_CODING_AGENT_DIR", "npm test",
-    "uv run pytest", "uvx --with zensical-glossary zensical build"])
+    "uv run pytest", "uv run zensical build"])
     assert.ok(toolchain.includes(text), `toolchain lacks ${text}`);
 });
 
