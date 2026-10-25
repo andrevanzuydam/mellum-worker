@@ -160,11 +160,22 @@ test("the examiner must seed inputs and assert exact outputs for computed/report
 	// sums and /visits returned []. The gates accepted a 200 / empty body. A computed endpoint must
 	// be driven with seeded rows and checked against the EXACT expected result, with a row included
 	// AND one excluded by each filter/definition the spec gives, so a stub fails. General, spec-led.
-	assert.match(PHASES.examine.prompt, /seed|representative rows|given inputs/i);
-	assert.match(PHASES.examine.prompt, /exact (expected )?(result|output|value)|compute the expected/i);
-	assert.match(PHASES.examine.prompt, /included and (one )?excluded|include.*exclude|distinguishing/i);
+	assert.match(PHASES.examine.prompt, /computes from data|a sum, count, filter|COMPUTED\/REPORT/i);
+	assert.match(PHASES.examine.prompt, /exact (expected )?(result|output|value)|compute the expected|the EXACT result/i);
+	assert.match(PHASES.examine.prompt, /mishandle|disagree|included and (one )?excluded|include.*exclude|distinguishing/i);
 	// and migrations/named artifacts are asserted RECORDED/applied, not merely defined
 	assert.match(PHASES.examine.prompt, /recorded|applied/i);
+});
+
+test("the examiner must not destructively mutate a persistent store; compute from existing data", () => {
+	// hard phases 6-7 passed visible but failed hidden because the gate ran DELETE FROM tickets /
+	// DELETE FROM visits then inserted its own rows into data.db — a destructive write to the
+	// file-backed fixture that the spec's report reads "from the database" and the grader checks.
+	// For data that already exists, read it and compute the expected; never delete/overwrite it;
+	// roll back any row added. General test discipline, not suite-specific.
+	assert.match(PHASES.examine.prompt, /persistent|on disk|file-backed|outlives|database file/i);
+	assert.match(PHASES.examine.prompt, /read (what is|the data)|compute the expected from (the|what)|already (there|exists)/i);
+	assert.match(PHASES.examine.prompt, /roll ?back|do not (delete|overwrite|mutate|reseed)|never (delete|overwrite|mutate|reseed)/i);
 });
 
 test("the examiner must write self-contained tests that create their own data, not assume seed ids/state", () => {

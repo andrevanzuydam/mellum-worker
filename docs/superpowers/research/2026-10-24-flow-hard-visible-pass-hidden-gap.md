@@ -75,3 +75,32 @@ code was correct each time it was checked. In order, each fixed and pushed:
   model over-reason and stop emitting. More completeness must not reintroduce
   the empty-output stall; keep the prompt lean.
 - n=1. A rate needs a preregistered multi-session run in `ladder/`.
+
+## Update 2026-10-25 — the hidden gap was a destructive gate, not incompleteness
+
+Resuming at phase 6 (via the new `--start-phase 6 --seed-from <g34g workspace>`,
+so phases 1–5 came hidden-verified-correct and only 6–7 re-ran) reproduced the
+same `visible=PASS, hidden=FAIL` (29/34) with the strengthened examiner. The
+cause is NOT that the gates were incomplete — it is that the phase-6 and phase-7
+gates **destructively mutate the persistent fixture**:
+
+- `phase_6.py` ran `DELETE FROM tickets` then inserted its own five rows;
+  `phase_7.py` ran `DELETE FROM visits` then inserted its own five rows.
+- Those writes persist in the workspace's `data.db`. The hidden grader then read
+  the examiner's data, not the fixture: it expects the fixture's
+  `all_time=2099, archived=1000, open=500` (7 ticket rows) but saw the
+  examiner's `all_time=1500, open=600` (5 rows). Every phase-6/7 hidden failure
+  traces to this one side effect.
+
+The earlier "seed representative rows" completeness rule, and the self-contained
+rule's "for a DB report INSERT the rows directly", are what told the examiner to
+reseed — on an in-memory store that is harmless (each test process is fresh), on
+a **file-backed** store it corrupts the data the spec's report ("from `data.db`")
+and the grade depend on.
+
+**Agnostic fix (in progress):** a test must not destructively mutate persistent
+fixture state. For a report/query over data that already exists in a store,
+READ what is there and compute the expected from it; never DELETE/overwrite it;
+roll back any row you add. This is general test discipline, derived from the
+spec's "from the database", not from the hidden grader's values. (Migration
+recording is tracked separately; re-check after the data-destruction fix.)

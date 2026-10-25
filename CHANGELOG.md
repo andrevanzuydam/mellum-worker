@@ -4,6 +4,16 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Fixed
+
+- The flow examiner's report gates destructively reseeded the fixture database (`DELETE FROM
+  tickets` / `DELETE FROM visits` then inserting their own rows), which persisted in the
+  workspace's `data.db` — so the hidden grader read the examiner's invented data, not the fixture,
+  and hard phases 6-7 failed the hidden grade while passing their own gates. The examiner is now
+  told, generally, to compute a report's expected value from the data ALREADY in the store and
+  never delete/overwrite/reseed a persistent store (roll back any row it must add). Derived from the
+  spec's "a report from the database", not from the hidden grader.
+
 ### Added
 
 - `run_ladder --acceptance-test <file>` (direct or `--mode mode`): places a
