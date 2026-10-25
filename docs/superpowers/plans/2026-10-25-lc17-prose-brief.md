@@ -84,3 +84,34 @@ Bounded, and the design was approved in conversation on 2026-10-25:
 `npm test`, `learn/code/tests` and `docs-caps` pass; the page's numbers are in
 the run record; no `docs/ladder/` link on the page; `qualify --suite medium`
 still passes.
+
+## Session state, 2026-10-25 (written before a session reset)
+
+**Cycle open.** Worktree `.worktrees/lc17-prose-brief`, branch
+`lc17-prose-brief`, based on `main` at `7068c7d`.
+
+Done and committed on this branch:
+
+- `045d0c9` `--single-prompt`, plus `machine` and `deadline` in `run.json`.
+- `cfa5aad` the process sweep: a run's leftover group is ended and recorded as
+  `leaked`.
+- `54fab82` threads `--single-prompt` through `suite all`.
+- The preregistration (`research/2026-10-25-oneprompt-preregistration.md`) and
+  **both sessions have run**:
+  - steps `39df1a`: tests pass, lint fails (`F401`), 53 requests, peak 11,369,
+    wall 894 s.
+  - one brief `ad1bb7`: **passes**, 52 requests, peak 3,761, wall 961 s.
+
+**The result reversed the lesson's direction** and the page must say so: at
+n=1 the one-brief arm passed where the steps arm failed, on lint rather than
+tests. The page is **not written yet**; that is the next task.
+
+Remaining for this cycle: `learn/lessons/prose-brief.md` (six steps, badges
+1–5, all `screen`, n=1 named), its test, the index link for item 8, the nav
+entry, the changelog, the Status cell, `## Now`, `## Result`, archive, merge.
+
+**Outside this cycle, still open:** the user's uncommitted `zensical.toml`
+(site name → "Small AI Learning Center") and `learn/index.md`, which leave one
+test failing because `tests/learn-site.test.mjs` still asserts the old name;
+the machine-calibration decision (A+C: calibration tokens/second per run);
+and LC.19 (ladder rungs 6–9 on llama.cpp), approved but not started.
