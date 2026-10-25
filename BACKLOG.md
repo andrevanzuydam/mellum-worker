@@ -10,6 +10,19 @@ never by line number.
 
 Reopen conditions, not promises.
 
+**The foreground-server pathology is measured but not placed.** Three
+`no-facts` sessions hung on `uvicorn app:app --reload` / `python app.py` after
+143–460 s of silence and died at the 600 s deadline; the facts bullet they
+lacked says `Do not: start servers`
+([record](docs/superpowers/research/2026-10-24-project-facts-screen.md)). The
+pathology is Andre's (index P2) and belongs to **LC.7A**, which needs LC.5's
+written consent and runs after LC.19; a purpose-built guard is dormant on
+branch `lc11b-server-guard` at `420ba1d`. Do not run the confirming arm inside
+a lessons re-base: its record would have no page to land on.
+*Reopens when* LC.5 closes and LC.7A starts, or a suite run hangs on a
+foreground server again and the arm's three-way question (facts bullet, dormant
+guard, both) can land on a page.
+
 **Recorded wall under-reports a stalled request.** `report()` in
 `learn/code/harness.py` derives wall from trace timestamps, and a request that
 never returns writes no rows: one session killed at the 600 s deadline
