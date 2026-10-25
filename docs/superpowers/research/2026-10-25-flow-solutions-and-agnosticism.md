@@ -97,6 +97,30 @@ buy is a harness that no longer blocks or corrupts a correct solution. The last
 needs either a more capable model for those phases or deeper harness grounding,
 not suite-specific hacks.
 
+## Addendum (clean full run): the visible gate can FALSE-FAIL a correct app
+
+The from-scratch run exhausted all 4 rounds on phase 5 — the first time — but
+the app was correct. The examiner's gate did `resolve` then `archive` and
+asserted the audit log grew by **+1**, when both actions correctly log (so +2):
+it used the before/after DELTA rule but forgot that its own setup `resolve` has
+a side effect. A correct app cannot pass it.
+
+Two things this nails down:
+
+- The small examiner writes subtly-wrong gates **stochastically** — a different
+  run surfaces a different brittleness (redirect-following, substring collision,
+  destructive reseed, now a mis-counted delta). No finite set of prose rules
+  makes it reliable; this is the grounding/authoring ceiling, restated.
+- The **visible gate is only a proxy**; the hidden grader is the oracle. A
+  brittle gate can false-FAIL a correct build (wasting rounds) without corrupting
+  it, so the hidden grade — which runs the suite's own tests — can still pass
+  that phase. This is why `run_gate` scoring the frozen gate is a convenience,
+  and the end-to-end number that matters is the hidden grade.
+
+The durable lesson: lean on the harness guarantees (fixture restore, schema
+injection, gate-only scoring) and the hidden grade, not on the small examiner
+authoring a perfect oracle every time.
+
 ## Key commits
 
 `5a9106b` examiner non-destructive rule · `f15db25` harness `restore_fixture_data`
