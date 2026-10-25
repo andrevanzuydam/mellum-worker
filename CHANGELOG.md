@@ -15,6 +15,14 @@ Versions match git tags; pin one in both install lines.
   text ("didn't pass — here's what failed, try again"), bounded by `--attempts`. Each phase records
   whether the fixed model was EVER able to solve it and how many rounds it took (`phase_rounds` in
   `result.json`). The default is unchanged (`forced`).
+- `flow_run --flow-mode free --memory memory.jsonl`: a portable, learned grounding store — almost a
+  skill, but grown from the agent's own mistakes. Lessons whose situation matches a phase are
+  injected into the build (like a skill), and a GENERAL, agnostic lesson is distilled from every
+  gate failure and appended, so the run learns from its mistakes and the file carries forward to
+  later runs, other machines, or a fine-tune. An agnostic guard refuses any lesson carrying a
+  concrete route, quoted literal or multi-digit value — the memory stores general discipline, never
+  the suite's answers. The with-vs-without comparison is preregistered as the deciding experiment;
+  grounding is off unless `--memory` is given.
 - The flow harness now puts the workspace under git and checkpoints it after each PASSING phase, so
   a later breaking change can be reverted to the last known-good phase and redone instead of
   poisoning the accumulated work. If a round leaves the app uncompilable (e.g. a phase-7 attempt

@@ -26,6 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import harness  # noqa: E402
 import loop_run as lr  # reuse pin_profile, fmt_event, stream_trace, emit, scoring  # noqa: E402
+from memory import Memory, distill as memory_distill  # portable learned grounding (free mode)  # noqa: E402
 
 EXT = Path(__file__).resolve().parents[2] / "extensions"
 FLOW = EXT / "mellum-flow.ts"
@@ -507,13 +508,18 @@ def restore_fixture_data(workspace: Path, base_dir: Path) -> list[str]:
 
 def drive_phase_free(pnum: int, *, workspace: Path, profile: Path, recorder: Path, provider: str,
                      model: str, run: Path, timeout: float, thinking: str,
-                     attempts: int) -> tuple[bool, int]:
+                     attempts: int, memory=None, situation: str = "") -> tuple[bool, int]:
     """Drive ONE phase the FREE way: freeze the gate (invariant 1), then let the agent build and
     verify the exit by re-running that gate (invariant 2), re-dispatching with the failure text on
     each fail. Returns (solved, rounds) — whether the fixed model was EVER able to pass, and how
     many rounds it took. The forced step order is gone; the two invariants are all the harness
     enforces. Uses the same shipped spawn path (`run_top`) as the forced flow, so the guards,
-    recorder and feed are identical — only the tools and prompt differ."""
+    recorder and feed are identical — only the tools and prompt differ.
+
+    With a `memory` (learn/code/memory.Memory), the agent is grounded like a skill: lessons whose
+    situation matches this phase are injected into each dispatch, and a general, agnostic lesson is
+    distilled from every gate failure and stored — so the run learns from its own mistakes and the
+    portable memory file carries that forward to later phases, runs, machines or a fine-tune."""
     # INVARIANT 1 — a frozen external acceptance test must exist before any build.
     def examine() -> None:
         run_top("Call examine() now — no arguments.", workspace=workspace, profile=profile,
@@ -537,6 +543,10 @@ def drive_phase_free(pnum: int, *, workspace: Path, profile: Path, recorder: Pat
             msg = ("Your previous attempt did NOT pass the acceptance test. Here is what still "
                    f"failed:\n\n{feedback}\n\nFix it and make the gate pass; continue from the "
                    "current workspace, do not start over.")
+        if memory is not None:  # ground the agent with lessons this situation has earned (like a skill)
+            grounding = memory.as_grounding(memory.retrieve(situation or f"phase {pnum}"))
+            if grounding:
+                msg += "\n\n" + grounding
         run_top(msg, workspace=workspace, profile=profile, recorder=recorder, provider=provider,
                 model=model, trace=run / f"trace-p{pnum}-free-{rnd}.jsonl", timeout=timeout,
                 thinking=thinking, phase=pnum, tools=FREE_CODER_TOOLS,
@@ -546,7 +556,12 @@ def drive_phase_free(pnum: int, *, workspace: Path, profile: Path, recorder: Pat
         restore_gate(workspace)  # canonical frozen gate — undo any coder tampering before judging
         ok, out = run_gate(workspace, 120.0, pnum)
         ok = ok and phase_gate_ok(workspace, pnum)
-        return ok, out[-2000:]  # the tail of the gate output becomes the next round's feedback
+        tail = out[-2000:]  # the tail of the gate output becomes the next round's feedback
+        if not ok and memory is not None:  # learn from the failure: store one general, agnostic lesson
+            lesson = memory_distill(tail)
+            if lesson and memory.add(f"{situation} :: {lesson.situation}".strip(" :"), lesson.lesson):
+                lr.emit(f"  phase {pnum}: learned a lesson — {lesson.lesson[:70]}…")
+        return ok, tail
 
     return drive_free_coder(dispatch, check, attempts)
 
@@ -554,8 +569,10 @@ def drive_phase_free(pnum: int, *, workspace: Path, profile: Path, recorder: Pat
 def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, model_id: str,
          thinking: str, attempts: int, concurrency: int,
          start_phase: int = 1, seed_from: Path | None = None, context_window: int = 56000,
-         retry_concurrency: int | None = None, flow_mode: str = "forced") -> dict:
+         retry_concurrency: int | None = None, flow_mode: str = "forced",
+         memory_path: Path | None = None) -> dict:
     retry_concurrency = retry_concurrency or concurrency  # retries escalate to this (default: same)
+    memory = Memory(memory_path) if (memory_path and flow_mode == "free") else None
     suite = harness.load_suite(harness.SUITES, suite_name)
     run = harness.new_run(runs_dir, f"flow-{suite_name}")
     workspace = run / "workspace"
@@ -668,7 +685,7 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
             passed, rnds = drive_phase_free(
                 pnum, workspace=workspace, profile=run / "profile", recorder=recorder,
                 provider=provider, model=model, run=run, timeout=timeout, thinking=thinking,
-                attempts=attempts)
+                attempts=attempts, memory=memory, situation=title)
             phase_rounds.append(rnds)
             if passed:
                 git_checkpoint(workspace, f"phase {pnum}: {title} — PASS (free, {rnds} round(s))")
@@ -744,7 +761,9 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
     graded, _ = harness.score_workspace(workspace, suite)
     todo = (workspace / "plan" / "TODO.md").exists()
     result = {
-        "suite": suite_name, "flow_mode": flow_mode, "visible": passed, "graded": graded,
+        "suite": suite_name, "flow_mode": flow_mode,
+        "memory": str(memory_path) if memory is not None else None,
+        "visible": passed, "graded": graded,
         "todo": todo, "phases": len(phases), "phase_results": phase_results,
         "phase_rounds": phase_rounds,  # free mode: rounds each phase took (0 = no gate frozen)
         "north_star": north_star, "model": model_id, "thinking": thinking, "started": started,
@@ -786,6 +805,12 @@ def main(argv: list[str] | None = None) -> int:
                         "review→test) as ordered tools. free: the harness freezes the gate, then the "
                         "agent self-drives with ordinary tools and a harness-verified exit (re-run the "
                         "frozen gate; re-dispatch on failure, bounded by --attempts).")
+    p.add_argument("--memory", type=Path, default=None,
+                   help="free mode only: a portable memory.jsonl of GENERAL lessons. Retrieved lessons "
+                        "ground each build (like a skill), and a general, agnostic lesson is distilled "
+                        "from every gate failure and appended — so the run learns from its mistakes "
+                        "and the file carries forward to later runs, machines or a fine-tune. The "
+                        "with-vs-without comparison is the deciding experiment (see the research note).")
     args = p.parse_args(argv)
     for name in args.suite.split(","):
         loop(name.strip(), runs_dir=args.runs_dir, timeout=args.timeout,
@@ -793,7 +818,7 @@ def main(argv: list[str] | None = None) -> int:
              attempts=args.attempts, concurrency=args.concurrency,
              start_phase=args.start_phase, seed_from=args.seed_from,
              context_window=args.context_window, retry_concurrency=args.retry_concurrency,
-             flow_mode=args.flow_mode)
+             flow_mode=args.flow_mode, memory_path=args.memory)
     return 0
 
 

@@ -329,3 +329,31 @@ def test_drive_phase_free_builds_once_the_gate_is_frozen_and_passes(tmp_path, mo
         run=tmp_path, timeout=10.0, thinking="off", attempts=5)
     assert solved is True and rounds == 1
     assert "examiner" in calls[0] and "free coder" in calls[1]  # freeze first, THEN build
+
+
+def test_drive_phase_free_injects_memory_grounding_and_learns_from_a_failure(tmp_path, monkeypatch):
+    # memory makes the free arm skill-like: a matching lesson grounds the build, and the failure
+    # teaches a new general lesson. No GPU — the pi-spawn and gate are monkeypatched.
+    import memory as mem
+    m = mem.Memory(tmp_path / "memory.jsonl")
+    m.add("building a report that reads from a database store",
+          "inspect the real columns before reading; never invent one")
+    seen: list[tuple[str, str]] = []
+    monkeypatch.setattr(flow_run, "run_top",
+                        lambda task="", **k: seen.append((k.get("label", ""), task)))
+    monkeypatch.setattr(flow_run, "restore_gate", lambda ws: None)
+    monkeypatch.setattr(flow_run, "phase_gate_ok", lambda ws, ph: True)  # gate freezes
+    results = iter([(False, "sqlite3.OperationalError: no such column: visited_at"), (True, "")])
+    monkeypatch.setattr(flow_run, "run_gate", lambda ws, to, ph: next(results))
+
+    solved, rounds = flow_run.drive_phase_free(
+        2, workspace=tmp_path, profile=tmp_path, recorder=tmp_path, provider="p", model="m",
+        run=tmp_path, timeout=10.0, thinking="off", attempts=5,
+        memory=m, situation="building a report that reads from a database store")
+
+    assert solved is True and rounds == 2
+    coder_msgs = [t for lbl, t in seen if "coder" in lbl]
+    assert any("inspect the real columns" in t for t in coder_msgs)   # grounded like a skill
+    assert "no answer" in coder_msgs[0].lower()                        # with the agnostic caveat
+    # the schema failure was distilled into a NEW general lesson and persisted — the run learned
+    assert len(mem.Memory(tmp_path / "memory.jsonl").lessons) == 2
