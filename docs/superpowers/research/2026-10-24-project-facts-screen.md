@@ -94,7 +94,9 @@ the natural hypothesis is that the missing bullet is
 `- Do not: start servers`.
 
 **That hypothesis is not tested here.** One arm, one difference, n=3, on a
-machine that was also running slower than earlier in the day. What the record
+machine that turned out to be an **M1 Pro** (8 cores, 32 GiB) while the backend
+records were taken on an **M5 Max** — a different machine, not a slow day
+(correction, 2026-10-25). What the record
 supports is a preregistration, not a claim: an arm whose reading is hung tool
 calls, where the `worker` block is compared against the same block with only
 that bullet removed.

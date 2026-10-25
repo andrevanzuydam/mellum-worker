@@ -1,4 +1,5 @@
 import json
+import re
 import os
 import shutil
 import subprocess
@@ -533,3 +534,33 @@ def test_loading_a_suite_reads_its_layout(tmp_path):
     (suite_dir / "layout.json").write_text(json.dumps({"allow": ["a.py"], "ignore": []}))
     suite = harness.load_suite(tmp_path / "suites", "demo")
     assert suite.layout == {"allow": ["a.py"], "ignore": []}
+
+
+def test_a_suite_can_run_all_its_prompts_as_one(tmp_path):
+    # "One prose brief" against "the same brief as steps" has to be one change,
+    # so the flag concatenates the suite's own prompts instead of copying it.
+    task = harness.load_suite(SUITES, "steps")
+    assert len(task.prompts) > 1
+    run_dir = harness.run_suite(
+        task, runs_dir=tmp_path / "one", profile=PROFILE,
+        pi_binary=str(FIX / "fake-pi-session.sh"), single_prompt=True,
+    )
+    # The brief carries newlines, so the log is not one line per invocation.
+    log = (run_dir / "workspace" / "session-log.txt").read_text()
+    invocations = re.findall(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\|", log)
+    assert len(invocations) == 1, f"expected one invocation, saw {len(invocations)}"
+    for text in task.prompts:
+        assert text in log, f"brief lost {text}"
+
+
+def test_a_record_says_which_machine_and_deadline_it_ran_on(tmp_path):
+    # An M1 Pro and an M5 Max produce very different walls; a record that does
+    # not name the machine invites the wrong comparison.
+    task = harness.load_suite(SUITES, "add")
+    harness._run_sessions(task, runs_dir=tmp_path / "runs",
+                          pi_binary=str(FIX / "fake-pi.sh"), repeat=1,
+                          grade_run=False, deadline=600, arm="worker")
+    record = json.loads((next((tmp_path / "runs").iterdir()) / "run.json").read_text())
+    assert record["deadline"] == 600
+    assert record["machine"] == harness.machine_label()
+    assert record["machine"], "machine label is empty"

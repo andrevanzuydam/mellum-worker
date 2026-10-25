@@ -73,7 +73,12 @@ names n.
 hand. All six sessions died at 600 s with 5–42 s of silence after their last
 row, walls of 557–600 s, and were still issuing requests — slow work, not a
 stall. The 45-session record ran medium `bare` at 359 s and `worker` at 204 s,
-so this machine is roughly 1.7–3× slower today.
+so this machine is roughly 1.7–3× slower — and **correction, 2026-10-25**: it is
+not a slow day but a different machine. The 45-session record and the backend
+measurements were taken on an **M5 Max, 128 GB**; every run in these records ran
+on an **M1 Pro, 8 cores, 32 GiB**, which is the whole explanation for medium not
+fitting 600 s. Peak token counts transfer between machines; walls do not, and no
+wall here may be compared with an M5 Max wall.
 
 Because `bare` and `worker` both time out, a medium contrast between them
 would be an artefact of the deadline rather than a policy difference, so

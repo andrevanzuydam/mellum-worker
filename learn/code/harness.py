@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
+import platform
 import hashlib
 import json
 import os
@@ -128,6 +129,25 @@ def arm_settings(arm: str) -> dict:
     return {"extension": EXTENSION, "env": env}
 
 
+def machine_label() -> str:
+    """What this run ran on: enough to tell an M1 Pro from an M5 Max.
+
+    Peak token counts travel between machines; walls do not.
+    """
+    brand = memory = ""
+    try:
+        brand = subprocess.run(["sysctl", "-n", "machdep.cpu.brand_string"],
+                               capture_output=True, text=True, check=False).stdout.strip()
+        memory = subprocess.run(["sysctl", "-n", "hw.memsize"],
+                                capture_output=True, text=True, check=False).stdout.strip()
+    except OSError:
+        pass
+    if not brand:
+        brand = f"{platform.system()} {platform.machine()}"
+    ram = f", {int(memory) // (1024 ** 3)} GiB" if memory.isdigit() else ""
+    return f"{brand}{ram}"
+
+
 def file_hashes(root: Path) -> dict[str, str]:
     """Every file under root by relative posix path, with its sha256."""
     hashes: dict[str, str] = {}
@@ -202,6 +222,7 @@ def run_suite(
     profile: Path = PROFILE,
     pi_binary: str = "pi",
     deadline: float | None = None,
+    single_prompt: bool = False,
 ) -> Path:
     run = new_run(runs_dir, suite.name)
     workspace = run / "workspace"
@@ -214,7 +235,9 @@ def run_suite(
     if suite.start is not None:
         shutil.copytree(suite.start, workspace, dirs_exist_ok=True)
     pristine = file_hashes(workspace) if suite.layout is not None else None
-    (run / "prompt.txt").write_text("\n\n".join(suite.prompts) + "\n")
+    prompts = (["\n\n".join(suite.prompts)] if single_prompt
+               else list(suite.prompts))
+    (run / "prompt.txt").write_text("\n\n".join(prompts) + "\n")
     trace = run / "trace.jsonl"
     trace.touch()
     sessions = run / "sessions"
@@ -231,7 +254,7 @@ def run_suite(
         env.pop(key, None)
     env.update(settings["env"])
     started = time.monotonic()
-    for prompt in suite.prompts:
+    for prompt in prompts:
         remaining = None if deadline is None else deadline - (time.monotonic() - started)
         if remaining is not None and remaining <= 0:
             (run / "deadline").write_text("hit\n")
@@ -437,11 +460,13 @@ def _run_sessions(
     grade_run: bool,
     deadline: float | None,
     arm: str = "bare",
+    single_prompt: bool = False,
 ) -> list[tuple]:
     results = []
     for _ in range(repeat):
         run_dir = run_suite(suite, runs_dir=runs_dir, pi_binary=pi_binary,
-                            deadline=deadline, arm=arm)
+                            deadline=deadline, arm=arm,
+                            single_prompt=single_prompt)
         grades = grade(run_dir / "workspace") if grade_run else []
         tests_passed, tail, failed_checks = score_details(run_dir, suite)
         quality_ok = all(
@@ -456,6 +481,9 @@ def _run_sessions(
         record = {
             "suite": suite.name,
             "arm": arm,
+            "single_prompt": single_prompt,
+            "machine": machine_label(),
+            "deadline": deadline,
             "passed": passed,
             "tests_passed": tests_passed,
             "quality_ok": quality_ok,
@@ -578,6 +606,8 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--repeat", type=int, default=1)
     run.add_argument("--deadline", type=float, default=600)
     run.add_argument("--arm", choices=ARMS, default="bare")
+    run.add_argument("--single-prompt", action="store_true",
+                     help="send the suite's prompts as one brief instead of steps")
     args = parser.parse_args(argv)
 
     if args.command == "qualify":
@@ -593,7 +623,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.suite == "all":
         run_suites(["all"], suites_dir=args.suites_dir, runs_dir=args.runs_dir,
                    pi_binary=args.pi_binary, grade_run=args.grade,
-                   repeat=args.repeat, deadline=args.deadline, arm=args.arm)
+                   repeat=args.repeat, deadline=args.deadline, arm=args.arm,
+                   single_prompt=args.single_prompt)
         return 0
 
     suite = load_suite(args.suites_dir, args.suite)
@@ -607,7 +638,7 @@ def main(argv: list[str] | None = None) -> int:
     results = _run_sessions(
         suite, runs_dir=args.runs_dir, pi_binary=args.pi_binary,
         repeat=args.repeat, grade_run=args.grade, deadline=args.deadline,
-        arm=args.arm,
+        arm=args.arm, single_prompt=args.single_prompt,
     )
     _print_task(suite, results, args.repeat)
     return 0
