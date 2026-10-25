@@ -1,5 +1,6 @@
 ---
-phase: LC.13A
+phase: LC
+feature_cycle: LC.13A
 cycle: 1
 lifecycle: active
 ---

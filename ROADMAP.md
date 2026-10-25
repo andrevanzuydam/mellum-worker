@@ -2,7 +2,8 @@
 
 Read [`README.md`](README.md) for what ships and [`docs/sdd.md`](docs/sdd.md)
 for how work is recorded. Deferred work lives in [`BACKLOG.md`](BACKLOG.md).
-One phase at a time; tangents go to the backlog, never into the current phase.
+One feature cycle at a time; tangents go to the backlog, never into the
+current cycle.
 
 ## Now
 
@@ -12,22 +13,24 @@ One phase at a time; tangents go to the backlog, never into the current phase.
 **After:** LC.5 (Andre's written consent), LC.20–LC.23 (Andre's mediation lessons), LC.7A (Pathologies). Context/input workflows are INT.3 candidates. The M series is closed ([archive](ROADMAP-M.md)).
 **Parked:** OpenCode, Ollama, execution bounds, versioned assessments, the mediated test, one worker, INT.1, INT.2 and the PR #1 prompt/guard extraction are [backlog entries](BACKLOG.md) with reopen conditions.
 
-## Phases
+## Feature cycles
 
 The M series closed on 2026-10-20 and is archived in
-[`ROADMAP-M.md`](ROADMAP-M.md); its last two phases moved to the backlog.
-The Learning Center is the active programme.
+[`ROADMAP-M.md`](ROADMAP-M.md); its last two cycles moved to the backlog.
+The Learning Center is the active phase.
 
 ### Learning Center (LC)
 
-`LC` marks a workstream that ships something else and does not take an `M`
-number. LC.1–LC.3C are closed; LC.4 onward are intent, and their
+`LC` is the phase the Learning Center runs in: it ships something else and
+does not take an `M` number. Each row is a **feature cycle** that delivers one
+lesson, or says in its Ships cell that it is housekeeping or infrastructure.
+LC.1–LC.3C are closed; LC.4 onward are intent, and their
 [spec](docs/superpowers/specs/2026-10-20-learning-center-design.md) is the
 authority.
 
 | Phase      | Ships                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Excludes                                                                                                                                                                                | Status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 |------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **LC.1**   | Site skeleton: `zensical.toml` at the repo root with `docs_dir = "learn"`, the home page, four `learn/about/` pages (what the center is, how to read a lesson, evidence badges, contributing), a glossary, credits for Andre and Paul with a Tina4 mention, three track index pages, the six-step lesson template with badges, a Validation step and an Interpretation, and a passing local `zensical build`.                                              | Writing lessons; llama.cpp or ladder runs; Andre-attributed content; any public deploy; publishing the SDD docs.                                                                        | complete 2026-10-20 — [plan](docs/superpowers/plans/archive/2026-10-20-l1-learning-center-skeleton.md), archived under its old `L.1` id; the phase was re-prefixed `LC.` on 2026-10-20 and step 5 was renamed Validation with the spec. No measured claims. Shipped in [Unreleased].                                                                                                                                                                                                                                         |
+| **LC.1**   | Site skeleton: `zensical.toml` at the repo root with `docs_dir = "learn"`, the home page, four `learn/about/` pages (what the center is, how to read a lesson, evidence badges, contributing), a glossary, credits for Andre and Paul with a Tina4 mention, three track index pages, the six-step lesson template with badges, a Validation step and an Interpretation, and a passing local `zensical build`.                                              | Writing lessons; llama.cpp or ladder runs; Andre-attributed content; any public deploy; publishing the SDD docs.                                                                        | complete 2026-10-20 — [plan](docs/superpowers/plans/archive/2026-10-20-l1-learning-center-skeleton.md), archived under its old `L.1` id; the row was re-prefixed `LC.` on 2026-10-20 and step 5 was renamed Validation with the spec. No measured claims. Shipped in [Unreleased].                                                                                                                                                                                                                                         |
 | **LC.2**   | Getting started, lesson 1: the learner clones the repo and installs `uv`, and the root `pyproject.toml` fetches Python; `scripts/backend.py` replaces the Justfile and reads `[tool.mellum]` as the one settings source; `learn/code/profile/models.json` is generated from it; llama.cpp pulls `Q4_K_M` through `-hf`; base Pi answers through the private profile, leaving `~/.pi` alone; `learn/project/` documents how the repo works for maintainers. | The harness, suite and telemetry (LC.3); Ollama, which stays a backlog option for a non-Apple machine; Andre's material.                                                                | complete 2026-10-20 — [plan](docs/superpowers/plans/archive/2026-10-20-lc2-base-pi-on-llamacpp.md). Live smoke on the M5 Max: `Q4_K_M` served with `n_ctx` 50176, `chat` replied in 94 tokens, base Pi through the private profile answered "Hello"; `npm test` 334/334. The lesson is [Base Pi on llama.cpp](learn/getting-started/base-pi-on-llamacpp.md); every backend claim stays `screen` until LC.3 reruns the ladder ([llamacpp.md](docs/backends/llamacpp.md)). Shipped in [Unreleased].                            |
 | **LC.3**   | Getting started, lesson 2: `learn/code/harness.py`, which copies a task into a fresh run directory, hands it to a child `pi` through the private profile, copies the hidden tests in after the run and scores them; `learn/code/record-pi.mjs` writes the run's trace; one easy fixture and the score line.                                                                                                                                                | The suite, telemetry and grading (LC.3A); the ladder run (LC.3B); model or prompt changes.                                                                                              | complete 2026-10-20 — [plan](docs/superpowers/plans/archive/2026-10-20-lc3-mini-harness.md). Live run through the llama.cpp server: `easy: PASS`, a 21-row trace (4 requests, 3 tool calls, 0 errors), the model's `fizz.py` passing the hidden tests; `npm test` 337/337. The lesson is [Make a mini harness](learn/getting-started/harness.md). Shipped in [Unreleased].                                                                                                                                                   |
 | **LC.3A**  | Getting started, lesson 3: the medium and hard fixtures, the three eval suites, the telemetry walkthrough over the trace, and validation grading through `uvx` `ruff`, `pyrefly` and one complexity tool with fixed thresholds.                                                                                                                                                                                                                            | Model or prompt changes; the ladder as the learner's harness; more than one complexity tool.                                                                                            | complete 2026-10-20 — [plan](docs/superpowers/plans/archive/2026-10-20-lc3a-suite-telemetry-grading.md). Live `suite all --grade`: 3/3 passed, with ruff's `I001` on the medium and hard import blocks and `pyrefly`/`complexipy` clean; `npm test` 345/345. The lesson is [A suite and the telemetry](learn/getting-started/suite.md). Later on 2026-10-21 the hard suite was rebuilt to seven phases with sqlite-utils migrations; qualification passes, but no live suite session has run since. Shipped in [Unreleased]. |
@@ -59,7 +62,7 @@ authority.
 | **LC.22**  | Lesson: "Implement the whole spec." Six steps, badges, Interpretation; v9 to v11. | New measurements; an Andre-attributed page before LC.5. | candidate — after LC.5 and LC.19; index #13; [research](docs/superpowers/research/2026-10-24-pr-harvest-index.md#lesson-map), [re-plan](docs/superpowers/research/2026-10-24-curriculum-replan.md). |
 | **LC.23**  | Lesson: "Mediation is a completeness gate." Six steps, badges, Interpretation; what mediation does and does not recover. | New measurements; an Andre-attributed page before LC.5. | candidate — after LC.5 and LC.19; index #14; [research](docs/superpowers/research/2026-10-24-pr-harvest-index.md#lesson-map), [re-plan](docs/superpowers/research/2026-10-24-curriculum-replan.md). |
 
-Each scheduled findings lesson is its own phase and cycle: one page, one
+Each scheduled findings lesson is its own feature cycle: one page, one
 plan, one badge set, one close. LC.4 and LC.5 write the digest or index and
 add rows; neither writes a lesson. Nine Andre index entries are deferred:
 #15–#20 to the backlog, #21–#23 to LC.7A.
@@ -77,7 +80,7 @@ is not a Basic Remedy.
 
 ## Gates
 
-A phase closes under [the SDD closing rules](docs/sdd.md#closing-a-phase):
+A feature cycle closes under [the SDD closing rules](docs/sdd.md#closing-a-feature-cycle):
 its plan records the result and is archived, roadmap/backlog state is current,
 the suite and document caps pass, and claims match the evidence they cite.
 Releases separately require matching tags, package and README versions, and

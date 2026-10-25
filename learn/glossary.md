@@ -8,6 +8,21 @@ of truth is this page; do not hand-link a term in prose.
 
 The whole Zensical site under `learn/`.
 
+### Phase
+
+The container a set of feature cycles runs in: the Learning Center (`LC`), and
+historically the `M` series. A phase has no plan of its own. Not the same as a
+suite phase, which is one step of a multi-phase eval task such as the hard
+suite's seven.
+
+### Feature cycle
+
+One roadmap row inside a phase, named `LC.13A`. It runs the SDD cycle —
+brainstorm, spec, plan, execute, review/close — and delivers one lesson, or,
+when its Ships cell says so, housekeeping or infrastructure. "Phase" was the
+older name for a row and means the same thing wherever it survives in a
+record.
+
 ### Track
 
 A group of lessons with a recommended order: Getting started and Lessons.

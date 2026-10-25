@@ -4,6 +4,15 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Changed
+
+- The roadmap's vocabulary now separates the two things it used to call a
+  "phase": **`LC` is the phase**, and **each row is a feature cycle** that runs
+  brainstorm → spec → plan → execute → close. A feature cycle delivers one
+  lesson, or says in its Ships cell that it is housekeeping or infrastructure.
+  Plan front matter gains `feature_cycle:` beside `phase:` and `cycle:`;
+  archived plans are unchanged.
+
 ### Added
 
 - The suites harness records **attempted compaction** as a `before_compact`

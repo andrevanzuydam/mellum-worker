@@ -4,9 +4,9 @@ Deferred work. Read [`ROADMAP.md`](ROADMAP.md) for what is in flight.
 
 Every entry states a reopen condition; an entry over 1,200 characters owes a
 research doc and shrinks to a summary, a link, and its reopen condition.
-Resolved entries are removed once their outcome is recorded in a phase row or
-a research doc that the row links. Cite entries by heading anchor, never by
-line number.
+Resolved entries are removed once their outcome is recorded in a feature-cycle
+row or a research doc that the row links. Cite entries by heading anchor,
+never by line number.
 
 Reopen conditions, not promises.
 
@@ -190,7 +190,7 @@ Andre's [PR #1](https://github.com/pauleveritt/mellum-worker/pull/1) is a
 candidate implementation (`--acceptance-test`; an n = 1 rung 9 screen on
 mlx-lm, [digest](docs/superpowers/research/2026-10-20-pr-digest.md)).
 *Reopens when* someone can run the rung 9 screen and wants the result; the
-closed phase and its design inputs are in [`ROADMAP-M.md`](ROADMAP-M.md).
+closed cycle and its design inputs are in [`ROADMAP-M.md`](ROADMAP-M.md).
 
 **One worker.** Retire the pi-subagents Worker (agent template, child-only
 guard loading, Worker run records, the setup skill's agent-file and intercom
@@ -199,7 +199,7 @@ becomes `mellum-worker.ts` and "Mellum Mode" becomes mellum-worker in the
 docs, skill and templates. `/mellum` and the run-record path stay; `learn`
 and `last` keep reading old `kind: "worker"` records; a rung 1 and a rung 6
 smoke show the rename launches the same requests. *Reopens when* the mediated
-test lands, or the rename is worth doing on its own; the closed phase and its
+test lands, or the rename is worth doing on its own; the closed cycle and its
 exclusions are in [`ROADMAP-M.md`](ROADMAP-M.md). 2026-10-20: taken as LC.8
 because the Learning Center needs one worker; the entry stays until it lands.
 
@@ -231,7 +231,7 @@ arm can differ by one value ([spec](docs/superpowers/specs/2026-10-20-learning-c
 §12). *Reopens when* LC.3's harness can run a rung fixture twice with one
 parameter changed.
 
-**PR #1 prompt and guard extraction.** The prompt v6–v11 triage is recorded: v6 is a null arm, v7–v9/v11 are ladder evidence, and v10’s foreground-server guard is dormant on branch `lc11b-server-guard` at `420ba1d`; workspace confinement is on branch `lc11b-confinement` at `176922f`. No guard is enabled and Baseline Worker is unchanged. Prospective Lessons #20–#22 are index entries only, not phases. The source map is the decision ledger. PR #1 stays open; the digest ends with a comment, not a close. *Reopens when* Getting Started is closed and a screen repeats a foreground-server or outside-workspace hang, or a prompt version has a suite-shaped arm worth measuring; enabling a guard needs a baseline v2 and re-baseline. [prompt triage](docs/superpowers/research/2026-10-24-prompt-v8-v11-triage.md), [PR #1 digest](docs/superpowers/research/2026-10-24-pr1-digest.md), [source map](docs/superpowers/research/2026-10-24-andre-lessons-map.md).
+**PR #1 prompt and guard extraction.** The prompt v6–v11 triage is recorded: v6 is a null arm, v7–v9/v11 are ladder evidence, and v10’s foreground-server guard is dormant on branch `lc11b-server-guard` at `420ba1d`; workspace confinement is on branch `lc11b-confinement` at `176922f`. No guard is enabled and Baseline Worker is unchanged. Prospective Lessons #20–#22 are index entries only, not feature cycles. The source map is the decision ledger. PR #1 stays open; the digest ends with a comment, not a close. *Reopens when* Getting Started is closed and a screen repeats a foreground-server or outside-workspace hang, or a prompt version has a suite-shaped arm worth measuring; enabling a guard needs a baseline v2 and re-baseline. [prompt triage](docs/superpowers/research/2026-10-24-prompt-v8-v11-triage.md), [PR #1 digest](docs/superpowers/research/2026-10-24-pr1-digest.md), [source map](docs/superpowers/research/2026-10-24-andre-lessons-map.md).
 
 **PR measurement support.** The PRs carry measurement machinery that is not a lesson: the mlx-lm backend, the effort-ramp flags, the mediation scripts, rungs 10–12, `scripts/screen.sh` and `product.sh`, `halve-model.sh`, and the workflow/tests. None is in the installed package or the Lessons track. *Reopens when* a preregistered ladder run or a Flow phase needs one of them; port only the part that run uses and keep the record with the run. [harvest](docs/superpowers/research/2026-10-24-pr-harvest-index.md), [PR #1 source map](docs/superpowers/research/2026-10-24-pr1-digest.md).
 
@@ -243,7 +243,7 @@ parameter changed.
 
 **Tier-1 contract test.** The PR #1 structural gate checks that routes exist; it is not the behavioral examiner Flow needs. *Reopens when* the INT.2 spec needs a cheap structural pre-check before the frozen behavioral gate, and a Flow run shows the examiner alone is too slow or too broad. [source map](docs/superpowers/research/2026-10-24-pr1-digest.md), [Flow triage](docs/superpowers/research/2026-10-24-flow-triage.md).
 
-**Andre's context and input lessons.** Lessons #15–#20 in the track index — rungs 10–12, context search, skeptical rethink, documents/images, live control and next-concept verify — are candidates, not phases. #16–#20 are INT.3 workflow candidates; #15 remains a lesson candidate. They need LC.5's written consent and a recorded screen for the extension each describes; several may be dropped. *Reopens when* LC.5 closes and one candidate has a record that supports a six-step page. [harvest](docs/superpowers/research/2026-10-24-pr-harvest-index.md#lesson-map), [re-plan](docs/superpowers/research/2026-10-24-curriculum-replan.md).
+**Andre's context and input lessons.** Lessons #15–#20 in the track index — rungs 10–12, context search, skeptical rethink, documents/images, live control and next-concept verify — are candidates, not feature cycles. #16–#20 are INT.3 workflow candidates; #15 remains a lesson candidate. They need LC.5's written consent and a recorded screen for the extension each describes; several may be dropped. *Reopens when* LC.5 closes and one candidate has a record that supports a six-step page. [harvest](docs/superpowers/research/2026-10-24-pr-harvest-index.md#lesson-map), [re-plan](docs/superpowers/research/2026-10-24-curriculum-replan.md).
 
 **Pathologies page.** A reference in `learn/` of the ways small models fail:
 announce-and-stop, false success, test-command thrash, a bent project, long
