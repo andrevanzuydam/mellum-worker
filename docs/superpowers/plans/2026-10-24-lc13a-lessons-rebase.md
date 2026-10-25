@@ -26,8 +26,11 @@ exactly as they are.
 - `docs/ladder/reference-llamacpp-rungs1-5` and
   `docs/superpowers/research/2026-10-21-basic-remedies-runs.md`, the only
   llama.cpp evidence the track already has.
-- `main` at `73fadc8`; branch `lessons-rebase` cut from `lc13-guards`, so the
-  LC.13 page is present and can be rewritten in place.
+- `main` at `7c94a6a`, on branch `lc13a-lessons-rebase` **corrected
+  2026-10-24**: this plan was written for `main` at `73fadc8` with the work on
+  a `lessons-rebase` branch cut from `lc13-guards`, but the LC.13 commits are
+  on `main`, no `lc13-guards` branch exists, and the branch is
+  `lc13a-lessons-rebase`.
 
 ## Deliverables
 
@@ -47,7 +50,15 @@ exactly as they are.
 - No comparative claim without a preregistration that fixed the arms, n,
   reading and rule first.
 - One change between arms. The guard arm's void result is the cautionary
-  case: two arms that never differ in behaviour cannot be compared.
+  case: two arms that never differ in behaviour cannot be compared. The
+  context-budget arm repeated the lesson on 2026-10-24: two windows that no
+  request approaches are one policy.
+- n = 3, from [`learn/lesson-template.md`](../../../learn/lesson-template.md):
+  "Use n = 3 for the baseline and for a claim you will state." **Corrected
+  2026-10-24**: this plan previously said n = 10 and forbade a rate below it,
+  which contradicted the template and the two n=3 llama.cpp records. The
+  nudge screen's n=5 remains the reason to be wary of small n, not a new
+  standard; a page that states a rate at n=3 says so in its Reading.
 - Keep the claim narrow in each page, and never quote a rate from n < 10.
 - The worker, the guard, the prompt and the Baseline Worker change only in
   an arm that measures the change, with a re-baseline.
@@ -61,10 +72,16 @@ exactly as they are.
   continues only `stop`; the empty finals recorded here were `error`
   (context overflow) and `length` (output cap). The guard is not wrong, it is
   shaped for a different ending.
-- **The context window blocks the instrument.** The worker refuses Pi's
-  auto-compaction while the mode is on, so an easy run reached 51,697 tokens
-  against `n_ctx` 50,176 and died. This is the first thing to settle, because
-  every later arm inherits it.
+- **The context window is not the block it looked like.** The guard arm's
+  overflow did not recur: seven sessions across 50,176 and 56,064 peaks of
+  857–4,699 tokens, zero compaction attempts, `A-50k` 3/3. The window stays
+  at 50,000 and the refusal stays, but neither may be called the overflow's
+  cause. Easy's demand is variable, so every pass count travels with its
+  peak ([record](../../research/2026-10-24-context-budget-screen.md)).
+- **A hung request is invisible in the recorded wall.** `report()` derives
+  wall from trace timestamps, and a request that never returns writes no
+  rows: one session recorded 164 s for a 600 s deadline kill. Backlog, not
+  a mid-arm patch.
 
 ## Tasks
 
@@ -86,18 +103,22 @@ new `arm_settings` entry, or needs rungs 6–9 that have never run on
 llama.cpp. Include the lesson that has no arm at all. This is reading, not
 running.
 
-### Task 3: Settle the context budget
+### Task 3: The context budget (done, void)
 
-**Output:** a preregistration, then a run.
+**Preregistration:** [the context budget](2026-10-24-context-budget-preregistration.md).
+**Record:** [the screen](2026-10-24-context-budget-screen.md).
 
-Either a window the easy suite fits inside, or a compaction policy that does
-not refuse while the worker is on. It changes a setting the baseline was
-measured with, so it is followed by a re-baseline of the easy suite at the
-staircase n.
+Preregistered, run, closed: `A-50k` 3/3 and `B-56k` 2/3, with peak demand of
+857–4,699 tokens against windows of 50,176 and 56,064. Neither window was
+approached, so the arm is void for its question and no setting changed. Two
+findings carry forward: easy's peak demand varies by more than an order of
+magnitude across recorded samples, so no page may describe it as fitting or
+needing a window; and a hung provider request does not appear in the
+recorded wall. Task 4 is no longer blocked on this, because 50,000 passed.
 
 ### Task 4: Arms in staircase order
 
-Easy first, n = 10; medium only on a majority; hard only on a majority of
+Easy first, n = 3; medium only on a majority; hard only on a majority of
 medium, and skipped when medium shows no headroom. Each arm gets its own
 preregistration and record, and its page is rewritten as it lands.
 

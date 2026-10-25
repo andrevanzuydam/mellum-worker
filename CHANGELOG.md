@@ -6,6 +6,18 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- The suites harness records **attempted compaction**: the recorder writes a
+  `before_compact` row and is loaded ahead of the worker extension, so an
+  attempt the worker refuses while the mode is on is still visible in the
+  trace. It is what let the context-budget arm say that compaction was never
+  asked for, rather than merely never happened.
+
+- The preregistration and record for the context-budget arm:
+  [`2026-10-24-context-budget-preregistration.md`](docs/superpowers/research/2026-10-24-context-budget-preregistration.md)
+  and its [record](docs/superpowers/research/2026-10-24-context-budget-screen.md).
+  The arm is void — peak demand of 857–4,699 tokens never approached either
+  window — but it fixes the shipped 50,000 wherever a lesson quotes easy.
+
 - The suites harness now reports **nudge fires** beside the passes: it counts
   an empty assistant turn that was followed by another request as a nudge and
   one that ended the run as an empty final, printing them on the score line and

@@ -10,6 +10,17 @@ line number.
 
 Reopen conditions, not promises.
 
+**Recorded wall under-reports a stalled request.** `report()` in
+`learn/code/harness.py` derives wall from trace timestamps, and a request that
+never returns writes no rows: one session killed at the 600 s deadline
+recorded 164 s for a 600 s run
+([record](docs/superpowers/research/2026-10-24-context-budget-screen.md)). The
+fix is a wall from process lifetime, or a `deadline` row in the trace. It
+changes a column the Getting Started suite lesson teaches, so it needs its own
+test and a re-read of the records that quote a wall, not a mid-arm patch.
+*Reopens when* a page or an arm quotes a wall for a session that hit its
+deadline, or when the harness report is next changed.
+
 **Discovery/output policy beyond M.7E.** Seven tools do not prevent shell
 dependency scans. Throwaway discovery interception blocked scans, but its
 compact-output branch had no model-run evidence and its heuristics can block
