@@ -121,6 +121,22 @@ The durable lesson: lean on the harness guarantees (fixture restore, schema
 injection, gate-only scoring) and the hidden grade, not on the small examiner
 authoring a perfect oracle every time.
 
+### And one brittle gate poisons every LATER phase's visible score
+
+Worse than a wasted phase: phase 6's app passed its OWN gate (2/2), yet phase 6
+was marked FAIL — because the flow scores the **cumulative** gate (phases 1..N),
+which still contains phase 5's brittle, unpassable test. So a single false-fail
+gate drags down 6 and 7 too. The hidden grade is unaffected (it runs the suite's
+own grader, not the examiner's frozen gates), but the *visible* run collapses
+after the first brittle freeze.
+
+This points at a real, agnostic harness improvement: a frozen gate that a phase
+cannot pass within its round budget should be **re-examined (regenerated), not
+carried forward as a permanent poison** — or the per-phase pass decision should
+score only that phase's own gate while the cumulative check stays advisory.
+Either keeps one stochastic bad gate from sinking the rest of the run. (Noted as
+the next harness fix; the hidden grade remains the real measure meanwhile.)
+
 ## Key commits
 
 `5a9106b` examiner non-destructive rule · `f15db25` harness `restore_fixture_data`
