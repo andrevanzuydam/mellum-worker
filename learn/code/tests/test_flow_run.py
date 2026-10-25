@@ -184,6 +184,10 @@ def test_gate_files_selects_only_the_frozen_gate_not_the_coders_scratch_tests(tm
     (tests / "conftest.py").write_text("")  # not a gate file
     got = sorted(p.name for p in flow_run.gate_files(tmp_path))
     assert got == ["test_gate_phase_1.py", "test_gate_phase_2.py"]
+    # phase filter: score a phase on its OWN gate, so a brittle earlier gate can't poison it
+    only2 = [p.name for p in flow_run.gate_files(tmp_path, phase=2)]
+    assert only2 == ["test_gate_phase_2.py"]
+    assert flow_run.gate_files(tmp_path, phase=9) == []  # no such phase
 
 
 def test_gate_files_is_empty_when_no_cumulative_gate_was_frozen(tmp_path):

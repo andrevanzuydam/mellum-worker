@@ -219,21 +219,26 @@ def restore_gate(workspace: Path) -> None:
         shutil.copy2(frozen, tests / f"test_gate_{frozen.stem}.py")
 
 
-def gate_files(workspace: Path) -> list[Path]:
-    """The restored cumulative acceptance gate — tests/test_gate_phase_*.py — and nothing else.
-    The phase is judged on this, the frozen definition of DONE, never on the coder's own scratch
-    tests: a brittle coder test (e.g. a list-equality order check polluted by shared in-memory
-    state) must not fail a build that passes the authoritative gate. Empty when no cumulative gate
-    was frozen (the single-file easy gate), so callers fall back to the whole suite."""
+def gate_files(workspace: Path, phase: int | None = None) -> list[Path]:
+    """The restored frozen acceptance gate — tests/test_gate_phase_*.py — and nothing else. The
+    phase is judged on this, the frozen definition of DONE, never on the coder's own scratch tests.
+    With `phase` set, return only THAT phase's gate; otherwise the whole cumulative set. Scoring a
+    phase on its OWN gate stops one stochastically-brittle earlier gate (a false-fail) from
+    poisoning every later phase's pass decision — the run's observed failure mode. Regressions are
+    caught by the final hidden grade, not by blocking mid-run on a possibly-brittle earlier gate.
+    Empty when no gate was frozen (the single-file easy gate), so callers fall back to the suite."""
     tests = workspace / "tests"
-    return sorted(tests.glob("test_gate_phase_*.py")) if tests.is_dir() else []
+    if not tests.is_dir():
+        return []
+    pat = f"test_gate_phase_{phase}.py" if phase is not None else "test_gate_phase_*.py"
+    return sorted(tests.glob(pat))
 
 
-def run_gate(workspace: Path, timeout: float) -> tuple[bool, str]:
-    """Score the workspace against the frozen acceptance gate only (see gate_files). Falls back to
-    the whole suite when there is no cumulative gate. Mirrors loop_run.run_tests' env so
-    `from app import app` resolves exactly as the hidden grader sees it."""
-    gates = gate_files(workspace)
+def run_gate(workspace: Path, timeout: float, phase: int | None = None) -> tuple[bool, str]:
+    """Score the workspace against the frozen acceptance gate (see gate_files). With `phase`, score
+    only that phase's own gate. Falls back to the whole suite when there is no frozen gate. Mirrors
+    loop_run.run_tests' env so `from app import app` resolves exactly as the hidden grader sees it."""
+    gates = gate_files(workspace, phase)
     if not gates:
         return lr.run_tests(workspace, timeout)
     env = {**os.environ, "PYTHONPATH": str(workspace)}
@@ -446,8 +451,8 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
         run_top(orch_msg, workspace=aw, profile=prof, recorder=recorder, provider=provider,
                 model=model, trace=run / f"trace-p{pnum}-r{rnd}-{idx}.jsonl",
                 timeout=timeout, thinking=thinking, phase=pnum)
-        restore_gate(aw)  # score against the cumulative gate — every prior phase must still pass
-        ok, _ = run_gate(aw, 120.0)
+        restore_gate(aw)  # materialize every frozen gate so the coder sees them; score THIS phase's own
+        ok, _ = run_gate(aw, 120.0, pnum)  # a brittle earlier gate must not poison this phase's pass
         ok = ok and phase_gate_ok(aw, pnum)  # and THIS phase must have frozen a real acceptance test
         return idx, ok, aw
 
@@ -492,8 +497,8 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
                 run_top(orch_msg + nudge, workspace=workspace, profile=run / "profile", recorder=recorder,
                         provider=provider, model=model, trace=run / f"trace-p{pnum}-{rnd}.jsonl",
                         timeout=timeout, thinking=thinking, phase=pnum)
-                restore_gate(workspace)  # score against the cumulative gate — every prior phase must still pass
-                passed, _ = run_gate(workspace, 120.0)
+                restore_gate(workspace)  # materialize every frozen gate for the coder; score THIS phase's own
+                passed, _ = run_gate(workspace, 120.0, pnum)  # a brittle earlier gate must not poison this phase
                 passed = passed and phase_gate_ok(workspace, pnum)  # and THIS phase must have frozen a real acceptance test
             else:
                 temps = temp_ladder(concurrency)

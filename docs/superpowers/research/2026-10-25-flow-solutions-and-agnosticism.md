@@ -137,6 +137,17 @@ score only that phase's own gate while the cumulative check stays advisory.
 Either keeps one stochastic bad gate from sinking the rest of the run. (Noted as
 the next harness fix; the hidden grade remains the real measure meanwhile.)
 
+**Implemented:** the per-phase pass decision now scores only that phase's OWN
+gate (`run_gate(workspace, timeout, phase=pnum)`); `restore_gate` still
+materializes every frozen gate so the coder sees them, and the final hidden
+grade stays the regression backstop. A stochastically-brittle earlier gate can
+no longer poison a later phase's pass. Confirmed by the clean from-scratch run's
+failure mode: phase 5's brittle gate had marked 6 (which passed its OWN gate
+2/2) and 7 as fails, the coder never got a pass signal, thrashed, and left
+`app.py` with an unterminated triple-quoted string — a broken app that errored
+all seven hidden graders (hidden 0). Scoring each phase on its own gate removes
+that cascade.
+
 ## Key commits
 
 `5a9106b` examiner non-destructive rule · `f15db25` harness `restore_fixture_data`
