@@ -22,7 +22,7 @@ what it rests on now.
 2. **[A short prompt, not a procedure](short-prompt.md)** — Prompt v5 is 643 characters, and on easy it did not move a pass: a null at n = 3. *(Paul)*
 3. **[Thinking is working memory](thinking-working-memory.md)** — The strip-thinking arm has no instrument on llama.cpp; thinking spends the output budget. *(Paul)*
 4. **[Guards for empty turns and loops](guards-for-empty-turns.md)** — The nudge never fired in ten easy sessions: no empty turn had the shape it answers. *(Paul)*
-5. **Project facts** — An arm is measured: the block reaches the model in every request and did not move easy at n = 3. *(Paul)*
+5. **[Project facts](project-facts.md)** — The block reaches the model in every request and did not move easy at n = 3. A null, with a lead. *(Paul)*
 6. **Write only the files you list** — Runs pass the hidden tests and still fail by writing outside the layout. *(Paul)*
 7. **Who holds the loop** — Worker, Mode and a delegated child pass alike and cost differently. *(Paul)*
 8. **A prose brief stops at its first reply** — The same brief as one prompt loses four passes; as steps it costs 2.4× the time. *(Paul)*

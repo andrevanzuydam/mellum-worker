@@ -28,6 +28,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- Lesson 5, **[Project facts](learn/lessons/project-facts.md)**: the facts arm
+  measured on llama.cpp, where the block reaches the model on every request
+  and did not move the easy suite at n=3. The page states the null with the
+  injection count beside it, and carries the foreground-server observation as
+  a lead attributed to the Pathologies page.
+
 - The suites harness records **attempted compaction** as a `before_compact`
   trace row, and a `no-facts` arm sets `MELLUM_MODE_FACTS=0`; the harness now
   clears all four arm knobs from the inherited environment first, so an
