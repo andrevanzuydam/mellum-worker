@@ -277,7 +277,9 @@ function runSubagent(phase: string, task: string, cwd: string, signal?: AbortSig
 						// Stream the sub-agent's steps to the feed so a working phase is visible,
 						// not silent. One line per tool call: `[code] -> write templates/home.html`.
 						for (const c of toolCallSummaries(evt)) {
-							feed(`    [${phase}] → ${c.name.padEnd(6)} ${c.where.slice(0, 70)}`);
+							// Collapse whitespace so a multi-line command (e.g. a heredoc/echo that can hang
+							// the shell) shows on ONE feed line, and keep more of it so the culprit is legible.
+							feed(`    [${phase}] → ${c.name.padEnd(6)} ${c.where.replace(/\s+/g, " ").slice(0, 300)}`);
 						}
 					} catch {
 						/* non-JSON line */
