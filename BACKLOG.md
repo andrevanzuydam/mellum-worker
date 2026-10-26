@@ -10,15 +10,20 @@ never by line number.
 
 Reopen conditions, not promises.
 
-**`run.json`'s `wall` stops at the last traced event.** A censored session
-reports its wall as the time of the last trace row, not the time it was
-killed: LC.24's two censored `bare` sessions report 70 s and 180 s against a
-2,700 s deadline, and only the `deadline` marker file tells the truth
-([record](docs/superpowers/research/2026-10-25-lesson1-run.md)). Any table
-that quotes wall next to a censored session is understating it.
-*Reopens when* a record quotes wall for a censored session, or the harness
-report is next changed: write the kill time into `run.json` and let the
-marker stay as the boolean.
+**`run.json`'s `wall` under-reports a censored or stalled session.** `report()`
+in `learn/code/harness.py` derives wall from trace timestamps, so a session
+the deadline ends reports its last traced event: LC.24's two censored `bare`
+sessions report 70 s and 180 s against a 2,700 s deadline, and a request that
+never returns writes no rows at all — one session killed at 600 s recorded
+164 s ([LC.24 run](docs/superpowers/research/2026-10-25-lesson1-run.md),
+[context screen](docs/superpowers/research/2026-10-24-context-budget-screen.md)).
+Only the `deadline` marker tells the truth, so any table quoting wall beside a
+censored session is understating it. The fix is a wall from process lifetime,
+or a `deadline` row in the trace; it changes a column the Getting Started
+suite lesson teaches, so it needs its own test and a re-read of the records
+that quote a wall, not a mid-arm patch.
+*Reopens when* a page or an arm quotes a wall for a session that hit its
+deadline, or when the harness report is next changed.
 
 **The foreground-server pathology is measured but not placed.** Three
 `no-facts` sessions hung on `uvicorn app:app --reload` / `python app.py` after
@@ -35,17 +40,6 @@ sessions in LC.24 censored on `uvicorn … --reload`, with a record and a page
 arm is still owed.
 *Reopens when* LC.5 closes and LC.7A starts, or the arm's three-way question
 (facts bullet, dormant guard, both) can land on a page.
-
-**Recorded wall under-reports a stalled request.** `report()` in
-`learn/code/harness.py` derives wall from trace timestamps, and a request that
-never returns writes no rows: one session killed at the 600 s deadline
-recorded 164 s for a 600 s run
-([record](docs/superpowers/research/2026-10-24-context-budget-screen.md)). The
-fix is a wall from process lifetime, or a `deadline` row in the trace. It
-changes a column the Getting Started suite lesson teaches, so it needs its own
-test and a re-read of the records that quote a wall, not a mid-arm patch.
-*Reopens when* a page or an arm quotes a wall for a session that hit its
-deadline, or when the harness report is next changed.
 
 **The recorder cannot have the payload and the refusal at once.** Pi runs
 `before_provider_request` handlers in extension load order and each may
