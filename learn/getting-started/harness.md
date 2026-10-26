@@ -82,6 +82,20 @@ the summary is `easy: 3/3 sessions passed`. Two or three sessions are still a
 lead, not a rate; lesson 4 explains why, and a rate needs a preregistered run
 with its arms and n fixed first.
 
+A suite may also ship a **spec variant**: the same project with its phased
+requirements laid out another way. `--specs joined|split` runs the suite with
+that variant's prompts and workspace, and the run record carries `specs`, so two
+arms are told apart by the record rather than by memory.
+
+```bash
+uv run learn/code/harness.py run --suite medium --specs split --repeat 3
+```
+
+Only a suite with `spec-variants/` has them; `medium` ships `joined`, whose
+briefs point at one `specs/roadmap.md`, and `split`, whose briefs each point at
+their own `specs/phase-4.md`. Without the flag the suite runs exactly as
+shipped.
+
 The suite is `learn/code/suites/easy/`: a base AgentClinic project, one
 prompt asking for phase 1, and the tests that check it. The prompt goes to
 `pi -p` as the request; nothing else about the suite is shown to the model.

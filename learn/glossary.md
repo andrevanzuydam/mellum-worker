@@ -176,7 +176,16 @@ rows. The table’s `Turns` is their mean over n.
 ### failed checks
 
 Expected test IDs that did not appear as `PASSED` in the grader run. They are
-not the same as failed sessions.
+not the same as failed sessions. A run records them by name and groups them by
+grader module, so a suite whose graders are one file per phase reports which
+phase's checks are missing, not only how many.
+
+### spec variant
+
+An alternative layout of a suite's project and the prompts that go with it,
+selected with `--specs` and recorded in the run as `specs`. It changes how the
+same requirements are laid out — one joined `specs/roadmap.md` against one file
+per phase — so an arm can hold everything else fixed.
 
 ### wall
 

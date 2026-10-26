@@ -4,6 +4,21 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Added
+
+- The harness records more than a count when a session fails its hidden checks:
+  `run.json` now carries `missing_checks`, the expected test IDs that did not
+  pass, and `check_groups`, the same tally per grader module. A suite whose
+  graders are one file per phase can now be read phase by phase, where passes
+  alone floors.
+
+- `--specs joined|split` runs a suite with one of its spec variants: the same
+  project and requirements, laid out as one joined `specs/roadmap.md` or as one
+  file per phase, with thin briefs that point at whichever applies. The run
+  record carries `specs`, and without the flag a suite runs exactly as shipped.
+  `medium` ships `joined` and `split`; the Getting Started pages and the
+  glossary describe both.
+
 ### Removed
 
 - The ladder's dead **delegated** reporting: `parse_parent_json` analysed a

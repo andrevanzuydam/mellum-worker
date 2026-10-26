@@ -309,6 +309,17 @@ test("the harness is the measured instrument", () => {
   assert.doesNotMatch(page("getting-started/suite.md"), /The ladder is the measuring instrument/);
 });
 
+test("the run record groups the failed checks by module", () => {
+  const suite = page("getting-started/suite.md");
+  assert.match(suite, /grader module/);
+  assert.match(suite, /missing_checks|expected tests that did not pass/);
+  const harness = page("getting-started/harness.md");
+  assert.match(harness, /--specs joined\|split/);
+  assert.match(harness, /spec-variants|spec variant/);
+  const entry = page("glossary.md").split("### failed checks")[1].split("###")[0];
+  assert.match(entry, /module/);
+});
+
 test("the lesson template opens with the two-sentence paragraph", () => {
   const t = page("lesson-template.md");
   const opening = t.split(/^# .+$/m)[1].split(/^## /m)[0].replace(/```[\s\S]*?```/g, "").trim();
