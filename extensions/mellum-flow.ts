@@ -559,6 +559,17 @@ export default function (pi: any): void {
 			// dropped any gate, and a regression in an earlier phase shows up here.
 			materializeGate(cwd());
 			const { ok, tail } = await runTests(cwd());
+			// Feed the ACTUAL gate failure back to the coder. The next code() reads REVIEW.md, so a
+			// failing run writes the pytest tail there — the coder sees exactly which assertion/route
+			// failed (e.g. a 404 on a route it never built) and can fix THAT, instead of re-building
+			// from the plan blind and repeating the same omission. On pass, leave REVIEW.md alone.
+			if (!ok) {
+				ensurePlan();
+				writeFileSync(
+					planPath("REVIEW.md"),
+					`=== ACCEPTANCE TEST FAILED — make these pass (this is the gate you must satisfy) ===\n${tail}`,
+				);
+			}
 			return textResult(`TESTS: ${ok ? "PASS" : "FAIL"}\n${tail}`, false);
 		},
 	});
