@@ -1,6 +1,10 @@
 # Lesson 1 as the exemplar: the page, the convention, and the badge
 
-Date: 2026-10-25. Status: awaiting Paul's review.
+Date: 2026-10-25. Status: approved by Paul on 2026-10-25; closed the same day.
+
+**Dated correction 2026-10-25.** The follow-up is **seven** pages, not eight: the
+track has eight lesson pages, and LC.24 shipped the opening on one of them. The
+rest of this document reads as written.
 
 ## Intent
 
