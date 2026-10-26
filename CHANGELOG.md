@@ -38,13 +38,6 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
-- The flow coder could hang a whole phase on a single blocking bash command (a server, or a
-  malformed multi-line `echo` — the Qwen hard phase-2 freeze): Pi's bash enforces a `timeout` that
-  kills the process tree, but it is optional with no default, and the flow never set one, so a
-  command run without a timeout blocked until the orchestrator's global reap. `mellum-nonblock` now
-  defaults the bash `timeout` (120s) when the model omits one, reusing Pi's own mechanism — a hung
-  command is killed in seconds and the sub-agent continues, instead of the phase freezing. A
-  server is still threaded by the existing rewrite so it returns at once.
 - The flow harness never logged a sub-agent's tool calls to the live feed: the streaming keyed on
   an event type (`tool_call`) that pi's `--mode json` does not emit for a sub-agent, so a hung phase
   showed only a frozen event count with no command. It now reads the schema pi actually emits
