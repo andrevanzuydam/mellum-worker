@@ -9,6 +9,10 @@ backends: [llamacpp]
 
 # A prose brief stops at its first reply
 
+Handed a four-phase build as one prose brief, a small model is expected to
+answer the first thing it reads and call that done. This screen found the
+opposite, so the page keeps steps for their checkpoints, not for a lost phase.
+
 ## Problem
 
 **Badge:** `screen`
