@@ -46,6 +46,15 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The medium suite no longer leaves verification to chance. Its roadmap asks for
+  the home page to be exercised in process with `TestClient` as well as for a
+  runnable `app.py`, the base project ships `tests/test_home.py` so the promised
+  test command has something to run on the first turn, and both spec variants'
+  briefs end by naming the loop: check with `uv run --frozen python -m pytest
+  tests`, not by starting a server. Two LC.19 attempts hung on a foreground
+  server before these were in place. The visible test is the worker's loop, not
+  a gate — `known-broken` passes it, and the hidden grader still fails it.
+
 - All seven older lessons now open the way Lesson 1 does: two sentences
   between the title and the first heading, the problem then the answer, 45
   words or fewer. The rule is in `learn/lesson-template.md` and is now held by
