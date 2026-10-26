@@ -189,3 +189,42 @@ fails that fixture.
 **What would falsify the diagnosis.** A session that starts a server anyway,
 with all three in place, says the behaviour is not instructional and a guard is
 the only remedy — which is exactly the answer LC.7A's arm wants.
+
+## Amendment 2026-10-26 (3): attempt 4, before it runs
+
+Attempt 3's one session finished all four phases in 840 s and then scored 18/18
+missing because two grader modules hit `ModuleNotFoundError: No module named
+'models'` and pytest aborted collection. Phase 1 alone passed 3 of 4. The spec
+never asked for `models.py`; the detailed prompts had, the thin briefs could
+not. Two instrument changes follow, both applied to **both** arms.
+
+1. **The spec carries the acceptance criteria.** `medium/specs/tech-stack.md`
+   gains a project layout table (`app.py`, `models.py` holding `Complaint` and
+   the module-level `complaints` list, `templates/`, `tests/`) and the markup
+   conventions (html5 doctype, `lang="en"`, brand and nav links, one `.card` per
+   complaint, `Open`/`Resolved`). `medium/specs/roadmap.md` gains a
+   **Acceptance** list per phase, and the four `spec-variants/split/specs/` files
+   carry the same lists — `test_the_split_keeps_the_roadmaps_phases` enforces
+   the lockstep.
+2. **A grader that cannot run says so.** `run.json` gains `grader_error`, set
+   when pytest exits with a collection error, and the score line prints
+   `grader error`. A session whose grader did not run is **excluded** from the
+   phase-4 comparison and reported as a grader error, not as failed checks:
+   "18 checks failed" and "the checks never ran" are different findings.
+
+**Unchanged:** arms (`joined` against `split`), n = 3 per arm, `--arm worker`,
+the phase-4 `check_groups` reading, the decision rule, `--deadline 2700`, and
+the `caffeinate -dims` wrapper.
+
+**Cost, measured from attempt 3:** that session took 840 s, so six sessions are
+roughly 1.5 h, and censors cost 45 min each if the briefs stop working.
+
+**What the change costs the records:** medium's base project is now further from
+LC.24's, so walls and check counts compare only within this run. The acceptance
+lists are derived from the grader's own modules, which means the spec states
+what is measured; a future edit to the graders owes the same edit to the spec.
+
+**What would falsify this.** A session with `grader_error: true` under the new
+spec would say the layout is still not stated clearly enough. Both arms reaching
+phase 4 with 0–1 missing checks would leave no headroom to separate them, and the
+reading would be a null for that reason rather than for layout.
