@@ -10,6 +10,19 @@ never by line number.
 
 Reopen conditions, not promises.
 
+**The leak sweep misses a foreground server that made its own process group.**
+`pi`'s bash tool runs each command in a new session, so a model-started server
+lands in its own group; `run_suite` kills and sweeps `child.pid`'s group, which
+is `pi`'s, so `leaked.json` reports nothing. LC.19's attempt 2 hung on
+`uv run python -m uvicorn app:app --reload` in its own group, and a
+`uv run uvicorn app:app --port 9000` from run `20261025T112212Z-medium-31816b`
+was still alive 1 day 7 h later, holding its port
+([preregistration](docs/superpowers/research/2026-10-25-lesson10-preregistration.md#amendment-2026-10-26-attempt-1-aborted-before-any-session-completed)).
+A censored session therefore leaves a server behind and the next session
+inherits the port. The fix is to sweep children by ppid as well as by group.
+*Reopens when* a censored session's `leaked.json` is empty while a server
+survived, or the sweep is next changed.
+
 **The deadline is counted on a clock that stops when the Mac sleeps.**
 `run_suite` bounds each child with `child.wait(timeout=remaining)` from
 `time.monotonic()`, and on Darwin that clock does not advance while the system
