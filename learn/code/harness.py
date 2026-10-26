@@ -264,6 +264,21 @@ def pi_argv(
     ]
 
 
+def load_variant(suite: Suite, name: str) -> Path:
+    """A suite's optional spec variant: prompts plus a workspace overlay."""
+    if suite.root is None:
+        raise SystemExit(f"suite {suite.name} has no root")
+    variants = Path(suite.root) / "spec-variants"
+    variant = variants / name
+    if not variant.is_dir():
+        available = sorted(p.name for p in variants.iterdir() if p.is_dir()) \
+            if variants.is_dir() else []
+        raise SystemExit(
+            f"no spec variant {name!r} in {variants}; "
+            f"available: {', '.join(available) or 'none'}")
+    return variant
+
+
 def run_suite(
     suite: Suite,
     *,
@@ -273,6 +288,7 @@ def run_suite(
     pi_binary: str = "pi",
     deadline: float | None = None,
     single_prompt: bool = False,
+    specs: str | None = None,
 ) -> Path:
     run = new_run(runs_dir, suite.name)
     workspace = run / "workspace"
@@ -284,9 +300,27 @@ def run_suite(
         shutil.copytree(suite.root / "base", workspace, dirs_exist_ok=True)
     if suite.start is not None:
         shutil.copytree(suite.start, workspace, dirs_exist_ok=True)
+    prompts = list(suite.prompts)
+    if specs is not None:
+        variant = load_variant(suite, specs)
+        for path in sorted(variant.rglob("*")):
+            rel = path.relative_to(variant)
+            if rel.parts[0] == "prompts" or rel.name == "delete.json":
+                continue
+            target = workspace / rel
+            if path.is_dir():
+                target.mkdir(parents=True, exist_ok=True)
+            else:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(path, target)
+        deletions = variant / "delete.json"
+        if deletions.is_file():
+            for rel in json.loads(deletions.read_text()):
+                (workspace / rel).unlink(missing_ok=True)
+        prompts = [_read_prompt(path)
+                   for path in sorted((variant / "prompts").glob("*.md"))]
     pristine = file_hashes(workspace) if suite.layout is not None else None
-    prompts = (["\n\n".join(suite.prompts)] if single_prompt
-               else list(suite.prompts))
+    prompts = (["\n\n".join(prompts)] if single_prompt else list(prompts))
     (run / "prompt.txt").write_text("\n\n".join(prompts) + "\n")
     trace = run / "trace.jsonl"
     trace.touch()
@@ -530,12 +564,13 @@ def _run_sessions(
     deadline: float | None,
     arm: str = "bare",
     single_prompt: bool = False,
+    specs: str | None = None,
 ) -> list[tuple]:
     results = []
     for _ in range(repeat):
         run_dir = run_suite(suite, runs_dir=runs_dir, pi_binary=pi_binary,
                             deadline=deadline, arm=arm,
-                            single_prompt=single_prompt)
+                            single_prompt=single_prompt, specs=specs)
         grades = grade(run_dir / "workspace") if grade_run else []
         tests_passed, tail, missing = score_details(run_dir, suite)
         failed_checks = len(missing)
@@ -555,6 +590,7 @@ def _run_sessions(
             "suite": suite.name,
             "arm": arm,
             "single_prompt": single_prompt,
+            "specs": specs,
             "machine": machine_label(),
             "deadline": deadline,
             "passed": passed,
@@ -600,6 +636,7 @@ def run_suites(
     deadline: float | None = 600,
     arm: str = "bare",
     single_prompt: bool = False,
+    specs: str | None = None,
 ) -> tuple[int, int]:
     order = {"easy": 0, "medium": 1, "hard": 2}
     available = sorted(
@@ -622,7 +659,7 @@ def run_suites(
         results = _run_sessions(
             suite, runs_dir=runs_dir, pi_binary=pi_binary,
             repeat=repeat, grade_run=grade_run, deadline=deadline, arm=arm,
-            single_prompt=single_prompt,
+            single_prompt=single_prompt, specs=specs,
         )
         sessions_passed += _print_task(suite, results, repeat)
         sessions_total += len(results)
@@ -685,6 +722,8 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--arm", choices=ARMS, default="bare")
     run.add_argument("--single-prompt", action="store_true",
                      help="send the suite's prompts as one brief instead of steps")
+    run.add_argument("--specs", metavar="VARIANT", default=None, choices=["joined", "split"],
+                     help="use the suite's spec variant: one joined roadmap, or one file per phase")
     args = parser.parse_args(argv)
 
     if args.command == "qualify":
@@ -701,21 +740,26 @@ def main(argv: list[str] | None = None) -> int:
         run_suites(["all"], suites_dir=args.suites_dir, runs_dir=args.runs_dir,
                    pi_binary=args.pi_binary, grade_run=args.grade,
                    repeat=args.repeat, deadline=args.deadline, arm=args.arm,
-                   single_prompt=args.single_prompt)
+                   single_prompt=args.single_prompt, specs=args.specs)
         return 0
 
     suite = load_suite(args.suites_dir, args.suite)
     provider, model = profile_pin(PROFILE)
     if args.dry_run:
         settings = arm_settings(args.arm)
+        if args.specs:
+            variant = load_variant(suite, args.specs)
+            prompt = _read_prompt(sorted((variant / "prompts").glob("*.md"))[0])
+        else:
+            prompt = suite.prompt
         print(shlex.join(pi_argv(args.pi_binary, PROFILE, RECORDER, provider,
-                                 model, suite.prompt,
+                                 model, prompt,
                                  extension=settings["extension"])))
         return 0
     results = _run_sessions(
         suite, runs_dir=args.runs_dir, pi_binary=args.pi_binary,
         repeat=args.repeat, grade_run=args.grade, deadline=args.deadline,
-        arm=args.arm, single_prompt=args.single_prompt,
+        arm=args.arm, single_prompt=args.single_prompt, specs=args.specs,
     )
     _print_task(suite, results, args.repeat)
     return 0

@@ -271,6 +271,80 @@ def test_check_groups_counts_each_module_both_ways(tmp_path):
     }
 
 
+def _phased_suite(tmp_path):
+    suite_dir = tmp_path / "suites" / "phased"
+    (suite_dir / "base" / "specs").mkdir(parents=True)
+    (suite_dir / "base" / "specs" / "roadmap.md").write_text("all phases, one file\n")
+    (suite_dir / "base" / "AGENTS.md").write_text("the phases are in specs/roadmap.md\n")
+    (suite_dir / "prompts").mkdir()
+    (suite_dir / "prompts" / "01.md").write_text("default prompt\n")
+    (suite_dir / "tests").mkdir()
+    (suite_dir / "tests" / "test_ok.py").write_text("def test_ok():\n    assert True\n")
+    joined = suite_dir / "spec-variants" / "joined" / "prompts"
+    joined.mkdir(parents=True)
+    (joined / "01.md").write_text("joined prompt\n")
+    split = suite_dir / "spec-variants" / "split"
+    (split / "prompts").mkdir(parents=True)
+    (split / "specs").mkdir()
+    (split / "prompts" / "01.md").write_text("split prompt\n")
+    (split / "AGENTS.md").write_text("one file per phase in specs/\n")
+    (split / "specs" / "phase-1.md").write_text("phase one\n")
+    (split / "delete.json").write_text(json.dumps(["specs/roadmap.md"]))
+    return harness.load_suite(tmp_path / "suites", "phased")
+
+
+def _variant_run(tmp_path, suite, specs):
+    return harness.run_suite(
+        suite, runs_dir=tmp_path / "runs", profile=PROFILE,
+        pi_binary=str(FIX / "fake-pi.sh"), specs=specs,
+    )
+
+
+def test_a_suite_without_a_variant_is_unchanged(tmp_path):
+    suite = _phased_suite(tmp_path)
+    run_dir = _variant_run(tmp_path, suite, None)
+    assert (Path(run_dir) / "prompt.txt").read_text().strip() == "default prompt"
+    workspace = Path(run_dir) / "workspace"
+    assert (workspace / "specs" / "roadmap.md").is_file()
+    assert (workspace / "AGENTS.md").read_text().strip() == (
+        "the phases are in specs/roadmap.md")
+
+
+def test_specs_joined_takes_the_variants_prompts(tmp_path):
+    suite = _phased_suite(tmp_path)
+    run_dir = _variant_run(tmp_path, suite, "joined")
+    assert (Path(run_dir) / "prompt.txt").read_text().strip() == "joined prompt"
+    assert (Path(run_dir) / "workspace" / "specs" / "roadmap.md").is_file()
+
+
+def test_specs_split_overlays_the_project_and_deletes_the_roadmap(tmp_path):
+    suite = _phased_suite(tmp_path)
+    run_dir = _variant_run(tmp_path, suite, "split")
+    workspace = Path(run_dir) / "workspace"
+    assert (Path(run_dir) / "prompt.txt").read_text().strip() == "split prompt"
+    assert (workspace / "specs" / "phase-1.md").is_file()
+    assert not (workspace / "specs" / "roadmap.md").exists()
+    assert (workspace / "AGENTS.md").read_text().strip() == (
+        "one file per phase in specs/")
+
+
+def test_unknown_specs_variant_names_the_ones_available(tmp_path):
+    suite = _phased_suite(tmp_path)
+    with pytest.raises(SystemExit) as error:
+        _variant_run(tmp_path, suite, "stepwise")
+    assert "joined" in str(error.value) and "split" in str(error.value)
+
+
+def test_run_sessions_records_the_variant(tmp_path):
+    suite = _phased_suite(tmp_path)
+    results = harness._run_sessions(
+        suite, runs_dir=tmp_path / "runs", pi_binary=str(FIX / "fake-pi.sh"),
+        repeat=1, grade_run=False, deadline=None, specs="split",
+    )
+    record = json.loads((results[0][0] / "run.json").read_text())
+    assert record["specs"] == "split"
+
+
 def test_run_sessions_writes_metrics(tmp_path):
     suite = harness.load_suite(SUITES, "add")
     results = harness._run_sessions(
