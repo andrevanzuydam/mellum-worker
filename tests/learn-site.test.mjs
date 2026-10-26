@@ -305,3 +305,12 @@ test("the harness is the measured instrument", () => {
   assert.doesNotMatch(page("project/index.md"), /\*\*The ladder\*\*/);
   assert.match(page("project/toolchain.md"), /Measured work lands in `docs\/superpowers\/research\/`/);
 });
+
+test("the lesson template opens with the two-sentence paragraph", () => {
+  const t = page("lesson-template.md");
+  const opening = t.split(/^# .+$/m)[1].split(/^## /m)[0].replace(/```[\s\S]*?```/g, "").trim();
+  assert.ok(opening.length > 0, "template has no opening paragraph");
+  assert.equal(opening.split(/(?<=\.)\s+/).filter(Boolean).length, 2);
+  assert.ok(opening.split(/\s+/).length <= 45, "opening is over 45 words");
+  assert.match(t, /two-sentence paragraph/);
+});

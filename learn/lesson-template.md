@@ -1,5 +1,7 @@
 # Lesson title
 
+The problem in one sentence. The solution in one sentence.
+
 ```yaml
 ---
 title: The worker decides when it is done
@@ -106,6 +108,9 @@ and the screen or badge that would test it.
 ---
 
 ### Repository conventions
+
+- A lesson opens with a two-sentence paragraph — the problem, then the
+  solution — 45 words or fewer, no heading, no badge and no link.
 
 - One lesson is one Markdown file under `learn/lessons/`.
   Do not copy a production source file into the lesson; quote the smallest
