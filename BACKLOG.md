@@ -10,6 +10,16 @@ never by line number.
 
 Reopen conditions, not promises.
 
+**`run.json`'s `wall` stops at the last traced event.** A censored session
+reports its wall as the time of the last trace row, not the time it was
+killed: LC.24's two censored `bare` sessions report 70 s and 180 s against a
+2,700 s deadline, and only the `deadline` marker file tells the truth
+([record](docs/superpowers/research/2026-10-25-lesson1-run.md)). Any table
+that quotes wall next to a censored session is understating it.
+*Reopens when* a record quotes wall for a censored session, or the harness
+report is next changed: write the kill time into `run.json` and let the
+marker stay as the boolean.
+
 **The foreground-server pathology is measured but not placed.** Three
 `no-facts` sessions hung on `uvicorn app:app --reload` / `python app.py` after
 143–460 s of silence and died at the 600 s deadline; the facts bullet they
@@ -19,21 +29,12 @@ pathology is Andre's (index P2) and belongs to **LC.7A**, which needs LC.5's
 written consent and runs after LC.19; a purpose-built guard is dormant on
 branch `lc11b-server-guard` at `420ba1d`. Do not run the confirming arm inside
 a lessons re-base: its record would have no page to land on.
-*Reopens when* LC.5 closes and LC.7A starts, or a suite run hangs on a
-foreground server again and the arm's three-way question (facts bullet, dormant
-guard, both) can land on a page.
-
-**Medium does not finish inside the harness deadline.** Every medium session
-in LC.13A's lesson arms — both `bare` and `worker`, three each — ran the full
-600 s and was killed while still issuing requests, walls 557–600 s. The
-45-session record ran medium `bare` at 359 s and `worker` at 204 s, so the
-machine was 1.7–3× slower that day. No medium claim may be made from a
-session that a deadline ended, and a bare/worker contrast there would measure
-the deadline. `--deadline` already exists; the open question is what value
-medium needs and whether a machine-speed note belongs in every record.
-*Reopens when* a medium arm is wanted for LC.16–LC.19 or the foreground-server
-arm: time one medium session first, set the deadline from it in the
-preregistration, and say so in the record.
+2026-10-25: reproduced on the unbounded arm — two of three `bare` easy
+sessions in LC.24 censored on `uvicorn … --reload`, with a record and a page
+([run](docs/superpowers/research/2026-10-25-lesson1-run.md)). The three-way
+arm is still owed.
+*Reopens when* LC.5 closes and LC.7A starts, or the arm's three-way question
+(facts bullet, dormant guard, both) can land on a page.
 
 **Recorded wall under-reports a stalled request.** `report()` in
 `learn/code/harness.py` derives wall from trace timestamps, and a request that
