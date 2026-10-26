@@ -9,6 +9,11 @@ backends: [llamacpp]
 
 # Thinking is working memory
 
+Stripping a reasoning model's thinking blocks looks like a cheaper prefill,
+but the output cap is the budget that binds and the worker's guards read those
+blocks. This page keeps them and names the arm that would settle the
+question.
+
 ## Problem
 
 **Badge:** `screen`
