@@ -27,6 +27,15 @@ test("lesson 1 names the three decisions the worker takes", () => {
 
 test("lesson 1 does not claim every medium session was killed", () => {
   assert.doesNotMatch(l, /every medium session, both arms, was killed/);
-  assert.match(l, /359 s/);
-  assert.match(l, /204 s/);
+  assert.match(l, /did not reproduce/);
+});
+
+test("lesson 1's evidence steps carry reference-run", () => {
+  for (const h of ["Evidence of the problem", "Validation"])
+    assert.match(section(h), /^\n+\*\*Badge:\*\* `reference-run`/);
+});
+
+test("lesson 1 reports a null rather than a pass-rate gap", () => {
+  assert.match(l, /null on both suites/);
+  assert.doesNotMatch(l, /passes where/);
 });

@@ -10,9 +10,9 @@ backends: [llamacpp]
 # The primary agent is the wrong worker
 
 The primary agent lets one small model plan, choose and decide it is finished,
-so a confident final over unchecked code is the result. The worker takes those
-three decisions out of the model's text and leaves the plan and the verdict
-with you.
+so its failures arrive as yours: a server that never returns, a file outside
+the layout, a burned deadline. The worker takes those decisions away and fails
+smaller.
 
 ## Problem
 
@@ -24,57 +24,51 @@ checked. Nothing outside the model knows what "finished" meant, so a missed
 phase, a narrowed test or a hang arrives as your result, and the turns, the
 context and the wall clock arrive as your bill.
 
-That is the pathology. This page tests whether moving the plan and the stop
-condition out of the model's hands answers it, and the evidence is thinner
-than the claim the page used to make: on easy an unbounded Pi finished one
-session in three, and the old 8/15 is retired. What survives is the shape of
-the bound and the baseline's medium contrast, 2/3 against 0/3.
+This page used to argue that from a pass rate. The run below does not support
+that: on easy and on medium the two arms passed the same number of sessions,
+and the older 8/15 is retired. What the run does support is the shape of the
+failure — what the unbounded agent costs while getting nowhere, and how much
+of it the bound removes.
 
 ## Eval case
 
 **Badge:** `screen`
 
-The easy suite from [Getting started](../getting-started/suite.md), one
-prompt: implement phase 1 of a small FastAPI complaints app, graded by hidden
-pytest plus `ruff`, `pyrefly` and `complexipy`. Three sessions per arm, one
-arm per policy, on llama.cpp:
+The easy and medium suites from [Getting started](../getting-started/suite.md),
+three sessions per arm, one arm per policy, on llama.cpp at n = 3. The run was
+preregistered with its arms, n, reading and decision rule fixed before it
+started:
 
-- `bare` — Pi with no extension: the **primary agent**, Mellum as the model
-  in charge, with Pi's seven file tools.
+- `bare` — Pi with no extension: the **primary agent**, Mellum as the model in
+  charge, with Pi's seven file tools.
 - `worker` — the shipped worker: prompt v5, the same seven tools, the
   empty-final nudge, the loop breaker and project facts.
 
-That pairing is the lesson's own comparison rather than an analogy: the only
-difference is the extension.
-
 ## Evidence of the problem
 
-**Badge:** `screen`
+**Badge:** `reference-run`
 
-Two samples of the same contrast, neither pooled with the other:
+Twelve sessions on Apple M1 Pro, 8 cores, 32 GiB, `--deadline 2700`, the
+learner's profile. Passes, and what each arm did on the way:
 
-| Sample | Primary agent | Bounded worker |
-| --- | --- | --- |
-| [The suite baseline](baseline.md), easy/medium/hard, n=3 each | 0/9 | 3/9 |
-| This run, easy only, n=3 | **1/3** | **2/3** |
-
-Per session, easy only:
-
-| Arm | Session | Passed | Turns | Failed checks | Tool errors | Peak input | Wall |
+| Suite | Arm | Passed | Failed checks | Requests | Tool errors | Peak input | Wall |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `bare` | 1 | **yes** | 20 | 0 | 2 | 1,589 | 189 s |
-| `bare` | 2 | no | 20 | 0 | 2 | 2,980 | 179 s |
-| `bare` | 3 | no | 18 | 2 | 2 | 1,589 | 90 s, then killed |
-| `worker` | 1 | **yes** | 21 | 0 | 4 | 1,639 | 185 s |
-| `worker` | 2 | no | 22 | 4 | 2 | 33,443 | 275 s |
-| `worker` | 3 | **yes** | 52 | 0 | 17 | 3,404 | 405 s |
+| easy | `bare` | 1/3 | 4, 4, 0 | 16, 13, 21 | 2, 2, 3 | 1,587 | 117, 70, 180 s |
+| easy | `worker` | 1/3 | 3, 0, 4 | 24, 37, 43 | 2, 7, 5 | 6,971 | 209, 291, 402 s |
+| medium | `bare` | 0/3 | 18, 18, 18 | 45, 54, 60 | 3, 0, 9 | 11,508 | 827, 997, 1,051 s |
+| medium | `worker` | 0/3 | 2, 12, 2 | 60, 26, 38 | 7, 1, 1 | 37,110 | 1,351, 587, 956 s |
 
-The baseline sample separates the two on the medium suite, where the worker
-took 2 of 3 and the primary agent none. This run adds what the baseline could
-not: **an unbounded Pi can pass this suite.** Its pass was not a fluke of
-spending more — `bare` peaked at 1,589–2,980 tokens, under the worker's
-1,639–33,443, and its failures were ordinary ones, one of them a hang.
-"Unbounded" did not mean "bigger".
+The pass counts are one session apart on easy and identical on medium, so the
+rule reads **null on both suites**. The baseline's medium sample — the worker
+at 2/3 against the primary agent's 0/3 on an M5 Max — did not reproduce here,
+and the page no longer leans on it.
+
+Two of the three `bare` easy sessions ended on the deadline, both after a
+foreground `uvicorn … --reload` that never returned; `worker` censored none.
+`main.py` appeared outside the layout in two `bare` sessions and in no worker
+session. On medium both arms passed nothing, which is a floor: a suite both
+arms fail cannot separate them, and the null there means "not separated", not
+"equivalent".
 
 ## Solution
 
@@ -99,50 +93,50 @@ The plan stays with the operator — one task per `/mellum` — and in a measure
 run the verdict is a separate act: the hidden tests are copied in and scored
 after the model has stopped talking.
 
-The guard is the thinnest of the three: on easy it never fired, zero nudges in
-ten sessions (LC.13A), so what carried those runs was the test command and the
-operator's scoring.
+The guard is the thinnest of the three: it fired zero times in this run and in
+the ten easy sessions before it, so what carried these sessions was the test
+command and the operator's scoring.
 
 ## Validation
 
-**Badge:** `screen`
+**Badge:** `reference-run`
 
 ### Evidence of the solution
 
-The comparison is one change — who holds the loop — on the same model, the
-same tasks and the same machine. What it shows is a direction and a floor,
-not a rate:
+Same twelve sessions, read as failure cost rather than success rate:
 
-| Suite | Arm | Passes | Turns | Failed checks | Tool errors | Peak input | Wall |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| easy | primary agent (`bare`) | 1/3 | 19.7 | 0.7 | 2.0 | 2,980 | 179 s |
-| easy | worker | 2/3 | 31.7 | 1.3 | 7.7 | 33,443 | 405 s |
+| Suite | Arm | Passed | Failed checks | Censored | Outside the layout |
+| --- | --- | --- | --- | --- | --- |
+| easy | `bare` | 1/3 | 4, 4, 0 | **2** | **2** |
+| easy | `worker` | 1/3 | 3, 0, 4 | 0 | 0 |
+| medium | `bare` | 0/3 | 18, 18, 18 | 0 | 0 |
+| medium | `worker` | 0/3 | 2, 12, 2 | 0 | 0 |
 
-Averages hide the shape: the worker's one failure was its most expensive
-session (33,443 tokens, 4 failed checks), and its two passes cost 185 s and
-405 s. The primary agent's pass cost 189 s and its failure 179 s. At n=3 the
-difference is **one session**, which is why the page says direction and not
-gap.
+The bound did not buy a pass. It bought cheaper failures: the worker never
+burned a deadline, never wrote outside the layout, and on medium its failed
+checks were 2, 12 and 2 against 18, 18 and 18. One `bare` session did pass —
+after its work was finished, while it sat on a server it had started and could
+not stop, and the harness killed it at the deadline and scored it anyway.
 
 ## Interpretation
 
-The weakest badge is `screen`: one suite of one task, three sessions, one
-machine, and the second sample of a contrast whose first sample pointed the
-other way — the baseline had the primary agent at 0/9. Neither sample is a
-rate.
+The weakest badge is `screen`: the Eval case, the pathology and the mechanism
+rest on one machine, one task per suite, and n = 3. Steps 3 and 5 carry
+`reference-run` because the run was preregistered, recorded and published —
+not because its answer was the one the page wanted.
 
-Lesson 1 used to say that Mellum as the main agent passes 8 of 15 and that
-the same model bounded passes 15. **That claim is retired.** It was oMLX
-ladder rungs, it does not transfer, and this backend's samples do not
-reproduce a gap of that size. What survives is the design argument — a
-bounded worker returns control between tasks, and the primary agent's context
-and failures are the operator's problem — and the medium suite's 2/3 against
-0/3 in the baseline.
+The null is the finding. At n = 3 the pass rate does not separate a bounded
+worker from an unbounded one on easy, and medium cannot separate them at all
+while both arms fail every session. What separates them is the failure: the
+unbounded agent starts servers it does not stop and writes where it was not
+asked to, and the operator pays in wall clock and in a result they then have
+to check.
 
-What would upgrade this: n larger than three, and a medium run on a machine
-and deadline that let the suite finish. Medium fits 600 s on the M5 Max where
-the baseline ran — Baseline Pi 0/3 at 359 s, Baseline Worker 2/3 at 204 s —
-and does not on the M1 Pro, roughly 1.7–3× slower, where medium now runs with
-`--deadline 1800`. Until then the honest sentence is "on easy, an unbounded Pi
-sometimes finishes; on medium, the baseline's primary agent did not in nine
-sessions".
+Changed 2026-10-25: steps 3 and 5 moved from `screen` to `reference-run` on
+[the record](https://github.com/pauleveritt/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson1-run.md),
+and the page's claim narrowed from a pass-rate gap to the cost of failing. The
+baseline's medium 2/3 against 0/3 was not reproduced.
+
+What would upgrade this: a medium task the worker can pass, so the floor
+becomes a contrast; n larger than three; and the same run on a second machine,
+since nothing here transfers across hardware.

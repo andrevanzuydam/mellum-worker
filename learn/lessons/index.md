@@ -15,7 +15,7 @@ what it rests on now.
 ## Start here
 
 - **[The suite baseline](baseline.md)** — Baseline Pi and the Baseline Worker on easy, medium and hard, n = 3, on llama.cpp. *(Paul)*
-1. **[The primary agent is the wrong worker](primary-agent.md)** — An unbounded Pi passed 1 of 3 easy sessions; the baseline separates them on medium. *(Paul)*
+1. **[The primary agent is the wrong worker](primary-agent.md)** — Neither suite separates the two arms on passes at n = 3; what separates them is how they fail. *(Paul)*
 
 ## Paul's lessons
 
