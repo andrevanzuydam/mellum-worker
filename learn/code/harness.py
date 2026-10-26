@@ -510,7 +510,7 @@ def score(run: Path, suite: Suite) -> tuple[bool, str]:
     return score_workspace(Path(run) / "workspace", suite)
 
 
-def score_details(run: Path, suite: Suite) -> tuple[bool, str, list[str]]:
+def score_details(run: Path, suite: Suite) -> tuple[bool, str, list[str], bool]:
     return score_workspace_details(Path(run) / "workspace", suite)
 
 
@@ -526,7 +526,9 @@ def check_groups(expected, missing) -> dict[str, dict[str, int]]:
     return groups
 
 
-def score_workspace_details(workspace: Path, suite: Suite) -> tuple[bool, str, list[str]]:
+def score_workspace_details(
+    workspace: Path, suite: Suite
+) -> tuple[bool, str, list[str], bool]:
     workspace = Path(workspace)
     target = workspace / "grader_tests"
     if target.exists():
@@ -542,15 +544,18 @@ def score_workspace_details(workspace: Path, suite: Suite) -> tuple[bool, str, l
         env={**os.environ, "PYTHONPATH": str(workspace)},
     )
     output = (result.stdout + result.stderr).strip()
+    # A collection error (or no tests at all) means the grader never ran, which
+    # is a different finding from the worker failing every check.
+    grader_error = result.returncode not in (0, 1) or "errors during collection" in output
     missing = sorted(test for test in suite.expected if f"PASSED {test}" not in output)
     lines = output.splitlines()[-20:]
     if missing:
         lines.append("missing expected tests: " + ", ".join(missing))
-    return result.returncode == 0 and not missing, "\n".join(lines), missing
+    return result.returncode == 0 and not missing, "\n".join(lines), missing, grader_error
 
 
 def score_workspace(workspace: Path, suite: Suite) -> tuple[bool, str]:
-    passed, tail, _ = score_workspace_details(workspace, suite)
+    passed, tail, _missing, _error = score_workspace_details(workspace, suite)
     return passed, tail
 
 
@@ -572,13 +577,13 @@ def _run_sessions(
                             deadline=deadline, arm=arm,
                             single_prompt=single_prompt, specs=specs)
         grades = grade(run_dir / "workspace") if grade_run else []
-        tests_passed, tail, missing = score_details(run_dir, suite)
+        tests_passed, tail, missing, grader_error = score_details(run_dir, suite)
         failed_checks = len(missing)
         quality_ok = all(
             ok for name, ok, _ in grades if name in {"ruff", "complexipy"}
         ) if grades else True
         contaminated = (run_dir / "contaminated").exists()
-        passed = tests_passed and quality_ok and not contaminated
+        passed = tests_passed and quality_ok and not contaminated and not grader_error
         metrics = report(run_dir)
         leaked_file = run_dir / "leaked.json"
         if leaked_file.is_file():
@@ -598,6 +603,7 @@ def _run_sessions(
             "quality_ok": quality_ok,
             "contaminated": contaminated,
             "failed_checks": failed_checks,
+            "grader_error": grader_error,
             "missing_checks": missing,
             "check_groups": check_groups(suite.expected, missing),
             **{key: value for key, value in metrics.items()
@@ -605,7 +611,7 @@ def _run_sessions(
         }
         (run_dir / "run.json").write_text(json.dumps(record, indent=2) + "\n")
         results.append((run_dir, passed, tail, grades, metrics,
-                        tests_passed, quality_ok, contaminated))
+                        tests_passed, quality_ok, contaminated, grader_error))
     return results
 
 
@@ -613,9 +619,9 @@ def _print_task(
     suite: Suite, results: list[tuple], repeat: int
 ) -> int:
     for index, (run_dir, passed, tail, grades, counts, tests_passed,
-                quality_ok, contaminated) in enumerate(results, 1):
+                quality_ok, contaminated, grader_error) in enumerate(results, 1):
         print(_line(suite, run_dir, passed, counts, repeat, index,
-                    tests_passed, quality_ok, contaminated))
+                    tests_passed, quality_ok, contaminated, grader_error))
         _print_grades(grades)
         if not passed:
             print(tail, file=sys.stderr)
@@ -680,6 +686,7 @@ def _line(
     tests_passed: bool = True,
     quality_ok: bool = True,
     contaminated: bool = False,
+    grader_error: bool = False,
 ) -> str:
     tag = suite.name + (f" [{index}/{repeat}]" if repeat > 1 else "")
     n_text = f"n={repeat}; " if repeat == 1 else ""
@@ -690,6 +697,8 @@ def _line(
         notes.append("quality FAIL")
     if contaminated:
         notes.append("grader touched")
+    if grader_error:
+        notes.append("grader error")
     note = ("; " + ", ".join(notes)) if notes else ""
     nudges = counts.get("nudges")
     fires = "" if nudges is None else f", {nudges} nudges"

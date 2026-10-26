@@ -180,6 +180,12 @@ not the same as failed sessions. A run records them by name and groups them by
 grader module, so a suite whose graders are one file per phase reports which
 phase's checks are missing, not only how many.
 
+### grader error
+
+A run whose hidden grader could not run: pytest stopped on a collection error,
+so no check was executed and every expected ID counts as missing. Recorded as
+`grader_error` so the record cannot be read as the worker failing every check.
+
 ### spec variant
 
 An alternative layout of a suite's project and the prompts that go with it,

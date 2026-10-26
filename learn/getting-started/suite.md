@@ -118,7 +118,10 @@ one thing wrong. A grader that cannot tell them apart is not a grader.
 5. The line prints the verdict and the counts; the grader lines print beside
    it. The run's `run.json` also names the expected tests that did not pass and
    groups them by grader module, so a session that fails four of six checks
-   says which module those four came from.
+   says which module those four came from. A grader that cannot run at all —
+   a collection error, a module the workspace never created — is recorded as
+   `grader_error`, because "the checks failed" and "the checks never ran" are
+   different findings.
 
 A failure is a finding about the code, not necessarily about the tests: a
 project can pass its hidden tests and still carry an unused import, a type

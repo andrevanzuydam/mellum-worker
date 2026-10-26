@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A grader that cannot run is no longer reported as failing checks. When pytest
+  stops on a collection error, `run.json` carries `grader_error: true` and the
+  score line says `grader error`, because "18 checks failed" and "the checks
+  never ran" are different findings.
+
 - The harness records more than a count when a session fails its hidden checks:
   `run.json` now carries `missing_checks`, the expected test IDs that did not
   pass, and `check_groups`, the same tally per grader module. A suite whose
@@ -45,6 +50,13 @@ Versions match git tags; pin one in both install lines.
   removed the latter.
 
 ### Changed
+
+- The medium suite's specs now carry the acceptance criteria its hidden checks
+  read — the file layout (`app.py`, `models.py`, `templates/`, `tests/`), the
+  markup conventions, and each phase's criteria — so a brief that points at the
+  spec asks for what is graded. Two LC.19 attempts hung, then a third completed
+  every phase and scored 18/18 for a reason the spec never mentioned: nothing
+  had asked for `models.py`.
 
 - The medium suite no longer leaves verification to chance. Its roadmap asks for
   the home page to be exercised in process with `TestClient` as well as for a
