@@ -335,6 +335,41 @@ def test_unknown_specs_variant_names_the_ones_available(tmp_path):
     assert "joined" in str(error.value) and "split" in str(error.value)
 
 
+def test_medium_ships_both_spec_variants():
+    suite = harness.load_suite(harness.SUITES, "medium")
+    joined = harness.load_variant(suite, "joined")
+    split = harness.load_variant(suite, "split")
+    assert (split / "specs" / "phase-4.md").is_file()
+    assert json.loads((split / "delete.json").read_text()) == ["specs/roadmap.md"]
+    joined_prompts = sorted((joined / "prompts").glob("*.md"))
+    split_prompts = sorted((split / "prompts").glob("*.md"))
+    assert len(joined_prompts) == len(split_prompts) == 4
+    for index, (left, right) in enumerate(zip(joined_prompts, split_prompts), 1):
+        # the arms differ in one thing only: the file the pointer names
+        assert left.read_text().replace("specs/roadmap.md", "SPEC") == \
+            right.read_text().replace(f"specs/phase-{index}.md", "SPEC")
+
+
+def test_the_split_keeps_the_roadmaps_phases():
+    suite = harness.load_suite(harness.SUITES, "medium")
+    roadmap = (suite.root / "base" / "specs" / "roadmap.md").read_text()
+    blocks, current = {}, None
+    for line in roadmap.splitlines():
+        if line.startswith("## Phase"):
+            current = line.removeprefix("## ").split(" \u2014 ")[0].lower().replace(" ", "-")
+            blocks[current] = [line.removeprefix("## ")]
+        elif line.startswith("## "):
+            current = None
+        elif current is not None and line.strip():
+            blocks[current].append(line.strip())
+    assert sorted(blocks) == ["phase-1", "phase-2", "phase-3", "phase-4"]
+    split = harness.load_variant(suite, "split")
+    for name, lines in blocks.items():
+        text = (split / "specs" / f"{name}.md").read_text()
+        for line in lines:
+            assert line in text, f"{name} lost: {line}"
+
+
 def test_run_sessions_records_the_variant(tmp_path):
     suite = _phased_suite(tmp_path)
     results = harness._run_sessions(
