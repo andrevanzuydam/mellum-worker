@@ -9,6 +9,11 @@ backends: [llamacpp]
 
 # A short prompt, not a procedure
 
+A prompt that narrates a six-step procedure gives a small model more to
+follow than the project needs, and every line is paid on every request. What
+ships is 643 characters with no procedure, and this run does not show it
+buying a pass.
+
 ## Problem
 
 **Badge:** `screen`
