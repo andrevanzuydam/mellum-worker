@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readdirSync, readFileSync, rmSyn
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { PHASES, finalText, bestPytest, asTodo, asCode, looksLikePytest, freezeName, gateTestName, GATE_DIR, materializeGate, flowBlock, PHASE_CALL_CAP, BASE_GUIDE, toolCallSummaries } from "../extensions/mellum-flow.ts";
+import { PHASES, finalText, bestPytest, asTodo, asCode, looksLikePytest, freezeName, gateTestName, GATE_DIR, materializeGate, flowBlock, PHASE_CALL_CAP, BASE_GUIDE, toolCallSummaries, reviewFromTestFailure } from "../extensions/mellum-flow.ts";
 
 const asstText = (t) => ({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: t }] } });
 
@@ -38,6 +38,32 @@ test("toolCallSummaries returns nothing for non-tool events and junk", () => {
 	assert.deepEqual(toolCallSummaries(asstText("just thinking out loud")), []);
 	assert.deepEqual(toolCallSummaries(null), []);
 	assert.deepEqual(toolCallSummaries({ type: "message_end", message: {} }), []);
+});
+
+// The gate failure goes into REVIEW.md LABELLED so the coder fixes the app, not the test. A bare
+// pytest tail names tests/test_gate_phase_N.py and reads as "make these pass", which a small model
+// satisfies by editing that test (pointless — the harness restores it). So: fix-the-app label, and
+// strip the gate test-file PATHS while keeping the test name + reason.
+test("reviewFromTestFailure labels it as the app failing and says do not edit tests", () => {
+	const out = reviewFromTestFailure("E   assert 404 == 303\n");
+	assert.match(out, /YOUR APP FAILED/);
+	assert.match(out, /Fix the application code/);
+	assert.match(out, /do NOT edit|Do NOT edit/i);
+	assert.match(out, /assert 404 == 303/); // the behaviour/reason is kept
+});
+
+test("reviewFromTestFailure strips the gate test-file PATH but keeps the test name", () => {
+	const tail = "FAILED tests/test_gate_phase_5.py::test_archive_resolved_complaint - assert 404 == 303";
+	const out = reviewFromTestFailure(tail);
+	assert.ok(!out.includes("tests/test_gate_phase_5.py"), "the test-file path must be gone");
+	assert.match(out, /test_archive_resolved_complaint/); // the test NAME (the behaviour) stays
+	assert.match(out, /assert 404 == 303/);
+});
+
+test("reviewFromTestFailure neutralises a bare gate-file mention", () => {
+	const out = reviewFromTestFailure("see tests/test_gate_phase_2.py for details");
+	assert.ok(!out.includes("test_gate_phase_2.py"));
+	assert.match(out, /the acceptance test/);
 });
 
 test("toolCallSummaries lists multiple tool calls in one message_end", () => {

@@ -331,6 +331,26 @@ function runTests(cwd: string): Promise<{ ok: boolean; tail: string }> {
 
 const textResult = (text: string, isError = false) => ({ content: [{ type: "text", text }], isError });
 
+/** Turn a failed gate run into coder feedback for REVIEW.md, LABELLED so the model fixes the APP,
+ * not the test. Two problems to avoid: (1) a bare pytest tail reads like "make these pass", which a
+ * small model satisfies by EDITING the named test file — pointless, the harness restores the frozen
+ * gate before grading; (2) the tail names `tests/test_gate_phase_N.py`, pointing the model straight
+ * at the file to edit. So we prepend an explicit label ("your app failed; fix app.py/models.py;
+ * never touch the tests") and strip the gate test-file PATHS, keeping the test NAME and the reason
+ * (the behaviour that's wrong) but not a file to open. */
+export function reviewFromTestFailure(tail: string): string {
+	const behaviour = tail
+		.replace(/\S*test_gate_phase_\d+\.py::/g, "") // drop "tests/test_gate_phase_5.py::", keep the test name
+		.replace(/\S*test_gate_phase_\d+\.py\b/g, "the acceptance test"); // any bare file mention
+	return (
+		"=== YOUR APP FAILED THESE ACCEPTANCE CHECKS ===\n" +
+		"These are behaviours your application got wrong. Fix the application code (app.py, models.py, " +
+		"templates/) so they pass. Do NOT edit, weaken or delete any test — the harness restores the " +
+		"frozen tests before grading, so changing a test is discarded and wasted effort.\n\n" +
+		behaviour
+	);
+}
+
 /** Read a file, or "" if it does not exist. Content flows through files, NOT tool arguments —
  * oMLX's tool-call parser drops a tool call whose JSON arguments are a large multi-line string,
  * so the orchestrator calls every tool with NO arguments and the tools read TASK.md / REVIEW.md. */
@@ -565,10 +585,7 @@ export default function (pi: any): void {
 			// from the plan blind and repeating the same omission. On pass, leave REVIEW.md alone.
 			if (!ok) {
 				ensurePlan();
-				writeFileSync(
-					planPath("REVIEW.md"),
-					`=== ACCEPTANCE TEST FAILED — make these pass (this is the gate you must satisfy) ===\n${tail}`,
-				);
+				writeFileSync(planPath("REVIEW.md"), reviewFromTestFailure(tail));
 			}
 			return textResult(`TESTS: ${ok ? "PASS" : "FAIL"}\n${tail}`, false);
 		},

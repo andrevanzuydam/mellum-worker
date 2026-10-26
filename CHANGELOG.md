@@ -42,9 +42,12 @@ Versions match git tags; pin one in both install lines.
   (the reviewer's prose) but `test()` wrote nothing there, so after a failed gate the coder rebuilt
   from the plan blind and repeated the same miss — e.g. a required route it never implemented,
   failing with a 404 every round, with best-of-N making the identical omission both times. `test()`
-  now writes the failing pytest tail to `REVIEW.md`, so the coder sees exactly which assertion/route
-  failed and can fix that specific gap (the "didn't pass — here's what failed, try again" loop the
-  free arm already had, now in the default forced flow too).
+  now writes the failing checks to `REVIEW.md`, which `code()` reads, so the coder sees the gap and
+  can fix it (the "didn't pass — here's what failed, try again" loop the free arm already had). The
+  feedback is **labelled for the app, not the test**: it says the application failed these checks,
+  to fix `app.py`/`models.py`/`templates/`, and never to edit a test (the harness restores the
+  frozen gate before grading anyway) — and it strips the gate test-file paths, so a small model is
+  not pointed at a test file to edit instead of fixing the code.
 - The flow harness never logged a sub-agent's tool calls to the live feed: the streaming keyed on
   an event type (`tool_call`) that pi's `--mode json` does not emit for a sub-agent, so a hung phase
   showed only a frozen event count with no command. It now reads the schema pi actually emits
