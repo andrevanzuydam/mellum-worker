@@ -80,9 +80,31 @@ export function applyNonblock(toolName: string, input: unknown): string | undefi
 	return launcher;
 }
 
+/** Default per-command timeout (seconds) for a bash/shell call. Pi's bash supports a `timeout`
+ * argument that kills the whole process tree on expiry, but it is OPTIONAL with NO default — so a
+ * blocking command the model runs without one hangs until the orchestrator's global reap (Qwen's
+ * phase-2 freeze). We DON'T forbid long commands; we just give Pi a default bound to enforce when
+ * the model omits one, so a hang dies in seconds and the sub-agent continues instead of the whole
+ * phase freezing. A server is still handled by the threading rewrite above (returns at once). */
+export const DEFAULT_BASH_TIMEOUT_S = 120;
+
+/** Default the bash/shell `timeout` argument (in place) when the model did not set a positive one.
+ * Returns the applied default, or undefined when the model's own timeout is kept. */
+export function applyTimeout(toolName: string, input: unknown, secs = DEFAULT_BASH_TIMEOUT_S): number | undefined {
+	if (toolName !== "bash" && toolName !== "shell") return undefined;
+	if (!input || typeof input !== "object") return undefined;
+	const cur = (input as Record<string, unknown>).timeout;
+	if (cur === undefined || cur === null || !(Number(cur) > 0)) {
+		(input as Record<string, unknown>).timeout = secs;
+		return secs;
+	}
+	return undefined; // the model set its own timeout — leave it
+}
+
 export default function (pi: { on: (event: string, handler: (event: any) => unknown) => void }): void {
 	pi.on("tool_call", (event) => {
-		applyNonblock(event?.toolName, event?.input);
-		return undefined; // never block — the command still runs, just threaded
+		applyNonblock(event?.toolName, event?.input); // thread a server so it returns at once
+		applyTimeout(event?.toolName, event?.input); // and bound everything else with a default timeout
+		return undefined; // never block — the command still runs, just threaded and time-bounded
 	});
 }

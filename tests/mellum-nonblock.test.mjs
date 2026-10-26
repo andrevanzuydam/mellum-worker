@@ -1,7 +1,32 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { blockingLauncher, wrap, applyNonblock } from "../extensions/mellum-nonblock.ts";
+import { blockingLauncher, wrap, applyNonblock, applyTimeout, DEFAULT_BASH_TIMEOUT_S } from "../extensions/mellum-nonblock.ts";
+
+// Pi's bash enforces a `timeout` (killing the process tree) but defaults to NONE, so a blocking
+// command the model runs without one hangs until the global reap — the Qwen phase-2 freeze. We
+// default it so Pi's own mechanism bounds the hang; this reuses Pi's bash, it does not replace it.
+test("applyTimeout defaults a missing bash timeout and leaves the model's own alone", () => {
+	const i1 = { command: "sleep 999" };
+	assert.equal(applyTimeout("bash", i1), DEFAULT_BASH_TIMEOUT_S);
+	assert.equal(i1.timeout, DEFAULT_BASH_TIMEOUT_S);
+
+	const i2 = { command: "uv run pytest", timeout: 300 }; // model asked for 300s — keep it
+	assert.equal(applyTimeout("bash", i2), undefined);
+	assert.equal(i2.timeout, 300);
+
+	const i3 = { command: "x", timeout: 0 }; // 0/invalid is treated as unset
+	applyTimeout("bash", i3);
+	assert.equal(i3.timeout, DEFAULT_BASH_TIMEOUT_S);
+});
+
+test("applyTimeout only touches bash/shell calls", () => {
+	const w = { path: "app.py", content: "x" };
+	assert.equal(applyTimeout("write", w), undefined);
+	assert.equal("timeout" in w, false);
+	assert.equal(applyTimeout("shell", { command: "ls" }), DEFAULT_BASH_TIMEOUT_S);
+});
+
 
 test("detects server / long-running launchers", () => {
 	for (const c of [
