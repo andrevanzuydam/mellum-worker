@@ -25,6 +25,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- Lesson 1, "The primary agent is the wrong worker", now opens with a
+  two-sentence summary, names the pathology before the measurement, says
+  which three decisions leave the model's hands instead of advising against
+  a role, and stops claiming every medium session was killed at 600 s.
+
 - `reference-run` is earned on the suites now, not on `ladder/`: the badge
   names a preregistration, a record in `docs/superpowers/research/` and a
   `research-*` release. `ladder/` and `docs/ladder/` stay as the internal

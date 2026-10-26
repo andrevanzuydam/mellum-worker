@@ -9,18 +9,26 @@ backends: [llamacpp]
 
 # The primary agent is the wrong worker
 
+The primary agent lets one small model plan, choose and decide it is finished,
+so a confident final over unchecked code is the result. The worker takes those
+three decisions out of the model's text and leaves the plan and the verdict
+with you.
+
 ## Problem
 
 **Badge:** `screen`
 
-Give Mellum the whole job — the plan, the tools, the decision that it is
-done — and on the easy suite it sometimes finishes and sometimes does not,
-and the same is true of the bounded worker. The difference between them is
-smaller than the claim this page used to make.
+Ask Mellum to own the plan, pick the tools and decide it is finished, and the
+failure is not a wrong answer: it is a confident final over work it never
+checked. Nothing outside the model knows what "finished" meant, so a missed
+phase, a narrowed test or a hang arrives as your result, and the turns, the
+context and the wall clock arrive as your bill.
 
-The idea is still the right one: what changes is who holds the plan and who
-decides the work is finished. What the numbers will not support, on this
-backend, is a large gap.
+That is the pathology. This page tests whether moving the plan and the stop
+condition out of the model's hands answers it, and the evidence is thinner
+than the claim the page used to make: on easy an unbounded Pi finished one
+session in three, and the old 8/15 is retired. What survives is the shape of
+the bound and the baseline's medium contrast, 2/3 against 0/3.
 
 ## Eval case
 
@@ -72,17 +80,28 @@ spending more — `bare` peaked at 1,589–2,980 tokens, under the worker's
 
 **Badge:** `screen`
 
-Do not make the model the main agent. Give it one task, seven file tools, a
-test command and a stop condition; keep the plan, the context and the
-checking outside.
+The model is not the thing you change. Pi is the main agent in both arms and
+Mellum is the model inside it; what changes is which decisions the model's own
+text is allowed to make. The worker takes three of them
+(`extensions/mellum-worker.ts`):
 
-That is what `/mellum` does in this center: the worker prompt replaces the
-main prompt, the tools are narrowed, and the session comes back to you
-between tasks. The extension is the vehicle; the bound is the point.
+- **Which tools exist:** `pi.setActiveTools(WORKER_TOOLS)` narrows the set to
+  seven file tools — `read`, `grep`, `find`, `ls`, `bash`, `edit`, `write`
+  (line 411).
+- **What the instructions are:** `before_provider_request` replaces the system
+  message with prompt v5, whose last line defines done as "the test command
+  exits 0" (line 577).
+- **Whether the turn is finished:** `agent_before_settle` can refuse to settle
+  an empty turn, up to three times, and the loop breaker blocks the next
+  identical tool call after five (line 614).
 
-This half of the lesson is untouched by the measurement above. It is also the
-half a learner can act on, which is why the page keeps it while retiring the
-rate.
+The plan stays with the operator — one task per `/mellum` — and in a measured
+run the verdict is a separate act: the hidden tests are copied in and scored
+after the model has stopped talking.
+
+The guard is the thinnest of the three: on easy it never fired, zero nudges in
+ten sessions (LC.13A), so what carried those runs was the test command and the
+operator's scoring.
 
 ## Validation
 
@@ -120,7 +139,10 @@ bounded worker returns control between tasks, and the primary agent's context
 and failures are the operator's problem — and the medium suite's 2/3 against
 0/3 in the baseline.
 
-What would upgrade this: a medium run with a deadline that lets the suite
-finish (today every medium session, both arms, was killed at 600 s), and n
-larger than three. Until then the honest sentence is "on easy, an unbounded
-Pi sometimes finishes; on medium, it did not in nine sessions".
+What would upgrade this: n larger than three, and a medium run on a machine
+and deadline that let the suite finish. Medium fits 600 s on the M5 Max where
+the baseline ran — Baseline Pi 0/3 at 359 s, Baseline Worker 2/3 at 204 s —
+and does not on the M1 Pro, roughly 1.7–3× slower, where medium now runs with
+`--deadline 1800`. Until then the honest sentence is "on easy, an unbounded Pi
+sometimes finishes; on medium, the baseline's primary agent did not in nine
+sessions".
