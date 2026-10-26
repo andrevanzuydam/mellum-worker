@@ -2,7 +2,7 @@
 phase: LC
 feature_cycle: LC.24
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # Lesson 1 as the Exemplar Implementation Plan
@@ -387,3 +387,22 @@ git commit -m "docs(lc24): record lesson 1's reference run and badge it"
 ```bash
 git add -A && git commit -m "docs(lc24): close the cycle"
 ```
+
+## Result
+
+2026-10-25. Shipped: Lesson 1 rewritten (pathology-first Problem, the three
+decisions named with file:line, terse two-sentence opening), the rule in
+`learn/lesson-template.md`, `reference-run` re-pointed from `docs/ladder/` to
+the suites with the four instrument sentences following, one preregistered run
+of twelve sessions, its record, and `research-2026-10-25`.
+
+The run came back **null on both suites** — easy 1/3 against 1/3, medium 0/3
+against 0/3 — and the baseline's medium 2/3 against 0/3 did not reproduce, so
+steps 3 and 5 carry `reference-run` for a null and the page now argues from
+the cost of failing: two of three `bare` easy sessions censored on a
+foreground server and `main.py` written outside the layout twice, against none
+for `worker`. `npm test` 366/366, `docs-caps` 4/4.
+
+Owed and recorded elsewhere: the other eight lesson pages' terse paragraphs
+(follow-up), LC.19's suite-shaped instrument (its row), and the `wall` metric
+that understates censored sessions ([backlog](../BACKLOG.md#backlog)).
