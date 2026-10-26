@@ -242,10 +242,33 @@ def test_score_details_counts_expected_failures(tmp_path):
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     (workspace / "add.py").write_text("def add(a, b):\n    return 0\n")
-    passed, tail, failed = harness.score_workspace_details(workspace, suite)
+    passed, tail, missing = harness.score_workspace_details(workspace, suite)
     assert not passed
-    assert failed == 1
+    assert missing == ["grader_tests/test_add.py::test_add"]
     assert "test_add" in tail
+
+
+def test_check_groups_counts_each_module_both_ways(tmp_path):
+    suite_dir = tmp_path / "suites" / "twophase"
+    (suite_dir / "tests").mkdir(parents=True)
+    (suite_dir / "tests" / "test_phase1_home.py").write_text(
+        "def test_home():\n    assert True\n")
+    (suite_dir / "tests" / "test_phase2_board.py").write_text(
+        "def test_board():\n    assert False\n")
+    (suite_dir / "expected.json").write_text(json.dumps([
+        "grader_tests/test_phase1_home.py::test_home",
+        "grader_tests/test_phase2_board.py::test_board",
+    ]))
+    (suite_dir / "task.md").write_text("Build it.\n")
+    suite = harness.load_suite(tmp_path / "suites", "twophase")
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    _passed, _tail, missing = harness.score_workspace_details(workspace, suite)
+    assert missing == ["grader_tests/test_phase2_board.py::test_board"]
+    assert harness.check_groups(suite.expected, missing) == {
+        "test_phase1_home.py": {"missing": 0, "total": 1},
+        "test_phase2_board.py": {"missing": 1, "total": 1},
+    }
 
 
 def test_run_sessions_writes_metrics(tmp_path):
@@ -259,6 +282,9 @@ def test_run_sessions_writes_metrics(tmp_path):
     assert record["suite"] == "add"
     assert record["passed"] is True
     assert record["failed_checks"] == 0
+    assert record["missing_checks"] == []
+    # the fixture suite declares no expected.json, so there are no groups to report
+    assert record["check_groups"] == {}
     assert record["turns"] == 0
     assert record["context"] is None
     assert record["wall"] is None

@@ -476,11 +476,23 @@ def score(run: Path, suite: Suite) -> tuple[bool, str]:
     return score_workspace(Path(run) / "workspace", suite)
 
 
-def score_details(run: Path, suite: Suite) -> tuple[bool, str, int]:
+def score_details(run: Path, suite: Suite) -> tuple[bool, str, list[str]]:
     return score_workspace_details(Path(run) / "workspace", suite)
 
 
-def score_workspace_details(workspace: Path, suite: Suite) -> tuple[bool, str, int]:
+def check_groups(expected, missing) -> dict[str, dict[str, int]]:
+    """Count the expected checks per grader module, missing and total."""
+    groups: dict[str, dict[str, int]] = {}
+    for test in expected:
+        module = test.split("::")[0].rsplit("/", 1)[-1]
+        groups.setdefault(module, {"missing": 0, "total": 0})["total"] += 1
+    for test in missing:
+        module = test.split("::")[0].rsplit("/", 1)[-1]
+        groups[module]["missing"] += 1
+    return groups
+
+
+def score_workspace_details(workspace: Path, suite: Suite) -> tuple[bool, str, list[str]]:
     workspace = Path(workspace)
     target = workspace / "grader_tests"
     if target.exists():
@@ -496,11 +508,11 @@ def score_workspace_details(workspace: Path, suite: Suite) -> tuple[bool, str, i
         env={**os.environ, "PYTHONPATH": str(workspace)},
     )
     output = (result.stdout + result.stderr).strip()
-    missing = [test for test in suite.expected if f"PASSED {test}" not in output]
+    missing = sorted(test for test in suite.expected if f"PASSED {test}" not in output)
     lines = output.splitlines()[-20:]
     if missing:
         lines.append("missing expected tests: " + ", ".join(missing))
-    return result.returncode == 0 and not missing, "\n".join(lines), len(missing)
+    return result.returncode == 0 and not missing, "\n".join(lines), missing
 
 
 def score_workspace(workspace: Path, suite: Suite) -> tuple[bool, str]:
@@ -525,7 +537,8 @@ def _run_sessions(
                             deadline=deadline, arm=arm,
                             single_prompt=single_prompt)
         grades = grade(run_dir / "workspace") if grade_run else []
-        tests_passed, tail, failed_checks = score_details(run_dir, suite)
+        tests_passed, tail, missing = score_details(run_dir, suite)
+        failed_checks = len(missing)
         quality_ok = all(
             ok for name, ok, _ in grades if name in {"ruff", "complexipy"}
         ) if grades else True
@@ -549,6 +562,8 @@ def _run_sessions(
             "quality_ok": quality_ok,
             "contaminated": contaminated,
             "failed_checks": failed_checks,
+            "missing_checks": missing,
+            "check_groups": check_groups(suite.expected, missing),
             **{key: value for key, value in metrics.items()
                if key != "final_reply"},
         }
