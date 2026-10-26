@@ -9,6 +9,11 @@ backends: [llamacpp]
 
 # The suite baseline
 
+Given the whole job, a small model fails most of the suite's sessions and
+never passes hard, whether it plans or only answers. The page measures the
+worker boundary against that baseline, suite by suite, as the unit the other
+lessons change.
+
 ## Problem
 
 **Badge:** `screen`
