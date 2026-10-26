@@ -9,6 +9,10 @@ backends: [llamacpp]
 
 # Write only the files you list
 
+A run can pass every hidden test and still be wrong, leaving scratch files, a
+second app copy or a test edited to pass. The page names the layout and checks
+the file set after each run, which the easy suite never tripped.
+
 ## Problem
 
 **Badge:** `screen`
