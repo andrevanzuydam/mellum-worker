@@ -10,6 +10,18 @@ never by line number.
 
 Reopen conditions, not promises.
 
+**A grader that cannot run reads as every check missing.** `score_workspace_details`
+counts as many missing checks as `expected.json` lists whenever pytest aborts
+before running them: LC.19's attempt 3 scored 18/18 with `passed: false` because
+two grader modules hit `ModuleNotFoundError: No module named 'models'` and pytest
+stopped with `Interrupted: 2 errors during collection`
+([record](docs/superpowers/research/2026-10-25-lesson10-run.md#attempt-3-2026-10-26-the-hang-is-fixed-the-scoring-is-not-yet-measuring)).
+Phase 1 alone passed 3 of 4. A record cannot tell "the worker failed everything"
+from "the grader never ran" without the tail. The fix is a `grader_error` field
+set when pytest exits with a collection error, and a lesson table that shows it.
+*Reopens when* a record quotes a full set of missing checks, or the grader's
+report is next changed.
+
 **The leak sweep misses a foreground server that made its own process group.**
 `pi`'s bash tool runs each command in a new session, so a model-started server
 lands in its own group; `run_suite` kills and sweeps `child.pid`'s group, which
