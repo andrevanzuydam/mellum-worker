@@ -146,3 +146,46 @@ foreground-server question rather than to this lesson.
 server guard on `lc11b-server-guard` (`420ba1d`). It is out of scope here: a
 guard change needs its own screen and re-baseline, and this cycle must not move
 the worker under the lesson it measures.
+
+## Amendment 2026-10-26 (2): attempt 3, before it runs
+
+Two attempts hung on a foreground server, so the instrument changed before a
+third. Three edits, each tied to a cause visible in the traces, and all applied
+to **both** arms so the only difference between them is still the pointer.
+
+1. **The roadmap asks for an in-process check.** Phase 1's stories keep
+   `uv run python app.py` as a deliverable and add: "As the operator, I want the
+   home page exercised in process with `TestClient`, so a change can be checked
+   without a running server." Cause: attempt 1's own reasoning used the story's
+   server line as its verification — "we should verify that the app can be run
+   with `uv run python app.py`" — and then ran it.
+2. **The base project ships a test.** `medium/base/tests/test_home.py` exercises
+   the home route with `TestClient` (status 200, the tagline, the shared
+   navigation), so the facts block's `uv run --frozen python -m pytest tests`
+   has something to run on the first turn. Cause: attempt 1 had no test at all;
+   attempt 2 wrote its own, got a 422 it could not explain, and went to a live
+   server to see the response.
+3. **Both briefs name the loop.** Every phase brief now ends: "Check your work
+   with `uv run --frozen python -m pytest tests`; do not check it by starting a
+   server." A positive instruction, not a prohibition — `Do not: start servers`
+   was already in the facts block and was ignored twice.
+
+Tests that hold these: `test_the_thin_briefs_name_the_verification_loop`,
+`test_medium_base_ships_a_phase1_smoke_test`,
+`test_medium_asks_for_the_home_page_in_process`, and the existing
+`test_the_split_keeps_the_roadmaps_phases` and
+`test_medium_ships_both_spec_variants`. `medium: QUALIFIED`.
+
+**Unchanged:** arms (`joined` against `split`), n = 3 per arm, `--arm worker`,
+the phase-4 `check_groups` reading, the decision rule, and `--deadline 2700`.
+The run is wrapped in `caffeinate -dims` as attempt 2 was.
+
+**What the change costs the records:** medium's base project is no longer the
+one LC.24 ran, so this run's walls and check counts are comparable only within
+the run, not against LC.24's medium numbers. The visible test is the worker's
+loop, not a gate: `known-broken` passes it too, and the hidden grader still
+fails that fixture.
+
+**What would falsify the diagnosis.** A session that starts a server anyway,
+with all three in place, says the behaviour is not instructional and a guard is
+the only remedy — which is exactly the answer LC.7A's arm wants.
