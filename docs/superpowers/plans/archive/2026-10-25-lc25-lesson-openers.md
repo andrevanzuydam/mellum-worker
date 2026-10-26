@@ -2,7 +2,7 @@
 phase: LC
 feature_cycle: LC.25
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # LC.25 — the two-sentence opening on the seven older lessons
@@ -201,3 +201,19 @@ git add tests/learn-site.test.mjs CHANGELOG.md && git commit -m "test(learn): ho
   four clauses, and a future edit to one owes the other.
 - **Seven commits, one file each.** Cheap to review, but a reviewer reading the
   branch needs the table above to see they are one change.
+
+## Result
+
+2026-10-25. Shipped: the two-sentence opening on the seven older lessons, one
+commit each, and the shared check in `tests/learn-site.test.mjs` that holds the
+rule for every lesson page. Nothing was measured, no badge moved, and no page's
+evidence changed; the seven sentences are the ones in the table above, at 40–44
+words.
+
+The check was written first and failed on `lessons/baseline.md has no opening
+paragraph`, then advanced page by page as each opener landed. It was committed
+with the last page, so every commit on the branch is green. `npm test`
+367/367, `docs-caps` 4/4, and `uv run zensical build` clean.
+
+The two `BACKLOG.md` entries for the `wall` metric are now one. Owed elsewhere:
+LC.19's suite-shaped instrument, in its row.
