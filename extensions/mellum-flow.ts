@@ -580,10 +580,13 @@ export default function (pi: any): void {
 			materializeGate(cwd());
 			const { ok, tail } = await runTests(cwd());
 			// Feed the ACTUAL gate failure back to the coder. The next code() reads REVIEW.md, so a
-			// failing run writes the pytest tail there — the coder sees exactly which assertion/route
-			// failed (e.g. a 404 on a route it never built) and can fix THAT, instead of re-building
-			// from the plan blind and repeating the same omission. On pass, leave REVIEW.md alone.
-			if (!ok) {
+			// failing run writes the labelled failure there — the coder sees what its APP did wrong and
+			// can fix THAT, instead of re-building from the plan blind and repeating the same omission.
+			// Env toggle so the feedback-vs-no-feedback comparison runs from ONE binary:
+			// MELLUM_CODER_FEEDBACK=0 turns the loop OFF (the control arm). Default ON. On pass, leave
+			// REVIEW.md alone.
+			const feedbackOn = process.env.MELLUM_CODER_FEEDBACK !== "0";
+			if (!ok && feedbackOn) {
 				ensurePlan();
 				writeFileSync(planPath("REVIEW.md"), reviewFromTestFailure(tail));
 			}

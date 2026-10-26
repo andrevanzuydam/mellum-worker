@@ -47,7 +47,9 @@ Versions match git tags; pin one in both install lines.
   feedback is **labelled for the app, not the test**: it says the application failed these checks,
   to fix `app.py`/`models.py`/`templates/`, and never to edit a test (the harness restores the
   frozen gate before grading anyway) — and it strips the gate test-file paths, so a small model is
-  not pointed at a test file to edit instead of fixing the code.
+  not pointed at a test file to edit instead of fixing the code. Toggle with
+  `MELLUM_CODER_FEEDBACK=0` (default on), so the feedback-vs-no-feedback comparison runs from one
+  binary.
 - The flow harness never logged a sub-agent's tool calls to the live feed: the streaming keyed on
   an event type (`tool_call`) that pi's `--mode json` does not emit for a sub-agent, so a hung phase
   showed only a frozen event count with no command. It now reads the schema pi actually emits
