@@ -304,6 +304,9 @@ test("the harness is the measured instrument", () => {
   assert.match(harness, /`learn\/code\/harness\.py` is the measured instrument/);
   assert.doesNotMatch(page("project/index.md"), /\*\*The ladder\*\*/);
   assert.match(page("project/toolchain.md"), /Measured work lands in `docs\/superpowers\/research\/`/);
+  assert.doesNotMatch(page("getting-started/harness.md"), /ladder is the measuring/);
+  assert.doesNotMatch(page("getting-started/suite.md"), /Rates come from the ladder/);
+  assert.doesNotMatch(page("getting-started/suite.md"), /The ladder is the measuring instrument/);
 });
 
 test("the lesson template opens with the two-sentence paragraph", () => {

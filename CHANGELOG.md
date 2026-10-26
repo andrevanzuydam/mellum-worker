@@ -19,6 +19,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- Two Getting Started pages still called the ladder the measuring instrument a
+  cycle after `reference-run` moved to the suites, and the suite page told the
+  learner that findings lessons cite `docs/ladder/`, which lesson pages may not
+  link. The harness and suite pages now name the suites as the instrument and a
+  preregistered record in `docs/superpowers/research/` as the citation.
+
 - `learn/project/index.md` named `extensions/mellum-mode.ts` and the retired
   `templates/` agent files, two cycles after LC.8 renamed the former and
   removed the latter.

@@ -153,14 +153,16 @@ nothing. The counts on the score line are these rows, summed.
 A suite is a handful of sessions, and each session is one observation. The
 same project can pass next time: the model varies, and this harness runs a
 suite once by default. Run it again before believing a difference, and still
-treat two or three sessions as a lead, not a rate. Rates come from the ladder
-with a preregistered arm, which is why findings lessons cite `docs/ladder/`
-and not these sessions.
+treat two or three sessions as a lead, not a rate. Rates come from a
+preregistered run on these suites, with the arms and n fixed before it starts,
+which is why findings lessons cite a record in `docs/superpowers/research/` and
+not one session.
 
 ## What this does and does not say
 
 These suites are a teaching harness: one machine, one model, one session per
 suite. They show you *where* to look — a tool error, a missing file, a final
 reply that claims success, a test that was never collected — not how often a
-model fails. The ladder is the measuring instrument; a preregistered reference
-run on llama.cpp is what findings lessons cite.
+model fails. A single session shows you where to look; a preregistered
+reference run on llama.cpp, recorded in `docs/superpowers/research/`, is what
+findings lessons cite.

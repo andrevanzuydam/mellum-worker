@@ -6,6 +6,12 @@ Date: 2026-10-25. Status: approved by Paul on 2026-10-25; closed the same day.
 track has eight lesson pages, and LC.24 shipped the opening on one of them. The
 rest of this document reads as written.
 
+**Dated correction 2026-10-25 (second).** Three further sentences still named the
+ladder the measuring instrument after this cycle's rollout: `harness.md:81-82`,
+and `suite.md:156-158` and `:165`, where the page also told the learner that
+findings lessons cite `docs/ladder/` — a path lesson pages may not link. The
+four sentences this cycle flipped were not the whole set. Corrected in LC.19A.
+
 ## Intent
 
 Lesson 1, "The primary agent is the wrong worker", is the page a learner meets

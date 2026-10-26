@@ -79,8 +79,8 @@ uv run learn/code/harness.py run --suite easy --repeat 3
 
 Each repeat starts from a fresh workspace; the lines are tagged `[1/3]` and
 the summary is `easy: 3/3 sessions passed`. Two or three sessions are still a
-lead, not a rate; lesson 4 explains why, and the ladder is the measuring
-instrument.
+lead, not a rate; lesson 4 explains why, and a rate needs a preregistered run
+with its arms and n fixed first.
 
 The suite is `learn/code/suites/easy/`: a base AgentClinic project, one
 prompt asking for phase 1, and the tests that check it. The prompt goes to
