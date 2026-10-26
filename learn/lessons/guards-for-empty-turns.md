@@ -9,6 +9,10 @@ backends: [llamacpp]
 
 # Guards for empty turns and loops
 
+A small model can end a turn having said nothing and called no tool, and the
+run stops there. The shipped guards answer that empty turn and repetition, and
+the arms here show the nudge never fired rather than that it worked.
+
 ## Problem
 
 **Badge:** `screen`
