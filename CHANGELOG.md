@@ -38,6 +38,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- The flow harness never logged a sub-agent's tool calls to the live feed: the streaming keyed on
+  an event type (`tool_call`) that pi's `--mode json` does not emit for a sub-agent, so a hung phase
+  showed only a frozen event count with no command. It now reads the schema pi actually emits
+  (`message_end` toolCall content, `tool_execution_start`), so every sub-agent command — including
+  the one a stuck phase is waiting on — appears in the feed and a hang is diagnosable.
 - `content-tool-call-assist` promoted a tool call whose `arguments` were a JSON list (arrays are
   `typeof "object"` in JS), which the inference server then rejected with `422 … arguments must be a
   JSON object, got list`, crashing the run instead of re-prompting. A list is now mapped to named

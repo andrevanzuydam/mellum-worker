@@ -5,9 +5,48 @@ import { mkdtempSync, mkdirSync, writeFileSync, readdirSync, readFileSync, rmSyn
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { PHASES, finalText, bestPytest, asTodo, asCode, looksLikePytest, freezeName, gateTestName, GATE_DIR, materializeGate, flowBlock, PHASE_CALL_CAP, BASE_GUIDE } from "../extensions/mellum-flow.ts";
+import { PHASES, finalText, bestPytest, asTodo, asCode, looksLikePytest, freezeName, gateTestName, GATE_DIR, materializeGate, flowBlock, PHASE_CALL_CAP, BASE_GUIDE, toolCallSummaries } from "../extensions/mellum-flow.ts";
 
 const asstText = (t) => ({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: t }] } });
+
+// The feed must show a sub-agent's tool calls so a hung phase is diagnosable. pi's --mode json
+// emits message_end (with toolCall content) and tool_execution_start — NOT "tool_call", which the
+// old code keyed on, so no command was ever logged. toolCallSummaries reads the real schema.
+test("toolCallSummaries reads a bash command from a message_end toolCall (the real schema)", () => {
+	const evt = { type: "message_end", message: { role: "assistant", content: [
+		{ type: "text", text: "running the app" },
+		{ type: "toolCall", name: "bash", arguments: { command: "uv run python app.py" } },
+	] } };
+	assert.deepEqual(toolCallSummaries(evt), [{ name: "bash", where: "uv run python app.py" }]);
+});
+
+test("toolCallSummaries handles string-encoded arguments and a targeted path", () => {
+	const evt = { type: "message_end", message: { content: [
+		{ type: "toolCall", name: "write", arguments: '{"path":"templates/home.html","content":"<h1>hi</h1>"}' },
+	] } };
+	assert.deepEqual(toolCallSummaries(evt), [{ name: "write", where: "templates/home.html" }]);
+});
+
+test("toolCallSummaries reads tool_execution_start and the legacy tool_call too", () => {
+	assert.deepEqual(toolCallSummaries({ type: "tool_execution_start", name: "ls", arguments: { path: "src" } }),
+		[{ name: "ls", where: "src" }]);
+	assert.deepEqual(toolCallSummaries({ type: "tool_call", toolName: "bash", input: { command: "pytest -q" } }),
+		[{ name: "bash", where: "pytest -q" }]);
+});
+
+test("toolCallSummaries returns nothing for non-tool events and junk", () => {
+	assert.deepEqual(toolCallSummaries(asstText("just thinking out loud")), []);
+	assert.deepEqual(toolCallSummaries(null), []);
+	assert.deepEqual(toolCallSummaries({ type: "message_end", message: {} }), []);
+});
+
+test("toolCallSummaries lists multiple tool calls in one message_end", () => {
+	const evt = { type: "message_end", message: { content: [
+		{ type: "toolCall", name: "write", arguments: { path: "app.py" } },
+		{ type: "toolCall", name: "bash", arguments: { command: "uv run pytest -q tests" } },
+	] } };
+	assert.deepEqual(toolCallSummaries(evt).map((c) => c.name), ["write", "bash"]);
+});
 
 test("bestPytest salvages a test written mid-transcript when the examiner ends on chatter", () => {
 	// hard phases 4 & 5: the examiner (a tool-using agent) wrote the test, then made a verifying

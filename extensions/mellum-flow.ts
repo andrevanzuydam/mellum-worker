@@ -185,6 +185,39 @@ export function bestPytest(events: any[]): string {
 }
 
 /** Spawn an isolated `pi` sub-agent for a phase; resolve with its final text. */
+/** Summarise the tool calls in a pi `--mode json` stream event, across the schema variants it
+ * actually emits (`message_end` carrying toolCall content, `tool_execution_start`, and the legacy
+ * `tool_call`), so the sub-agent's actions show in the feed. Returns {name, where} per call, where
+ * `where` is the command text or the path the call targets. The old streaming keyed ONLY on
+ * `evt.type === "tool_call"` — a type pi never emits for a sub-agent — so no sub-agent command was
+ * ever logged, which is exactly why a hung phase could not be diagnosed from the feed. */
+export function toolCallSummaries(evt: any): { name: string; where: string }[] {
+	const out: { name: string; where: string }[] = [];
+	const push = (name: unknown, args: unknown) => {
+		let a: any = args;
+		if (typeof a === "string") {
+			try { a = JSON.parse(a); } catch { a = { command: a }; }
+		}
+		a = a && typeof a === "object" ? a : {};
+		const where = a.path ?? a.file_path ?? (a.command != null ? String(a.command) : "");
+		out.push({ name: String(name ?? ""), where: String(where) });
+	};
+	if (!evt || typeof evt !== "object") return out;
+	if (evt.type === "message_end") {
+		const content = evt.message?.content;
+		if (Array.isArray(content)) {
+			for (const b of content) {
+				if (b && typeof b === "object" && String(b.type).toLowerCase().includes("toolcall")) push(b.name, b.arguments);
+			}
+		}
+	} else if (evt.type === "tool_execution_start") {
+		push(evt.name, evt.arguments ?? evt.input);
+	} else if (evt.type === "tool_call") {
+		push(evt.toolName, evt.input);
+	}
+	return out;
+}
+
 function runSubagent(phase: string, task: string, cwd: string, signal?: AbortSignal): Promise<string> {
 	const cfg = PHASES[phase];
 	const dir = mkdtempSync(join(tmpdir(), "mellum-flow-"));
@@ -243,10 +276,8 @@ function runSubagent(phase: string, task: string, cwd: string, signal?: AbortSig
 						events.push(evt);
 						// Stream the sub-agent's steps to the feed so a working phase is visible,
 						// not silent. One line per tool call: `[code] -> write templates/home.html`.
-						if (evt?.type === "tool_call") {
-							const i = evt.input ?? {};
-							const where = i.path ?? i.file_path ?? (i.command ? String(i.command).slice(0, 60) : "");
-							feed(`    [${phase}] → ${String(evt.toolName ?? "").padEnd(6)} ${String(where).slice(0, 70)}`);
+						for (const c of toolCallSummaries(evt)) {
+							feed(`    [${phase}] → ${c.name.padEnd(6)} ${c.where.slice(0, 70)}`);
 						}
 					} catch {
 						/* non-JSON line */
