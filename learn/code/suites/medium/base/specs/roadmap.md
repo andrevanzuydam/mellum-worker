@@ -10,6 +10,8 @@ mission and tech stack are in this folder.
 - As a visitor, I want a shared layout with a navbar to Home and Complaints,
   so I can move around.
 - As the operator, I want `uv run python app.py` to start the app with reload.
+- As the operator, I want the home page exercised in process with `TestClient`,
+  so a change can be checked without a running server.
 
 ## Phase 2 — Complaints Board
 

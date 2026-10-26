@@ -370,6 +370,35 @@ def test_the_split_keeps_the_roadmaps_phases():
             assert line in text, f"{name} lost: {line}"
 
 
+def test_the_thin_briefs_name_the_verification_loop():
+    suite = harness.load_suite(harness.SUITES, "medium")
+    for arm in ("joined", "split"):
+        prompts = sorted((harness.load_variant(suite, arm) / "prompts").glob("*.md"))
+        assert len(prompts) == 4
+        for prompt in prompts:
+            text = " ".join(prompt.read_text().split())
+            assert "python -m pytest tests" in text, f"{arm}/{prompt.name} names no test command"
+            assert "do not check it by starting a server" in text, (
+                f"{arm}/{prompt.name} does not rule out a server as the check")
+
+
+def test_medium_base_ships_a_phase1_smoke_test():
+    suite = harness.load_suite(harness.SUITES, "medium")
+    test = suite.root / "base" / "tests" / "test_home.py"
+    assert test.is_file(), "the base project ships no test, so its test command has nothing to run"
+    text = test.read_text()
+    assert "TestClient" in text
+    assert "Come in. Sit down." in text
+
+
+def test_medium_asks_for_the_home_page_in_process():
+    suite = harness.load_suite(harness.SUITES, "medium")
+    roadmap = (suite.root / "base" / "specs" / "roadmap.md").read_text()
+    assert "TestClient" in roadmap, "the roadmap never asks for an in-process check"
+    split = (harness.load_variant(suite, "split") / "specs" / "phase-1.md").read_text()
+    assert "TestClient" in split
+
+
 def test_run_sessions_records_the_variant(tmp_path):
     suite = _phased_suite(tmp_path)
     results = harness._run_sessions(
