@@ -9,6 +9,11 @@ backends: [llamacpp]
 
 # Project facts
 
+A small model dropped into a workspace has to infer how the project is built,
+and a plausible guess survives several turns. The worker appends a short,
+switchable block of project facts to every request, and this run found no pass
+moved.
+
 ## Problem
 
 **Badge:** `screen`
