@@ -59,8 +59,9 @@ note. It is stronger than a screen and weaker than a `reference-run`.
 
 ### reference-run
 
-A preregistered ladder run on llama.cpp, recorded in `docs/ladder/`, made for
-a lesson.
+A preregistered run on llama.cpp, made for a lesson, on the suites the course
+teaches. Earned with a preregistration written before the run, the record in
+`docs/superpowers/research/`, and raw evidence in a `research-*` release.
 
 ### conjecture
 

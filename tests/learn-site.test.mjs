@@ -284,3 +284,24 @@ test("learn/ never says tutorial or case study", () => {
   for (const p of PAGES)
     assert.doesNotMatch(page(p), /tutorial|case stud/i, p);
 });
+
+test("reference-run is earned on the suites, not the ladder", () => {
+  const evidence = page("about/evidence.md");
+  const row = evidence.split("\n").find((l) => l.startsWith("| `reference-run`"));
+  assert.ok(row, "no reference-run row");
+  assert.match(row, /preregistration/);
+  assert.doesNotMatch(row, /docs\/ladder\//);
+  assert.match(evidence.split("\n").find((l) => l.startsWith("| `cited`")), /docs\/ladder\//);
+  const entry = page("glossary.md").split("### reference-run")[1].split("###")[0];
+  assert.match(entry, /preregistered run on llama\.cpp/);
+  assert.doesNotMatch(entry, /ladder run/);
+});
+
+test("the harness is the measured instrument", () => {
+  const harness = page("getting-started/harness.md");
+  assert.doesNotMatch(harness, /`ladder\/` is the measured instrument/);
+  assert.doesNotMatch(harness, /do not replace `docs\/ladder\/`/);
+  assert.match(harness, /`learn\/code\/harness\.py` is the measured instrument/);
+  assert.doesNotMatch(page("project/index.md"), /\*\*The ladder\*\*/);
+  assert.match(page("project/toolchain.md"), /Measured work lands in `docs\/superpowers\/research\/`/);
+});

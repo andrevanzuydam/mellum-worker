@@ -25,6 +25,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- `reference-run` is earned on the suites now, not on `ladder/`: the badge
+  names a preregistration, a record in `docs/superpowers/research/` and a
+  `research-*` release. `ladder/` and `docs/ladder/` stay as the internal
+  instrument and the A0–A21 archive.
+
 - The Learning Center builds from the project virtualenv: `zensical` and
   `zensical-glossary` are `dev` dependencies in `pyproject.toml`, and the
   README, the toolchain page and CI all use `uv run zensical build` instead of

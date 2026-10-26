@@ -11,9 +11,8 @@ backends: [llamacpp]
 
 A harness runs a model on a task and scores the result. The one in this repo
 is small enough to read: each run gets a fresh directory, its own copy of the
-profile, a child `pi` and a score. It is a teaching tool; the ladder in
-`ladder/` is the measured instrument, and findings lessons cite the ladder
-only.
+profile, a child `pi` and a score. It is a teaching tool; `learn/code/harness.py` is the measured instrument, and
+findings lessons cite the suites.
 
 ## Why a fresh directory
 
@@ -103,7 +102,8 @@ thing, or wrote something the tests could not import.
 
 ## What this does not measure
 
-The numbers here are for you while you learn. They are not preregistered, they
-run on one machine, and they do not replace `docs/ladder/`. Lesson 4 runs the eval
+The numbers here are for you while you learn. They are not preregistered and they
+run on one machine; a lesson's `reference-run` is the preregistered version of
+the same run. Lesson 4 runs the eval
 suites and reads the traces; the reference run on llama.cpp is a separate
 phase.

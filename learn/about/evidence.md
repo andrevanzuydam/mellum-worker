@@ -6,8 +6,8 @@ Each step of a lesson (except the Interpretation) opens with an evidence badge. 
 
 | Badge | Means | Needs |
 | --- | --- | --- |
-| `reference-run` | A preregistered run on llama.cpp, made for this lesson | A record in `docs/ladder/`, a preregistration, raw evidence in a `research-*` release |
-| `cited` | An existing record on oMLX or mlx-lm | A record in `docs/ladder/` or a research note on `main` |
+| `reference-run` | A preregistered run on llama.cpp, made for this lesson, on the suites the course teaches | A preregistration written before the run naming the lesson, the arms, n, the reading and the decision rule; the record in `docs/superpowers/research/`; raw evidence in a `research-*` release; machine and deadline in the record |
+| `cited` | An existing record made before 2026-10-25 | A record in `docs/ladder/` (pre-2026-10-25) or a research note on `main` |
 | `screen` | A few targeted runs or one observation | A research note, or a PR note or commit message cited by name |
 | `conjecture` | No run behind it | Reasoning, design, unit tests only |
 
