@@ -39,10 +39,11 @@ deadline is next changed.
 **`run.json`'s `wall` under-reports a censored or stalled session.** `report()`
 in `learn/code/harness.py` derives wall from trace timestamps, so a session
 the deadline ends reports its last traced event: LC.24's two censored `bare`
-sessions report 70 s and 180 s against a 2,700 s deadline, and a request that
-never returns writes no rows at all — one session killed at 600 s recorded
-164 s ([LC.24 run](docs/superpowers/research/2026-10-25-lesson1-run.md),
-[context screen](docs/superpowers/research/2026-10-24-context-budget-screen.md)).
+sessions report 70 s and 180 s against a 2,700 s deadline, one session killed at
+600 s recorded 164 s, and LC.19's censored session recorded 448 s against 2,700 s
+([LC.24 run](docs/superpowers/research/2026-10-25-lesson1-run.md),
+[context screen](docs/superpowers/research/2026-10-24-context-budget-screen.md),
+[LC.19 run](docs/superpowers/research/2026-10-25-lesson10-run.md)).
 Only the `deadline` marker tells the truth, so any table quoting wall beside a
 censored session is understating it. The fix is a wall from process lifetime,
 or a `deadline` row in the trace; it changes a column the Getting Started

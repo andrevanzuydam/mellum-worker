@@ -87,6 +87,10 @@ not the layout.
 `layout.json`, `deadline` when present) go to a `research-*` release with
 `workspace/` and `profile/` excluded; nothing is committed to Git.
 
+**Outcome:** one censored session, no completed session, so the `joined` arm
+is void and there is no comparison. See the
+[run record](2026-10-25-lesson10-run.md).
+
 ## Amendment 2026-10-26: attempt 1 aborted before any session completed
 
 Attempt 1 started 16:57:24Z with the arms, n, deadline and reading exactly as
