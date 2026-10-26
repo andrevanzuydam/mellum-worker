@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `content-tool-call-assist` now normalises a small model's loose tool call into a valid named-args
+  JSON object: a POSITIONAL list of arguments (`{"tool":"write","args":["a.py","hi"]}` — a tiny
+  model's common mistake) is mapped onto the tool's declared parameter order, and Hermes/Qwen XML
+  (`<function=…><parameter=…>`) is converted to the same shape. The pure parser moved to a
+  dependency-free `parse.ts` with a unit-test suite (`tests/content-tool-call-assist.test.mjs`).
 - `flow_run --flow-mode free`: an agent-decided flow alongside the default forced pipeline. Forced
   mode drives a fixed six-step order (plan → review → examine → code → review → test) as ordered
   tools; free mode enforces only two invariants and lets the agent decide every step between them —
@@ -33,6 +38,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- `content-tool-call-assist` promoted a tool call whose `arguments` were a JSON list (arrays are
+  `typeof "object"` in JS), which the inference server then rejected with `422 … arguments must be a
+  JSON object, got list`, crashing the run instead of re-prompting. A list is now mapped to named
+  arguments when it fits the tool's parameters, and an unmappable list or bare scalar is rejected so
+  the loop re-prompts rather than sending an invalid call.
 - The flow examiner's report gates destructively reseeded the fixture database (`DELETE FROM
   tickets` / `DELETE FROM visits` then inserting their own rows), which persisted in the
   workspace's `data.db` — so the hidden grader read the examiner's invented data, not the fixture,

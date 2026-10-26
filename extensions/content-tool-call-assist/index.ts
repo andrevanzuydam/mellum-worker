@@ -31,142 +31,15 @@ import {
 	type TranscriptContext,
 } from "@earendil-works/pi-ai/compat";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { parseContentToolCall, type ParsedToolCall, type ToolParams } from "./parse";
 
 /** The real upstream wire protocol we delegate to. */
 const UPSTREAM_API = "openai-completions" as Api;
 /** The synthetic api our registered models declare, so Pi routes them to us. */
 const ASSIST_API = "content-tool-call-assist" as Api;
 
-interface ParsedToolCall {
-	name: string;
-	arguments: Record<string, unknown>;
-}
-
-/** Drop <think>...</think> reasoning so a call restated inside it is not mistaken for the action. */
-function stripThinking(text: string): string {
-	let rest = text.replace(/<think>[\s\S]*?<\/think>/gi, "");
-	// An unclosed opener or a stray closer: keep the part outside the reasoning.
-	if (/<\/think>/i.test(rest)) rest = rest.slice(rest.toLowerCase().lastIndexOf("</think>") + "</think>".length);
-	return rest.replace(/<\/?think>/gi, "").trim();
-}
-
-/**
- * Yield every top-level balanced {...} object in the text, string- and
- * escape-aware. A depth counter beats a regex: a non-greedy regex stops at the
- * first inner "}" and a greedy one swallows trailing prose, so nested argument
- * objects break both.
- */
-function* iterJsonObjects(text: string): Generator<string> {
-	let depth = 0;
-	let start = -1;
-	let inStr = false;
-	let esc = false;
-	for (let i = 0; i < text.length; i++) {
-		const ch = text[i];
-		if (inStr) {
-			if (esc) esc = false;
-			else if (ch === "\\") esc = true;
-			else if (ch === '"') inStr = false;
-			continue;
-		}
-		if (ch === '"') inStr = true;
-		else if (ch === "{") {
-			if (depth === 0) start = i;
-			depth += 1;
-		} else if (ch === "}" && depth > 0) {
-			depth -= 1;
-			if (depth === 0) yield text.slice(start, i + 1);
-		}
-	}
-}
-
-/**
- * Coerce a parsed object into a tool call, accepting both naming conventions.
- * Two guards keep model DATA from being mistaken for a call: the object must
- * carry an `arguments`/`args` key (a bare {"name": "..."} is data, e.g. a cart
- * item {"name":"Widget A","priceCents":...}), and when the caller passes the
- * real tool names, the name must be one of them. Without the name guard the
- * plugin will happily "call" a tool that does not exist and stall the loop.
- */
-function coerceToolCall(obj: unknown, validNames?: Set<string>): ParsedToolCall | undefined {
-	if (!obj || typeof obj !== "object") return undefined;
-	const o = obj as Record<string, unknown>;
-	// Hermes/OpenAI name "name"/"arguments"; the compact form small models favor
-	// (and what this plugin's own nudge shows) names "tool"/"args".
-	const hasArgsKey = "arguments" in o || "args" in o;
-	if (!hasArgsKey) return undefined;
-	const name = typeof o.name === "string" ? o.name : typeof o.tool === "string" ? o.tool : undefined;
-	if (!name) return undefined;
-	if (validNames && !validNames.has(name)) return undefined;
-	let args: unknown = o.arguments ?? o.args ?? {};
-	if (typeof args === "string") {
-		try {
-			args = JSON.parse(args);
-		} catch {
-			// leave as the raw string; the shape check below rejects it
-		}
-	}
-	if (args !== null && typeof args === "object") return { name, arguments: args as Record<string, unknown> };
-	return undefined;
-}
-
-/** Parse a single XML-ish parameter value: JSON if it parses (number/bool/object/array/quoted), else the raw string. */
-function coerceScalar(raw: string): unknown {
-	const trimmed = raw.trim();
-	try {
-		return JSON.parse(trimmed);
-	} catch {
-		return trimmed;
-	}
-}
-
-/**
- * Convert the Hermes/Qwen XML tool-call form into a structured call. Many small
- * models' own chat templates define tool calls as XML, not JSON:
- *
- *   <tool_call><function=write>
- *     <parameter=path>hello.txt</parameter>
- *     <parameter=content>hi there</parameter>
- *   </function></tool_call>
- *
- * The outer <tool_call> wrapper is optional; a bare <function=...> block is
- * accepted. This is the plugin "doing the hard bit": normalizing whatever the
- * model's template emits into one JSON-shaped call the loop can run.
- */
-function parseXmlToolCall(text: string, validNames?: Set<string>): ParsedToolCall | undefined {
-	const fn = text.match(/<function=([^>\s]+)\s*>([\s\S]*?)<\/function>/);
-	if (!fn?.[1]) return undefined;
-	const name = fn[1];
-	if (validNames && !validNames.has(name)) return undefined;
-	const args: Record<string, unknown> = {};
-	const paramRe = /<parameter=([^>\s]+)\s*>([\s\S]*?)<\/parameter>/g;
-	let m: RegExpExecArray | null = paramRe.exec(fn[2]);
-	while (m !== null) {
-		if (m[1]) args[m[1]] = coerceScalar(m[2]);
-		m = paramRe.exec(fn[2]);
-	}
-	return { name, arguments: args };
-}
-
-/** Pull a tool-call out of model text in any shape (JSON object or XML), or undefined. */
-function parseContentToolCall(text: string, validNames?: Set<string>): ParsedToolCall | undefined {
-	// Scan the de-thought text first, then the raw text as a fallback.
-	for (const region of [stripThinking(text), text]) {
-		// JSON object form ({"tool"/"name", "args"/"arguments"}) — what the nudge asks for.
-		for (const chunk of iterJsonObjects(region)) {
-			try {
-				const call = coerceToolCall(JSON.parse(chunk), validNames);
-				if (call) return call;
-			} catch {
-				// not valid JSON; keep scanning
-			}
-		}
-		// XML form (<function=...><parameter=...>) — what many small models' templates define.
-		const xml = parseXmlToolCall(region, validNames);
-		if (xml) return xml;
-	}
-	return undefined;
-}
+// The pure tool-call parsing (JSON object, positional-list, Hermes XML) lives in ./parse so it can
+// be unit tested without Pi's runtime imports. index.ts supplies it the tool parameter order.
 
 /** Tools available at the end of the transcript, from replayed system messages. */
 function collectTools(context: TranscriptContext): Tool[] {
@@ -177,6 +50,24 @@ function collectTools(context: TranscriptContext): Tool[] {
 		for (const ref of message.toolsRemoved ?? []) byName.delete(ref.name);
 	}
 	return [...byName.values()];
+}
+
+/**
+ * Build the name -> ordered parameter-name map `parse` needs to turn a positional-list call into
+ * named arguments and to reject an unknown tool. Parameter order is the tool schema's property
+ * declaration order (JSON preserves key order). Tool schemas vary by host, so read the common
+ * shapes defensively; a tool with no discoverable schema maps to an empty list (object-args and
+ * XML calls still work — only positional-list mapping needs the names).
+ */
+function toolParams(tools: Tool[]): ToolParams {
+	const map: ToolParams = new Map();
+	for (const t of tools) {
+		const holder = t as { parameters?: unknown; inputSchema?: unknown; schema?: unknown };
+		const s = (holder.parameters ?? holder.inputSchema ?? holder.schema) as { properties?: unknown } | undefined;
+		const props = s && typeof s === "object" ? s.properties : undefined;
+		map.set(t.name, props && typeof props === "object" ? Object.keys(props as object) : []);
+	}
+	return map;
 }
 
 /**
@@ -266,7 +157,7 @@ function streamLive(
 	context: TranscriptContext,
 	options: SimpleStreamOptions | undefined,
 ): void {
-	const validNames = new Set(collectTools(context).map((t) => t.name));
+	const tools = toolParams(collectTools(context));
 	void (async () => {
 		let sawToolCall = false;
 		let text = "";
@@ -276,7 +167,7 @@ function streamLive(
 				else if (event.type === "text_delta") text += event.delta;
 
 				if (event.type === "done") {
-					const parsed = sawToolCall ? undefined : parseContentToolCall(text, validNames);
+					const parsed = sawToolCall ? undefined : parseContentToolCall(text, tools);
 					if (!parsed) {
 						outer.push(event);
 						outer.end(event.message);
@@ -311,7 +202,7 @@ async function runAttempt(
 	upstreamModel: Model<Api>,
 	context: TranscriptContext,
 	options: SimpleStreamOptions,
-	validNames: Set<string>,
+	tools: ToolParams,
 ): Promise<AttemptResult> {
 	const captured: AssistantMessageEvent[] = [];
 	let sawToolCall = false;
@@ -324,7 +215,7 @@ async function runAttempt(
 	}
 	const last = captured[captured.length - 1];
 	const done = last?.type === "done" ? last : undefined;
-	const parsed = done && !sawToolCall ? parseContentToolCall(text, validNames) : undefined;
+	const parsed = done && !sawToolCall ? parseContentToolCall(text, tools) : undefined;
 	return { captured, done, parsed, acted: Boolean(done) && (sawToolCall || parsed !== undefined) };
 }
 
@@ -349,7 +240,7 @@ function streamForced(
 	// Keep the host's native tool field in the context: it is what the host uses
 	// to render tool-result turns and to execute a promoted call. The nudge only
 	// adds the output-shape contract and the tool names on top.
-	const validNames = new Set(collectTools(context).map((t) => t.name));
+	const tools = toolParams(collectTools(context));
 
 	void (async () => {
 		try {
@@ -366,7 +257,7 @@ function streamForced(
 					...context,
 					messages: [...context.messages, buildForceNudge(context, attempt)],
 				};
-				const result = await runAttempt(upstreamModel, attemptContext, attemptOptions, validNames);
+				const result = await runAttempt(upstreamModel, attemptContext, attemptOptions, tools);
 				lastResult = result;
 
 				// A hard error: surface it, no retry.
