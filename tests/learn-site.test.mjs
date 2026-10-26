@@ -314,3 +314,16 @@ test("the lesson template opens with the two-sentence paragraph", () => {
   assert.ok(opening.split(/\s+/).length <= 45, "opening is over 45 words");
   assert.match(t, /two-sentence paragraph/);
 });
+
+test("every lesson page opens with the two-sentence paragraph", () => {
+  const lessons = PAGES.filter((p) => p.startsWith("lessons/") && p !== "lessons/index.md");
+  assert.ok(lessons.length >= 8, "lesson discovery found too few pages");
+  for (const p of lessons) {
+    const l = page(p);
+    const opening = l.split(/^# .+$/m)[1].split(/^## /m)[0].trim();
+    assert.ok(opening.length > 0, `${p} has no opening paragraph`);
+    assert.equal(opening.split(/(?<=\.)\s+/).filter(Boolean).length, 2, `${p} opening is not two sentences`);
+    assert.ok(opening.split(/\s+/).length <= 45, `${p} opening is over 45 words`);
+    assert.doesNotMatch(opening, /`|\]\(|\*\*Badge/, `${p} opening carries markup`);
+  }
+});

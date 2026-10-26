@@ -25,6 +25,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- All seven older lessons now open the way Lesson 1 does: two sentences
+  between the title and the first heading, the problem then the answer, 45
+  words or fewer. The rule is in `learn/lesson-template.md` and is now held by
+  `tests/learn-site.test.mjs` for every lesson page. Wording only — no page's
+  evidence, badges or numbers changed.
+
 - Lesson 1, "The primary agent is the wrong worker", now opens with a
   two-sentence summary, names the pathology before the measurement, says
   which three decisions leave the model's hands instead of advising against

@@ -98,9 +98,10 @@ test("every lesson page opens with the two-sentence paragraph", () => {
 
 Each task is the same three steps with its own page and sentence from the table
 above: insert the paragraph after the H1 and a blank line, run
-`node --test tests/learn-site.test.mjs` and confirm the failure now names the
-next non-compliant page (or, at Task 8, that nothing fails), then commit that
-file alone so the check stays out of the branch until the set is complete.
+`node --test tests/learn-site.test.mjs` and confirm it still fails on a page
+not yet done — the check reports the alphabetically first offender, so its
+message can lag the commit order by one — then commit that file alone so the
+check stays out of the branch until the set is complete. At Task 8 it passes.
 
 | Task | Page | Commit subject |
 | --- | --- | --- |
