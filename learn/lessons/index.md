@@ -36,9 +36,9 @@ what it rests on now.
    *(Paul)*
 10. **One spec file per phase** — A one-file roadmap misses the last phase's id in 5 of 6 runs; n = 3. *(Paul)*
 
-Lessons 5–10 still carry the wording their digest gave them. Each is a
-feature cycle that re-measures it on llama.cpp when its page is written; the
-numbers above are the plan, not a citation.
+Lessons 9 and 10 are not written yet: their lines above are the plan, not a
+citation. Each lesson is a feature cycle that re-measures it on llama.cpp when
+its page is written.
 
 ## Andre's mediation
 
