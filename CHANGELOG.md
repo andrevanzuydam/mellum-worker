@@ -6,6 +6,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `flow_run` records the GRANULAR hidden grade in `result.json` — `hidden_passed`/`hidden_total`
+  (e.g. 31/34), not just the full-pass bool — plus a `coder_feedback` flag, so a run's real score is
+  visible and arms of a comparison can be told apart (the full-pass bool is almost always False on
+  hard, so it discriminates nothing).
 - `content-tool-call-assist` now normalises a small model's loose tool call into a valid named-args
   JSON object: a POSITIONAL list of arguments (`{"tool":"write","args":["a.py","hi"]}` — a tiny
   model's common mistake) is mapped onto the tool's declared parameter order, and Hermes/Qwen XML

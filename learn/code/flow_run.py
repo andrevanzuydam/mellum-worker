@@ -758,12 +758,18 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
         restored = restore_fixture_data(workspace, suite.root / "base")
         if restored:
             lr.emit(f"  restored fixture data before grading: {', '.join(restored)}")
-    graded, _ = harness.score_workspace(workspace, suite)
+    # Granular hidden grade: full pass (bool) is almost always False on hard (the 31/34 ceiling), so
+    # record the COUNT of hidden tests passed — that's what discriminates one run/arm from another.
+    graded, _, missing = harness.score_workspace_details(workspace, suite)
+    hidden_total = len(suite.expected)
+    hidden_passed = hidden_total - missing
     todo = (workspace / "plan" / "TODO.md").exists()
     result = {
         "suite": suite_name, "flow_mode": flow_mode,
         "memory": str(memory_path) if memory is not None else None,
+        "coder_feedback": os.environ.get("MELLUM_CODER_FEEDBACK") != "0",
         "visible": passed, "graded": graded,
+        "hidden_passed": hidden_passed, "hidden_total": hidden_total,
         "todo": todo, "phases": len(phases), "phase_results": phase_results,
         "phase_rounds": phase_rounds,  # free mode: rounds each phase took (0 = no gate frozen)
         "north_star": north_star, "model": model_id, "thinking": thinking, "started": started,
@@ -771,7 +777,8 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
     }
     (run / "result.json").write_text(json.dumps(result, indent=2) + "\n")
     lr.emit(f"{suite_name}: visible={'PASS' if passed else 'FAIL'} "
-            f"hidden-grader={'PASS' if graded else 'FAIL'} TODO.md={'yes' if todo else 'NO'} bundle={run}")
+            f"hidden={hidden_passed}/{hidden_total} ({'PASS' if graded else 'partial'}) "
+            f"TODO.md={'yes' if todo else 'NO'} bundle={run}")
     lr._FEED_PATH = None
     return result
 
