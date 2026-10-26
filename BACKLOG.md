@@ -10,6 +10,19 @@ never by line number.
 
 Reopen conditions, not promises.
 
+**The deadline is counted on a clock that stops when the Mac sleeps.**
+`run_suite` bounds each child with `child.wait(timeout=remaining)` from
+`time.monotonic()`, and on Darwin that clock does not advance while the system
+sleeps: LC.19's attempt 1 hung on a foreground server and had counted roughly 8
+minutes of its 2,700 s after 62 minutes of wall, so no `deadline` marker existed
+and the session outlived its budget by the sleep
+([preregistration](docs/superpowers/research/2026-10-25-lesson10-preregistration.md#amendment-2026-10-26-attempt-1-aborted-before-any-session-completed)).
+A `deadline` marker is therefore only honest on a machine that stayed awake; a
+run that quotes one should say it was caffeinated. The fix is a wall-clock
+deadline, or a `deadline` row in the trace carrying both clocks.
+*Reopens when* a run's deadline marker is missing past its budget, or the harness
+deadline is next changed.
+
 **`run.json`'s `wall` under-reports a censored or stalled session.** `report()`
 in `learn/code/harness.py` derives wall from trace timestamps, so a session
 the deadline ends reports its last traced event: LC.24's two censored `bare`

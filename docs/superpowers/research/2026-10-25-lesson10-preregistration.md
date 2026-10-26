@@ -86,3 +86,59 @@ not the layout.
 **Raw evidence.** Run directories (`run.json`, `trace.jsonl`, `prompt.txt`,
 `layout.json`, `deadline` when present) go to a `research-*` release with
 `workspace/` and `profile/` excluded; nothing is committed to Git.
+
+## Amendment 2026-10-26: attempt 1 aborted before any session completed
+
+Attempt 1 started 16:57:24Z with the arms, n, deadline and reading exactly as
+above, joined first. Session 1 hung at 16:59:59Z: the last trace row is
+`tool_call bash {"command": "uv run --frozen python app.py"}` with no
+`tool_result` after it, and that `python app.py` was still running 57 minutes
+later. This is the foreground-server pathology already carried in
+[`BACKLOG.md`](../../../BACKLOG.md#backlog), on the `worker` arm, whose own facts
+block says `Do not: start servers`.
+
+**The 2700 s deadline did not fire, and the reason matters more than the hang.**
+`run_suite` bounds each child with `child.wait(timeout=remaining)`, and
+`remaining` comes from `time.monotonic()`. Darwin's monotonic clock does not
+advance while the machine sleeps. The Mac slept during the attempt (last wake
+17:52:39Z), so after 62 minutes of wall the harness had counted roughly 8 of its
+45. A `sample` of the harness showed it inside `Popen._wait`'s `time.sleep` poll:
+waiting, not deadlocked.
+
+**No session completed.** The run directory `20261026T165724Z-medium-a9a85c` has
+no `run.json` and no `deadline` marker, so nothing here is scored, censored, or
+excluded, and no outcome is being rescued. The arm itself was applied correctly
+before it hung: `AGENTS.md` and the briefs both pointed at `specs/roadmap.md`,
+and that file was present — the second falsifier above did not fire.
+
+Attempt 1 is evidence, kept outside Git at `/tmp/lc19-attempt1`: `trace.jsonl`
+(115 rows), `prompt.txt`, `sessions/`, and the workspace's `AGENTS.md` and
+`specs/roadmap.md`. Its trace belongs with whatever release publishes this
+lesson's runs.
+
+### Attempt 2, fixed before it runs
+
+- **Arms, n, suite, worker, reading and decision rule: unchanged.** The abort
+  changed nothing a result depends on.
+- **Environment:** the whole run is wrapped in `caffeinate -dims`, so no sleep
+  can stretch the deadline. An environment fix, not a design change.
+- **Deadline stays 2700 s.** Lowering it after an abort would be tuning, and
+  LC.24's slowest medium session was 1351 s, so 2700 still leaves 2×.
+- **Censor policy unchanged.** A hang burns its deadline and is reported
+  censored, never failed. Fewer than two completed sessions in an arm makes
+  that arm void, and the page says so with the hang named.
+- **Cost, corrected:** 6 sessions at 10–23 min if they behave (1–2.3 h), plus up
+  to 45 min for every session that hangs. All six hanging is ~4.5 h and two void
+  arms; the rule above already covers that outcome.
+
+**Conjecture, labeled as such.** LC.24's medium `worker` arm, with the detailed
+step-list briefs, never hung (walls 587–1351 s). The thin briefs here leave the
+model to decide how to check its own work, and its first choice was to start the
+server in the foreground. If both arms hang the same way, the finding is about
+the briefs and the pathology, not about spec layout — and it belongs to LC.7A's
+foreground-server question rather than to this lesson.
+
+**What would make attempt 2 moot.** A worker-level fix, such as the dormant
+server guard on `lc11b-server-guard` (`420ba1d`). It is out of scope here: a
+guard change needs its own screen and re-baseline, and this cycle must not move
+the worker under the lesson it measures.
