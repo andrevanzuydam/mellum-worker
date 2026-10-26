@@ -2,7 +2,7 @@
 phase: LC
 feature_cycle: LC.19A
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # LC.19A — the suite-shaped instrument LC.19 owes
@@ -341,3 +341,23 @@ def check_groups(expected, missing):
 - **A flag nobody uses.** `--specs` is exercised by unit tests and by LC.19; if
   LC.19 is dropped, the variant data and the overlay are dead weight the repo
   carries. The reopen condition is LC.19's row.
+
+## Result
+
+2026-10-25. Shipped: `run.json` carries `missing_checks` and `check_groups`;
+`--specs joined|split` applies a suite's `spec-variants/`, records `specs`, and
+ships the flag alongside `--repeat` on the harness page; `medium` carries both
+variants — one joined `specs/roadmap.md` with thin briefs, or four phase files
+with their own `AGENTS.md` pointer and an explicit `delete.json`; the glossary
+defines the per-module grouping under **failed checks** and adds **spec
+variant**; and the three
+Getting Started sentences that still called the ladder the measuring instrument
+are corrected.
+
+Read on the real suite rather than assumed: `known-good` misses 0 checks in all
+four modules, `known-broken` misses 1 of 3 in `test_phase3_add.py` and 2 of 5 in
+`test_phase4_resolve_reopen.py`. `medium: QUALIFIED`, `learn/code/tests` 57/57,
+`npm test` 368/368, `docs-caps` 4/4, `uv run zensical build` clean.
+
+Owed: LC.19's preregistration and its two-arm run (the arm is the instruction
+between the joined and split variants at n = 3), then the page.
