@@ -206,11 +206,14 @@ not. Two instrument changes follow, both applied to **both** arms.
    **Acceptance** list per phase, and the four `spec-variants/split/specs/` files
    carry the same lists — `test_the_split_keeps_the_roadmaps_phases` enforces
    the lockstep.
-2. **A grader that cannot run says so.** `run.json` gains `grader_error`, set
-   when pytest exits with a collection error, and the score line prints
-   `grader error`. A session whose grader did not run is **excluded** from the
-   phase-4 comparison and reported as a grader error, not as failed checks:
-   "18 checks failed" and "the checks never ran" are different findings.
+2. **Checks that never ran say so.** `run.json` gains `checks_ran`, false when
+   pytest exits with a collection error, so a record with every expected check
+   missing cannot be read as the worker failing every check. It was first
+   written as `grader_error` and renamed before this run: an empty workspace
+   fails collection too, so the flag describes the checks, not a faulty grader.
+   The session still fails; it just records why the count is full. A session
+   with `checks_ran: false` is reported separately and not compared as if its
+   checks had run.
 
 **Unchanged:** arms (`joined` against `split`), n = 3 per arm, `--arm worker`,
 the phase-4 `check_groups` reading, the decision rule, `--deadline 2700`, and

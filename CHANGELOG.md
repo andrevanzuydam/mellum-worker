@@ -6,10 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
-- A grader that cannot run is no longer reported as failing checks. When pytest
-  stops on a collection error, `run.json` carries `grader_error: true` and the
-  score line says `grader error`, because "18 checks failed" and "the checks
-  never ran" are different findings.
+- A run whose hidden checks never executed now says so. When pytest stops on a
+  collection error — usually a module the workspace lacks — `run.json` carries
+  `checks_ran: false` beside the count, because "18 checks failed" and "the
+  checks never ran" are different findings. It is still a failure; the record
+  just stops hiding why.
 
 - The harness records more than a count when a session fails its hidden checks:
   `run.json` now carries `missing_checks`, the expected test IDs that did not

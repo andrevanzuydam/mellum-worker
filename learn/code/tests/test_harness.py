@@ -242,9 +242,9 @@ def test_score_details_counts_expected_failures(tmp_path):
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     (workspace / "add.py").write_text("def add(a, b):\n    return 0\n")
-    passed, tail, missing, grader_error = harness.score_workspace_details(workspace, suite)
+    passed, tail, missing, checks_ran = harness.score_workspace_details(workspace, suite)
     assert not passed
-    assert not grader_error
+    assert checks_ran
     assert missing == ["grader_tests/test_add.py::test_add"]
     assert "test_add" in tail
 
@@ -264,7 +264,7 @@ def test_check_groups_counts_each_module_both_ways(tmp_path):
     suite = harness.load_suite(tmp_path / "suites", "twophase")
     workspace = tmp_path / "workspace"
     workspace.mkdir()
-    _passed, _tail, missing, _error = harness.score_workspace_details(workspace, suite)
+    _passed, _tail, missing, _ran = harness.score_workspace_details(workspace, suite)
     assert missing == ["grader_tests/test_phase2_board.py::test_board"]
     assert harness.check_groups(suite.expected, missing) == {
         "test_phase1_home.py": {"missing": 0, "total": 1},
@@ -301,7 +301,7 @@ def _variant_run(tmp_path, suite, specs):
     )
 
 
-def test_a_grader_that_cannot_run_is_a_grader_error(tmp_path):
+def test_checks_that_never_ran_are_recorded_as_such(tmp_path):
     suite_dir = tmp_path / "suites" / "broken"
     (suite_dir / "tests").mkdir(parents=True)
     (suite_dir / "tests" / "test_board.py").write_text(
@@ -312,14 +312,14 @@ def test_a_grader_that_cannot_run_is_a_grader_error(tmp_path):
     suite = harness.load_suite(tmp_path / "suites", "broken")
     workspace = tmp_path / "workspace"
     workspace.mkdir()
-    passed, tail, missing, grader_error = harness.score_workspace_details(workspace, suite)
+    passed, tail, missing, checks_ran = harness.score_workspace_details(workspace, suite)
     assert not passed
-    assert grader_error, "a collection error is not the worker failing every check"
+    assert not checks_ran, "a collection error is not the same finding as a failing check"
     assert missing == ["grader_tests/test_board.py::test_board"]
     assert "ModuleNotFoundError" in tail
 
 
-def test_the_record_says_when_the_grader_could_not_run(tmp_path):
+def test_the_record_says_when_the_checks_never_ran(tmp_path):
     suite_dir = tmp_path / "suites" / "broken"
     (suite_dir / "tests").mkdir(parents=True)
     (suite_dir / "tests" / "test_board.py").write_text(
@@ -333,7 +333,7 @@ def test_the_record_says_when_the_grader_could_not_run(tmp_path):
         repeat=1, grade_run=False, deadline=None,
     )
     record = json.loads((results[0][0] / "run.json").read_text())
-    assert record["grader_error"] is True
+    assert record["checks_ran"] is False
 
 
 def test_a_suite_without_a_variant_is_unchanged(tmp_path):
@@ -458,7 +458,7 @@ def test_run_sessions_writes_metrics(tmp_path):
     assert record["failed_checks"] == 0
     assert record["missing_checks"] == []
     # the fixture suite declares no expected.json, so there are no groups to report
-    assert record["grader_error"] is False
+    assert record["checks_ran"] is True
     assert record["check_groups"] == {}
     assert record["turns"] == 0
     assert record["context"] is None

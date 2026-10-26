@@ -318,8 +318,8 @@ test("the run record groups the failed checks by module", () => {
   assert.match(harness, /spec-variants|spec variant/);
   const entry = page("glossary.md").split("### failed checks")[1].split("###")[0];
   assert.match(entry, /module/);
-  assert.match(suite, /grader_error/);
-  assert.match(page("glossary.md"), /^### grader error$/m);
+  assert.match(suite, /checks_ran: false/);
+  assert.match(page("glossary.md"), /^### checks did not run$/m);
 });
 
 test("the lesson template opens with the two-sentence paragraph", () => {
