@@ -14,8 +14,23 @@ stated **verbatim in the spec prompts** the planner was handed. The second
 finished control run scored the same band (control-1: 27/34 but 4/7 phases,
 visible FAIL — a different, incomplete run).
 
-**Conjecture.** That a gate authored as a **superset of the spec** closes the
-gap enough to reach a hidden pass. Untested — it needs a ladder run.
+**Measured (screen, 2026-10-27).** The spec-coverage gate (`bbfac5f`) was run on
+one hard run, feedback OFF, control-matched. It did what it was built to do: the
+examiner's gate could no longer freeze while blind to a diagnosed artifact —
+`[examine] residual uncovered spec tokens: add_tickets_status_archived_index`
+appears in the trace, so the detector fires on the real miss, not a stand-in.
+But **phase 5 failed its own gate across all 6 best-of-2 rounds** and carried its
+best incomplete attempt forward — the same wall control-3 hit. The run was
+**stopped at phase 6/7 before grading**, so there is no hidden=N/34 for it. One
+screen, a lead, not a rate.
+
+**Conjecture.** That a superset gate closes the gap enough to reach a hidden
+pass. This screen weakens the "gate alone" form of it: a stronger **detector**
+does not move a phase the model cannot satisfy — it only names what is missing.
+The lever still untested is the gate paired with its **actuator**: coder feedback
+ON (`MELLUM_CODER_FEEDBACK=1`), so the named miss reaches the coder on retry
+instead of it rebuilding blind (see `2026-10-26-coder-feedback-comparison.md`).
+Needs a ladder run: spec-coverage gate + feedback ON, control-matched.
 
 ## The 8 misses (control-2, all explicit in the spec)
 
