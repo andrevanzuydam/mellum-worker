@@ -10,6 +10,16 @@ never by line number.
 
 Reopen conditions, not promises.
 
+**Lesson 10's layout question needs a sample it does not have.** The
+preregistered `joined`-against-`split` arm came back null at n = 3: phase-4
+missing {5, 0} against {0, 3}, two usable sessions per arm, and medium 0/3 on
+passes for both arms
+([record](docs/superpowers/research/2026-10-25-lesson10-run.md#attempt-4-2026-10-2527-the-arm-ran-and-the-layout-did-not-separate-it)).
+The reading had to be the per-module one because medium floors on passes, so a
+claim about spec layout needs a task above that floor **and** n above 3.
+*Reopens when* a suite with pass headroom exists, or a lesson or default needs
+the layout claim.
+
 **Checks that never ran read as every check missing.** `score_workspace_details`
 counts as many missing checks as `expected.json` lists whenever pytest aborts
 before running them: LC.19's attempt 3 scored 18/18 with `passed: false` because

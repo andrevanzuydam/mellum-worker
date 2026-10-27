@@ -2,7 +2,7 @@
 phase: LC
 feature_cycle: LC.19
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # LC.19 — lesson 10, one spec file per phase
@@ -138,3 +138,26 @@ what got a 12B worker from "nothing imports" to 1 of 18 checks missing.
   comparison appears.
 - **The reading is per-module.** Quoting `failed_checks` totals without the
   module breakdown would hide that the whole difference sits in phases 2 and 4.
+
+## Result
+
+2026-10-25. Shipped: lesson 10, **One spec file per phase**, written from a
+preregistered `joined`-against-`split` arm on the medium suite; its test; the
+index entry, nav entry and changelog; and the attempts 3–4 evidence on the
+`research-2026-10-25` release.
+
+What was measured: six sessions, no censors, no contamination, one write outside
+the layout. Phase-4 missing was `joined` {5, 0} against `split` {0, 3}, and total
+missing {13, 1} against {4, 10}; passes 0/3 for both arms. The preregistered rule
+saw a tie at 0 and stopped: **a null on spec layout**, so steps 3 and 5 stay
+`screen` and no `reference-run` is claimed.
+
+What the cycle did establish: the acceptance criteria in the spec, not the number
+of files they sit in, are what moved a 12B worker from a workspace no check could
+import to 1 of 18 checks missing. Two of six sessions recorded `checks_ran:
+false` — a syntax error in `app.py` and a `Complaint` with no default
+`timestamp` — which is the pathology the page names.
+
+Open, and parked in `BACKLOG.md`: the layout question at n above 3 on a task
+above the pass floor. `npm test` 368/368, `learn/code/tests` 62/62,
+`docs-caps` 4/4.
