@@ -76,6 +76,19 @@ def test_arms_select_the_extension_and_guards():
     assert harness.arm_settings("bare")["extension"] is None
 
 
+def test_the_server_guard_arm_keeps_the_other_guards_on():
+    env = harness.arm_settings("server-guard")["env"]
+    # MELLUM_GUARDS replaces ENABLED, so the arm must carry the whole set or it
+    # would change three things and be no arm at all.
+    assert json.loads(env["MELLUM_GUARDS"]) == harness.GUARDS_WITH_SERVER
+    assert harness.GUARDS_WITH_SERVER == {"emptyFinalNudge": 3, "loopBreaker": True,
+                                          "blockForegroundServer": True}
+    assert "MELLUM_MODE_FACTS" not in env
+    alone = harness.arm_settings("no-facts-guard")["env"]
+    assert alone["MELLUM_MODE_FACTS"] == "0"
+    assert json.loads(alone["MELLUM_GUARDS"]) == harness.GUARDS_WITH_SERVER
+
+
 def test_two_prompts_share_one_session(tmp_path):
     task = harness.load_suite(SUITES, "steps")
     run_dir = harness.run_suite(
@@ -196,7 +209,7 @@ def test_report_counts_the_trace(tmp_path):
     assert harness.report(run_dir) == {
         "requests": 2, "turns": 2, "tool_calls": 1, "tool_errors": 1,
         "final_reply": "done", "context": 1500, "output_tokens": 30,
-        "wall": 2.0, "nudges": 0, "empty_finals": 0,
+        "wall": 2.0, "nudges": 0, "empty_finals": 0, "guard_blocks": 0,
     }
 
 
@@ -207,7 +220,7 @@ def test_report_without_text(tmp_path):
     assert harness.report(run_dir) == {
         "requests": 0, "turns": 0, "tool_calls": 0, "tool_errors": 0,
         "final_reply": "", "context": None, "output_tokens": None, "wall": None,
-        "nudges": 0, "empty_finals": 0,
+        "nudges": 0, "empty_finals": 0, "guard_blocks": 0,
     }
 
 
@@ -228,6 +241,27 @@ def test_report_separates_a_nudge_from_an_empty_final(tmp_path):
     report = harness.report(run_dir)
     assert report["nudges"] == 1
     assert report["empty_finals"] == 1
+
+
+def test_report_counts_a_guard_refusal_the_model_was_told_about(tmp_path):
+    run_dir = tmp_path / "r"
+    run_dir.mkdir()
+    rows = [
+        {"type": "instance_start", "timestamp": "2026-10-27T01:00:00Z"},
+        {"type": "provider_request", "timestamp": "2026-10-27T01:00:01Z"},
+        {"type": "tool_call", "toolName": "bash", "input": {"command": "uvicorn app:app"},
+         "timestamp": "2026-10-27T01:00:02Z"},
+        {"type": "message_end", "timestamp": "2026-10-27T01:00:03Z",
+         "message": {"role": "toolResult", "content": [
+             {"type": "text", "text": "That starts a server in the foreground; it blocks forever."}]}},
+        {"type": "message_end", "timestamp": "2026-10-27T01:00:05Z",
+         "message": {"role": "assistant", "content": [
+             {"type": "text", "text": "Using TestClient instead."}]}},
+    ]
+    (run_dir / "trace.jsonl").write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+    counts = harness.report(run_dir)
+    assert counts["guard_blocks"] == 1
+    assert counts["nudges"] == 0
 
 
 def test_score_details_counts_expected_failures(tmp_path):

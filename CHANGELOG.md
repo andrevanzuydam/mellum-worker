@@ -6,6 +6,16 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- The **foreground-server guard** is on `main` but dormant: it refuses a `bash`
+  call that starts a server in the foreground and points at the in-process
+  `TestClient` form or a detached `nohup … &`. Its pattern now covers
+  `python app.py` and `uv run python scripts/serve.py`, the shapes LC.19's first
+  attempt actually hung on, and read-only or backgrounded commands still pass.
+  It stays off until an arm measures it: `--arm server-guard` and
+  `--arm no-facts-guard` run it with or without the facts bullet, and a run
+  record now counts `guard_blocks` — a blocked call never reaches the recorder,
+  so the count is taken from the refusal the model was told about.
+
 - Lesson 10, **One spec file per phase**. Written from a preregistered
   `joined`-against-`split` arm on the medium suite: the spec's acceptance
   criteria took a worker from a workspace no check could import to 1 of 18

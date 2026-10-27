@@ -32,7 +32,10 @@ SUITES = CODE / "suites"
 RECORDER = CODE / "record-pi.mjs"
 PROFILE = CODE / "profile"
 EXTENSION = CODE.parents[1] / "extensions" / "mellum-worker.ts"
-ARMS = ("bare", "worker", "no-prompt", "no-nudge", "no-loop", "no-facts")
+GUARDS_WITH_SERVER = {"emptyFinalNudge": 3, "loopBreaker": True,
+                      "blockForegroundServer": True}
+ARMS = ("bare", "worker", "no-prompt", "no-nudge", "no-loop", "no-facts",
+        "server-guard", "no-facts-guard")
 # Every knob an arm may set. A run clears them from the inherited environment
 # first, so an exported value cannot make two arms the same policy.
 ARM_ENV_KEYS = ("MELLUM_MODE", "MELLUM_GUARDS", "MELLUM_WORKER_PROMPT",
@@ -125,6 +128,13 @@ def arm_settings(arm: str) -> dict:
     elif arm == "no-loop":
         env["MELLUM_GUARDS"] = json.dumps({"emptyFinalNudge": 3})
     elif arm == "no-facts":
+        env["MELLUM_MODE_FACTS"] = "0"
+    elif arm == "server-guard":
+        # The full set: MELLUM_GUARDS replaces ENABLED, so a partial object
+        # would silently drop the nudge and the loop breaker.
+        env["MELLUM_GUARDS"] = json.dumps(GUARDS_WITH_SERVER)
+    elif arm == "no-facts-guard":
+        env["MELLUM_GUARDS"] = json.dumps(GUARDS_WITH_SERVER)
         env["MELLUM_MODE_FACTS"] = "0"
     return {"extension": EXTENSION, "env": env}
 
@@ -438,6 +448,13 @@ def _trace_time(value):
         return None
 
 
+# A blocked tool call never reaches the recorder: the worker's guard stops the
+# event chain first, so there is no tool_call row. What the trace does carry is
+# the refusal as the model saw it, in a toolResult message. This phrase is that
+# refusal's first sentence; the guard test pins it on the extension side.
+SERVER_REFUSAL = "starts a server in the foreground"
+
+
 def report(run: Path) -> dict:
     rows = [
         json.loads(line)
@@ -449,6 +466,7 @@ def report(run: Path) -> dict:
     outputs = []
     times = []
     empties: list[int] = []
+    guard_blocks = 0
     for index, row in enumerate(rows):
         if (when := _trace_time(row.get("timestamp"))) is not None:
             times.append(when)
@@ -462,6 +480,9 @@ def report(run: Path) -> dict:
         value = usage.get("output", usage.get("completion_tokens"))
         if isinstance(value, (int, float)):
             outputs.append(value)
+        if (message.get("role") == "toolResult"
+                and SERVER_REFUSAL in str(message.get("content"))):
+            guard_blocks += 1
         if message.get("role") != "assistant":
             continue
         blocks = message.get("content") or []
@@ -502,6 +523,7 @@ def report(run: Path) -> dict:
         "wall": round((times[-1] - times[0]).total_seconds(), 3) if len(times) > 1 else None,
         "nudges": continued,
         "empty_finals": len(empties) - continued,
+        "guard_blocks": guard_blocks,
     }
 
 
