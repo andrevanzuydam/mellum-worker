@@ -2,7 +2,7 @@
 phase: LC
 feature_cycle: LC.7A
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # LC.7A — the Pathologies page
@@ -107,3 +107,26 @@ alive instead of frozen: the glossary rule and the pathologies rule.
   and says so; if it is reproduced here later, the line changes to a record.
 - **Staleness.** A page like this rots silently. The two close-time rules are
   the answer, and they are conditional on evidence so neither becomes ceremony.
+
+## Result
+
+2026-10-25. Shipped: `learn/pathologies.md` — thirteen entries in four sections,
+each a numbered bold name, one plain sentence, `Seen:` with a link, and
+`Answer:` naming the shape that answers it or saying nothing does yet. Twelve
+rest on records in this repository; one (the runaway search) says `Seen
+elsewhere` and names Andre's digest. Two entries are harness faults, marked as
+such. The ditch's placeholder link, the nav, the site test's `PAGES` list and a
+glossary entry for **pathology** all follow.
+
+The close checklist in `docs/sdd.md` gained two steps and `AGENTS.md` gained the
+same sentence: a glossary entry for a concept the cycle introduced, and a
+Pathologies entry for a failure shape its evidence showed — or nothing, because
+an entry without an observation is a hypothesis.
+
+`tests/pathologies.test.mjs` holds the page's invariant: four family sections,
+eleven-plus entries with unique names, every entry carrying `Seen:` (with a
+link) and `Answer:`, a two-sentence opening, the "reference, not a rate" rule,
+and no `docs/ladder/` link. `npm test` 386/386, docs caps 4/4, build clean.
+
+Owed: nothing. If a later cycle reproduces the runaway search, its line changes
+from `Seen elsewhere` to a record.
