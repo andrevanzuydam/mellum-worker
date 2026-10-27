@@ -258,16 +258,24 @@ def run_tests(workspace: Path, timeout: float) -> tuple[bool, str]:
     return proc.returncode == 0, "\n".join(out.splitlines()[-25:])
 
 
-def pin_profile(profile_dir: Path, base_url: str, model_id: str, context_window: int = 56000) -> None:
+def pin_profile(profile_dir: Path, base_url: str, model_id: str, context_window: int = 56000,
+                thinking_format: str | None = None) -> None:
     mp = profile_dir / "models.json"
     data = json.loads(mp.read_text())
     _, prov = next(iter(data["providers"].items()))
     prov["baseUrl"] = base_url
-    prov["models"][0]["id"] = model_id
+    model = prov["models"][0]
+    model["id"] = model_id
     # A smaller window reserves less KV per request, so best-of-N (--concurrency N) fits under the
     # oMLX memory guard — each concurrent request costs model + KV(window), and the guard rejects
     # the overflow. Keep it above the largest context a phase actually reaches or it truncates.
-    prov["models"][0]["contextWindow"] = context_window
+    model["contextWindow"] = context_window
+    if thinking_format is not None:
+        # The pinned model carries Mellum's thinking format (qwen-chat-template). A different
+        # model served by vLLM (e.g. gemma) keeps reasoning AND tool calling, but needs its own
+        # format or pi's injected thinking leaks as garbage tokens. Override just the format;
+        # reasoning stays on. "chat-template" defers thinking to the model's own chat template.
+        model.setdefault("compat", {})["thinkingFormat"] = thinking_format
     mp.write_text(json.dumps(data, indent=2) + "\n")
 
 

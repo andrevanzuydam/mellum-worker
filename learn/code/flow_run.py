@@ -633,6 +633,7 @@ def drive_phase_free(pnum: int, *, workspace: Path, profile: Path, recorder: Pat
 def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, model_id: str,
          thinking: str, attempts: int, concurrency: int,
          start_phase: int = 1, seed_from: Path | None = None, context_window: int = 56000,
+         thinking_format: str | None = None,
          retry_concurrency: int | None = None, flow_mode: str = "forced",
          memory_path: Path | None = None) -> dict:
     retry_concurrency = retry_concurrency or concurrency  # retries escalate to this (default: same)
@@ -651,7 +652,7 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
     elif suite.root is not None and (suite.root / "base").is_dir():
         shutil.copytree(suite.root / "base", workspace, dirs_exist_ok=True)
     shutil.copytree(harness.PROFILE, run / "profile")
-    lr.pin_profile(run / "profile", base_url, model_id, context_window)
+    lr.pin_profile(run / "profile", base_url, model_id, context_window, thinking_format=thinking_format)
     recorder = run / "record-pi.mjs"
     shutil.copy2(harness.RECORDER, recorder)
     provider, model = harness.profile_pin(run / "profile")
@@ -867,6 +868,12 @@ def main(argv: list[str] | None = None) -> int:
                    help="pinned context window; smaller reserves less KV per request so --concurrency "
                         ">1 (best-of-N) fits under the oMLX memory guard. Keep above the largest "
                         "context a phase reaches or it truncates.")
+    p.add_argument("--thinking-format", default=None,
+                   help="override the pinned model's thinkingFormat (pi compat) for a non-Mellum "
+                        "model served elsewhere, e.g. 'chat-template' for a vLLM-served gemma. Keeps "
+                        "reasoning and tool calling on; only changes how thinking is encoded, so pi "
+                        "does not force Mellum's qwen-chat-template onto it (the cause of the leaked "
+                        "thought tokens).")
     p.add_argument("--retry-concurrency", type=int, default=None,
                    help="best-of-N concurrency for RETRY rounds (rounds 2+); defaults to --concurrency. "
                         "Set e.g. --concurrency 1 --retry-concurrency 2 to try singles first and spend "
@@ -888,7 +895,8 @@ def main(argv: list[str] | None = None) -> int:
              base_url=args.base_url, model_id=args.model, thinking=args.thinking,
              attempts=args.attempts, concurrency=args.concurrency,
              start_phase=args.start_phase, seed_from=args.seed_from,
-             context_window=args.context_window, retry_concurrency=args.retry_concurrency,
+             context_window=args.context_window, thinking_format=args.thinking_format,
+             retry_concurrency=args.retry_concurrency,
              flow_mode=args.flow_mode, memory_path=args.memory)
     return 0
 
