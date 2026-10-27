@@ -35,11 +35,11 @@ EXTENSION = CODE.parents[1] / "extensions" / "mellum-worker.ts"
 GUARDS_WITH_SERVER = {"emptyFinalNudge": 3, "loopBreaker": True,
                       "blockForegroundServer": True}
 ARMS = ("bare", "worker", "no-prompt", "no-nudge", "no-loop", "no-facts",
-        "server-guard", "no-facts-guard")
+        "server-guard", "no-facts-guard", "strip-thinking")
 # Every knob an arm may set. A run clears them from the inherited environment
 # first, so an exported value cannot make two arms the same policy.
 ARM_ENV_KEYS = ("MELLUM_MODE", "MELLUM_GUARDS", "MELLUM_WORKER_PROMPT",
-                "MELLUM_MODE_FACTS")
+                "MELLUM_MODE_FACTS", "MELLUM_STRIP_THINKING")
 FLAGS = [
     "-p", "--no-approve", "--no-extensions", "--no-skills",
     "--no-prompt-templates", "--no-themes", "--no-context-files",
@@ -136,6 +136,10 @@ def arm_settings(arm: str) -> dict:
     elif arm == "no-facts-guard":
         env["MELLUM_GUARDS"] = json.dumps(GUARDS_WITH_SERVER)
         env["MELLUM_MODE_FACTS"] = "0"
+    elif arm == "strip-thinking":
+        # Opens the seam the worker closes by default (A12): earlier reasoning is
+        # dropped from the payload, everything else identical.
+        env["MELLUM_STRIP_THINKING"] = "1"
     return {"extension": EXTENSION, "env": env}
 
 
@@ -619,6 +623,7 @@ def _run_sessions(
             "arm": arm,
             "single_prompt": single_prompt,
             "specs": specs,
+            "strip_thinking": arm_settings(arm)["env"].get("MELLUM_STRIP_THINKING") == "1",
             "machine": machine_label(),
             "deadline": deadline,
             "passed": passed,

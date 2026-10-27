@@ -67,7 +67,7 @@ function withFacts(m: Msg, facts: string): Msg {
 	return { ...m, content: parts };
 }
 
-export function filterForMellum(payload: any, systemPrompt: string, opts: { expectMarker?: boolean; facts?: string; keepSystem?: boolean } = {}) {
+export function filterForMellum(payload: any, systemPrompt: string, opts: { expectMarker?: boolean; facts?: string; keepSystem?: boolean; stripThinking?: boolean } = {}) {
 	if (!payload || !Array.isArray(payload.messages)) return payload;
 	const msgs: Msg[] = payload.messages;
 	const isMarker = (m: Msg) => m.role === "user" && (textOf(m).includes(MARK_ON) || textOf(m).includes(MARK_OFF));
@@ -111,7 +111,8 @@ export function filterForMellum(payload: any, systemPrompt: string, opts: { expe
 	const system = opts.keepSystem
 		? (msgs.find((m) => m.role === "system") ?? { role: "system", content: "" })
 		: { role: "system", content: systemPrompt };
-	const out: any = { ...payload, messages: [system, ...kept] };
+	const messages = opts.stripThinking ? stripReasoning(kept as Record<string, any>[]) : kept;
+	const out: any = { ...payload, messages: [system, ...messages] };
 	if (Array.isArray(payload.tools)) {
 		// pi-subagents re-adds its own tools after setActiveTools; the worker gets only its seven.
 		const tools = payload.tools.filter((t: any) => WORKER_TOOLS.includes(t?.function?.name ?? t?.name));
@@ -122,6 +123,23 @@ export function filterForMellum(payload: any, systemPrompt: string, opts: { expe
 	}
 	if (markerMissing) out.mellumModeMarkerMissing = true;
 	return out;
+}
+
+/**
+ * Drop earlier assistant reasoning from the payload.
+ *
+ * Left in place by default: removing it made runs 60% slower on the ladder (A12),
+ * because this backend's prefix cache absorbs the repeated reasoning and the run
+ * pays for the lost context in output tokens instead. `MELLUM_STRIP_THINKING=1`
+ * opens the seam so the claim can be measured rather than assumed.
+ */
+export function stripReasoning<T extends Record<string, any>>(messages: T[]): T[] {
+	return messages.map((m) => {
+		if (m?.role !== "assistant") return m;
+		if (!("reasoning_content" in m) && !("reasoning" in m)) return m;
+		const { reasoning_content: _content, reasoning: _reasoning, ...rest } = m;
+		return rest as T;
+	});
 }
 
 /**
@@ -581,6 +599,7 @@ export default function (pi: any, options: { startTimeoutMs?: number; fetch?: ty
 			expectMarker: interactive,
 			facts: factsBlock(spanFacts),
 			keepSystem: process.env.MELLUM_WORKER_PROMPT === "pi",
+			stripThinking: process.env.MELLUM_STRIP_THINKING === "1",
 		});
 		if (out?.mellumModeMarkerMissing) {
 			delete out.mellumModeMarkerMissing;

@@ -76,6 +76,24 @@ def test_arms_select_the_extension_and_guards():
     assert harness.arm_settings("bare")["extension"] is None
 
 
+def test_the_strip_thinking_arm_opens_exactly_one_seam():
+    env = harness.arm_settings("strip-thinking")["env"]
+    assert env == {"MELLUM_MODE": "1", "MELLUM_STRIP_THINKING": "1"}, "one seam, not three"
+    assert harness.arm_settings("worker")["env"].get("MELLUM_STRIP_THINKING") is None
+
+
+def test_the_record_says_whether_reasoning_was_stripped(tmp_path):
+    suite = harness.load_suite(SUITES, "add")
+    for arm, expected in (("worker", False), ("strip-thinking", True)):
+        results = harness._run_sessions(
+            suite, runs_dir=tmp_path / arm, pi_binary=str(FIX / "fake-pi.sh"),
+            repeat=1, grade_run=False, deadline=None, arm=arm,
+        )
+        record = json.loads((results[0][0] / "run.json").read_text())
+        assert record["strip_thinking"] is expected, arm
+        assert record["arm"] == arm
+
+
 def test_the_server_guard_arm_keeps_the_other_guards_on():
     env = harness.arm_settings("server-guard")["env"]
     # MELLUM_GUARDS replaces ENABLED, so the arm must carry the whole set or it

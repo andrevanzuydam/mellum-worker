@@ -195,6 +195,14 @@ the run that shows it and the shape that answers it. [The Pathologies
 page](pathologies.md) keeps the list; an entry without an observation behind it
 is a hypothesis, not a pathology.
 
+### strip thinking
+
+Removing earlier assistant reasoning from the payload the worker sends, so the
+next request cannot see what the model thought before. Off by default: on this
+backend the prefix cache absorbs repeated reasoning, and removing it made runs
+60% slower (A12). The worker's `MELLUM_STRIP_THINKING=1` opens the seam so the
+claim can be measured, and the harness arm is `--arm strip-thinking`.
+
 ### spec variant
 
 An alternative layout of a suite's project and the prompts that go with it,

@@ -6,6 +6,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A **strip-thinking seam** in the worker, so lesson 3's claim can be measured at
+  all: `MELLUM_STRIP_THINKING=1` drops earlier assistant reasoning from the
+  payload, the harness runs it as `--arm strip-thinking`, and `run.json` carries
+  `strip_thinking`. It replaces only `reasoning_content`/`reasoning` and leaves
+  content, tool calls and tool messages untouched, which a test pins both ways —
+  the default stays as shipped, because A12 found stripping made runs 60% slower.
+
 - The **Pathologies page**, `learn/pathologies.md`: thirteen named failure
   modes in four sections, each with a plain one-sentence statement of the
   problem, the record that shows it, and the shape that answers it. Harvested

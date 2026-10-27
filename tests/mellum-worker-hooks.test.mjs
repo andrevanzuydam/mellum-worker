@@ -92,6 +92,48 @@ test("context hook is dormant when no mellum span exists, and collapses when one
 	assert.ok(out.messages.length < messages.length);
 });
 
+test("MELLUM_STRIP_THINKING reaches the payload, and is off by default", async () => {
+	const handlers = {};
+	const commands = {};
+	const pi = {
+		on: (name, fn) => { handlers[name] = fn; },
+		registerCommand: (name, def) => { commands[name] = def; },
+		getActiveTools: () => ["read"],
+		setActiveTools: () => {},
+		setModel: async () => true,
+		sendMessage: () => {},
+		sendUserMessage: () => {},
+	};
+	const ctx = {
+		model: { provider: "anthropic", id: "parent" },
+		modelRegistry: { find: () => MODEL },
+		ui: { notify: () => {} },
+	};
+	const payload = () => ({
+		messages: [
+			{ role: "user", content: [{ type: "text", text: "[mellum-worker on]" }] },
+			{ role: "user", content: [{ type: "text", text: "fix it" }] },
+			{ role: "assistant", content: "", reasoning_content: "why I did that", tool_calls: [{ id: "1" }] },
+			{ role: "tool", tool_call_id: "1", content: "r" },
+		],
+	});
+	install(pi, { fetch: noServer });
+	await commands.mellum.handler("on", ctx);
+
+	delete process.env.MELLUM_STRIP_THINKING;
+	const kept = handlers.before_provider_request({ payload: payload() }, ctx);
+	const keptAssistant = kept.messages.find((m) => m.role === "assistant");
+	assert.equal(keptAssistant.reasoning_content, "why I did that", "off by default (A12)");
+
+	process.env.MELLUM_STRIP_THINKING = "1";
+	const stripped = handlers.before_provider_request({ payload: payload() }, ctx);
+	const strippedAssistant = stripped.messages.find((m) => m.role === "assistant");
+	assert.equal(strippedAssistant.reasoning_content, undefined, "the seam is open");
+	assert.deepEqual(strippedAssistant.tool_calls, [{ id: "1" }], "only reasoning goes");
+	assert.equal(stripped.messages.find((m) => m.role === "tool").content, "r");
+	delete process.env.MELLUM_STRIP_THINKING;
+});
+
 test("/mellum off notifies a one-line summary of the span", async () => {
 	const notes = [];
 	const handlers = {};
