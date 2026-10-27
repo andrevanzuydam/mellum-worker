@@ -91,7 +91,9 @@ not written at release time. This is a standing rule.
 
 Update the cycle's Status cell and the `## Now` pointer in `ROADMAP.md`, close
 the plan with `## Result`, move it to `plans/archive/`, and remove any backlog
-entry the cycle resolved. Confirm claims against linked evidence, pass
+entry the cycle resolved. At close, also add a glossary entry for any concept the
+cycle introduced, and a `learn/pathologies.md` entry for any failure shape its
+evidence showed — or nothing, if it showed none. Confirm claims against linked evidence, pass
 `node --test tests/docs-caps.test.mjs` and `npm test`, and reconcile the
 changelog before finishing the branch. A cycle may close before a release
 tag. This is a standing rule.

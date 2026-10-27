@@ -188,6 +188,13 @@ expected ID counts as missing. The record carries `checks_ran: false` beside the
 count, so a table cannot read it as the worker failing every check. The session
 still fails; it just says why.
 
+### pathology
+
+A way a small model has been observed to fail on an agentic task, recorded with
+the run that shows it and the shape that answers it. [The Pathologies
+page](pathologies.md) keeps the list; an entry without an observation behind it
+is a hypothesis, not a pathology.
+
 ### spec variant
 
 An alternative layout of a suite's project and the prompts that go with it,

@@ -157,11 +157,19 @@ Before closing a feature cycle or finishing its branch:
 
 1. Update its Status cell and the `## Now` pointer in `ROADMAP.md`, and
    remove backlog entries it resolved once their outcome has a record.
-2. Confirm every claim is supported by the linked evidence; keep screens,
+2. **Glossary:** add or update one `###` entry for any concept the cycle
+   introduced. The rule already applies to every page; at close it is the last
+   chance, and a page that links a term nobody defined is how a glossary rots.
+3. **Pathologies:** if the cycle's evidence showed a failure shape
+   [`learn/pathologies.md`](../learn/pathologies.md) does not carry, add it with
+   the record that shows it. If it showed none, add nothing — an entry needs an
+   observation behind it, so "update the page every cycle" would fill it with
+   hypotheses.
+4. Confirm every claim is supported by the linked evidence; keep screens,
    revised scores and comparative measurements distinguishable.
-3. Write the plan's `## Result`, set its lifecycle to `closed` or
+5. Write the plan's `## Result`, set its lifecycle to `closed` or
    `superseded`, and move it to `docs/superpowers/plans/archive/`.
-4. Run `node --test tests/docs-caps.test.mjs` and `npm test`, and reconcile
+6. Run `node --test tests/docs-caps.test.mjs` and `npm test`, and reconcile
    `[Unreleased]` with commits since the latest release tag.
 
 A feature cycle does not require a release tag to close. When releasing, the

@@ -13,6 +13,7 @@ nav = [
     "getting-started/harness.md",
     "getting-started/suite.md", "getting-started/worker-extension.md",
     "getting-started/troubleshoot.md"] },
+  { "Pathologies" = "pathologies.md" },
   { "Lessons" = ["lessons/index.md", "lessons/baseline.md",
     "lessons/primary-agent.md", "lessons/short-prompt.md",
     "lessons/thinking-working-memory.md",

@@ -6,6 +6,15 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- The **Pathologies page**, `learn/pathologies.md`: thirteen named failure
+  modes in four sections, each with a plain one-sentence statement of the
+  problem, the record that shows it, and the shape that answers it. Harvested
+  for form from the sibling `swiftstar` and `ds4-engine` catalogues — an entry
+  needs an observation, and the list is a reference, not a rate — and it carries
+  two entries that are harness faults rather than model faults, because a
+  harness fault that reads as a model fault is the misfiling worth avoiding. The
+  ditch's placeholder link now points at it.
+
 - Lesson 9, **The intercom block is a prefill tax**, as a rationale: the
   delegated mechanism it measured was removed in LC.8, so the page argues from
   the removal and from the handoff block that replaced it — one summary per
@@ -73,6 +82,12 @@ Versions match git tags; pin one in both install lines.
   removed the latter.
 
 ### Changed
+
+- Closing a feature cycle now names two habits: a glossary entry for any concept
+  the cycle introduced, and a Pathologies entry for any failure shape its
+  evidence showed — or nothing, if it showed none, because an entry without an
+  observation is a hypothesis. Both are in `docs/sdd.md`'s closing list and
+  `AGENTS.md`.
 
 - The medium suite's specs now carry the acceptance criteria its hidden checks
   read — the file layout (`app.py`, `models.py`, `templates/`, `tests/`), the

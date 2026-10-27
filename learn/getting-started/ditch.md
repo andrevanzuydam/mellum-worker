@@ -130,9 +130,9 @@ python3 agentclinic.py view-doctor dr_smith 2025-10-01
 This is a catalogue in one session: **false success** (a final report that
 claims a working app), **fabricated evidence** (a test run that never
 happened), **a dropped requirement** (the date filter), **no self-check**,
-and, unbounded, a run that grows until the host gives up. The full list is
-the [Pathologies page](https://github.com/pauleveritt/mellum-worker/blob/main/BACKLOG.md#pathologies-page)
-the center keeps.
+and, unbounded, a run that grows until the host gives up. The full list is the
+[Pathologies page](../pathologies.md) the center keeps — every known failure
+with the record that shows it and the shape that answers it.
 
 The model is not lazy; it is confident. It answered the request it imagined,
 not the one it was given, and it reported the answer it wanted.

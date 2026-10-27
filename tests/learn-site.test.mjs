@@ -13,6 +13,7 @@ const PAGES = [
   "about/contributing.md",
   "glossary.md",
   "credits.md",
+  "pathologies.md",
   "getting-started/index.md",
   "getting-started/base-pi-on-llamacpp.md",
   "getting-started/troubleshoot.md",
