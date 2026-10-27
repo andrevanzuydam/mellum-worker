@@ -74,7 +74,7 @@ export const PHASES: Record<string, Phase> = {
 	plan: {
 		thinking: "high",
 		tools: "read,grep,find,ls",
-		ext: [],
+		ext: [ext("mellum-loopguard.ts")],
 		maxTokens: 8192,
 		prompt:
 			"You are the PLANNER — step 1 of the pipeline plan → examine → code → test. Turn THIS phase's " +
@@ -90,7 +90,7 @@ export const PHASES: Record<string, Phase> = {
 	review_plan: {
 		thinking: "high",
 		tools: "read,grep,find,ls",
-		ext: [],
+		ext: [ext("mellum-loopguard.ts")],
 		maxTokens: 8192,
 		prompt:
 			"You are the PLAN REVIEWER — read-only; you judge plan/TODO.md, you do not change files. Read " +
@@ -103,7 +103,7 @@ export const PHASES: Record<string, Phase> = {
 	examine: {
 		thinking: "high",
 		tools: "read,grep,find,ls,lookup",
-		ext: [ext("mellum-knowledge.ts")],
+		ext: [ext("mellum-knowledge.ts"), ext("mellum-loopguard.ts")],
 		// The examiner is a THINKING model whose reasoning cannot be capped (reasoning_effort and
 		// enable_thinking are both no-ops on oMLX — verified). On a complex phase it needs >16384
 		// tokens JUST to finish thinking, so at 16384 it emits ZERO output (finish_reason=length,
@@ -137,7 +137,7 @@ export const PHASES: Record<string, Phase> = {
 	review_code: {
 		thinking: "high",
 		tools: "read,grep,find,ls",
-		ext: [],
+		ext: [ext("mellum-loopguard.ts")],
 		maxTokens: 8192,
 		prompt:
 			"You are the CODE REVIEWER — read-only; you judge, you do not change files. Read specs/, " +
@@ -240,10 +240,14 @@ function runSubagent(phase: string, task: string, cwd: string, signal?: AbortSig
 		writeFileSync(mp, `${JSON.stringify(data, null, 2)}\n`);
 		env = { ...process.env, PI_CODING_AGENT_DIR: agentDir };
 	}
+	// The phase's thinking level is the default, but a model whose server templates thinking
+	// itself (no pi-managed reasoning channel) can override it per-run via MELLUM_FLOW_THINKING.
+	// Mellum leaves it unset, so cfg.thinking stands — this file is byte-identical for it.
+	const thinking = process.env.MELLUM_FLOW_THINKING || cfg.thinking;
 	const args = [
 		"--mode", "json", "-p", "--no-session",
 		"--no-extensions", "--no-skills", "--no-prompt-templates", "--no-context-files", "--no-approve",
-		"--thinking", cfg.thinking, "--tools", cfg.tools,
+		"--thinking", thinking, "--tools", cfg.tools,
 	];
 	for (const e of cfg.ext) args.push("-e", e); // explicit -e still load under --no-extensions
 	// Append our guide + role UNDER Pi's base prompt. We tried REPLACING Pi's base (--system-prompt)
@@ -253,7 +257,7 @@ function runSubagent(phase: string, task: string, cwd: string, signal?: AbortSig
 	// BASE_GUIDE + the role on top; the de-brittle examiner prompt mitigates Pi's "be thorough" nudge.
 	args.push("--append-system-prompt", promptFile, `Task: ${task}`);
 
-	feed(`  ━ ${phase} starting (think=${cfg.thinking}) ━`);
+	feed(`  ━ ${phase} starting (think=${thinking}) ━`);
 	return new Promise((resolve) => {
 		const child = spawn("pi", args, { cwd, env, stdio: ["ignore", "pipe", "pipe"] });
 		const events: any[] = [];

@@ -346,11 +346,24 @@ test("only the coder phase has write/edit/bash; plan and reviewers are read-only
 	}
 });
 
-test("only the coder loads the safety guards (nonblock/guards/surgical)", () => {
+test("only the coder loads the write-safety guards (nonblock/guards/surgical)", () => {
 	assert.ok(PHASES.code.ext.some((e) => e.includes("mellum-nonblock")));
 	assert.ok(PHASES.code.ext.some((e) => e.includes("mellum-surgical")));
-	for (const r of ["plan", "review_plan", "review_code"]) {
-		assert.deepEqual(PHASES[r].ext, [], r);
+	// The read-only phases never get the write-oriented guards…
+	for (const r of ["plan", "review_plan", "examine", "review_code"]) {
+		assert.ok(!PHASES[r].ext.some((e) => e.includes("mellum-nonblock")), `${r} no nonblock`);
+		assert.ok(!PHASES[r].ext.some((e) => e.includes("mellum-surgical")), `${r} no surgical`);
+		assert.ok(!PHASES[r].ext.some((e) => e.includes("mellum-guards")), `${r} no full guards`);
+	}
+});
+
+test("every phase carries the loop-breaker (unbounded no-op repeats are capped for any model)", () => {
+	// The coder gets it via mellum-guards; every other phase via the dedicated loop-guard.
+	// A thinking model whose stop-decision never fires (e.g. examine on a fresh workspace)
+	// must still be capped so the phase emits and the flow can grade.
+	assert.ok(PHASES.code.ext.some((e) => e.includes("mellum-guards")), "coder via guards");
+	for (const r of ["plan", "review_plan", "examine", "review_code"]) {
+		assert.ok(PHASES[r].ext.some((e) => e.includes("mellum-loopguard")), `${r} loop-guard`);
 	}
 });
 

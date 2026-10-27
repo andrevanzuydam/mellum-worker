@@ -6,6 +6,19 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- The flow harness can now drive a model whose server templates reasoning itself, not only the
+  default worker. `MELLUM_FLOW_THINKING` overrides the per-phase sub-agent thinking level for every
+  phase in one place; set it to `off` (together with `flow_run --thinking off --thinking-format
+  openai`) to call such a model as plain OpenAI, with no client-managed reasoning channel to
+  mis-template. Left unset, each phase keeps its own thinking budget, so the default worker's calls
+  are byte-identical. This is the cascadable knob that lets a different model be swapped in and
+  measured against the same flow.
+- The read-only flow phases (plan, review_plan, examine, review_code) now carry the loop-breaker
+  via a dedicated `mellum-loopguard` extension, so an unbroken run of identical no-op tool calls
+  (e.g. the same `ls .` over and over) is capped with a nudge to take the next concrete action.
+  Previously only the coder loaded it, and a model that does not converge in a read role could spin
+  a phase past a thousand events. It trips only on genuine unbroken repeats, so a model that
+  converges — including the default worker — is unaffected.
 - The flow harness now enforces a SPEC-COVERAGE guarantee when the examiner writes a phase's
   acceptance test: the harness extracts the contract tokens the spec itself NAMES (the routes it
   declares, the migrations/indexes/views/columns it names, the status codes it pins) and, if the
