@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readdirSync, readFileSync, rmSyn
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { PHASES, finalText, bestPytest, asTodo, asCode, looksLikePytest, freezeName, gateTestName, GATE_DIR, materializeGate, flowBlock, PHASE_CALL_CAP, BASE_GUIDE, toolCallSummaries, reviewFromTestFailure } from "../extensions/mellum-flow.ts";
+import { PHASES, finalText, bestPytest, asTodo, asCode, looksLikePytest, freezeName, gateTestName, GATE_DIR, materializeGate, flowBlock, PHASE_CALL_CAP, BASE_GUIDE, toolCallSummaries, reviewFromTestFailure, specCoverageTokens, missingGateCoverage } from "../extensions/mellum-flow.ts";
 
 const asstText = (t) => ({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: t }] } });
 
@@ -365,4 +365,38 @@ test("every phase has a system prompt and a thinking budget", () => {
 		assert.ok(p.prompt.length > 40, name);
 		assert.ok(["off", "minimal", "low", "medium", "high", "xhigh", "max"].includes(p.thinking), name);
 	}
+});
+
+test("specCoverageTokens extracts the contract tokens the spec NAMES", () => {
+	const slice = [
+		"# Phase 7 — Visits report",
+		"`GET /visits` takes `from`, `to`.",
+		"Add a migration. Name it `add_tickets_note`; add a nullable `note` column to `tickets`.",
+		"POST /complaints returns 303 with Location: /complaints",
+		"create an index `idx_tickets_status_archived` on tickets.",
+	].join("\n");
+	const toks = specCoverageTokens(slice);
+	for (const t of ["visits", "add_tickets_note", "note", "303", "idx_tickets_status_archived"]) {
+		assert.ok(toks.includes(t), `missing ${t} in ${JSON.stringify(toks)}`);
+	}
+});
+
+test("specCoverageTokens reduces a templated route to its distinctive leaf", () => {
+	const toks = specCoverageTokens("`POST /complaints/{id}/archive` archives it.");
+	assert.ok(toks.includes("archive"), JSON.stringify(toks));
+	assert.ok(!toks.some((t) => t.includes("{")), "no placeholder token");
+});
+
+test("specCoverageTokens does not pin a bare 200", () => {
+	assert.ok(!specCoverageTokens("the home page returns 200 with a tagline").includes("200"));
+});
+
+test("missingGateCoverage returns only spec tokens the gate never references", () => {
+	const slice = "`GET /visits` ... returns 303 ... Name it `add_tickets_note`.";
+	// a gate that tests /visits but forgets the 303 and the migration
+	const gate = "def test_visits():\n    assert client.get('/visits').json()['visits']\n";
+	assert.deepEqual(missingGateCoverage(slice, gate).sort(), ["303", "add_tickets_note"]);
+	// a gate that references all of them (any mention counts) → nothing missing
+	const full = gate + "\n# 303 add_tickets_note\n";
+	assert.deepEqual(missingGateCoverage(slice, full), []);
 });

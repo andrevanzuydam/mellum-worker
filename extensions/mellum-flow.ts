@@ -394,6 +394,69 @@ export function looksLikePytest(code: string): boolean {
 	return true;
 }
 
+/** The distinctive contract tokens a phase's spec NAMES — routes it declares, DB artifacts it names,
+ *  status codes it pins. A gate that references all of them is a SUPERSET of the spec's named surface;
+ *  one that drops some is a subset the coder can satisfy while the hidden grader still fails (measured:
+ *  7/7 phase gates green, 26/34 hidden — see docs/superpowers/research/2026-10-27-proxy-oracle-gap.md).
+ *  Agnostic: every token is read from the spec slice itself, NEVER from the hidden grader. Pure → tested. */
+export function specCoverageTokens(slice: string): string[] {
+	const toks = new Set<string>();
+	// A route reduces to its distinctive leaf segment (len >= 4), so a gate that hits
+	// `/complaints/1/archive` satisfies the spec's templated `/complaints/{id}/archive`.
+	const leaf = (path: string): string | undefined => {
+		const segs = path.replace(/\{[^}]*\}/g, "").split("/").filter(Boolean);
+		for (let i = segs.length - 1; i >= 0; i--) if (segs[i].length >= 4) return segs[i];
+		return undefined;
+	};
+	const add = (t?: string) => { if (t) toks.add(t); };
+	for (const m of slice.matchAll(/`(\/[\w/{}-]+)`/g)) add(leaf(m[1]));           // `/route`
+	for (const m of slice.matchAll(/\b(?:GET|POST|PUT|PATCH|DELETE)\s+(\/[\w/{}-]+)/g)) add(leaf(m[1])); // VERB /route
+	for (const m of slice.matchAll(/[Nn]ame it\s+`([^`]+)`/g)) add(m[1]);          // Name it `migration`
+	for (const m of slice.matchAll(/\b(?:index|view)\s+`([^`]+)`/g)) add(m[1]);    // index/view `name`
+	for (const m of slice.matchAll(/`(\w+)`\s+column/g)) add(m[1]);                // `col` column
+	for (const m of slice.matchAll(/(?:status|redirect[^\n.]{0,20}|returns?)\D{0,12}?\b(30[1-8]|4\d\d)\b/gi)) add(m[1]); // pinned 3xx/4xx
+	return [...toks];
+}
+
+/** The spec tokens a gate text does NOT reference — the parts of the spec its acceptance test leaves
+ *  uncovered. Case-insensitive substring presence: the gate need only MENTION the token, so the
+ *  assertion form stays the examiner's call; this check only forbids ignoring a named requirement. */
+export function missingGateCoverage(slice: string, gateText: string): string[] {
+	const hay = gateText.toLowerCase();
+	return specCoverageTokens(slice).filter((t) => !hay.includes(t.toLowerCase()));
+}
+
+/** Instruction appended to a re-examine when the gate misses named spec tokens. Spec-derived and
+ *  concrete, so a fixed small model that ignored the standing "be exhaustive" prose gets told EXACTLY
+ *  what to add — a harness guarantee, not another plea. */
+export function coverageFeedback(missing: string[]): string {
+	return (
+		"\n\n=== YOUR ACCEPTANCE TEST IS INCOMPLETE ===\n" +
+		"The spec NAMES these and your test does not reference them yet. Add a real assertion for EACH, " +
+		"keeping every assertion you already have:\n" +
+		missing.map((t) => ` - ${t}`).join("\n") +
+		"\nFor a ROUTE word, exercise that route and assert its stated behaviour. For a named " +
+		"migration/index/view/column, assert the artifact EXISTS and is applied/recorded (query it — not " +
+		"merely that a function is defined). For a status code, assert the response status equals it " +
+		"EXACTLY. Output ONLY the full pytest file, no prose, no fences."
+	);
+}
+
+/** Concatenated text of every phase gate already frozen under plan/gate/ — the cumulative gate the
+ *  coder will actually see, so a token covered by an earlier phase is not re-demanded here. */
+export function frozenGateText(cwd: string): string {
+	const gate = join(cwd, GATE_DIR);
+	if (!existsSync(gate)) return "";
+	return readdirSync(gate)
+		.filter((f) => /^phase_\d+\.py$/.test(f))
+		.map((f) => readFileSync(join(gate, f), "utf8"))
+		.join("\n");
+}
+
+/** How many times examine is re-dispatched to cover spec tokens it missed. Small: examine is the
+ *  largest thinking budget, and only phases with a gap retry at all. */
+export const EXAMINE_COVERAGE_RETRIES = 2;
+
 /** The frozen gate holds one acceptance test per phase; the current phase comes from MELLUM_PHASE. */
 // Harness bookkeeping lives under plan/ so it never pollutes the solution tree (and a
 // write-list check — e.g. the ladder's AgentClinic rule — can keep it out of grading).
@@ -528,13 +591,27 @@ export default function (pi: any): void {
 			if (!looksLikePytest(code)) {
 				return textResult("examine did not produce a valid pytest file — this phase has NO gate yet. Call examine again before code.", true);
 			}
-			// Freeze THIS phase under its own name so the gate ACCUMULATES: a later phase can never
+			// SPEC-COVERAGE GUARANTEE: the gate must at least REFERENCE every contract the spec names,
+				// or it is a subset the coder can satisfy while the hidden grader fails. Re-dispatch the
+				// examiner, naming the gaps, until covered or the budget is spent — keeping the best-covered
+				// version. Agnostic: the tokens come from THIS phase's spec, never the grader.
+				const earlier = frozenGateText(cwd());
+				let missing = missingGateCoverage(task, earlier + code);
+				for (let tries = 0; missing.length && tries < EXAMINE_COVERAGE_RETRIES; tries++) {
+					feed(`    [examine] gate misses spec tokens: ${missing.join(", ")} — re-examining`);
+					const next = asCode(await runSubagent("examine", task + coverageFeedback(missing), cwd(), signal));
+					if (!looksLikePytest(next)) continue;
+					const nextMissing = missingGateCoverage(task, earlier + next);
+					if (nextMissing.length < missing.length) { code = next; missing = nextMissing; } // keep the best
+				}
+				if (missing.length) feed(`    [examine] residual uncovered spec tokens: ${missing.join(", ")}`);
+				// Freeze THIS phase under its own name so the gate ACCUMULATES: a later phase can never
 			// pass by regressing an earlier one, and the coder cannot weaken a gate it is told not to touch.
 			const gate = join(cwd(), GATE_DIR);
 			mkdirSync(gate, { recursive: true });
 			writeFileSync(join(gate, freezeName(process.env.MELLUM_PHASE ?? "1")), code);
 			const n = materializeGate(cwd()); // put this phase + every earlier phase into tests/ for the coder
-			return textResult(`Acceptance test written (${code.split("\n").length} lines); gate now covers ${n} phase(s). The coder must pass them ALL.`);
+			return textResult(`Acceptance test written (${code.split("\n").length} lines); gate now covers ${n} phase(s)${cover}. The coder must pass them ALL.`);
 		},
 	});
 

@@ -6,6 +6,16 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- The flow harness now enforces a SPEC-COVERAGE guarantee when the examiner writes a phase's
+  acceptance test: the harness extracts the contract tokens the spec itself NAMES (the routes it
+  declares, the migrations/indexes/views/columns it names, the status codes it pins) and, if the
+  authored gate does not even reference one of them, re-dispatches the examiner naming the exact gaps
+  until the gate covers them or a small retry budget is spent. This closes the measured proxy→oracle
+  gap where a run passed every self-authored phase gate and the visible suite yet scored 26/34 on the
+  hidden grader, because the gates were a subset of the spec (no `/visits` route, no `note`-column
+  migration, a redirect asserted loosely so a wrong 306 slipped through). Agnostic: every token is
+  read from the phase's own spec, never from the hidden grader. See
+  `docs/superpowers/research/2026-10-27-proxy-oracle-gap.md`.
 - `flow_run` records the GRANULAR hidden grade in `result.json` — `hidden_passed`/`hidden_total`
   (e.g. 31/34), not just the full-pass bool — plus a `coder_feedback` flag, so a run's real score is
   visible and arms of a comparison can be told apart (the full-pass bool is almost always False on
