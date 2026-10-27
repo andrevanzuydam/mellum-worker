@@ -39,3 +39,14 @@ test("lesson 1 reports a null rather than a pass-rate gap", () => {
   assert.match(l, /null on both suites/);
   assert.doesNotMatch(l, /passes where/);
 });
+
+test("lesson 1 dates its medium rows against the earlier fixture", () => {
+  // The suite gained acceptance criteria on 2026-10-27; the rows predate it.
+  assert.match(l, /Dated note, 2026-10-27/);
+  assert.match(l, /acceptance criteria/);
+  assert.match(l, /do not reproduce against\s+today's/);
+});
+
+test("lesson 1 links the record and the release behind its badge", () => {
+  assert.match(l, /2026-10-25-lesson1-run\.md/);
+});

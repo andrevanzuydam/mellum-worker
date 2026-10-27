@@ -31,4 +31,7 @@ test("the spec-layout lesson states its null and its mechanism", () => {
   assert.match(l, /retired/);
   assert.ok(!/reference-run/.test(l), "a null cannot claim reference-run");
   assert.match(page("lessons/index.md"), /one-spec-per-phase\.md/);
+  // A page that quotes a run links the record and the release it came from.
+  assert.match(l, /2026-10-25-lesson10-run\.md/);
+  assert.match(l, /releases\/tag\/research-2026-10-25/);
 });

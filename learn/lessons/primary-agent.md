@@ -132,9 +132,17 @@ unbounded agent starts servers it does not stop and writes where it was not
 asked to, and the operator pays in wall clock and in a result they then have
 to check.
 
+Dated note, 2026-10-27: the medium rows above were measured before the medium
+suite's spec gained its acceptance criteria, its `models.py` layout and its own
+seeded test. They are a record of that fixture and do not reproduce against
+today's — the arms did not change, the project they were given did.
+
 Changed 2026-10-25: steps 3 and 5 moved from `screen` to `reference-run` on
 [the record](https://github.com/pauleveritt/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson1-run.md),
-and the page's claim narrowed from a pass-rate gap to the cost of failing. The
+whose twelve run directories are in the
+[`research-2026-10-25`](https://github.com/pauleveritt/mellum-worker/releases/tag/research-2026-10-25)
+release, and the page's claim narrowed from a pass-rate gap to the cost of
+failing. The
 baseline's medium 2/3 against 0/3 was not reproduced.
 
 What would upgrade this: a medium task the worker can pass, so the floor

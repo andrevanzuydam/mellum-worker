@@ -140,6 +140,12 @@ sessions where no check could run at all, because nothing had asked for
 | `split` | `995575` | 4 | 0 | 88 | 1294 s |
 | `split` | `b3eaae` | 10 | 3 | 62 | 839 s |
 
+Every number here is in [the run record](https://github.com/pauleveritt/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson10-run.md),
+with the preregistration, the two excluded sessions and the rule as it was
+written before the run; the six sessions' `run.json` and traces are in the
+[`research-2026-10-25`](https://github.com/pauleveritt/mellum-worker/releases/tag/research-2026-10-25)
+release.
+
 ### Quality and budget
 
 Quality is the column that moved: from a workspace no check could open, to four
