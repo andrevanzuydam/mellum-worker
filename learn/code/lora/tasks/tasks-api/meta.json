@@ -1,0 +1,29 @@
+{
+  "domain": "task",
+  "app_name": "Taskbin",
+  "stack": [
+    "fastapi",
+    "jinja2",
+    "sqlite-utils"
+  ],
+  "generated": true,
+  "requirements": [
+    "GET / home page shows the app name",
+    "GET /tasks lists rows and renders an add form",
+    "POST /tasks creates a row and redirects 303 to /tasks",
+    "POST /tasks/{id}/star sets starred=1 and redirects 303",
+    "POST /tasks/{id}/unstar sets starred=0 and redirects 303",
+    "migration 004_index_starred creates idx_tasks_starred",
+    "migration 003_add_priority adds the priority column",
+    "migration 002_backfill_created_at leaves no null created_at",
+    "all four migrations recorded in _migrations",
+    "re-running migrations is a no-op",
+    "GET /summary returns exact integer keys total/starred/unstarred"
+  ],
+  "shapes": [
+    "second-endpoint-of-a-pair",
+    "exact-status-code",
+    "write-apply-track-idempotent-migration",
+    "exact-json-shape"
+  ]
+}

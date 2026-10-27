@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Articles</h1>
+<ul>
+  {% for r in rows %}
+  <li>{{ r.title }} — {{ r.url }}{% if r.saved %} (saved){% endif %}</li>
+  {% endfor %}
+</ul>
+<form method="post" action="/articles">
+  <input name="title" />
+  <input name="url" />
+  <button type="submit">Add</button>
+</form>
+{% endblock %}

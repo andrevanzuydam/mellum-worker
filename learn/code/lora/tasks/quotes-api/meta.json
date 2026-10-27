@@ -1,0 +1,29 @@
+{
+  "domain": "quote",
+  "app_name": "Commonplace",
+  "stack": [
+    "fastapi",
+    "jinja2",
+    "sqlite-utils"
+  ],
+  "generated": true,
+  "requirements": [
+    "GET / home page shows the app name",
+    "GET /quotes lists rows and renders an add form",
+    "POST /quotes creates a row and redirects 303 to /quotes",
+    "POST /quotes/{id}/love sets loved=1 and redirects 303",
+    "POST /quotes/{id}/unlove sets loved=0 and redirects 303",
+    "migration 004_index_loved creates idx_quotes_loved",
+    "migration 003_add_origin adds the origin column",
+    "migration 002_backfill_created_at leaves no null created_at",
+    "all four migrations recorded in _migrations",
+    "re-running migrations is a no-op",
+    "GET /summary returns exact integer keys total/loved/unloved"
+  ],
+  "shapes": [
+    "second-endpoint-of-a-pair",
+    "exact-status-code",
+    "write-apply-track-idempotent-migration",
+    "exact-json-shape"
+  ]
+}

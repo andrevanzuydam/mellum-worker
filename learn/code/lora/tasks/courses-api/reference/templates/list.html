@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Courses</h1>
+<ul>
+  {% for r in rows %}
+  <li>{{ r.title }} — {{ r.teacher }}{% if r.enrolled %} (enrolled){% endif %}</li>
+  {% endfor %}
+</ul>
+<form method="post" action="/courses">
+  <input name="title" />
+  <input name="teacher" />
+  <button type="submit">Add</button>
+</form>
+{% endblock %}

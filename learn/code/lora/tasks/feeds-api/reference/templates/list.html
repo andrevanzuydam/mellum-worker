@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Feeds</h1>
+<ul>
+  {% for r in rows %}
+  <li>{{ r.title }} — {{ r.url }}{% if r.subscribed %} (subscribed){% endif %}</li>
+  {% endfor %}
+</ul>
+<form method="post" action="/feeds">
+  <input name="title" />
+  <input name="url" />
+  <button type="submit">Add</button>
+</form>
+{% endblock %}

@@ -31,29 +31,27 @@ def home(request: Request):
 
 
 @app.get("/bookings", response_class=HTMLResponse)
-def bookings(request: Request):
+def listing(request: Request):
     return templates.TemplateResponse(
-        request,
-        "bookings.html",
-        {"app_name": APP_NAME, "bookings": models.list_bookings(_db())},
+        request, "list.html", {"app_name": APP_NAME, "rows": models.list_rows(_db())}
     )
 
 
 @app.post("/bookings")
-def create_booking(who: str = Form(...), when_at: str = Form(...)):
-    models.add_booking(_db(), who, when_at)
+def create(who: str = Form(...), when_at: str = Form(...)):
+    models.add_row(_db(), who, when_at)
     return RedirectResponse("/bookings", status_code=303)
 
 
 @app.post("/bookings/{booking_id}/confirm")
-def confirm(booking_id: int):
-    models.set_confirmed(_db(), booking_id, True)
+def flag_on(booking_id: int):
+    models.set_flag(_db(), booking_id, True)
     return RedirectResponse("/bookings", status_code=303)
 
 
 @app.post("/bookings/{booking_id}/cancel")
-def cancel(booking_id: int):
-    models.set_confirmed(_db(), booking_id, False)
+def flag_off(booking_id: int):
+    models.set_flag(_db(), booking_id, False)
     return RedirectResponse("/bookings", status_code=303)
 
 

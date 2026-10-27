@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Bookings</h1>
+<ul>
+  {% for r in rows %}
+  <li>{{ r.who }} — {{ r.when_at }}{% if r.confirmed %} (confirmed){% endif %}</li>
+  {% endfor %}
+</ul>
+<form method="post" action="/bookings">
+  <input name="who" />
+  <input name="when_at" />
+  <button type="submit">Add</button>
+</form>
+{% endblock %}

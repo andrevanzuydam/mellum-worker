@@ -11,7 +11,6 @@ BASE = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE / "templates"))
 
 app = FastAPI()
-
 APP_NAME = "Markpile"
 
 
@@ -32,29 +31,27 @@ def home(request: Request):
 
 
 @app.get("/bookmarks", response_class=HTMLResponse)
-def bookmarks(request: Request):
+def listing(request: Request):
     return templates.TemplateResponse(
-        request,
-        "bookmarks.html",
-        {"app_name": APP_NAME, "bookmarks": models.list_bookmarks(_db())},
+        request, "list.html", {"app_name": APP_NAME, "rows": models.list_rows(_db())}
     )
 
 
 @app.post("/bookmarks")
-def create_bookmark(title: str = Form(...), url: str = Form(...)):
-    models.add_bookmark(_db(), title, url)
+def create(title: str = Form(...), url: str = Form(...)):
+    models.add_row(_db(), title, url)
     return RedirectResponse("/bookmarks", status_code=303)
 
 
 @app.post("/bookmarks/{bookmark_id}/pin")
-def pin(bookmark_id: int):
-    models.set_pinned(_db(), bookmark_id, True)
+def flag_on(bookmark_id: int):
+    models.set_flag(_db(), bookmark_id, True)
     return RedirectResponse("/bookmarks", status_code=303)
 
 
 @app.post("/bookmarks/{bookmark_id}/unpin")
-def unpin(bookmark_id: int):
-    models.set_pinned(_db(), bookmark_id, False)
+def flag_off(bookmark_id: int):
+    models.set_flag(_db(), bookmark_id, False)
     return RedirectResponse("/bookmarks", status_code=303)
 
 

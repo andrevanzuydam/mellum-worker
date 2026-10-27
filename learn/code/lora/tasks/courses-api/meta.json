@@ -1,0 +1,29 @@
+{
+  "domain": "course",
+  "app_name": "Campus",
+  "stack": [
+    "fastapi",
+    "jinja2",
+    "sqlite-utils"
+  ],
+  "generated": true,
+  "requirements": [
+    "GET / home page shows the app name",
+    "GET /courses lists rows and renders an add form",
+    "POST /courses creates a row and redirects 303 to /courses",
+    "POST /courses/{id}/enroll sets enrolled=1 and redirects 303",
+    "POST /courses/{id}/unenroll sets enrolled=0 and redirects 303",
+    "migration 004_index_enrolled creates idx_courses_enrolled",
+    "migration 003_add_credits adds the credits column",
+    "migration 002_backfill_created_at leaves no null created_at",
+    "all four migrations recorded in _migrations",
+    "re-running migrations is a no-op",
+    "GET /summary returns exact integer keys total/enrolled/unenrolled"
+  ],
+  "shapes": [
+    "second-endpoint-of-a-pair",
+    "exact-status-code",
+    "write-apply-track-idempotent-migration",
+    "exact-json-shape"
+  ]
+}

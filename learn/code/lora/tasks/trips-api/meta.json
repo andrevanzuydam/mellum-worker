@@ -1,0 +1,29 @@
+{
+  "domain": "trip",
+  "app_name": "Wander",
+  "stack": [
+    "fastapi",
+    "jinja2",
+    "sqlite-utils"
+  ],
+  "generated": true,
+  "requirements": [
+    "GET / home page shows the app name",
+    "GET /trips lists rows and renders an add form",
+    "POST /trips creates a row and redirects 303 to /trips",
+    "POST /trips/{id}/book sets booked=1 and redirects 303",
+    "POST /trips/{id}/unbook sets booked=0 and redirects 303",
+    "migration 004_index_booked creates idx_trips_booked",
+    "migration 003_add_nights adds the nights column",
+    "migration 002_backfill_created_at leaves no null created_at",
+    "all four migrations recorded in _migrations",
+    "re-running migrations is a no-op",
+    "GET /summary returns exact integer keys total/booked/unbooked"
+  ],
+  "shapes": [
+    "second-endpoint-of-a-pair",
+    "exact-status-code",
+    "write-apply-track-idempotent-migration",
+    "exact-json-shape"
+  ]
+}

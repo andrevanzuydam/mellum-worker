@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Items</h1>
+<ul>
+  {% for r in rows %}
+  <li>{{ r.name }} — {{ r.sku }} — {{ r.quantity }}{% if r.flagged %} (flagged){% endif %}</li>
+  {% endfor %}
+</ul>
+<form method="post" action="/items">
+  <input name="name" />
+  <input name="sku" />
+  <input name="quantity" />
+  <button type="submit">Add</button>
+</form>
+{% endblock %}

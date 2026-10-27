@@ -1,0 +1,29 @@
+{
+  "domain": "habit",
+  "app_name": "Streaks",
+  "stack": [
+    "fastapi",
+    "jinja2",
+    "sqlite-utils"
+  ],
+  "generated": true,
+  "requirements": [
+    "GET / home page shows the app name",
+    "GET /habits lists rows and renders an add form",
+    "POST /habits creates a row and redirects 303 to /habits",
+    "POST /habits/{id}/track sets tracked=1 and redirects 303",
+    "POST /habits/{id}/untrack sets tracked=0 and redirects 303",
+    "migration 004_index_tracked creates idx_habits_tracked",
+    "migration 003_add_streak adds the streak column",
+    "migration 002_backfill_created_at leaves no null created_at",
+    "all four migrations recorded in _migrations",
+    "re-running migrations is a no-op",
+    "GET /summary returns exact integer keys total/tracked/untracked"
+  ],
+  "shapes": [
+    "second-endpoint-of-a-pair",
+    "exact-status-code",
+    "write-apply-track-idempotent-migration",
+    "exact-json-shape"
+  ]
+}

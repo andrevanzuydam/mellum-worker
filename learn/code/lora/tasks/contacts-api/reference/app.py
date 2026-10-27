@@ -31,29 +31,27 @@ def home(request: Request):
 
 
 @app.get("/contacts", response_class=HTMLResponse)
-def contacts(request: Request):
+def listing(request: Request):
     return templates.TemplateResponse(
-        request,
-        "contacts.html",
-        {"app_name": APP_NAME, "contacts": models.list_contacts(_db())},
+        request, "list.html", {"app_name": APP_NAME, "rows": models.list_rows(_db())}
     )
 
 
 @app.post("/contacts")
-def create_contact(name: str = Form(...), email: str = Form(...)):
-    models.add_contact(_db(), name, email)
+def create(name: str = Form(...), email: str = Form(...)):
+    models.add_row(_db(), name, email)
     return RedirectResponse("/contacts", status_code=303)
 
 
 @app.post("/contacts/{contact_id}/star")
-def star(contact_id: int):
-    models.set_starred(_db(), contact_id, True)
+def flag_on(contact_id: int):
+    models.set_flag(_db(), contact_id, True)
     return RedirectResponse("/contacts", status_code=303)
 
 
 @app.post("/contacts/{contact_id}/unstar")
-def unstar(contact_id: int):
-    models.set_starred(_db(), contact_id, False)
+def flag_off(contact_id: int):
+    models.set_flag(_db(), contact_id, False)
     return RedirectResponse("/contacts", status_code=303)
 
 

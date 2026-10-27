@@ -1,0 +1,29 @@
+{
+  "domain": "recipe",
+  "app_name": "Pantry",
+  "stack": [
+    "fastapi",
+    "jinja2",
+    "sqlite-utils"
+  ],
+  "generated": true,
+  "requirements": [
+    "GET / home page shows the app name",
+    "GET /recipes lists rows and renders an add form",
+    "POST /recipes creates a row and redirects 303 to /recipes",
+    "POST /recipes/{id}/favorite sets favorited=1 and redirects 303",
+    "POST /recipes/{id}/unfavorite sets favorited=0 and redirects 303",
+    "migration 004_index_favorited creates idx_recipes_favorited",
+    "migration 003_add_servings adds the servings column",
+    "migration 002_backfill_created_at leaves no null created_at",
+    "all four migrations recorded in _migrations",
+    "re-running migrations is a no-op",
+    "GET /summary returns exact integer keys total/favorited/unfavorited"
+  ],
+  "shapes": [
+    "second-endpoint-of-a-pair",
+    "exact-status-code",
+    "write-apply-track-idempotent-migration",
+    "exact-json-shape"
+  ]
+}

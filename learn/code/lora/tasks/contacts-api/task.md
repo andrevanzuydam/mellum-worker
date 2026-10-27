@@ -1,8 +1,8 @@
-# Rolodex — a contacts directory
+# Rolodex — a contacts app
 
-Build a small FastAPI application called Rolodex that keeps contacts, backed by
-a SQLite database (use `sqlite-utils`). Implement ALL of the following — every
-route, column, status code, and migration.
+Build a small FastAPI application called Rolodex, backed by a SQLite database
+(use `sqlite-utils`). Implement ALL of the following — every route, column,
+status code, and migration.
 
 ## Pages and routes
 - `app.py` with a FastAPI app instance.
@@ -11,18 +11,18 @@ route, column, status code, and migration.
   linking Home (`/`) and Contacts (`/contacts`).
 - `GET /` returns a home page that extends the layout and shows the app name
   "Rolodex".
-- `GET /contacts` lists every contact (name, email), ordered by id, and renders
-  an add form.
+- `GET /contacts` lists every row (name, email), ordered by id, and renders an
+  add form.
 
 ## Create (exact redirect)
-- `POST /contacts` reads form fields `name` and `email`, inserts a new contact,
-  and redirects to `GET /contacts` using status code 303.
+- `POST /contacts` reads form fields `name`, `email`, inserts a new row, and
+  redirects to `GET /contacts` using status code 303.
 
-## Star and unstar (both endpoints)
-- `POST /contacts/{contact_id}/star` sets the contact's `starred` to 1 and
-  redirects to `/contacts` with status 303.
-- `POST /contacts/{contact_id}/unstar` sets `starred` to 0 and redirects to
-  `/contacts` with status 303.
+## Star and Unstar (both endpoints)
+- `POST /contacts/{contact_id}/star` sets `starred` to 1 and redirects to `/contacts`
+  with status 303.
+- `POST /contacts/{contact_id}/unstar` sets `starred` to 0 and redirects to `/contacts`
+  with status 303.
 
 ## Migrations (write, apply, record, idempotent)
 Put migrations in `migrations.py` and apply them at startup. Track applied
@@ -30,9 +30,8 @@ migrations in a `_migrations` table so re-running is a no-op.
 - `001_add_created_at` — add a `created_at` text column.
 - `002_backfill_created_at` — set `created_at` to `2026-01-01T00:00:00`
   wherever it is null.
-- `003_add_phone` — add a `phone` text column defaulting to an empty string.
-- `004_index_starred` — create an index named `idx_contacts_starred` on
-  `contacts(starred)`.
+- `003_add_phone` — add a `phone` text column defaulting to ``.
+- `004_index_starred` — create an index named `idx_contacts_starred` on `contacts(starred)`.
 Running the migrations twice must not error, duplicate a column, or re-record a
 migration.
 

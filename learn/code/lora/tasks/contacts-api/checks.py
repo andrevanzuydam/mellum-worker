@@ -1,4 +1,4 @@
-"""Per-requirement checker for the Rolodex golden task."""
+"""Per-requirement checker for the Rolodex golden task (generated)."""
 import os
 import sys
 import tempfile
@@ -39,30 +39,26 @@ def test_home_ok_and_names_app():
     assert "Rolodex" in r.text
 
 
-def test_contacts_lists_seed():
+def test_listing_shows_seed():
     r = client.get("/contacts")
     assert r.status_code == 200
     assert "Avery" in r.text
 
 
 def test_create_redirects_303_and_appears():
-    r = client.post(
-        "/contacts",
-        data={"name": "Casey", "email": "casey@example.com"},
-        follow_redirects=False,
-    )
+    r = client.post("/contacts", data={'name': 'Casey', 'email': 'casey@example.com'}, follow_redirects=False)
     assert r.status_code == 303
     assert r.headers["location"] == "/contacts"
     assert "Casey" in client.get("/contacts").text
 
 
-def test_star_redirects_303_and_stars():
+def test_flag_on_redirects_303():
     r = client.post("/contacts/2/star", follow_redirects=False)
     assert r.status_code == 303
     assert _db()["contacts"].get(2)["starred"] == 1
 
 
-def test_unstar_redirects_303_and_unstars():
+def test_flag_off_redirects_303():
     client.post("/contacts/2/star", follow_redirects=False)
     r = client.post("/contacts/2/unstar", follow_redirects=False)
     assert r.status_code == 303
@@ -74,7 +70,7 @@ def test_migration_index_exists():
     assert "idx_contacts_starred" in names
 
 
-def test_migration_phone_column_added():
+def test_migration_extra_column_added():
     assert "phone" in _fresh()["contacts"].columns_dict
 
 
@@ -87,12 +83,7 @@ def test_migration_created_at_backfilled():
 
 def test_migrations_are_recorded():
     names = {r["name"] for r in _fresh()["_migrations"].rows}
-    assert names == {
-        "001_add_created_at",
-        "002_backfill_created_at",
-        "003_add_phone",
-        "004_index_starred",
-    }
+    assert names == {"001_add_created_at", "002_backfill_created_at", "003_add_phone", "004_index_starred"}
 
 
 def test_rerunning_migrations_is_a_noop():

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Books</h1>
+<ul>
+  {% for r in rows %}
+  <li>{{ r.title }} — {{ r.author }}{% if r.shelved %} (shelved){% endif %}</li>
+  {% endfor %}
+</ul>
+<form method="post" action="/books">
+  <input name="title" />
+  <input name="author" />
+  <button type="submit">Add</button>
+</form>
+{% endblock %}

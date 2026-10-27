@@ -1,4 +1,4 @@
-"""Per-requirement checker for the Stockroom golden task."""
+"""Per-requirement checker for the Stockroom golden task (generated)."""
 import os
 import sys
 import tempfile
@@ -39,34 +39,30 @@ def test_home_ok_and_names_app():
     assert "Stockroom" in r.text
 
 
-def test_items_lists_seed():
+def test_listing_shows_seed():
     r = client.get("/items")
     assert r.status_code == 200
     assert "Widget" in r.text
 
 
 def test_create_redirects_303_and_appears():
-    r = client.post(
-        "/items",
-        data={"name": "Sprocket", "sku": "S-200", "quantity": "5"},
-        follow_redirects=False,
-    )
+    r = client.post("/items", data={'name': 'Sprocket', 'sku': 'S-200', 'quantity': '5'}, follow_redirects=False)
     assert r.status_code == 303
     assert r.headers["location"] == "/items"
     assert "Sprocket" in client.get("/items").text
 
 
-def test_flag_redirects_303_and_flags():
-    r = client.post("/items/1/flag", follow_redirects=False)
+def test_flag_on_redirects_303():
+    r = client.post("/items/2/flag", follow_redirects=False)
     assert r.status_code == 303
-    assert _db()["items"].get(1)["flagged"] == 1
+    assert _db()["items"].get(2)["flagged"] == 1
 
 
-def test_unflag_redirects_303_and_unflags():
-    client.post("/items/1/flag", follow_redirects=False)
-    r = client.post("/items/1/unflag", follow_redirects=False)
+def test_flag_off_redirects_303():
+    client.post("/items/2/flag", follow_redirects=False)
+    r = client.post("/items/2/unflag", follow_redirects=False)
     assert r.status_code == 303
-    assert _db()["items"].get(1)["flagged"] == 0
+    assert _db()["items"].get(2)["flagged"] == 0
 
 
 def test_migration_index_exists():
@@ -74,7 +70,7 @@ def test_migration_index_exists():
     assert "idx_items_flagged" in names
 
 
-def test_migration_location_column_added():
+def test_migration_extra_column_added():
     assert "location" in _fresh()["items"].columns_dict
 
 
@@ -87,12 +83,7 @@ def test_migration_created_at_backfilled():
 
 def test_migrations_are_recorded():
     names = {r["name"] for r in _fresh()["_migrations"].rows}
-    assert names == {
-        "001_add_created_at",
-        "002_backfill_created_at",
-        "003_add_location",
-        "004_index_flagged",
-    }
+    assert names == {"001_add_created_at", "002_backfill_created_at", "003_add_location", "004_index_flagged"}
 
 
 def test_rerunning_migrations_is_a_noop():

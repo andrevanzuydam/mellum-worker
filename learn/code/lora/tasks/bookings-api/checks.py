@@ -1,4 +1,4 @@
-"""Per-requirement checker for the Slots golden task."""
+"""Per-requirement checker for the Slots golden task (generated)."""
 import os
 import sys
 import tempfile
@@ -39,30 +39,26 @@ def test_home_ok_and_names_app():
     assert "Slots" in r.text
 
 
-def test_bookings_lists_seed():
+def test_listing_shows_seed():
     r = client.get("/bookings")
     assert r.status_code == 200
     assert "Dana" in r.text
 
 
 def test_create_redirects_303_and_appears():
-    r = client.post(
-        "/bookings",
-        data={"who": "Kim", "when_at": "2026-03-03T09:00"},
-        follow_redirects=False,
-    )
+    r = client.post("/bookings", data={'who': 'Kim', 'when_at': '2026-03-03T09:00'}, follow_redirects=False)
     assert r.status_code == 303
     assert r.headers["location"] == "/bookings"
     assert "Kim" in client.get("/bookings").text
 
 
-def test_confirm_redirects_303_and_confirms():
+def test_flag_on_redirects_303():
     r = client.post("/bookings/2/confirm", follow_redirects=False)
     assert r.status_code == 303
     assert _db()["bookings"].get(2)["confirmed"] == 1
 
 
-def test_cancel_redirects_303_and_cancels():
+def test_flag_off_redirects_303():
     client.post("/bookings/2/confirm", follow_redirects=False)
     r = client.post("/bookings/2/cancel", follow_redirects=False)
     assert r.status_code == 303
@@ -74,7 +70,7 @@ def test_migration_index_exists():
     assert "idx_bookings_confirmed" in names
 
 
-def test_migration_seats_column_added():
+def test_migration_extra_column_added():
     assert "seats" in _fresh()["bookings"].columns_dict
 
 
@@ -87,12 +83,7 @@ def test_migration_created_at_backfilled():
 
 def test_migrations_are_recorded():
     names = {r["name"] for r in _fresh()["_migrations"].rows}
-    assert names == {
-        "001_add_created_at",
-        "002_backfill_created_at",
-        "003_add_seats",
-        "004_index_confirmed",
-    }
+    assert names == {"001_add_created_at", "002_backfill_created_at", "003_add_seats", "004_index_confirmed"}
 
 
 def test_rerunning_migrations_is_a_noop():

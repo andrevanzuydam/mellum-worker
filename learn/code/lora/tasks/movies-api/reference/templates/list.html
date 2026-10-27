@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Movies</h1>
+<ul>
+  {% for r in rows %}
+  <li>{{ r.title }} — {{ r.director }}{% if r.watched %} (watched){% endif %}</li>
+  {% endfor %}
+</ul>
+<form method="post" action="/movies">
+  <input name="title" />
+  <input name="director" />
+  <button type="submit">Add</button>
+</form>
+{% endblock %}

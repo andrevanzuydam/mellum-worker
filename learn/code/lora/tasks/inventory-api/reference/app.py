@@ -31,27 +31,27 @@ def home(request: Request):
 
 
 @app.get("/items", response_class=HTMLResponse)
-def items(request: Request):
+def listing(request: Request):
     return templates.TemplateResponse(
-        request, "items.html", {"app_name": APP_NAME, "items": models.list_items(_db())}
+        request, "list.html", {"app_name": APP_NAME, "rows": models.list_rows(_db())}
     )
 
 
 @app.post("/items")
-def create_item(name: str = Form(...), sku: str = Form(...), quantity: int = Form(...)):
-    models.add_item(_db(), name, sku, quantity)
+def create(name: str = Form(...), sku: str = Form(...), quantity: int = Form(...)):
+    models.add_row(_db(), name, sku, quantity)
     return RedirectResponse("/items", status_code=303)
 
 
 @app.post("/items/{item_id}/flag")
-def flag(item_id: int):
-    models.set_flagged(_db(), item_id, True)
+def flag_on(item_id: int):
+    models.set_flag(_db(), item_id, True)
     return RedirectResponse("/items", status_code=303)
 
 
 @app.post("/items/{item_id}/unflag")
-def unflag(item_id: int):
-    models.set_flagged(_db(), item_id, False)
+def flag_off(item_id: int):
+    models.set_flag(_db(), item_id, False)
     return RedirectResponse("/items", status_code=303)
 
 

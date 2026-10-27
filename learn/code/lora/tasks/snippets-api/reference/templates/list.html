@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Snippets</h1>
+<ul>
+  {% for r in rows %}
+  <li>{{ r.title }} — {{ r.body }}{% if r.pinned %} (pinned){% endif %}</li>
+  {% endfor %}
+</ul>
+<form method="post" action="/snippets">
+  <input name="title" />
+  <input name="body" />
+  <button type="submit">Add</button>
+</form>
+{% endblock %}

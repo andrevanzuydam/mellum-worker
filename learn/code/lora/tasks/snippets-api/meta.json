@@ -1,0 +1,29 @@
+{
+  "domain": "snippet",
+  "app_name": "Snipbox",
+  "stack": [
+    "fastapi",
+    "jinja2",
+    "sqlite-utils"
+  ],
+  "generated": true,
+  "requirements": [
+    "GET / home page shows the app name",
+    "GET /snippets lists rows and renders an add form",
+    "POST /snippets creates a row and redirects 303 to /snippets",
+    "POST /snippets/{id}/pin sets pinned=1 and redirects 303",
+    "POST /snippets/{id}/unpin sets pinned=0 and redirects 303",
+    "migration 004_index_pinned creates idx_snippets_pinned",
+    "migration 003_add_language adds the language column",
+    "migration 002_backfill_created_at leaves no null created_at",
+    "all four migrations recorded in _migrations",
+    "re-running migrations is a no-op",
+    "GET /summary returns exact integer keys total/pinned/unpinned"
+  ],
+  "shapes": [
+    "second-endpoint-of-a-pair",
+    "exact-status-code",
+    "write-apply-track-idempotent-migration",
+    "exact-json-shape"
+  ]
+}

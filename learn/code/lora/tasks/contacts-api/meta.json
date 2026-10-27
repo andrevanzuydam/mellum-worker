@@ -1,11 +1,16 @@
 {
   "domain": "contacts",
   "app_name": "Rolodex",
-  "stack": ["fastapi", "jinja2", "sqlite-utils"],
+  "stack": [
+    "fastapi",
+    "jinja2",
+    "sqlite-utils"
+  ],
+  "generated": true,
   "requirements": [
     "GET / home page shows the app name",
-    "GET /contacts lists contacts and renders an add form",
-    "POST /contacts creates a contact and redirects 303 to /contacts",
+    "GET /contacts lists rows and renders an add form",
+    "POST /contacts creates a row and redirects 303 to /contacts",
     "POST /contacts/{id}/star sets starred=1 and redirects 303",
     "POST /contacts/{id}/unstar sets starred=0 and redirects 303",
     "migration 004_index_starred creates idx_contacts_starred",
@@ -13,7 +18,7 @@
     "migration 002_backfill_created_at leaves no null created_at",
     "all four migrations recorded in _migrations",
     "re-running migrations is a no-op",
-    "GET /summary returns exact integer keys total/starred/unstarred with total==starred+unstarred"
+    "GET /summary returns exact integer keys total/starred/unstarred"
   ],
   "shapes": [
     "second-endpoint-of-a-pair",

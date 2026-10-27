@@ -1,9 +1,4 @@
-"""Per-requirement checker for the Markpile golden task.
-
-One test per requirement in task.md. A reference that does not satisfy every
-requirement fails here — that is how we keep ghost references out of the set.
-Hermetic: a fresh temp DB, the reference on sys.path.
-"""
+"""Per-requirement checker for the Markpile golden task (generated)."""
 import os
 import sys
 import tempfile
@@ -22,7 +17,6 @@ import app as appmod  # noqa: E402
 import migrations  # noqa: E402
 import models  # noqa: E402
 
-# Prepare the DB explicitly so the checker does not depend on startup firing.
 models.init_db(models.get_db())
 migrations.run_migrations(models.get_db())
 client = TestClient(appmod.app)
@@ -33,8 +27,6 @@ def _db():
 
 
 def _fresh():
-    """A fresh, migrated DB — migration contracts are tested independent of
-    the HTTP tests' inserts."""
     db = sqlite_utils.Database(tempfile.mktemp(suffix=".db"))
     models.init_db(db)
     migrations.run_migrations(db)
@@ -47,34 +39,30 @@ def test_home_ok_and_names_app():
     assert "Markpile" in r.text
 
 
-def test_bookmarks_lists_seed():
+def test_listing_shows_seed():
     r = client.get("/bookmarks")
     assert r.status_code == 200
     assert "Python docs" in r.text
 
 
 def test_create_redirects_303_and_appears():
-    r = client.post(
-        "/bookmarks",
-        data={"title": "Example", "url": "https://example.com"},
-        follow_redirects=False,
-    )
+    r = client.post("/bookmarks", data={'title': 'Example', 'url': 'https://example.com'}, follow_redirects=False)
     assert r.status_code == 303
     assert r.headers["location"] == "/bookmarks"
     assert "Example" in client.get("/bookmarks").text
 
 
-def test_pin_redirects_303_and_pins():
-    r = client.post("/bookmarks/1/pin", follow_redirects=False)
+def test_flag_on_redirects_303():
+    r = client.post("/bookmarks/2/pin", follow_redirects=False)
     assert r.status_code == 303
-    assert _db()["bookmarks"].get(1)["pinned"] == 1
+    assert _db()["bookmarks"].get(2)["pinned"] == 1
 
 
-def test_unpin_redirects_303_and_unpins():
-    client.post("/bookmarks/1/pin", follow_redirects=False)
-    r = client.post("/bookmarks/1/unpin", follow_redirects=False)
+def test_flag_off_redirects_303():
+    client.post("/bookmarks/2/pin", follow_redirects=False)
+    r = client.post("/bookmarks/2/unpin", follow_redirects=False)
     assert r.status_code == 303
-    assert _db()["bookmarks"].get(1)["pinned"] == 0
+    assert _db()["bookmarks"].get(2)["pinned"] == 0
 
 
 def test_migration_index_exists():
@@ -82,7 +70,7 @@ def test_migration_index_exists():
     assert "idx_bookmarks_pinned" in names
 
 
-def test_migration_color_column_added():
+def test_migration_extra_column_added():
     assert "color" in _fresh()["bookmarks"].columns_dict
 
 
@@ -95,12 +83,7 @@ def test_migration_created_at_backfilled():
 
 def test_migrations_are_recorded():
     names = {r["name"] for r in _fresh()["_migrations"].rows}
-    assert names == {
-        "001_add_created_at",
-        "002_backfill_created_at",
-        "003_add_color",
-        "004_index_pinned",
-    }
+    assert names == {"001_add_created_at", "002_backfill_created_at", "003_add_color", "004_index_pinned"}
 
 
 def test_rerunning_migrations_is_a_noop():

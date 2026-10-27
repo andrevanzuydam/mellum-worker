@@ -1,8 +1,4 @@
-"""Tracked, idempotent migrations for Markpile.
-
-Each migration is applied once, recorded in `_migrations`, and guarded so a
-re-run never errors, duplicates a column, or re-records a migration.
-"""
+"""Tracked, idempotent migrations for Markpile."""
 from __future__ import annotations
 
 BACKFILL_DATE = "2026-01-01T00:00:00"
@@ -19,20 +15,21 @@ def _m_add_created_at(db) -> None:
 
 def _m_backfill_created_at(db) -> None:
     db.execute(
-        "UPDATE bookmarks SET created_at = ? WHERE created_at IS NULL",
-        [BACKFILL_DATE],
+        "UPDATE bookmarks SET created_at = ? WHERE created_at IS NULL", [BACKFILL_DATE]
     )
     db.conn.commit()
 
 
-def _m_add_color(db) -> None:
+def _m_add_extra(db) -> None:
     if not _has_column(db, "bookmarks", "color"):
         db["bookmarks"].add_column("color", str)
-        db.execute("UPDATE bookmarks SET color = 'white' WHERE color IS NULL")
+        db.execute(
+            "UPDATE bookmarks SET color = 'white' WHERE color IS NULL"
+        )
         db.conn.commit()
 
 
-def _m_index_pinned(db) -> None:
+def _m_index_flag(db) -> None:
     db["bookmarks"].create_index(
         ["pinned"], index_name="idx_bookmarks_pinned", if_not_exists=True
     )
@@ -41,8 +38,8 @@ def _m_index_pinned(db) -> None:
 MIGRATIONS = [
     ("001_add_created_at", _m_add_created_at),
     ("002_backfill_created_at", _m_backfill_created_at),
-    ("003_add_color", _m_add_color),
-    ("004_index_pinned", _m_index_pinned),
+    ("003_add_color", _m_add_extra),
+    ("004_index_pinned", _m_index_flag),
 ]
 
 

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Photos</h1>
+<ul>
+  {% for r in rows %}
+  <li>{{ r.title }} — {{ r.url }}{% if r.favorited %} (favorited){% endif %}</li>
+  {% endfor %}
+</ul>
+<form method="post" action="/photos">
+  <input name="title" />
+  <input name="url" />
+  <button type="submit">Add</button>
+</form>
+{% endblock %}

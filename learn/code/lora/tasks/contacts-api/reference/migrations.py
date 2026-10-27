@@ -20,14 +20,16 @@ def _m_backfill_created_at(db) -> None:
     db.conn.commit()
 
 
-def _m_add_phone(db) -> None:
+def _m_add_extra(db) -> None:
     if not _has_column(db, "contacts", "phone"):
         db["contacts"].add_column("phone", str)
-        db.execute("UPDATE contacts SET phone = '' WHERE phone IS NULL")
+        db.execute(
+            "UPDATE contacts SET phone = '' WHERE phone IS NULL"
+        )
         db.conn.commit()
 
 
-def _m_index_starred(db) -> None:
+def _m_index_flag(db) -> None:
     db["contacts"].create_index(
         ["starred"], index_name="idx_contacts_starred", if_not_exists=True
     )
@@ -36,8 +38,8 @@ def _m_index_starred(db) -> None:
 MIGRATIONS = [
     ("001_add_created_at", _m_add_created_at),
     ("002_backfill_created_at", _m_backfill_created_at),
-    ("003_add_phone", _m_add_phone),
-    ("004_index_starred", _m_index_starred),
+    ("003_add_phone", _m_add_extra),
+    ("004_index_starred", _m_index_flag),
 ]
 
 

@@ -20,14 +20,16 @@ def _m_backfill_created_at(db) -> None:
     db.conn.commit()
 
 
-def _m_add_location(db) -> None:
+def _m_add_extra(db) -> None:
     if not _has_column(db, "items", "location"):
         db["items"].add_column("location", str)
-        db.execute("UPDATE items SET location = 'unknown' WHERE location IS NULL")
+        db.execute(
+            "UPDATE items SET location = 'unknown' WHERE location IS NULL"
+        )
         db.conn.commit()
 
 
-def _m_index_flagged(db) -> None:
+def _m_index_flag(db) -> None:
     db["items"].create_index(
         ["flagged"], index_name="idx_items_flagged", if_not_exists=True
     )
@@ -36,8 +38,8 @@ def _m_index_flagged(db) -> None:
 MIGRATIONS = [
     ("001_add_created_at", _m_add_created_at),
     ("002_backfill_created_at", _m_backfill_created_at),
-    ("003_add_location", _m_add_location),
-    ("004_index_flagged", _m_index_flagged),
+    ("003_add_location", _m_add_extra),
+    ("004_index_flagged", _m_index_flag),
 ]
 
 

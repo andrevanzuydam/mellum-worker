@@ -1,8 +1,8 @@
-# Slots — a bookings ledger
+# Slots — a bookings app
 
-Build a small FastAPI application called Slots that records time bookings,
-backed by a SQLite database (use `sqlite-utils`). Implement ALL of the
-following — every route, column, status code, and migration.
+Build a small FastAPI application called Slots, backed by a SQLite database
+(use `sqlite-utils`). Implement ALL of the following — every route, column,
+status code, and migration.
 
 ## Pages and routes
 - `app.py` with a FastAPI app instance.
@@ -11,18 +11,18 @@ following — every route, column, status code, and migration.
   linking Home (`/`) and Bookings (`/bookings`).
 - `GET /` returns a home page that extends the layout and shows the app name
   "Slots".
-- `GET /bookings` lists every booking (who, when_at), ordered by id, and
-  renders a booking form.
+- `GET /bookings` lists every row (who, when_at), ordered by id, and renders an
+  add form.
 
 ## Create (exact redirect)
-- `POST /bookings` reads form fields `who` and `when_at`, inserts a new
-  booking, and redirects to `GET /bookings` using status code 303.
+- `POST /bookings` reads form fields `who`, `when_at`, inserts a new row, and
+  redirects to `GET /bookings` using status code 303.
 
-## Confirm and cancel (both endpoints)
-- `POST /bookings/{booking_id}/confirm` sets the booking's `confirmed` to 1 and
-  redirects to `/bookings` with status 303.
-- `POST /bookings/{booking_id}/cancel` sets `confirmed` to 0 and redirects to
-  `/bookings` with status 303.
+## Confirm and Cancel (both endpoints)
+- `POST /bookings/{booking_id}/confirm` sets `confirmed` to 1 and redirects to `/bookings`
+  with status 303.
+- `POST /bookings/{booking_id}/cancel` sets `confirmed` to 0 and redirects to `/bookings`
+  with status 303.
 
 ## Migrations (write, apply, record, idempotent)
 Put migrations in `migrations.py` and apply them at startup. Track applied
@@ -31,8 +31,7 @@ migrations in a `_migrations` table so re-running is a no-op.
 - `002_backfill_created_at` — set `created_at` to `2026-01-01T00:00:00`
   wherever it is null.
 - `003_add_seats` — add a `seats` integer column defaulting to 1.
-- `004_index_confirmed` — create an index named `idx_bookings_confirmed` on
-  `bookings(confirmed)`.
+- `004_index_confirmed` — create an index named `idx_bookings_confirmed` on `bookings(confirmed)`.
 Running the migrations twice must not error, duplicate a column, or re-record a
 migration.
 

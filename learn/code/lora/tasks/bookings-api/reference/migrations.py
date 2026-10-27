@@ -20,14 +20,16 @@ def _m_backfill_created_at(db) -> None:
     db.conn.commit()
 
 
-def _m_add_seats(db) -> None:
+def _m_add_extra(db) -> None:
     if not _has_column(db, "bookings", "seats"):
         db["bookings"].add_column("seats", int)
-        db.execute("UPDATE bookings SET seats = 1 WHERE seats IS NULL")
+        db.execute(
+            "UPDATE bookings SET seats = 1 WHERE seats IS NULL"
+        )
         db.conn.commit()
 
 
-def _m_index_confirmed(db) -> None:
+def _m_index_flag(db) -> None:
     db["bookings"].create_index(
         ["confirmed"], index_name="idx_bookings_confirmed", if_not_exists=True
     )
@@ -36,8 +38,8 @@ def _m_index_confirmed(db) -> None:
 MIGRATIONS = [
     ("001_add_created_at", _m_add_created_at),
     ("002_backfill_created_at", _m_backfill_created_at),
-    ("003_add_seats", _m_add_seats),
-    ("004_index_confirmed", _m_index_confirmed),
+    ("003_add_seats", _m_add_extra),
+    ("004_index_confirmed", _m_index_flag),
 ]
 
 

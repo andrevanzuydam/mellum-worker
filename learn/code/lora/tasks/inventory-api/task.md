@@ -1,8 +1,8 @@
-# Stockroom — an inventory tracker
+# Stockroom — a inventory app
 
-Build a small FastAPI application called Stockroom that tracks stock items,
-backed by a SQLite database (use `sqlite-utils`). Implement ALL of the
-following — every route, column, status code, and migration.
+Build a small FastAPI application called Stockroom, backed by a SQLite database
+(use `sqlite-utils`). Implement ALL of the following — every route, column,
+status code, and migration.
 
 ## Pages and routes
 - `app.py` with a FastAPI app instance.
@@ -11,16 +11,16 @@ following — every route, column, status code, and migration.
   linking Home (`/`) and Items (`/items`).
 - `GET /` returns a home page that extends the layout and shows the app name
   "Stockroom".
-- `GET /items` lists every item (name, sku, quantity), ordered by id, and
-  renders an add form.
+- `GET /items` lists every row (name, sku, quantity), ordered by id, and renders an
+  add form.
 
 ## Create (exact redirect)
-- `POST /items` reads form fields `name`, `sku`, and `quantity`, inserts a new
-  item, and redirects to `GET /items` using status code 303.
+- `POST /items` reads form fields `name`, `sku`, `quantity`, inserts a new row, and
+  redirects to `GET /items` using status code 303.
 
-## Flag and unflag (both endpoints)
-- `POST /items/{item_id}/flag` sets the item's `flagged` to 1 and redirects to
-  `/items` with status 303.
+## Flag and Unflag (both endpoints)
+- `POST /items/{item_id}/flag` sets `flagged` to 1 and redirects to `/items`
+  with status 303.
 - `POST /items/{item_id}/unflag` sets `flagged` to 0 and redirects to `/items`
   with status 303.
 
@@ -31,8 +31,7 @@ migrations in a `_migrations` table so re-running is a no-op.
 - `002_backfill_created_at` — set `created_at` to `2026-01-01T00:00:00`
   wherever it is null.
 - `003_add_location` — add a `location` text column defaulting to `unknown`.
-- `004_index_flagged` — create an index named `idx_items_flagged` on
-  `items(flagged)`.
+- `004_index_flagged` — create an index named `idx_items_flagged` on `items(flagged)`.
 Running the migrations twice must not error, duplicate a column, or re-record a
 migration.
 

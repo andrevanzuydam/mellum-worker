@@ -1,0 +1,29 @@
+{
+  "domain": "product",
+  "app_name": "Shopfront",
+  "stack": [
+    "fastapi",
+    "jinja2",
+    "sqlite-utils"
+  ],
+  "generated": true,
+  "requirements": [
+    "GET / home page shows the app name",
+    "GET /products lists rows and renders an add form",
+    "POST /products creates a row and redirects 303 to /products",
+    "POST /products/{id}/feature sets featured=1 and redirects 303",
+    "POST /products/{id}/unfeature sets featured=0 and redirects 303",
+    "migration 004_index_featured creates idx_products_featured",
+    "migration 003_add_price adds the price column",
+    "migration 002_backfill_created_at leaves no null created_at",
+    "all four migrations recorded in _migrations",
+    "re-running migrations is a no-op",
+    "GET /summary returns exact integer keys total/featured/unfeatured"
+  ],
+  "shapes": [
+    "second-endpoint-of-a-pair",
+    "exact-status-code",
+    "write-apply-track-idempotent-migration",
+    "exact-json-shape"
+  ]
+}
