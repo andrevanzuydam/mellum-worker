@@ -77,17 +77,14 @@ deadline, or when the harness report is next changed.
 
 **The foreground-server pathology is measured but not placed.** Three
 `no-facts` sessions hung on `uvicorn app:app --reload` / `python app.py` after
-143–460 s of silence and died at the 600 s deadline; the facts bullet they
-lacked says `Do not: start servers`
-([record](docs/superpowers/research/2026-10-24-project-facts-screen.md)). The
-pathology is Andre's (index P2) and belongs to **LC.7A**, which needs LC.5's
-written consent and runs after LC.19; a purpose-built guard is dormant on
-branch `lc11b-server-guard` at `420ba1d`. Do not run the confirming arm inside
-a lessons re-base: its record would have no page to land on.
-2026-10-25: reproduced on the unbounded arm — two of three `bare` easy
-sessions in LC.24 censored on `uvicorn … --reload`, with a record and a page
-([run](docs/superpowers/research/2026-10-25-lesson1-run.md)). The three-way
-arm is still owed.
+143–460 s of silence and died at the 600 s deadline
+([record](docs/superpowers/research/2026-10-24-project-facts-screen.md)); LC.24's
+`bare` easy arm and LC.19's first two attempts hung the same way. It is Andre's
+(index P2) and belongs to **LC.7A**. 2026-10-27: the guard fired **0** times on
+medium — neither arm issued a foreground command, because the briefs now name the
+verification loop
+([run](docs/superpowers/research/2026-10-26-server-guard-run.md)) — so it stays
+dormant and the pathology is instructional, not unfixed.
 *Reopens when* LC.5 closes and LC.7A starts, or the arm's three-way question
 (facts bullet, dormant guard, both) can land on a page.
 
