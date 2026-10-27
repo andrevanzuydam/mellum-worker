@@ -1,6 +1,18 @@
 # LoRA completeness probe — preregistration
 
-Date: 2026-10-27. Lifecycle: preregistered, not yet run.
+Date: 2026-10-27. Lifecycle: run (directional, n=1 per arm) — see Result.
+
+## Result (2026-10-27)
+
+Run as directional screens, not the full preregistered n=3. The probe's hypothesis
+(a completeness LoRA closes the dense-phase gap) did **not** hold: a corrected
+tool-call adapter (200 samples) on the 6-bit base failed phase 5 the same as base,
+and retraining on 8-bit stalled. The adapter fixed tool-call *mechanics* (the
+earlier flat-dump adapter had degraded them) but not completeness on the dense
+phase. Combined with the 8-bit precision screen, the wall reads as a model
+throughput ceiling, with quantization ruled out. Full cross-lever write-up:
+`2026-10-27-dense-phase-wall-levers.md`. The open lever is adaptive decomposition,
+not more LoRA samples.
 
 ## What is measured / What is conjecture
 
