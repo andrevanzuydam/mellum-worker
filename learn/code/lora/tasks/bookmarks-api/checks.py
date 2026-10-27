@@ -1,0 +1,120 @@
+"""Per-requirement checker for the Markpile golden task.
+
+One test per requirement in task.md. A reference that does not satisfy every
+requirement fails here — that is how we keep ghost references out of the set.
+Hermetic: a fresh temp DB, the reference on sys.path.
+"""
+import os
+import sys
+import tempfile
+from pathlib import Path
+
+REF = Path(__file__).parent / "reference"
+sys.path.insert(0, str(REF))
+
+_DB = tempfile.mktemp(suffix=".db")
+os.environ["MARKPILE_DB"] = _DB
+
+import sqlite_utils  # noqa: E402
+from starlette.testclient import TestClient  # noqa: E402
+
+import app as appmod  # noqa: E402
+import migrations  # noqa: E402
+import models  # noqa: E402
+
+# Prepare the DB explicitly so the checker does not depend on startup firing.
+models.init_db(models.get_db())
+migrations.run_migrations(models.get_db())
+client = TestClient(appmod.app)
+
+
+def _db():
+    return sqlite_utils.Database(_DB)
+
+
+def _fresh():
+    """A fresh, migrated DB — migration contracts are tested independent of
+    the HTTP tests' inserts."""
+    db = sqlite_utils.Database(tempfile.mktemp(suffix=".db"))
+    models.init_db(db)
+    migrations.run_migrations(db)
+    return db
+
+
+def test_home_ok_and_names_app():
+    r = client.get("/")
+    assert r.status_code == 200
+    assert "Markpile" in r.text
+
+
+def test_bookmarks_lists_seed():
+    r = client.get("/bookmarks")
+    assert r.status_code == 200
+    assert "Python docs" in r.text
+
+
+def test_create_redirects_303_and_appears():
+    r = client.post(
+        "/bookmarks",
+        data={"title": "Example", "url": "https://example.com"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+    assert r.headers["location"] == "/bookmarks"
+    assert "Example" in client.get("/bookmarks").text
+
+
+def test_pin_redirects_303_and_pins():
+    r = client.post("/bookmarks/1/pin", follow_redirects=False)
+    assert r.status_code == 303
+    assert _db()["bookmarks"].get(1)["pinned"] == 1
+
+
+def test_unpin_redirects_303_and_unpins():
+    client.post("/bookmarks/1/pin", follow_redirects=False)
+    r = client.post("/bookmarks/1/unpin", follow_redirects=False)
+    assert r.status_code == 303
+    assert _db()["bookmarks"].get(1)["pinned"] == 0
+
+
+def test_migration_index_exists():
+    names = {i.name for i in _fresh()["bookmarks"].indexes}
+    assert "idx_bookmarks_pinned" in names
+
+
+def test_migration_color_column_added():
+    assert "color" in _fresh()["bookmarks"].columns_dict
+
+
+def test_migration_created_at_backfilled():
+    nulls = _fresh().execute(
+        "select count(*) from bookmarks where created_at is null"
+    ).fetchone()[0]
+    assert nulls == 0
+
+
+def test_migrations_are_recorded():
+    names = {r["name"] for r in _fresh()["_migrations"].rows}
+    assert names == {
+        "001_add_created_at",
+        "002_backfill_created_at",
+        "003_add_color",
+        "004_index_pinned",
+    }
+
+
+def test_rerunning_migrations_is_a_noop():
+    db = _fresh()
+    cols_before = len(db["bookmarks"].columns_dict)
+    mig_before = db["_migrations"].count
+    migrations.run_migrations(db)
+    migrations.run_migrations(db)
+    assert len(db["bookmarks"].columns_dict) == cols_before
+    assert db["_migrations"].count == mig_before
+
+
+def test_summary_exact_shape_and_sums():
+    s = client.get("/summary").json()
+    assert set(s.keys()) == {"total", "pinned", "unpinned"}
+    assert all(isinstance(v, int) for v in s.values())
+    assert s["total"] == s["pinned"] + s["unpinned"]
