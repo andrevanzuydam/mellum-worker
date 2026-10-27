@@ -155,20 +155,84 @@ def run_top(task: str, *, workspace: Path, profile: Path, recorder: Path, provid
         reap_group(child.pid)  # reap any phase sub-agents
 
 
-def decompose(task: str) -> list[str]:
-    """Split a task into small, ordered units for one-at-a-time implementation.
+# A phase with at least this many top-level requirement bullets is "dense" and gets
+# decomposed into one sub-phase per requirement. The measured wall is a throughput
+# ceiling: the fixed model completes the salient requirement of a dense phase and drops
+# the rest, even under best-of-N, feedback, and higher precision. Splitting a dense phase
+# so each sub-phase carries ONE requirement (plus the phase's shared context) lowers the
+# per-step load to what the model clears reliably; the loop already gates, materializes
+# cumulatively, and checkpoints per phase, so N smaller phases "just work". Agnostic: the
+# split is on the spec's own enumerated bullets, never on the hidden grader.
+SUBDIVIDE_THRESHOLD = 5
 
-    The model cannot bound its reasoning (`supportsReasoningEffort: false`), so a big task
-    drowns it. Split on the structure the text already has — Phase/Step headers at ANY level
-    first (so `# Phase 5` groups with `## Phase 1`), then any markdown header — so each unit is
-    small. A task with no structure stays one unit (model-splitting an unstructured wall is the
-    parked backlog item). Returns the slices in order.
-    """
+_BULLET = re.compile(r"^(?:[-*]\s|\d+\.\s)")
+
+
+def _heading_split(task: str) -> list[str]:
+    """Split on the structure the text already has — Phase/Step headers at ANY level first
+    (so `# Phase 5` groups with `## Phase 1`), then any markdown header. No structure → one
+    unit (model-splitting an unstructured wall is the parked backlog item)."""
     for pat in (r"(?m)^(?=#{1,6}\s*(?:Phase|Step)\b)", r"(?m)^(?=#{1,6}\s+\S)"):
         parts = [p.strip() for p in re.split(pat, task) if p.strip()]
         if len(parts) > 1:
             return parts
     return [task]
+
+
+def _requirements(slice_text: str) -> tuple[list[str], list[str]]:
+    """Split a phase slice into its lead (heading + any intro prose) and its ordered
+    top-level requirement bullets (each with its own nested sub-bullets attached)."""
+    lead: list[str] = []
+    reqs: list[str] = []
+    cur: list[str] | None = None
+    for ln in slice_text.splitlines():
+        if _BULLET.match(ln):  # a new top-level requirement (column 0, not indented)
+            if cur is not None:
+                reqs.append("\n".join(cur))
+            cur = [ln]
+        elif cur is None:
+            lead.append(ln)
+        else:
+            cur.append(ln)  # continuation / nested detail of the current requirement
+    if cur is not None:
+        reqs.append("\n".join(cur))
+    return lead, reqs
+
+
+def subdivide(slice_text: str) -> list[str]:
+    """A dense phase (>= SUBDIVIDE_THRESHOLD requirements) becomes one sub-phase per
+    requirement, each carrying the phase's shared context so it stays grounded. A phase with
+    fewer requirements is returned unchanged."""
+    lead, reqs = _requirements(slice_text)
+    if len(reqs) < SUBDIVIDE_THRESHOLD:
+        return [slice_text]
+    has_head = bool(lead) and lead[0].lstrip().startswith("#")
+    head = lead[0].rstrip() if has_head else ""
+    body = "\n".join(lead[1:] if has_head else lead).strip()
+    out = []
+    n = len(reqs)
+    for k, req in enumerate(reqs, 1):
+        parts = [f"{head} — step {k} of {n}" if head else f"### Step {k} of {n}"]
+        if body:
+            parts.append(body)
+        parts.append(req.strip())
+        out.append("\n\n".join(parts))
+    return out
+
+
+def decompose(task: str) -> list[str]:
+    """Split a task into small, ordered units for one-at-a-time implementation: by the text's
+    Phase/Step or markdown headers. With MELLUM_SUBDIVIDE=1, also subdivide any dense phase
+    (>= SUBDIVIDE_THRESHOLD requirements) into one sub-phase per stated requirement — the
+    throughput lever for the dense-phase wall. Off by default (it changes phase count, which
+    shifts --start-phase seed indices), opt-in for the decomposition experiment."""
+    parts = _heading_split(task)
+    if os.environ.get("MELLUM_SUBDIVIDE") not in ("1", "true", "yes"):
+        return parts
+    out: list[str] = []
+    for part in parts:
+        out.extend(subdivide(part))
+    return out
 
 
 def phase_title(slice_text: str) -> str:
