@@ -15,10 +15,67 @@ counts — see verify.py.
 from __future__ import annotations
 
 import json
+import shutil
 import string
 from pathlib import Path
 
 ROOT = Path(__file__).parent
+
+# Variation pools — rotate these over each base domain to multiply the catalog.
+# Every token here is guard-clean (no hard-suite domain literal), and "un"+field
+# reads naturally for the summary keys.
+FLAG_POOL = [
+    ("pinned", "pin", "unpin"),
+    ("saved", "save", "unsave"),
+    ("starred", "star", "unstar"),
+    ("flagged", "flag", "unflag"),
+    ("favorited", "favorite", "unfavorite"),
+    ("liked", "like", "unlike"),
+    ("hidden", "hide", "unhide"),
+    ("muted", "mute", "unmute"),
+    ("locked", "lock", "unlock"),
+    ("tracked", "track", "untrack"),
+]
+EXTRA_POOL = [
+    ("color", "str", "white"),
+    ("label", "str", "none"),
+    ("rank", "int", 0),
+    ("tag", "str", ""),
+    ("priority", "int", 0),
+    ("score", "int", 0),
+    ("category", "str", "general"),
+    ("weight", "int", 1),
+    ("position", "int", 0),
+    ("slug", "str", ""),
+]
+
+
+def expand(base_catalog: list[dict]) -> list[dict]:
+    """Multiply each base domain into len(FLAG_POOL) variants by rotating the
+    flag verb-pair and the extra migration column (and renaming app/db/seed to
+    match). Field set and routes stay the base's, so each reference is coherent."""
+    specs = []
+    for base in base_catalog:
+        old_flag = base["flag"]["field"]
+        for i, (flag_field, on, off) in enumerate(FLAG_POOL):
+            ename, etype, edefault = EXTRA_POOL[i]
+            seed = [
+                {**{k: v for k, v in row.items() if k != old_flag}, flag_field: row[old_flag]}
+                for row in base["seed"]
+            ]
+            specs.append(
+                {
+                    **base,
+                    "name": f"{base['name']}-v{i}",
+                    "app": f"{base['app']}{i}",
+                    "db_env": f"{base['db_env']}_{i}",
+                    "db_file": f"{base['table']}_{i}.db",
+                    "flag": {"field": flag_field, "on": on, "off": off},
+                    "extra": [ename, etype, edefault],
+                    "seed": seed,
+                }
+            )
+    return specs
 TASKS = ROOT / "tasks"
 PYT = {"str": "str", "int": "int"}
 
@@ -488,10 +545,15 @@ def render(spec: dict) -> None:
 
 
 def main() -> int:
-    catalog = json.loads((ROOT / "catalog.json").read_text())
-    for spec in catalog:
+    base = json.loads((ROOT / "catalog.json").read_text())
+    specs = expand(base)
+    if TASKS.exists():
+        for d in TASKS.iterdir():
+            if d.is_dir():
+                shutil.rmtree(d)
+    for spec in specs:
         render(spec)
-    print(f"generated {len(catalog)} task(s) into {TASKS}")
+    print(f"generated {len(specs)} task(s) from {len(base)} base domains into {TASKS}")
     return 0
 
 
