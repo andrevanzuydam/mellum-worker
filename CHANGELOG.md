@@ -6,6 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- Lesson 10, **One spec file per phase**. Written from a preregistered
+  `joined`-against-`split` arm on the medium suite: the spec's acceptance
+  criteria took a worker from a workspace no check could import to 1 of 18
+  checks missing, and the layout of the spec did not separate the arms at n = 3
+  — a null, stated as one, with the old ladder claim retired.
+
 - A run whose hidden checks never executed now says so. When pytest stops on a
   collection error — usually a module the workspace lacks — `run.json` carries
   `checks_ran: false` beside the count, because "18 checks failed" and "the

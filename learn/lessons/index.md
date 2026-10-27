@@ -34,11 +34,13 @@ what it rests on now.
 9. **The intercom block is a prefill tax** — *re-scoped 2026-10-24.* LC.8 removed
    the block, so the page states the reason it went rather than a measured tax.
    *(Paul)*
-10. **One spec file per phase** — A one-file roadmap misses the last phase's id in 5 of 6 runs; n = 3. *(Paul)*
+10. **[One spec file per phase](one-spec-per-phase.md)** — Writing the acceptance
+    criteria into the spec took a worker from "no check could run" to one missing
+    check; one file against four did not separate at n = 3. *(Paul)*
 
-Lessons 9 and 10 are not written yet: their lines above are the plan, not a
-citation. Each lesson is a feature cycle that re-measures it on llama.cpp when
-its page is written.
+Lesson 9 is not written yet: its line above is the plan, not a citation. Each
+lesson is a feature cycle that re-measures it on llama.cpp when its page is
+written.
 
 ## Andre's mediation
 
