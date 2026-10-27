@@ -18,7 +18,8 @@ nav = [
     "lessons/thinking-working-memory.md",
     "lessons/guards-for-empty-turns.md",
     "lessons/project-facts.md", "lessons/write-only-listed.md",
-    "lessons/prose-brief.md", "lessons/one-spec-per-phase.md"] },
+    "lessons/prose-brief.md", "lessons/intercom-block.md",
+    "lessons/one-spec-per-phase.md"] },
   { "About" = [
     "about/index.md", "about/how-to-read.md",
     "about/evidence.md", "about/contributing.md",

@@ -6,6 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- Lesson 9, **The intercom block is a prefill tax**, as a rationale: the
+  delegated mechanism it measured was removed in LC.8, so the page argues from
+  the removal and from the handoff block that replaced it — one summary per
+  finished span, never a transcript per turn — with `conjecture` badges and no
+  restated percentage.
+
 - The **foreground-server guard** is on `main` but dormant: it refuses a `bash`
   call that starts a server in the foreground and points at the in-process
   `TestClient` form or a detached `nohup … &`. Its pattern now covers

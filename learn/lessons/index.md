@@ -31,16 +31,16 @@ what it rests on now.
 8. **[A prose brief stops at its first reply](prose-brief.md)** — One brief against four:
    both passed the hidden tests, and the one-brief arm used a third of the
    context. A `screen` at n = 1, against the old claim. *(Paul)*
-9. **The intercom block is a prefill tax** — *re-scoped 2026-10-24.* LC.8 removed
-   the block, so the page states the reason it went rather than a measured tax.
-   *(Paul)*
+9. **[The intercom block is a prefill tax](intercom-block.md)** — A delegate's
+   transcript is paid on every turn; the worker hands back one summary block per
+   span instead. A rationale, because LC.8 removed the mechanism. *(Paul)*
 10. **[One spec file per phase](one-spec-per-phase.md)** — Writing the acceptance
     criteria into the spec took a worker from "no check could run" to one missing
     check; one file against four did not separate at n = 3. *(Paul)*
 
-Lesson 9 is not written yet: its line above is the plan, not a citation. Each
-lesson is a feature cycle that re-measures it on llama.cpp when its page is
-written.
+Every scheduled lesson in this track now has a page. Each was a feature cycle
+that re-measured it on llama.cpp when its page was written; a page's badges say
+what it rests on.
 
 ## Andre's mediation
 
