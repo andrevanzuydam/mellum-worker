@@ -2,7 +2,7 @@
 phase: LC
 feature_cycle: LC.18
 cycle: 1
-lifecycle: active
+lifecycle: closed
 ---
 
 # LC.18 — lesson 9, the intercom block as a rationale
@@ -96,3 +96,20 @@ states **why the transcript was not kept**, not what it cost.
 - **The handoff block's own cost.** It is one block per span, and a span with
   fifteen commands still produces a bounded message; the page says the bound is
   the point, not that the block is free.
+
+## Result
+
+2026-10-25. Shipped: lesson 9, **The intercom block is a prefill tax**, as the
+roadmap re-scoped it — a rationale whose five steps carry `conjecture`, whose Eval
+case says there is no arm and why (LC.8 deleted the mechanism on 2026-10-20), and
+whose Solution is `collapseHandoffs`' one-summary-block-per-span, quoted small from
+`extensions/mellum-worker.ts`. Its own test, the index entry, the nav line and a
+changelog entry land with it.
+
+Nothing was measured: the page restates no percentage from the retired arm, links
+no `docs/ladder/` record, and claims no `reference-run`. What it validates is the
+mechanism's contract — 93 handoff tests — and `npm test` 380/380, docs caps 4/4.
+
+Open, and stated in the Interpretation: the pairing (transcript against summary,
+on the suites) needs a delegate mechanism re-added and measured. That is a new
+cycle, not a gap in this one.
