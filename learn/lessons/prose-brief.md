@@ -66,7 +66,7 @@ phases: every hidden test passed and the lint gate passed with it, in the same
 number of requests as the stepped arm (52 against 53) and at about the same
 wall (961 s against 894 s).
 
-What actually separated the arms was **the steps arm's lint failure** — an
+What told the two sessions apart was **the steps arm's lint failure** — an
 unused import (`models.Complaint`) — not phases two through four going
 missing. Both arms' failing-check count is zero, which is the direct measure
 of "did a phase's behaviour fail": none did, in either shape.

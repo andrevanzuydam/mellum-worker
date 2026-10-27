@@ -54,9 +54,19 @@ prompt lines, the tool list, the guard function or the config that changed.
 
 For a lesson that changes a setting, prompt, tool set or guard, show the
 before/after arms on the same suites. Compare inside a suite, never across
-easy/medium/hard. Use n = 3 for the baseline and for a claim you will state;
-a screen may use n = 1, must carry a `screen` badge and must not be worded as
-a rate.
+easy/medium/hard. **Size the screen by what you read:**
+
+- **A presence claim needs n = 1.** The block reached every request, the guard
+  fired, a file was written outside the layout, a session's checks never ran.
+  One session settles presence, and it is the cheapest evidence a lesson can
+  carry.
+- **An absence or a comparison needs n = 3 or more.** "The nudge never fired",
+  "no arm separated", "the layout did not change what the worker reached" — one
+  quiet session is not an absence, and one session per arm is not a comparison.
+  At n = 1 the only honest comparative sentence is *"one session each, and X did
+  Y"*, which is an observation, not a result.
+
+A `screen` badge is required at either size, and no screen is worded as a rate.
 
 | Suite | Arm | Passes | Turns | Failed checks | Tool errors | Context | Wall | Output tokens | Nudges |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |

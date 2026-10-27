@@ -137,6 +137,11 @@ assets after review; a sibling manifest can record their provenance.
   runs that can move it (often two or three), then write a short research
   note saying what ran, what it showed and n. No preregistration, spec or
   plan is needed for an exploratory screen.
+- **Screens are sized by what they read, not by habit.** A *presence* — the
+  block arrived, the guard fired, a file left the layout — is settled at
+  n = 1. An *absence* or a *comparison* needs n >= 3: one quiet session is not
+  an absence, and one session per arm is not a comparison. A page that states
+  n = 1 may not say "null", "void" or "separated"; a test enforces the wording.
 - **Preregistered runs decide.** Before a run that decides a default,
   product change or comparative claim, fix the arms, n, reading and decision
   rule in a preregistration. Screens do not establish comparative rates.

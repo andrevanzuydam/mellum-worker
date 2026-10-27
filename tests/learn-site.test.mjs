@@ -332,6 +332,28 @@ test("the lesson template opens with the two-sentence paragraph", () => {
   assert.match(t, /two-sentence paragraph/);
 });
 
+test("a lesson screen is sized by what it reads", () => {
+  const lessons = PAGES.filter((p) => p.startsWith("lessons/") && p !== "lessons/index.md");
+  for (const p of lessons) {
+    const l = page(p).replace(/\s+/g, " ");
+    const nOne = /\bn ?= ?1\b/.test(l);
+    if (nOne) {
+      // One session settles presence; it cannot support an absence or a comparison.
+      assert.doesNotMatch(l, /\bnull\b/i, `${p}: n = 1 cannot be a null`);
+      assert.doesNotMatch(l, /\bvoid\b/i, `${p}: n = 1 cannot be a void arm`);
+      assert.doesNotMatch(l, /\bseparat(?:ed|es|ion)\b/i, `${p}: n = 1 cannot claim separation`);
+    }
+    // A lesson with no arm says so instead of quoting an n.
+    if (/\bno arm\b/i.test(l)) continue;
+    // Every other lesson states the size of its evidence somewhere.
+    assert.match(
+      l,
+      /\bn ?= ?[1-9]\b|\b(?:one|two|three|four|five|ten|45)[ -](?:session|sessions)\b|sessions per arm/,
+      `${p}: states no n for its evidence`,
+    );
+  }
+});
+
 test("every lesson page opens with the two-sentence paragraph", () => {
   const lessons = PAGES.filter((p) => p.startsWith("lessons/") && p !== "lessons/index.md");
   assert.ok(lessons.length >= 8, "lesson discovery found too few pages");
