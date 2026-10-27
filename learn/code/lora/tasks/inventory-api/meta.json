@@ -1,0 +1,24 @@
+{
+  "domain": "inventory",
+  "app_name": "Stockroom",
+  "stack": ["fastapi", "jinja2", "sqlite-utils"],
+  "requirements": [
+    "GET / home page shows the app name",
+    "GET /items lists items and renders an add form",
+    "POST /items creates an item and redirects 303 to /items",
+    "POST /items/{id}/flag sets flagged=1 and redirects 303",
+    "POST /items/{id}/unflag sets flagged=0 and redirects 303",
+    "migration 004_index_flagged creates idx_items_flagged",
+    "migration 003_add_location adds the location column",
+    "migration 002_backfill_created_at leaves no null created_at",
+    "all four migrations recorded in _migrations",
+    "re-running migrations is a no-op",
+    "GET /summary returns exact integer keys total/flagged/unflagged with total==flagged+unflagged"
+  ],
+  "shapes": [
+    "second-endpoint-of-a-pair",
+    "exact-status-code",
+    "write-apply-track-idempotent-migration",
+    "exact-json-shape"
+  ]
+}

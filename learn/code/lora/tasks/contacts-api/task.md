@@ -1,0 +1,41 @@
+# Rolodex — a contacts directory
+
+Build a small FastAPI application called Rolodex that keeps contacts, backed by
+a SQLite database (use `sqlite-utils`). Implement ALL of the following — every
+route, column, status code, and migration.
+
+## Pages and routes
+- `app.py` with a FastAPI app instance.
+- `templates/base.html` — a shared Jinja2 layout: HTML5 doctype,
+  `<html lang="en">`, a title block defaulting to the app name, and a navbar
+  linking Home (`/`) and Contacts (`/contacts`).
+- `GET /` returns a home page that extends the layout and shows the app name
+  "Rolodex".
+- `GET /contacts` lists every contact (name, email), ordered by id, and renders
+  an add form.
+
+## Create (exact redirect)
+- `POST /contacts` reads form fields `name` and `email`, inserts a new contact,
+  and redirects to `GET /contacts` using status code 303.
+
+## Star and unstar (both endpoints)
+- `POST /contacts/{contact_id}/star` sets the contact's `starred` to 1 and
+  redirects to `/contacts` with status 303.
+- `POST /contacts/{contact_id}/unstar` sets `starred` to 0 and redirects to
+  `/contacts` with status 303.
+
+## Migrations (write, apply, record, idempotent)
+Put migrations in `migrations.py` and apply them at startup. Track applied
+migrations in a `_migrations` table so re-running is a no-op.
+- `001_add_created_at` — add a `created_at` text column.
+- `002_backfill_created_at` — set `created_at` to `2026-01-01T00:00:00`
+  wherever it is null.
+- `003_add_phone` — add a `phone` text column defaulting to an empty string.
+- `004_index_starred` — create an index named `idx_contacts_starred` on
+  `contacts(starred)`.
+Running the migrations twice must not error, duplicate a column, or re-record a
+migration.
+
+## Summary API (exact JSON)
+- `GET /summary` returns JSON with exactly the keys `total`, `starred`,
+  `unstarred`, all integers, where `total == starred + unstarred`.
