@@ -13,12 +13,19 @@ Versions match git tags; pin one in both install lines.
   mis-template. Left unset, each phase keeps its own thinking budget, so the default worker's calls
   are byte-identical. This is the cascadable knob that lets a different model be swapped in and
   measured against the same flow.
-- The read-only flow phases (plan, review_plan, examine, review_code) now carry the loop-breaker
-  via a dedicated `mellum-loopguard` extension, so an unbroken run of identical no-op tool calls
-  (e.g. the same `ls .` over and over) is capped with a nudge to take the next concrete action.
-  Previously only the coder loaded it, and a model that does not converge in a read role could spin
-  a phase past a thousand events. It trips only on genuine unbroken repeats, so a model that
-  converges — including the default worker — is unaffected.
+- The read-only flow phases (plan, review_plan, examine, review_code) now carry a dedicated
+  `mellum-loopguard` extension with two guards: the loop-breaker (an unbroken run of identical no-op
+  calls, e.g. the same `ls .`, is capped) and an arg-agnostic step budget (after a generous number
+  of tool calls the phase is told it has enough context and must produce its answer). The budget
+  catches the runaway the loop-breaker misses — a model that re-issues the same read with a slightly
+  different arg each time, so no two calls are identical. Previously only the coder had the
+  loop-breaker, and a non-converging model could spin a read phase past a thousand events. Both trip
+  only on a genuine runaway, so a model that converges — including the default worker — is unaffected.
+- `MELLUM_FLOW_MAXTOKENS` caps the per-phase output budget from one place — a ceiling, never a
+  raise. examine's budget is a deliberately large 32000 so a reasoning worker can think then emit;
+  a model that instead pours out content without stopping needs a tighter ceiling so the phase
+  terminates and its answer is salvaged. Unset, every phase keeps its own budget (the default worker
+  is byte-identical). Cascadable, like `MELLUM_FLOW_THINKING`.
 - The flow harness now enforces a SPEC-COVERAGE guarantee when the examiner writes a phase's
   acceptance test: the harness extracts the contract tokens the spec itself NAMES (the routes it
   declares, the migrations/indexes/views/columns it names, the status codes it pins) and, if the

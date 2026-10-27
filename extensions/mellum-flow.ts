@@ -151,6 +151,21 @@ export const PHASES: Record<string, Phase> = {
 
 const PYTEST = ["uv", "run", "--with", "pytest", "pytest", "-q", "tests"];
 
+/**
+ * The stop-and-emit content cap. The loop-breaker caps repeated no-op CALLS; it cannot cap a model
+ * that never makes the stop-and-write decision and instead pours out CONTENT (measured: examine on a
+ * non-converging model, 3000+ events streaming toward its budget). maxTokens IS that bound — it forces
+ * a `message_end` the examiner's output is salvaged from — but examine's default is a deliberately large
+ * 32000 so a reasoning worker has room to think THEN emit. MELLUM_FLOW_MAXTOKENS applies a per-run
+ * CEILING instead: it stops an over-generating model early while never lifting a phase's own smaller
+ * budget, and unset it leaves every phase (and the default worker) byte-identical. Cascadable, like
+ * MELLUM_FLOW_THINKING.
+ */
+export function effectiveMaxTokens(phaseMax: number, env = process.env.MELLUM_FLOW_MAXTOKENS): number {
+	const cap = Number(env);
+	return Number.isInteger(cap) && cap > 0 ? Math.min(phaseMax, cap) : phaseMax;
+}
+
 /** Pull the final assistant text out of a `--mode json` event stream. */
 export function finalText(events: any[]): string {
 	let text = "";
@@ -236,7 +251,7 @@ function runSubagent(phase: string, task: string, cwd: string, signal?: AbortSig
 		const mp = join(agentDir, "models.json");
 		const data = JSON.parse(readFileSync(mp, "utf8"));
 		const prov: any = Object.values(data.providers)[0];
-		prov.models[0].maxTokens = cfg.maxTokens;
+		prov.models[0].maxTokens = effectiveMaxTokens(cfg.maxTokens);
 		writeFileSync(mp, `${JSON.stringify(data, null, 2)}\n`);
 		env = { ...process.env, PI_CODING_AGENT_DIR: agentDir };
 	}
@@ -257,7 +272,9 @@ function runSubagent(phase: string, task: string, cwd: string, signal?: AbortSig
 	// BASE_GUIDE + the role on top; the de-brittle examiner prompt mitigates Pi's "be thorough" nudge.
 	args.push("--append-system-prompt", promptFile, `Task: ${task}`);
 
-	feed(`  ━ ${phase} starting (think=${thinking}) ━`);
+	const capped = effectiveMaxTokens(cfg.maxTokens);
+	const capNote = capped < cfg.maxTokens ? `, maxTokens=${capped}` : "";
+	feed(`  ━ ${phase} starting (think=${thinking}${capNote}) ━`);
 	return new Promise((resolve) => {
 		const child = spawn("pi", args, { cwd, env, stdio: ["ignore", "pipe", "pipe"] });
 		const events: any[] = [];

@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readdirSync, readFileSync, rmSyn
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { PHASES, finalText, bestPytest, asTodo, asCode, looksLikePytest, freezeName, gateTestName, GATE_DIR, materializeGate, flowBlock, PHASE_CALL_CAP, BASE_GUIDE, toolCallSummaries, reviewFromTestFailure, specCoverageTokens, missingGateCoverage } from "../extensions/mellum-flow.ts";
+import { PHASES, finalText, bestPytest, asTodo, asCode, looksLikePytest, freezeName, gateTestName, GATE_DIR, materializeGate, flowBlock, PHASE_CALL_CAP, BASE_GUIDE, toolCallSummaries, reviewFromTestFailure, specCoverageTokens, missingGateCoverage, effectiveMaxTokens } from "../extensions/mellum-flow.ts";
 
 const asstText = (t) => ({ type: "message_end", message: { role: "assistant", content: [{ type: "text", text: t }] } });
 
@@ -365,6 +365,19 @@ test("every phase carries the loop-breaker (unbounded no-op repeats are capped f
 	for (const r of ["plan", "review_plan", "examine", "review_code"]) {
 		assert.ok(PHASES[r].ext.some((e) => e.includes("mellum-loopguard")), `${r} loop-guard`);
 	}
+});
+
+test("effectiveMaxTokens caps a phase at MELLUM_FLOW_MAXTOKENS, never raising it", () => {
+	// Unset: the phase keeps its own budget (the default worker is unchanged).
+	assert.equal(effectiveMaxTokens(32000, undefined), 32000);
+	assert.equal(effectiveMaxTokens(32000, ""), 32000);
+	// Set: a ceiling — it stops an over-generating model early, but never lifts a smaller budget.
+	assert.equal(effectiveMaxTokens(32000, "10000"), 10000);
+	assert.equal(effectiveMaxTokens(8192, "10000"), 8192);
+	// Garbage or non-positive is ignored, so a bad env can never zero the budget.
+	assert.equal(effectiveMaxTokens(32000, "0"), 32000);
+	assert.equal(effectiveMaxTokens(32000, "-5"), 32000);
+	assert.equal(effectiveMaxTokens(32000, "abc"), 32000);
 });
 
 test("asTodo strips preamble and code fences, keeping from the first heading", () => {
