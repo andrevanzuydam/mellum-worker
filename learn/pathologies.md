@@ -102,18 +102,22 @@ scoreboard.
     never reused — and grade the phase rather than the session.
 11. **The project stops importing.** A syntax error, or a dataclass that cannot
     construct without an argument the seed code does not pass, leaves a
-    workspace nothing can load. **Seen:** two of six sessions reported success
-    over a project that did not import — `SyntaxError: unterminated
-    triple-quoted string` and `Complaint.__init__() missing … 'timestamp'`
-    ([record](../../docs/superpowers/research/2026-10-25-lesson10-run.md)).
+    workspace nothing can load. **Seen:** three of three sessions of a joined
+    brief, and two of six in the spec-layout arm — `ModuleNotFoundError`,
+    `SyntaxError: unterminated string`, `Complaint.__init__() missing …
+    'timestamp'`
+    ([record](../../docs/superpowers/research/2026-10-27-prose-brief-run.md),
+    [record](../../docs/superpowers/research/2026-10-25-lesson10-run.md)).
     **Answer:** the test command in the brief and a seeded test give the signal
     on the first turn; the harness now records `checks_ran: false` so a full
     set of missing checks is not read as a full set of failures.
 12. **Builds it somewhere else.** The requirements are met, but in a file the
     project's own notes did not name — the dataclass in `app.py` rather than
-    `models.py` — so everything that imports the project fails. **Seen:** a
-    session scored 18 of 18 missing because `models` did not exist
-    ([record](../../docs/superpowers/research/2026-10-25-lesson10-run.md)).
+    `models.py` — so everything that imports the project fails. **Seen:** three
+    joined-brief sessions and one spec-layout session ended without `models.py`,
+    and each scored 18 of 18 missing
+    ([record](../../docs/superpowers/research/2026-10-27-prose-brief-run.md),
+    [record](../../docs/superpowers/research/2026-10-25-lesson10-run.md)).
     **Answer:** the project layout belongs in the spec, and the checks should
     say they could not run rather than that everything failed.
 
@@ -132,5 +136,5 @@ scoreboard.
 
 *Provenance: entry 7 comes from Andre's harvest and has no observation here yet;
 entries 1, 2 and 4-13 are drawn from this repository's own records, linked on
-each line. Collected as runs happened, which is why the list is uneven and why
+each line; the strongest are three of three. Collected as runs happened, which is why the list is uneven and why
 it is not a rate.*

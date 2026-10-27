@@ -336,12 +336,15 @@ test("a lesson screen is sized by what it reads", () => {
   const lessons = PAGES.filter((p) => p.startsWith("lessons/") && p !== "lessons/index.md");
   for (const p of lessons) {
     const l = page(p).replace(/\s+/g, " ");
-    const nOne = /\bn ?= ?1\b/.test(l);
+    // The rule is about the evidence the page rests on, so it reads the
+    // Validation step; an Interpretation may still describe a retired screen.
+    const evidence = l.split("## Validation")[1]?.split("## Interpretation")[0] ?? "";
+    const nOne = /\bn ?= ?1\b/.test(evidence);
     if (nOne) {
       // One session settles presence; it cannot support an absence or a comparison.
-      assert.doesNotMatch(l, /\bnull\b/i, `${p}: n = 1 cannot be a null`);
-      assert.doesNotMatch(l, /\bvoid\b/i, `${p}: n = 1 cannot be a void arm`);
-      assert.doesNotMatch(l, /\bseparat(?:ed|es|ion)\b/i, `${p}: n = 1 cannot claim separation`);
+      assert.doesNotMatch(evidence, /\bnull\b/i, `${p}: n = 1 cannot be a null`);
+      assert.doesNotMatch(evidence, /\bvoid\b/i, `${p}: n = 1 cannot be a void arm`);
+      assert.doesNotMatch(evidence, /\bseparat(?:ed|es|ion)\b/i, `${p}: n = 1 cannot claim separation`);
     }
     // A lesson with no arm says so instead of quoting an n.
     if (/\bno arm\b/i.test(l)) continue;

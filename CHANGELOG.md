@@ -83,6 +83,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- Lesson 8, **A prose brief stops at its first reply**, now rests on six
+  sessions at n = 3 per arm instead of one each — and the finding flipped again:
+  all three joined-brief sessions finished faster and cheaper and left a project
+  the checks could not import, while all three stepped sessions produced a
+  runnable project. The one-session screen that had the joined arm passing is
+  retired with the original claim.
+
 - Closing a feature cycle now names two habits: a glossary entry for any concept
   the cycle introduced, and a Pathologies entry for any failure shape its
   evidence showed — or nothing, if it showed none, because an entry without an

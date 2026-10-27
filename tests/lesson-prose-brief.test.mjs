@@ -20,14 +20,17 @@ test("the eighth findings lesson follows the six steps and names its badge", () 
   assert.match(l, /^backends: \[llamacpp\]$/m);
 });
 
-test("the prose-brief lesson reports its reversal at n=1", () => {
+test("the prose-brief lesson rests on six sessions, three per arm", () => {
   const l = page("lessons/prose-brief.md");
   assert.ok(!/docs\/ladder\//.test(l), "lesson links a ladder record");
   assert.ok(!/ablation-a/.test(l), "lesson cites an ablation");
-  for (const text of ["--single-prompt", "n = 1", "39df1a", "ad1bb7",
-    "F401", "did not appear", "Apple M1 Pro"])
+  for (const text of ["--single-prompt", "n = 3", "Apple M1 Pro",
+    "checks ran", "ModuleNotFoundError", "did not follow"])
     assert.ok(l.includes(text), `lesson lacks ${text}`);
-  // The old claims must be retired, not merely left out.
+  for (const session of ["d534ce", "eda435", "df4046", "5d9dfb", "705bdd", "a26728"])
+    assert.ok(l.includes(session), `lesson lacks session ${session}`);
+  // The old claims must be retired, not merely left out - both of them.
   assert.match(l, /retired/);
+  assert.match(l, /one session per arm/i);
   assert.match(page("lessons/index.md"), /prose-brief\.md/);
 });
