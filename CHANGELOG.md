@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- **The Challenge**: the three eval suites are presented on the site as
+  Bronze, Silver and Gold, a challenge learners can attempt to test what they
+  have learnt, with the baseline as the score to beat. The CLI keeps
+  `--suite easy|medium|hard`, so existing commands and records still work.
+
 - `harness.py run --stall SECONDS` ends a session as **stalled** when one tool
   call has run that long with no result (a foreground server the model
   started), instead of waiting out the whole deadline. The record carries

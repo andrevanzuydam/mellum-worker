@@ -48,8 +48,8 @@ this page asks is whether the block that ships changes anything.
 
 **Badge:** `screen`
 
-The easy suite from [Getting started](../../getting-started/suite.md), one
-prompt, graded by hidden pytest plus `ruff`, `pyrefly` and `complexipy`. Three
+Bronze, the first level of [The Challenge](../../challenge/index.md), as set up
+in [Getting started](../../getting-started/suite.md): one prompt, graded by hidden pytest plus `ruff`, `pyrefly` and `complexipy`. Three
 sessions per arm on llama.cpp, one change between them:
 
 - `worker`: prompt v5, seven tools, guards on, facts on.
@@ -113,8 +113,8 @@ last bullet is the one this page will come back to.
 
 | Suite | Arm | Passes | Turns | Tool errors | Peak input | Wall |
 | --- | --- | --- | --- | --- | --- | --- |
-| easy | facts on (`worker`) | 1/2 | 24 | 3.5 | 19,721 | 316 s, 199 s |
-| easy | facts off (`no-facts`) | 0/3 | 38.7 | 10.0 | 880 | 139–457 s |
+| Bronze | facts on (`worker`) | 1/2 | 24 | 3.5 | 19,721 | 316 s, 199 s |
+| Bronze | facts off (`no-facts`) | 0/3 | 38.7 | 10.0 | 880 | 139–457 s |
 
 ### Quality and budget
 
@@ -149,7 +149,7 @@ the Pathologies page behind his consent.
 ## Interpretation
 
 The weakest badge is `screen`: one suite of one task, three sessions, one
-machine, and a null. Project facts did not change what the easy suite passed
+machine, and a null. Project facts did not change what Bronze passed
 here.
 
 The claim this page used to carry, a 600-character facts section taking a
@@ -165,7 +165,7 @@ preregistration and belongs to the Pathologies page.
 
 ### Run it yourself
 
-Run facts on (`worker`) and facts off (`no-facts`) on the easy suite, three sessions each:
+Run facts on (`worker`) and facts off (`no-facts`) on Bronze, three sessions each:
 
 ```bash
 uv run python learn/code/harness.py run --suite easy --arm worker --repeat 3 --grade --deadline 600

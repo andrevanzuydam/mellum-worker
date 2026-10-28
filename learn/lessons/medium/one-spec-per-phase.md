@@ -24,7 +24,7 @@ spec can be checked before the next arrives.
 
     **Objectives**
 
-    - Compare a `joined` and a `split` spec layout on the medium suite using the phase-4 `check_groups` reading.
+    - Compare a `joined` and a `split` spec layout on Silver using the phase-4 `check_groups` reading.
     - Recognise a workspace that does not import by reading `checks_ran` before `failed_checks`.
     - Write acceptance criteria into the spec where the brief points.
 
@@ -52,8 +52,9 @@ the count.
 
 **Badge:** `screen`
 
-The medium suite from [Getting started](../../getting-started/suite.md): four
-phases of an AgentClinic complaints app, graded by hidden pytest plus `ruff`,
+Silver, the second level of [The Challenge](../../challenge/index.md), as set up
+in [Getting started](../../getting-started/suite.md): four phases
+of an AgentClinic complaints app, graded by hidden pytest plus `ruff`,
 `pyrefly` and `complexipy`. The arm is the *layout of the spec*, and nothing
 else:
 
@@ -76,7 +77,7 @@ uv run learn/code/harness.py run --suite medium --arm worker \
 | Backend | `llama-server` 0.7.0, Mellum 2.1 `Q4_K_M`, `-c 50000` (`n_ctx` 50,176) |
 | Sampling | `temperature 1`, `top_p 0.95`, `top_k 20`, `max_tokens 16384` |
 
-The reading is not passes. Medium floors at 0/3 for every arm, so the reading is
+The reading is not passes. Silver floors at 0/3 for every arm, so the reading is
 `check_groups` in each run's `run.json` (how many of each phase's hidden checks
 are missing) with the phase-4 group as the primary one, because the last phase
 is where the old finding lived.
@@ -206,7 +207,7 @@ an open question on this page, not an answer either way.
 
 ### Run it yourself
 
-Run each layout on the medium suite, three sessions per arm, with the page's deadline:
+Run each layout on Silver, three sessions per arm, with the page's deadline:
 
 ```bash
 uv run python learn/code/harness.py run --suite medium --arm worker \

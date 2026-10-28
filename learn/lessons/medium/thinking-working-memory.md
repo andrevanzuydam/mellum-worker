@@ -54,9 +54,10 @@ rewrote outgoing payloads; the suites harness launches `pi` directly and has
 no such seam. The settings the worker does expose (prompt, guards, facts)
 say nothing about thinking, and `llama-server` is served with thinking on.
 
-So the eval case this page wants is: the easy and medium suites, three
-sessions each, `worker` against `worker` with every prior assistant
-`reasoning` block removed from the forwarded context. It has not been run, and
+So the eval case this page wants is: Bronze and Silver, the first two levels
+of [The Challenge](../../challenge/index.md), three sessions each,
+`worker` against `worker` with every prior assistant `reasoning` block
+removed from the forwarded context. It has not been run, and
 an arm_settings entry alone cannot express it.
 
 ## Evidence of the problem
@@ -70,8 +71,8 @@ whole allowance went to reasoning. At `max_tokens 200` the same prompt
 returned its reasoning and then `ready`.
 
 The suites show the same budget being hit in anger: the failing runs in this
-cycle's records include finals ended by `length`, the output cap, on both easy
-and medium. An output cap spent on reasoning is a run that never reached its
+cycle's records include finals ended by `length`, the output cap, on both Bronze
+and Silver. An output cap spent on reasoning is a run that never reached its
 answer, and no guard of this worker's shape can answer it.
 
 None of that measures the saving from *keeping* thinking. It measures the
@@ -102,8 +103,8 @@ page is waiting on.
 
 | Suite | Arm | Passes | Peak input | Wall | Status |
 | --- | --- | --- | --- | --- | --- |
-| easy | `worker` | n/a | n/a | n/a | not run: no strip arm exists |
-| medium | `worker` | n/a | n/a | n/a | not run: same |
+| Bronze | `worker` | n/a | n/a | n/a | not run: no strip arm exists |
+| Silver | `worker` | n/a | n/a | n/a | not run: same |
 
 A missing measurement is `n/a`, never `0`.
 
@@ -120,7 +121,7 @@ payload mostly moves cost from prefill into output. The suites can show that,
 once the payload seam exists.
 
 What would upgrade this: one instrument (a strip-thinking option in the
-harness or the extension) and then the arm above, at n=3 on easy and medium.
+harness or the extension) and then the arm above, at n=3 on Bronze and Silver.
 Until it exists this page should be read as a question, not a finding.
 
 ### Run it yourself

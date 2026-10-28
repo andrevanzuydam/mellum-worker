@@ -24,7 +24,7 @@ steps, the same briefs produced a runnable project every time.
 
     **Objectives**
 
-    - Compare a stepped and a `--single-prompt` run of the medium suite.
+    - Compare a stepped and a `--single-prompt` run of Silver.
     - Recognise a confident final message over a project the checks cannot import.
     - Separate an outcome the run measured from a mechanism it did not show.
 
@@ -49,9 +49,10 @@ project that is missing a file the checks import.
 
 **Badge:** `screen`
 
-The medium suite from [Getting started](../../getting-started/suite.md): four
-phases of a FastAPI complaints app, graded by hidden pytest plus `ruff`,
-`pyrefly` and `complexipy`. The same four brief files, the same base, the same
+Silver, the second level of [The Challenge](../../challenge/index.md), as set up
+in [Getting started](../../getting-started/suite.md): four phases
+of a FastAPI complaints app, graded by hidden pytest plus `ruff`, `pyrefly`
+and `complexipy`. The same four brief files, the same base, the same
 grader, and one change between the arms:
 
 - **steps**: the suite's four `prompts/*.md`, one request each.
@@ -67,7 +68,7 @@ which is itself the finding.
 | Machine | Apple M1 Pro, 8 cores, 32 GiB |
 | Backend | `llama-server` 0.7.0 (build 11669), Mellum 2.1 `Q4_K_M`, `-c 50000` (`n_ctx` 50,176) |
 | Sampling | `temperature 1`, `top_p 0.95`, `top_k 20`, `max_tokens 16384` |
-| Deadline | 2,700 s, twice this machine's slowest recorded medium session |
+| Deadline | 2,700 s, twice this machine's slowest recorded Silver session |
 
 The machine matters: the records this center started from were taken on an M5
 Max, and **wall seconds do not transfer between machines**. Peak token counts
@@ -142,7 +143,7 @@ cheaper, and not runnable in any of three sessions.
   context did not follow:** one joined session peaked at 21,100 against the
   stepped arm's highest 11,683, so the page does not claim a context saving.
 - **Passes:** 0 of 3 in both arms, so nothing here separates them on passes.
-  Medium is at a floor where both arms fail.
+  Silver is at a floor where both arms fail.
 
 ### Checks
 
@@ -177,7 +178,7 @@ one machine can only say what happened here.
 
 ### Run it yourself
 
-Run the stepped arm and the one-brief arm on the medium suite, three sessions each, with the page's 2,700 s deadline:
+Run the stepped arm and the one-brief arm on Silver, three sessions each, with the page's 2,700 s deadline:
 
 ```bash
 uv run python learn/code/harness.py run --suite medium --specs joined --arm worker \

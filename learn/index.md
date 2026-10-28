@@ -23,7 +23,8 @@ one page.
 ## Start here
 
 Start with the **[Getting started](getting-started/index.md)** track: five steps that go from llama.cpp to a graded
-eval harness. After that, any [lesson](lessons/index.md) stands alone and lists what you need first.
+eval harness. After that, any [lesson](lessons/index.md) stands alone and lists what you need first, and
+[The Challenge](challenge/index.md) is where you test what you have learnt.
 
 ## Where to go
 
@@ -53,6 +54,13 @@ eval harness. After that, any [lesson](lessons/index.md) stands alone and lists 
     One failure, measured and fixed, per lesson. Pick a level:
     [easy](lessons/easy/index.md), [medium](lessons/medium/index.md) or
     [hard](lessons/hard/index.md). Each stands alone.
+
+-   **[The Challenge](challenge/index.md)**
+
+    ---
+
+    Test what you have learnt: Bronze, Silver and Gold, the same three
+    projects every lesson is measured on. Can your setup beat the baseline?
 
 -   **[Pathologies](pathologies.md)**
 

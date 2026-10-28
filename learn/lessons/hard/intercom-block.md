@@ -147,8 +147,8 @@ session rather than with the work. The same reasoning applies to any framework
 that offers to keep a child's history in the parent's window.
 
 What would upgrade this: re-add a delegate mechanism, give it an arm, and measure
-the transcript against the summary on the suites, the pairing this page cannot
-do for a feature that no longer exists. Until then, the honest reading is "do not
+the transcript against the summary on [The Challenge](../../challenge/index.md),
+the pairing this page cannot do for a feature that no longer exists. Until then, the honest reading is "do not
 add this back unmeasured", which is also the rule the rest of this track follows.
 
 ### Run it yourself

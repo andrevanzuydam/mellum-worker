@@ -65,7 +65,7 @@ uv run learn/code/harness.py run --suite easy
 ```
 
 The first line is only needed once. The second prints the child's argv if you
-add `--dry-run`; otherwise it runs one task and prints a score line:
+add `--dry-run`; otherwise it runs one Bronze task and prints a score line:
 
 ```text
 easy: PASS (n=1; run /var/folders/...; 1 request, 3 tool calls, 0 tool errors)
@@ -93,12 +93,12 @@ arms are told apart by the record rather than by memory.
 uv run learn/code/harness.py run --suite medium --specs split --repeat 3
 ```
 
-Only a suite with `spec-variants/` has them; `medium` ships `joined`, whose
+Only a suite with `spec-variants/` has them; `medium` (Silver) ships `joined`, whose
 briefs point at one `specs/roadmap.md`, and `split`, whose briefs each point at
 their own `specs/phase-4.md`. Without the flag the suite runs exactly as
 shipped.
 
-The suite is `learn/code/suites/easy/`: a base AgentClinic project, one
+The suite is Bronze, in `learn/code/suites/easy/`: a base AgentClinic project, one
 prompt asking for phase 1, and the tests that check it. The prompt goes to
 `pi -p` as the request; nothing else about the suite is shown to the model.
 

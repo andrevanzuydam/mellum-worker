@@ -12,8 +12,9 @@ a worker is ([Getting started](../../getting-started/worker-extension.md)).
 
     ---
 
-    Neither suite separates the two arms on passes at n = 3; what separates
-    them is how they fail. *(Paul)*
+    Neither Bronze nor Silver, the first two levels of
+    [The Challenge](../../challenge/index.md), separates the two arms on passes
+    at n = 3; what separates them is how they fail. *(Paul)*
 
 -   **[H2 · The Intercom Block Is a Prefill Tax](intercom-block.md)**
 

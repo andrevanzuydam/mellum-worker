@@ -20,7 +20,8 @@ is the only prerequisite.
 
     ---
 
-    The nudge never fired in ten easy sessions: no empty turn had the shape it
+    The nudge never fired in ten sessions on Bronze, the first level of
+    [The Challenge](../../challenge/index.md): no empty turn had the shape it
     answers. *(Paul)*
 
 -   **[M3 · One Spec File per Phase](one-spec-per-phase.md)**

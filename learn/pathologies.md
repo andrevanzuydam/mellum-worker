@@ -54,7 +54,7 @@ scoreboard.
 
 5. **An empty final.** A turn ends with no text and no tool call, and the run
    stops there having done nothing, followed by the quiet version, an empty
-   final at the very end. **Seen:** ten easy sessions in which the nudge never
+   final at the very end. **Seen:** ten Bronze sessions in which the nudge never
    fired because no empty turn had the shape it answers, the finals ending on a
    context overflow or the output cap instead
    ([lesson](../lessons/medium/guards-for-empty-turns.md)). **Answer:** the bounded
@@ -78,7 +78,7 @@ scoreboard.
 8. **A server nobody can stop.** The model starts `uvicorn` in the foreground to
    check its work, the call never returns, and the session burns its whole
    deadline waiting. **Seen:** three `no-facts` sessions that went silent for
-   143–460 s, two of three `bare` easy sessions, and LC.19's first two attempts
+   143–460 s, two of three `bare` Bronze sessions, and LC.19's first two attempts
    ([screen](../../docs/superpowers/research/2026-10-24-project-facts-screen.md),
    [run](../../docs/superpowers/research/2026-10-25-lesson1-run.md),
    [attempts](../../docs/superpowers/research/2026-10-25-lesson10-run.md)).

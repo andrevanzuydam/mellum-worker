@@ -14,7 +14,7 @@ backends: [llamacpp]
 
 A run can pass every hidden test and still be wrong, leaving scratch files, a
 second app copy or a test edited to pass. The page names the layout and checks
-the file set after each run, which the easy suite never tripped.
+the file set after each run, which Bronze never tripped.
 
 !!! abstract "Overview"
 
@@ -48,8 +48,8 @@ compare the workspace with the copy taken before it started.
 
 **Badge:** `screen`
 
-The easy suite from [Getting started](../../getting-started/suite.md), one
-prompt, three sessions of the shipped worker on llama.cpp: `llama-server`
+Bronze, the first level of [The Challenge](../../challenge/index.md), as set up
+in [Getting started](../../getting-started/suite.md): one prompt, three sessions of the shipped worker on llama.cpp: `llama-server`
 0.7.0 (build 11669), Mellum 2.1 `Q4_K_M`, `-c 50000` (`n_ctx` 50,176),
 `temperature 1`, `top_p 0.95`, `top_k 20`, `max_tokens 16384`.
 
@@ -75,7 +75,7 @@ The instrument is worth nothing if it cannot fail, so it is tested both ways
 before it is trusted: a workspace that only edits `app.py` reports nothing
 outside, and a workspace that adds `notes.txt` reports exactly that file.
 
-What the easy suite produced:
+What Bronze produced:
 
 | Session | Passed | Requests | Tool errors | Created or modified outside the layout |
 | --- | --- | --- | --- | --- |
@@ -113,7 +113,7 @@ Name the layout, then check it. Two habits:
 
 | Suite | Arm | Sessions | Passes | Out of layout |
 | --- | --- | --- | --- | --- |
-| easy | `worker` | 3 | 2/3 | **0** |
+| Bronze | `worker` | 3 | 2/3 | **0** |
 
 A missing measurement is `n/a`, never `0`.
 
@@ -121,13 +121,13 @@ A missing measurement is `n/a`, never `0`.
 
 The two sessions that passed and the one that failed are equally clean, so the
 check is independent of the outcome, which is the point of measuring it
-separately. Medium was not run: every medium session in this cycle's other
-arms hit the 600 s deadline, so a medium reading here would measure the
+separately. Silver was not run: every Silver session in this cycle's other
+arms hit the 600 s deadline, so a Silver reading here would measure the
 deadline, not the layout.
 
 ## Interpretation
 
-The weakest badge is `screen`, and the honest summary is that on the easy suite
+The weakest badge is `screen`, and the honest summary is that on Bronze
 the pathology is **absent**: three of three sessions wrote only what the task
 allowed, and two of them failed for other reasons.
 
@@ -136,14 +136,14 @@ rate. It is the only lesson in this track whose value did not depend on the
 model: the check runs after every session from now on, and the run's
 `out_of_layout` list is what a later arm reads.
 
-What would upgrade this: a task with more freedom than the easy suite (the
-hard suite's seven-phase build, or a loose prompt like the ditch's), where
+What would upgrade this: a task with more freedom than Bronze (Gold's
+seven-phase build, or a loose prompt like the ditch's), where
 writing outside the layout is a tempting shortcut. That needs a deadline the
 suite can finish inside, which this machine did not offer.
 
 ### Run it yourself
 
-Run the shipped worker on the easy suite three times; each run's `run.json` carries its `out_of_layout` list:
+Run the shipped worker on Bronze three times; each run's `run.json` carries its `out_of_layout` list:
 
 ```bash
 uv run python learn/code/harness.py run --suite easy --arm worker --repeat 3 --grade --deadline 600
@@ -151,7 +151,7 @@ uv run python learn/code/harness.py run --suite easy --arm worker --repeat 3 --g
 
 !!! success "Key points"
 
-    - On the easy suite the pathology was absent: three of three sessions wrote only what the layout allowed (a screen).
+    - On Bronze the pathology was absent: three of three sessions wrote only what the layout allowed (a screen).
     - The check is independent of the outcome; passing and failing sessions were equally clean.
     - An ignore list for unavoidable artefacts keeps the check from becoming noise.
     - The value here is the instrument and the habit, not a pass rate.

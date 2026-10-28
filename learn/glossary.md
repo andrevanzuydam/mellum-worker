@@ -31,6 +31,14 @@ Interpretation. Every findings lesson uses it.
 The closing narrative of a lesson: what the evidence means, how far its
 badges let you trust it, and what is still open.
 
+### Challenge
+
+<!-- zensical-glossary-aliases: The Challenge, Bronze, Silver, Gold -->
+The three levels learners attempt to test what they have learnt: Bronze (one
+prompt, 4 hidden checks), Silver (four prompts, 18 checks) and Gold (eleven
+prompts, 34 checks). They are the eval suites `easy`, `medium` and `hard`;
+[The Challenge](challenge/index.md) explains how to attempt them.
+
 ### Phase
 
 The container a set of feature cycles runs in: the Learning Center (`LC`), and

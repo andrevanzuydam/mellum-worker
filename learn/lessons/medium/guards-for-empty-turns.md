@@ -21,7 +21,7 @@ the arms here show the nudge never fired rather than that it worked.
     **Questions**
 
     - What does the worker do when the model ends a turn having said nothing?
-    - Do the guards actually fire on the easy suite?
+    - Do the guards actually fire on Bronze?
 
     **Objectives**
 
@@ -45,8 +45,8 @@ repetition with a loop breaker.
 
 **Badge:** `screen`
 
-The easy suite from [Getting started](../../getting-started/suite.md), one
-prompt, graded by hidden pytest plus `ruff`, `pyrefly` and `complexipy`.
+Bronze, the first level of [The Challenge](../../challenge/index.md), as set up
+in [Getting started](../../getting-started/suite.md): one prompt, graded by hidden pytest plus `ruff`, `pyrefly` and `complexipy`.
 Three sessions per arm on llama.cpp, and the arm is the guard:
 
 - `worker`: prompt v5, seven tools, nudge on, loop breaker on.
@@ -60,7 +60,7 @@ pass count, so the harness records `Nudges` beside the passes.
 
 **Badge:** `screen`
 
-**The nudge never fired.** In ten easy sessions the count was zero in both
+**The nudge never fired.** In ten Bronze sessions the count was zero in both
 arms. Every empty final in that sample had a reason the guard is not built to
 answer:
 
@@ -72,13 +72,13 @@ answer:
 
 `isEmptyAssistantTurn` continues only a turn the model ended itself with
 `stop`. An aborted turn is deliberately not ours to continue, and a capped
-turn never matched. So on the easy suite the guard was not idle because the
+turn never matched. So on Bronze the guard was not idle because the
 arms behaved well; it was idle because **no empty turn had the shape it
 answers**.
 
-The follow-up arms agree. A later easy pairing recorded zero nudge fires
-across nine sessions in three arms, and one apparent fire on the medium suite
-turned out to be a counting bug: medium runs four prompts as four Pi
+The follow-up arms agree. A later Bronze pairing recorded zero nudge fires
+across nine sessions in three arms, and one apparent fire on Silver
+turned out to be a counting bug: Silver runs four prompts as four Pi
 processes, and the harness counted the empty final that ended one prompt as
 continued by the next prompt's request. One test now pins each side.
 
@@ -116,8 +116,8 @@ and that file is the source this excerpt is copied from.
 
 | Run | Arm | Passes | Turns, mean | Tool errors, mean | Nudge fires |
 | --- | --- | --- | --- | --- | --- |
-| guard screen, easy, n=5 | `worker` | 2/5 | 32.6 | 4.2 | **0** |
-| guard screen, easy, n=5 | `no-nudge` | 3/5 | 34.6 | 4.6 | **0** |
+| guard screen, Bronze, n=5 | `worker` | 2/5 | 32.6 | 4.2 | **0** |
+| guard screen, Bronze, n=5 | `no-nudge` | 3/5 | 34.6 | 4.6 | **0** |
 
 Two arms that never differ in behaviour cannot be compared, so this table is
 **void for its question**, not a null: the 2/5 against 3/5 is one policy
@@ -142,13 +142,13 @@ and a sharpened problem statement: an empty turn has several causes and the
 nudge answers exactly one. What the guards are worth is still open.
 
 What would upgrade this: a task on which an empty final carries `stop` (the
-hard suite's longer builds are the candidate) with the `Nudges` column as the
+Gold level's longer builds are the candidate) with the `Nudges` column as the
 reading, and a deadline long enough for that suite to finish. Until then the
 loop breaker's share is unmeasured and the nudge's is zero-fired.
 
 ### Run it yourself
 
-The guard screen ran both arms on the easy suite with the harness's default deadline, five sessions each:
+The guard screen ran both arms on Bronze with the harness's default deadline, five sessions each:
 
 ```bash
 uv run python learn/code/harness.py run --suite easy --arm worker --repeat 5 --grade
@@ -157,7 +157,7 @@ uv run python learn/code/harness.py run --suite easy --arm no-nudge --repeat 5 -
 
 !!! success "Key points"
 
-    - The nudge never fired on the easy suite: zero fires in both arms.
+    - The nudge never fired on Bronze: zero fires in both arms.
     - The empty finals there ended by `error` (context overflow) or `length` (output cap), which the nudge is not built to answer.
     - The 2/5 against 3/5 table is void for its question, not a null; the old 13/15 to 15/15 number is retired.
-    - What the guards are worth on this backend is still open; the hard suite is the candidate to test it.
+    - What the guards are worth on this backend is still open; Gold is the candidate to test it.

@@ -48,8 +48,8 @@ context cost moves, in the direction nobody wants.
 
 **Badge:** `screen`
 
-The easy suite from [Getting started](../../getting-started/suite.md), one
-prompt, graded by hidden pytest plus `ruff`, `pyrefly` and `complexipy`.
+Bronze, the first level of [The Challenge](../../challenge/index.md), as set up
+in [Getting started](../../getting-started/suite.md): one prompt, graded by hidden pytest plus `ruff`, `pyrefly` and `complexipy`.
 Three sessions per arm on llama.cpp, one change between them:
 
 - `worker`: prompt v5, the 643-character task prompt replacing Pi's own.
@@ -65,10 +65,10 @@ Two samples, not pooled:
 
 | Sample | With v5 | With Pi's prompt | Context |
 | --- | --- | --- | --- |
-| the 45-session record, easy/medium/hard, n=3 each | 3/9 | 3/9 | v5 7,834 vs 15,167 peak, easy |
-| this run, easy only, n=3 | **2/3** | **1/3** | v5 peaks 1,639–33,443; no-prompt 4,762–20,773 |
+| the 45-session record, Bronze/Silver/Gold, n=3 each | 3/9 | 3/9 | v5 7,834 vs 15,167 peak, Bronze |
+| this run, Bronze only, n=3 | **2/3** | **1/3** | v5 peaks 1,639–33,443; no-prompt 4,762–20,773 |
 
-Per session, easy only:
+Per session, Bronze only:
 
 | Arm | Session | Passed | Turns | Tool errors | Peak input | Wall |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -108,15 +108,15 @@ page rather than as a procedure.
 
 | Suite | Arm | Passes | Turns | Tool errors | Peak input | Wall |
 | --- | --- | --- | --- | --- | --- | --- |
-| easy | prompt v5 (`worker`) | 2/3 | 31.7 | 7.7 | 33,443 | 288 s |
-| easy | Pi's prompt (`no-prompt`) | 1/3 | 32.3 | 6.3 | 20,773 | 361 s |
+| Bronze | prompt v5 (`worker`) | 2/3 | 31.7 | 7.7 | 33,443 | 288 s |
+| Bronze | Pi's prompt (`no-prompt`) | 1/3 | 32.3 | 6.3 | 20,773 | 361 s |
 
 The two arms are within one session and within 1.4× on wall. Nothing in this
 table separates them.
 
 ## Interpretation
 
-The weakest badge is `screen`, and this page is a **null**: on the easy suite
+The weakest badge is `screen`, and this page is a **null**: on Bronze
 at n=3 the worker prompt did not beat Pi's own prompt, and the same was true
 at 3/9 against 3/9 across three suites. The claim this page used to make,
 that removing each line was paid for by a pass, rested on ladder ablations
@@ -132,7 +132,7 @@ backend. A null against Pi's prompt is not a null against a bloated one.
 
 ### Run it yourself
 
-Run prompt v5 (`worker`) and Pi's prompt (`no-prompt`) on the easy suite, three sessions each:
+Run prompt v5 (`worker`) and Pi's prompt (`no-prompt`) on Bronze, three sessions each:
 
 ```bash
 uv run python learn/code/harness.py run --suite easy --arm worker --repeat 3 --grade --deadline 600

@@ -27,6 +27,7 @@ nav = [
     { "Hard" = ["lessons/hard/index.md", "lessons/hard/primary-agent.md",
       "lessons/hard/intercom-block.md"] },
   ] },
+  { "The Challenge" = "challenge/index.md" },
   { "Pathologies" = "pathologies.md" },
   { "Glossary" = "glossary.md" },
   { "About" = [

@@ -33,6 +33,10 @@ otherwise.
 
 </div>
 
+The lessons' runs use the Bronze, Silver and Gold levels of
+[The Challenge](../challenge/index.md). A lesson's tier says how far into the
+material it goes, not which level it runs on.
+
 ## How every lesson reads
 
 Every lesson page has the same shape, so you know where to look:

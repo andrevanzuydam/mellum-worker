@@ -69,7 +69,7 @@ prompt lines, the tool list, the guard function or the config that changed.
 
 For a lesson that changes a setting, prompt, tool set or guard, show the
 before/after arms on the same suites. Compare inside a suite, never across
-easy/medium/hard. **Size the screen by what you read:**
+Bronze/Silver/Gold. **Size the screen by what you read:**
 
 - **A presence claim needs n = 1.** The block reached every request, the guard
   fired, a file was written outside the layout, a session's checks never ran.
@@ -85,12 +85,12 @@ A `screen` badge is required at either size, and no screen is worded as a rate.
 
 | Suite | Arm | Passes | Turns | Failed checks | Tool errors | Context | Wall | Output tokens | Nudges |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| easy | before | | | | | | | | |
-| easy | after | | | | | | | | |
-| medium | before | | | | | | | | |
-| medium | after | | | | | | | | |
-| hard | before | | | | | | | | |
-| hard | after | | | | | | | | |
+| Bronze | before | | | | | | | | |
+| Bronze | after | | | | | | | | |
+| Silver | before | | | | | | | | |
+| Silver | after | | | | | | | | |
+| Gold | before | | | | | | | | |
+| Gold | after | | | | | | | | |
 
 A missing metric is `n/a`, never `0`. A code-only lesson may use Checks alone and
 say why there is no arm.
@@ -133,7 +133,7 @@ and the screen or badge that would test it.
 ### Run it yourself
 
 One sentence, then the command that reproduces the page's arms, with the
-suites, n and deadline the page names. A page with no runnable arm says so in
+suites (Bronze, Silver or Gold: `--suite easy`, `medium` or `hard`), n and deadline the page names. A page with no runnable arm says so in
 one sentence and gives no command.
 
 ```bash
