@@ -99,6 +99,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- `run_ladder --mode primary` now asks Pi for the model the run names
+  (`--model`) instead of the hard-coded oMLX 6-bit id, so a plain baseline on
+  another server reaches its model rather than failing before the first request.
+
 - The flow coder never saw WHY the acceptance test failed on a retry: `code()` reads `REVIEW.md`
   (the reviewer's prose) but `test()` wrote nothing there, so after a failed gate the coder rebuilt
   from the plan blind and repeated the same miss — e.g. a required route it never implemented,

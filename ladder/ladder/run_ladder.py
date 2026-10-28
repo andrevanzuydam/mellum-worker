@@ -255,7 +255,7 @@ def worker_provenance(root: Path = REPO_ROOT) -> dict:
     return {"worker_version": version, "worker_git": described or None}
 
 
-def build_pi_primary_args(sentence: str, plain: bool = False) -> list[str]:
+def build_pi_primary_args(sentence: str, plain: bool = False, model: str = MODEL) -> list[str]:
     """Mellum as the primary agent, given the raw sentence.
 
     Two baselines the worker is measured against. Operator (default): no
@@ -279,7 +279,7 @@ def build_pi_primary_args(sentence: str, plain: bool = False) -> list[str]:
         "--thinking",
         "high",
         "--model",
-        MODEL,
+        model,
         "-e",
         str(RECORD_EXT),
         sentence,
@@ -595,7 +595,7 @@ def run_once(
             pi_agent_dir or Path.home() / ".pi" / "agent", scratch / "pi-agent", [ws]
         )
         env = child_env(dict(os.environ), str(trace), agent_dir, offline=False)
-        args = build_pi_primary_args(rung.sentence, plain)
+        args = build_pi_primary_args(rung.sentence, plain, model)
     elif mode == "mode":
         agent_dir = mirror_agent_dir(
             Path.home() / ".pi" / "agent",

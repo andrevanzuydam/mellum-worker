@@ -1498,3 +1498,34 @@ def test_pi_agent_dir_flag_reaches_run_once(monkeypatch, tmp_path):
         "--pi-agent-dir", str(tmp_path / "pinned"),
     ])
     assert seen["pi_agent_dir"] == tmp_path / "pinned"
+
+
+def test_primary_args_send_the_model_the_run_names():
+    """A plain baseline on vLLM must ask Pi for that model, not the oMLX default."""
+    from ladder.run_ladder import build_pi_primary_args
+
+    args = build_pi_primary_args("fix it", plain=True, model="vllm/Mellum2.1-12B-A2.5B-Thinking")
+    assert args[args.index("--model") + 1] == "vllm/Mellum2.1-12B-A2.5B-Thinking"
+
+
+def test_run_once_hands_primary_mode_the_run_model(monkeypatch, tmp_path):
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    launched = []
+
+    def fake_run(args, **kw):
+        launched.append(list(args))
+        return sp.CompletedProcess(args, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(run_ladder.subprocess, "run", fake_run)
+    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    monkeypatch.setattr(run_ladder, "mirror_agent_dir", lambda s, d, t, **kw: d)
+    rung = Rung(1, "calculator", "fix it", ["true"], lambda ws, base: CheckResult(False, True))
+    run_ladder.run_once(rung, "primary", "baseline", 1, tmp_path / "out", 5, {}, False,
+                        plain=True, model="vllm/m")
+    pi_calls = [a for a in launched if "--model" in a]
+    assert pi_calls and all(a[a.index("--model") + 1] == "vllm/m" for a in pi_calls)
