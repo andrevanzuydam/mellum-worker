@@ -880,3 +880,31 @@ def test_a_group_with_nothing_left_reports_nothing(tmp_path):
     child = subprocess.Popen(["sh", "-c", "true"], start_new_session=True)
     child.wait(timeout=5)
     assert harness.sweep_group(child.pid) == []
+
+
+def test_run_profile_flag_points_the_bare_arm_at_another_server(tmp_path, capsys):
+    """--profile swaps the Pi profile (provider, model, sampling) without touching the arm."""
+    profile = tmp_path / "profile"
+    profile.mkdir()
+    (profile / "models.json").write_text(json.dumps({"providers": {"vllm": {
+        "baseUrl": "http://127.0.0.1:8000/v1", "api": "openai-completions",
+        "models": [{"id": "Mellum2.1-12B-A2.5B-Thinking"}]}}}))
+    assert harness.main(["run", "--suite", "easy", "--dry-run", "--profile", str(profile)]) == 0
+    argv = capsys.readouterr().out.split()
+    assert argv[argv.index("--provider") + 1] == "vllm"
+    assert argv[argv.index("--model") + 1] == "Mellum2.1-12B-A2.5B-Thinking"
+    assert "--no-extensions" in argv
+
+
+def test_run_suites_hand_run_suite_the_profile_they_are_given(tmp_path, monkeypatch):
+    """--suite all threads the profile through to run_suite, which copies it into the run."""
+    class Seen(Exception):
+        pass
+
+    def capture(suite, **kw):
+        raise Seen(kw["profile"])
+
+    monkeypatch.setattr(harness, "run_suite", capture)
+    with pytest.raises(Seen) as seen:
+        harness.run_suites(["easy"], runs_dir=tmp_path, profile=tmp_path / "p")
+    assert seen.value.args == (tmp_path / "p",)

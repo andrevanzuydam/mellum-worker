@@ -6,6 +6,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `harness.py run --profile <dir>` runs the eval suites against another Pi
+  profile (provider, model, sampling), so the bare arm can point at the
+  baseline's vLLM server.
+
 - `run_ladder --pi-agent-dir <dir>` gives primary mode a pinned Pi profile to
   mirror instead of `~/.pi/agent`, so a plain baseline does not pick up the
   operator's own Pi configuration.

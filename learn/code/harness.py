@@ -597,12 +597,14 @@ def _run_sessions(
     arm: str = "bare",
     single_prompt: bool = False,
     specs: str | None = None,
+    profile: Path = PROFILE,
 ) -> list[tuple]:
     results = []
     for _ in range(repeat):
         run_dir = run_suite(suite, runs_dir=runs_dir, pi_binary=pi_binary,
                             deadline=deadline, arm=arm,
-                            single_prompt=single_prompt, specs=specs)
+                            single_prompt=single_prompt, specs=specs,
+                            profile=profile)
         grades = grade(run_dir / "workspace") if grade_run else []
         tests_passed, tail, missing, checks_ran = score_details(run_dir, suite)
         failed_checks = len(missing)
@@ -671,6 +673,7 @@ def run_suites(
     arm: str = "bare",
     single_prompt: bool = False,
     specs: str | None = None,
+    profile: Path = PROFILE,
 ) -> tuple[int, int]:
     # Run easiest first and hardest last, so a slow hard suite never blocks the
     # quicker ones; unknown suites keep alphabetical order after the known tiers.
@@ -696,7 +699,7 @@ def run_suites(
         results = _run_sessions(
             suite, runs_dir=runs_dir, pi_binary=pi_binary,
             repeat=repeat, grade_run=grade_run, deadline=deadline, arm=arm,
-            single_prompt=single_prompt, specs=specs,
+            single_prompt=single_prompt, specs=specs, profile=profile,
         )
         sessions_passed += _print_task(suite, results, repeat)
         sessions_total += len(results)
@@ -757,6 +760,9 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--repeat", type=int, default=1)
     run.add_argument("--deadline", type=float, default=600)
     run.add_argument("--arm", choices=ARMS, default="bare")
+    run.add_argument("--profile", type=Path, default=PROFILE,
+                     help="the Pi profile directory (models.json) the sessions use; "
+                          "default the pinned llama.cpp profile")
     run.add_argument("--single-prompt", action="store_true",
                      help="send the suite's prompts as one brief instead of steps")
     run.add_argument("--specs", metavar="VARIANT", default=None, choices=["joined", "split"],
@@ -777,11 +783,12 @@ def main(argv: list[str] | None = None) -> int:
         run_suites(["all"], suites_dir=args.suites_dir, runs_dir=args.runs_dir,
                    pi_binary=args.pi_binary, grade_run=args.grade,
                    repeat=args.repeat, deadline=args.deadline, arm=args.arm,
-                   single_prompt=args.single_prompt, specs=args.specs)
+                   single_prompt=args.single_prompt, specs=args.specs,
+                   profile=args.profile)
         return 0
 
     suite = load_suite(args.suites_dir, args.suite)
-    provider, model = profile_pin(PROFILE)
+    provider, model = profile_pin(args.profile)
     if args.dry_run:
         settings = arm_settings(args.arm)
         if args.specs:
@@ -789,7 +796,7 @@ def main(argv: list[str] | None = None) -> int:
             prompt = _read_prompt(sorted((variant / "prompts").glob("*.md"))[0])
         else:
             prompt = suite.prompt
-        print(shlex.join(pi_argv(args.pi_binary, PROFILE, RECORDER, provider,
+        print(shlex.join(pi_argv(args.pi_binary, args.profile, RECORDER, provider,
                                  model, prompt,
                                  extension=settings["extension"])))
         return 0
@@ -797,6 +804,7 @@ def main(argv: list[str] | None = None) -> int:
         suite, runs_dir=args.runs_dir, pi_binary=args.pi_binary,
         repeat=args.repeat, grade_run=args.grade, deadline=args.deadline,
         arm=args.arm, single_prompt=args.single_prompt, specs=args.specs,
+        profile=args.profile,
     )
     _print_task(suite, results, args.repeat)
     return 0
