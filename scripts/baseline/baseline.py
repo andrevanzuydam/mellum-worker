@@ -14,7 +14,8 @@ Windows `run` happens inside WSL2.
     serve    copy the box scripts over, start vLLM, wait for the model
     tunnel   forward the box's vLLM to localhost:LOCAL_PORT (background)
     run      check the GPU, then the ladder and the suites, here
-             (--screen: screen 1's rungs and the easy suite, n = 1)
+             (--screen: screen 1's rungs and the easy suite, n = 1;
+             --suites-only: rerun the suites into the latest run, keeping its ladder)
     lessons  run every lesson's "Run it yourself" commands once per arm, here
     fetch    copy the box's vLLM log into the newest baseline run
     ssh      open a shell on the box
@@ -401,12 +402,22 @@ def run_plan(p: dict[str, str], screen: bool) -> dict:
     """What a run covers: the pinned baseline, or screen 1's presence check."""
     if screen:
         return {"rungs": p["BASELINE_SCREEN_RUNGS"].split(), "ladder_repeat": "1",
-                "suites": p["BASELINE_SCREEN_SUITES"], "suite_repeat": "1", "label": "screen"}
+                "suites": p["BASELINE_SCREEN_SUITES"], "suite_repeat": "1", "label": "screen",
+                "stall": p["BASELINE_SUITE_STALL"]}
     return {"rungs": p["BASELINE_LADDER_RUNGS"].split(), "ladder_repeat": p["BASELINE_LADDER_REPEAT"],
-            "suites": p["BASELINE_SUITES"], "suite_repeat": p["BASELINE_SUITE_REPEAT"], "label": "baseline"}
+            "suites": p["BASELINE_SUITES"], "suite_repeat": p["BASELINE_SUITE_REPEAT"], "label": "baseline",
+            "stall": p["BASELINE_SUITE_STALL"]}
 
 
-def cmd_run(screen: bool = False) -> None:
+def latest_run(label: str) -> Path:
+    runs = sorted((ROOT / "runs").glob(f"{label}-*"), key=lambda d: d.name)
+    runs = [d for d in runs if (d / "manifest.json").is_file() and (d / "ladder").is_dir()]
+    if not runs:
+        raise BaselineError(f"no {label} run with a ladder to add suites to")
+    return runs[-1]
+
+
+def cmd_run(screen: bool = False, suites_only: bool = False) -> None:
     if os.name == "nt":
         raise BaselineError("the ladder and suites need POSIX process groups; run this step inside WSL2")
     p, c = pins(), config()
@@ -425,9 +436,20 @@ def cmd_run(screen: bool = False) -> None:
         raise BaselineError("; ".join(problems))
     plan = run_plan(p, screen)
     commit = git("rev-parse", "HEAD")
+    env = client_env(p)
+    if suites_only:
+        out = latest_run(plan["label"])
+        manifest = json.loads((out / "manifest.json").read_text())
+        if (out / "suites").exists():
+            (out / "suites").rename(out / f"suites-aborted-{datetime.now(UTC):%Y%m%dT%H%M%SZ}")
+        manifest["suites_run"] = {"commit": commit, "started": f"{datetime.now(UTC):%Y-%m-%dT%H:%M:%SZ}",
+                                  "stall": plan["stall"], "server": server_identity(url), "gpu": gpus}
+        (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+        say(f"suites only, into {out}")
+        run_suites_part(p, plan, out, out / "pi-profile", pi, env)
+        return
     out = ROOT / "runs" / f"{plan['label']}-{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{commit[:7]}"
     out.mkdir(parents=True)
-    env = client_env(p)
     manifest = {
         "commit": commit, "run": plan, "pins": p, "server": server_identity(url), "gpu": gpus,
         "client": {"os": f"{platform.system()} {platform.release()} {platform.machine()}",
@@ -451,12 +473,16 @@ def cmd_run(screen: bool = False) -> None:
          "--repeat", plan["ladder_repeat"], "--deadline", p["BASELINE_LADDER_DEADLINE"],
          *rungs, "--out", str(out / "ladder")],
         cwd=ROOT / "ladder", env=env, check=True)
+    run_suites_part(p, plan, out, profile, pi, env)
+
+
+def run_suites_part(p: dict[str, str], plan: dict, out: Path, profile: Path, pi: Path, env: dict) -> None:
     with (out / "suites.txt").open("w") as log:
         suites = subprocess.Popen(
             ["uv", "run", "python", "learn/code/harness.py", "run", "--suite", plan["suites"],
              "--arm", "bare", "--grade", "--profile", str(profile), "--pi-binary", str(pi),
              "--repeat", plan["suite_repeat"], "--deadline", p["BASELINE_SUITE_DEADLINE"],
-             "--runs-dir", str(out / "suites")],
+             "--stall", plan["stall"], "--runs-dir", str(out / "suites")],
             cwd=ROOT, env=env, stdout=subprocess.PIPE, text=True)
         for line in suites.stdout:
             print(line, end="")
@@ -495,18 +521,20 @@ def lesson_commands(page: str) -> list[list[str]]:
     return commands
 
 
-def smoke_argv(command: list[str], profile: Path, pi: Path, runs: Path) -> list[str]:
+def smoke_argv(command: list[str], profile: Path, pi: Path, runs: Path,
+               stall: str | None = None) -> list[str]:
     """One session per arm, through the pinned profile and Pi, into `runs`."""
     argv, skip = [], False
     for i, arg in enumerate(command):
         if skip:
             skip = False
             continue
-        if arg in ("--repeat", "--profile", "--pi-binary", "--runs-dir"):
+        if arg in ("--repeat", "--profile", "--pi-binary", "--runs-dir", "--stall"):
             skip = True
             continue
         argv.append(arg)
-    return argv + ["--repeat", "1", "--profile", str(profile), "--pi-binary", str(pi), "--runs-dir", str(runs)]
+    argv += ["--repeat", "1", "--profile", str(profile), "--pi-binary", str(pi), "--runs-dir", str(runs)]
+    return argv + (["--stall", stall] if stall else [])
 
 
 def cmd_lessons() -> None:
@@ -535,7 +563,7 @@ def cmd_lessons() -> None:
             results.append((number.group(1) if number else page.stem, page.stem, "no command", ""))
             continue
         for command in commands:
-            argv = smoke_argv(command, profile, pi, out / page.stem)
+            argv = smoke_argv(command, profile, pi, out / page.stem, p["BASELINE_SUITE_STALL"])
             say(f"{page.stem}: {' '.join(argv[argv.index('--suite'):])}")
             done = subprocess.run(argv, cwd=ROOT, env=client_env(p), capture_output=True, text=True)
             last = (done.stdout.strip().splitlines() or [done.stderr.strip()[-200:]])[-1]
@@ -594,7 +622,7 @@ COMMANDS = {"client": cmd_client, "offers": cmd_offers, "up": cmd_up, "serve": c
             "down": cmd_down, "all": cmd_all}
 
 
-FLAGS = {"run": ("screen",), "all": ("screen", "keep")}
+FLAGS = {"run": ("screen", "suites_only"), "all": ("screen", "keep")}
 
 
 def parse_args(argv: list[str]) -> tuple[str, dict] | None:
@@ -604,7 +632,7 @@ def parse_args(argv: list[str]) -> tuple[str, dict] | None:
     allowed = FLAGS.get(argv[0], ())
     options = {name: False for name in allowed}
     for flag in argv[1:]:
-        name = flag.removeprefix("--")
+        name = flag.removeprefix("--").replace("-", "_")
         if not flag.startswith("--") or name not in allowed or options[name]:
             return None
         options[name] = True

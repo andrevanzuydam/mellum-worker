@@ -6,6 +6,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `harness.py run --stall SECONDS` ends a session as **stalled** when one tool
+  call has run that long with no result (a foreground server the model
+  started), instead of waiting out the whole deadline. The record carries
+  `stalled` with the command; Pi is untouched. The vLLM baseline pins it at
+  120 s for the suites and the lesson runs, and `baseline.py run --suites-only`
+  reruns just the suites into the latest baseline, keeping its ladder.
+
 - `uv run scripts/baseline/baseline.py lessons` runs every lesson's "Run it
   yourself" commands once per arm against the baseline's vLLM box, with the
   pinned Pi, and writes a summary, so each lesson's command is proven to run

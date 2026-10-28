@@ -55,7 +55,7 @@ Linux recipe, with its own pinned Node and Pi.
 | Part | Command | n | Deadline |
 | --- | --- | --- | --- |
 | Ladder, rungs 1–12 | `run_ladder --mode primary --plain` | 3 | 600 s |
-| Eval suites, easy/medium/hard | `harness.py run --arm bare --grade` | 3 | 2,700 s |
+| Eval suites, easy/medium/hard | `harness.py run --arm bare --grade --stall 120` | 3 | 2,700 s, or 120 s on one stalled command |
 
 Pi starts with `--no-extensions --no-skills --no-context-files` (the suites
 add `--no-prompt-templates --no-themes`), its own system prompt and its own

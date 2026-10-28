@@ -87,7 +87,7 @@ def test_an_unknown_command_prints_the_usage(capsys):
 def test_the_screen_is_a_small_named_subset_of_the_baseline():
     full, screen = baseline.run_plan(PINS, screen=False), baseline.run_plan(PINS, screen=True)
     assert full == {"rungs": PINS["BASELINE_LADDER_RUNGS"].split(), "ladder_repeat": "3",
-                    "suites": "all", "suite_repeat": "3", "label": "baseline"}
+                    "suites": "all", "suite_repeat": "3", "label": "baseline", "stall": "120"}
     assert screen["label"] == "screen"
     assert set(screen["rungs"]) < set(full["rungs"])
     assert screen["ladder_repeat"] == screen["suite_repeat"] == "1"
@@ -95,7 +95,7 @@ def test_the_screen_is_a_small_named_subset_of_the_baseline():
 
 
 def test_run_and_all_take_screen_and_all_takes_keep():
-    assert baseline.parse_args(["run", "--screen"]) == ("run", {"screen": True})
+    assert baseline.parse_args(["run", "--screen"]) == ("run", {"screen": True, "suites_only": False})
     assert baseline.parse_args(["all"]) == ("all", {"screen": False, "keep": False})
     assert baseline.parse_args(["all", "--keep", "--screen"]) == ("all", {"screen": True, "keep": True})
     assert baseline.parse_args(["down"]) == ("down", {})
@@ -171,3 +171,20 @@ def test_a_smoke_run_is_one_session_per_arm_through_the_pinned_client(tmp_path):
     assert out[out.index("--pi-binary") + 1] == str(tmp_path / "pi")
     assert out[out.index("--runs-dir") + 1] == str(tmp_path / "r")
     assert "--grade" in out and out[out.index("--deadline") + 1] == "2700"
+
+
+def test_the_suites_carry_the_pinned_stall_limit():
+    assert PINS["BASELINE_SUITE_STALL"] == "120"
+    plan = baseline.run_plan(PINS, screen=False)
+    assert plan["stall"] == "120"
+
+
+def test_run_takes_suites_only():
+    assert baseline.parse_args(["run", "--suites-only"]) == ("run", {"screen": False, "suites_only": True})
+    assert baseline.parse_args(["run"]) == ("run", {"screen": False, "suites_only": False})
+
+
+def test_a_lesson_smoke_run_carries_the_stall_limit(tmp_path):
+    cmd = baseline.lesson_commands(PAGE)[0]
+    out = baseline.smoke_argv(cmd, profile=tmp_path / "p", pi=tmp_path / "pi", runs=tmp_path / "r", stall="120")
+    assert out[out.index("--stall") + 1] == "120"
