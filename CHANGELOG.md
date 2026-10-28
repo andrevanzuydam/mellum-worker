@@ -27,7 +27,8 @@ Versions match git tags; pin one in both install lines.
 - `uv run scripts/baseline/baseline.py lessons` runs every lesson's "Run it
   yourself" commands once per arm against the baseline's vLLM box, with the
   pinned Pi, and writes a summary, so each lesson's command is proven to run
-  and grade end to end.
+  and grade end to end It runs three commands at once and caps each
+  smoke session at 900 s (both pinned), so the whole set takes about an hour.
 
 - Every page of the Learning Center has an illustration in one shared flat
   style, generated from `learn/assets/illustrations/prompts.toml` by

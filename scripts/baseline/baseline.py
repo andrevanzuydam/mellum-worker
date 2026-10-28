@@ -522,7 +522,7 @@ def lesson_commands(page: str) -> list[list[str]]:
 
 
 def smoke_argv(command: list[str], profile: Path, pi: Path, runs: Path,
-               stall: str | None = None) -> list[str]:
+               stall: str | None = None, cap: str | None = None) -> list[str]:
     """One session per arm, through the pinned profile and Pi, into `runs`."""
     argv, skip = [], False
     for i, arg in enumerate(command):
@@ -533,8 +533,18 @@ def smoke_argv(command: list[str], profile: Path, pi: Path, runs: Path,
             skip = True
             continue
         argv.append(arg)
+    if cap and "--deadline" in argv:
+        i = argv.index("--deadline") + 1
+        argv[i] = str(min(float(argv[i]), float(cap))).removesuffix(".0")
     argv += ["--repeat", "1", "--profile", str(profile), "--pi-binary", str(pi), "--runs-dir", str(runs)]
     return argv + (["--stall", stall] if stall else [])
+
+
+def run_all(commands: list[list[str]], runner, parallel: int = 1) -> list:
+    """Run each command through `runner`, `parallel` at a time; results keep the input order."""
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=max(1, parallel)) as pool:
+        return list(pool.map(runner, commands))
 
 
 def cmd_lessons() -> None:
@@ -553,23 +563,29 @@ def cmd_lessons() -> None:
     models = json.loads((profile / "models.json").read_text())
     models["providers"]["vllm"]["baseUrl"] = url
     (profile / "models.json").write_text(json.dumps(models, indent=2) + "\n")
-    results = []
+    results, jobs = [], []
     for page in sorted((ROOT / "learn" / "lessons").glob("*/*.md")):
         if page.name == "index.md":
             continue
         number = re.search(r"^number: (\S+)", page.read_text(), re.M)
+        label = number.group(1) if number else page.stem
         commands = lesson_commands(page.read_text())
         if not commands:
-            results.append((number.group(1) if number else page.stem, page.stem, "no command", ""))
-            continue
+            results.append((label, page.stem, "no command", ""))
         for command in commands:
-            argv = smoke_argv(command, profile, pi, out / page.stem, p["BASELINE_SUITE_STALL"])
-            say(f"{page.stem}: {' '.join(argv[argv.index('--suite'):])}")
-            done = subprocess.run(argv, cwd=ROOT, env=client_env(p), capture_output=True, text=True)
-            last = (done.stdout.strip().splitlines() or [done.stderr.strip()[-200:]])[-1]
-            results.append((number.group(1) if number else page.stem, page.stem,
-                            "ran" if done.returncode == 0 else f"exit {done.returncode}", last))
-            print(last, flush=True)
+            jobs.append((label, page.stem, smoke_argv(command, profile, pi, out / page.stem,
+                                                      p["BASELINE_SUITE_STALL"], p["BASELINE_LESSON_DEADLINE_CAP"])))
+
+    def runner(argv: list[str]) -> tuple[int, str]:
+        say(f"start {' '.join(argv[argv.index('--suite'):argv.index('--profile')])}")
+        done = subprocess.run(argv, cwd=ROOT, env=client_env(p), capture_output=True, text=True)
+        last = (done.stdout.strip().splitlines() or [done.stderr.strip()[-200:]])[-1]
+        say(f"done  {' '.join(argv[argv.index('--suite'):argv.index('--profile')])} :: {last}")
+        return done.returncode, last
+
+    for (label, stem, _), (code, last) in zip(jobs, run_all([j[2] for j in jobs], runner,
+                                                           int(p["BASELINE_LESSON_PARALLEL"]))):
+        results.append((label, stem, "ran" if code == 0 else f"exit {code}", last))
     lines = ["| Lesson | Page | Command | Result |", "| --- | --- | --- | --- |"]
     lines += [f"| {n} | {s} | {status} | {last} |" for n, s, status, last in results]
     (out / "summary.md").write_text("\n".join(lines) + "\n")

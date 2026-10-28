@@ -188,3 +188,37 @@ def test_a_lesson_smoke_run_carries_the_stall_limit(tmp_path):
     cmd = baseline.lesson_commands(PAGE)[0]
     out = baseline.smoke_argv(cmd, profile=tmp_path / "p", pi=tmp_path / "pi", runs=tmp_path / "r", stall="120")
     assert out[out.index("--stall") + 1] == "120"
+
+
+def test_the_smoke_deadline_is_capped_never_raised(tmp_path):
+    long_cmd = baseline.lesson_commands(PAGE)[0]                     # --deadline 2700
+    out = baseline.smoke_argv(long_cmd, profile=tmp_path, pi=tmp_path, runs=tmp_path, cap="900")
+    assert out[out.index("--deadline") + 1] == "900"
+    short = ["uv", "run", "python", "learn/code/harness.py", "run", "--suite", "easy", "--deadline", "600"]
+    out = baseline.smoke_argv(short, profile=tmp_path, pi=tmp_path, runs=tmp_path, cap="900")
+    assert out[out.index("--deadline") + 1] == "600"
+    bare = ["uv", "run", "python", "learn/code/harness.py", "run", "--suite", "easy"]
+    out = baseline.smoke_argv(bare, profile=tmp_path, pi=tmp_path, runs=tmp_path, cap="900")
+    assert "--deadline" not in out                                    # the harness default (600) is under the cap
+
+
+def test_lesson_runs_are_pinned_parallel_and_capped():
+    assert int(PINS["BASELINE_LESSON_PARALLEL"]) >= 1
+    assert int(PINS["BASELINE_LESSON_DEADLINE_CAP"]) >= 300
+
+
+def test_lesson_commands_run_in_parallel_and_keep_their_order(monkeypatch):
+    import threading, time as _t
+    active, peak, lock = [0], [0], threading.Lock()
+
+    def fake(argv):
+        with lock:
+            active[0] += 1; peak[0] = max(peak[0], active[0])
+        _t.sleep(0.05)
+        with lock:
+            active[0] -= 1
+        return 0, argv[-1]
+
+    results = baseline.run_all([["x", str(i)] for i in range(6)], fake, parallel=3)
+    assert peak[0] == 3
+    assert [r[1] for r in results] == [str(i) for i in range(6)]
