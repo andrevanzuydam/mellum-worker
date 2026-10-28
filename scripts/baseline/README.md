@@ -31,7 +31,7 @@ uv run scripts/baseline/baseline.py all      # install, rent, serve, run, fetch,
 ```
 
 `all` destroys the instance on any exit, success or failure, after fetching
-the vLLM log. Each step also runs on its own: `client`, `up`, `serve`,
+the vLLM log; `all --keep` leaves it up for more runs (it bills until `down`). Each step also runs on its own: `client`, `up`, `serve`,
 `tunnel`, `run`, `fetch`, `down`, and `ssh` opens a shell on the box.
 `vast.env` is git-ignored; the token reaches only the vastai CLI's environment.
 

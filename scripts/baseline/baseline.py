@@ -19,7 +19,7 @@ Windows `run` happens inside WSL2.
     ssh      open a shell on the box
     down     close the tunnel and destroy the instance
     all      client, up, serve, tunnel, run, fetch, down — destroys on any exit
-             (--screen as for run)
+             (--screen as for run; --keep leaves the box up for more runs)
 
 Configuration: scripts/baseline/vast.env (copy vast.env.example), or the file
 named by VAST_CONFIG.
@@ -302,7 +302,7 @@ def cmd_serve() -> None:
     subprocess.run(["scp", "-i", c["VAST_SSH_KEY"], "-P", port, "-o", "StrictHostKeyChecking=accept-new",
                     *(str(HERE / f) for f in BOX_FILES), f"{host}:baseline/"], check=True)
     started = remote(c, "cd baseline && chmod +x *.sh && ./check-host.sh && "
-                        "(nohup ./serve.sh > vllm.log 2>&1 &)")
+                        "(pgrep -f 'vllm serve' >/dev/null || (nohup ./serve.sh > vllm.log 2>&1 &))")
     if started.returncode:
         raise BaselineError("the box failed its check; see above")
     p = pins()
@@ -486,7 +486,7 @@ def cmd_down() -> None:
     say(f"instance {ident} destroyed")
 
 
-def cmd_all(screen: bool = False) -> None:
+def cmd_all(screen: bool = False, keep: bool = False) -> None:
     cmd_client()
     try:
         cmd_up()
@@ -494,7 +494,9 @@ def cmd_all(screen: bool = False) -> None:
         cmd_tunnel()
         cmd_run(screen)
     finally:
-        if (STATE / "instance").is_file():
+        if keep and (STATE / "instance").is_file():
+            say(f"--keep: instance {instance_id()} stays up and bills until `down`")
+        elif (STATE / "instance").is_file():
             try:
                 cmd_fetch()
             except (subprocess.CalledProcessError, SystemExit, OSError) as error:
@@ -507,15 +509,21 @@ COMMANDS = {"client": cmd_client, "offers": cmd_offers, "up": cmd_up, "serve": c
             "down": cmd_down, "all": cmd_all}
 
 
-def parse_args(argv: list[str]) -> tuple[str, bool] | None:
-    """(command, screen), or None for a usage error; only run and all take --screen."""
+FLAGS = {"run": ("screen",), "all": ("screen", "keep")}
+
+
+def parse_args(argv: list[str]) -> tuple[str, dict] | None:
+    """(command, options), or None for a usage error; run takes --screen, all --screen and --keep."""
     if not argv or argv[0] not in COMMANDS:
         return None
-    if argv[1:] == []:
-        return argv[0], False
-    if argv[1:] == ["--screen"] and argv[0] in ("run", "all"):
-        return argv[0], True
-    return None
+    allowed = FLAGS.get(argv[0], ())
+    options = {name: False for name in allowed}
+    for flag in argv[1:]:
+        name = flag.removeprefix("--")
+        if not flag.startswith("--") or name not in allowed or options[name]:
+            return None
+        options[name] = True
+    return argv[0], options
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -523,8 +531,8 @@ def main(argv: list[str] | None = None) -> int:
     if parsed is None:
         print(__doc__)
         return 2
-    command, screen = parsed
-    COMMANDS[command](screen) if command in ("run", "all") else COMMANDS[command]()
+    command, options = parsed
+    COMMANDS[command](**options)
     return 0
 
 

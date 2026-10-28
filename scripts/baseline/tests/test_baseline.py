@@ -94,8 +94,11 @@ def test_the_screen_is_a_small_named_subset_of_the_baseline():
     assert screen["suites"] == "easy"
 
 
-def test_run_and_all_take_screen_and_nothing_else(capsys):
-    assert baseline.parse_args(["run", "--screen"]) == ("run", True)
-    assert baseline.parse_args(["all"]) == ("all", False)
+def test_run_and_all_take_screen_and_all_takes_keep():
+    assert baseline.parse_args(["run", "--screen"]) == ("run", {"screen": True})
+    assert baseline.parse_args(["all"]) == ("all", {"screen": False, "keep": False})
+    assert baseline.parse_args(["all", "--keep", "--screen"]) == ("all", {"screen": True, "keep": True})
+    assert baseline.parse_args(["down"]) == ("down", {})
     assert baseline.parse_args(["up", "--screen"]) is None
+    assert baseline.parse_args(["run", "--keep"]) is None
     assert baseline.parse_args(["run", "--fast"]) is None
