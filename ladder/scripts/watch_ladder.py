@@ -22,12 +22,15 @@ import time
 def _globs() -> list[str]:
     # Derive from the ACTUAL temp dir so this works wherever tempfile puts ladder-*/ (not just
     # /tmp or /private/var/folders); keep the historical paths; add any dir given on the CLI.
+    # A recursive glob over the whole temp dir is too slow to poll (macOS keeps
+    # thousands of entries there), so temp roots match only ladder-*/ scratch dirs;
+    # only a directory named on the CLI is searched recursively.
     roots = [tempfile.gettempdir(), "/tmp", "/private/var/folders/*/*/T"]
-    roots += [a for a in sys.argv[1:] if not a.startswith("-")]
     pats: list[str] = []
     for r in roots:
-        pats += [f"{r}/ladder-*/trace.jsonl", f"{r}/ladder-*/*/trace.jsonl",
-                 f"{r}/**/trace.jsonl"]
+        pats += [f"{r}/ladder-*/trace.jsonl", f"{r}/ladder-*/*/trace.jsonl"]
+    for r in (a for a in sys.argv[1:] if not a.startswith("-")):
+        pats.append(f"{r}/**/trace.jsonl")
     return pats
 
 
