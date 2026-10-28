@@ -102,3 +102,16 @@ def test_run_and_all_take_screen_and_all_takes_keep():
     assert baseline.parse_args(["up", "--screen"]) is None
     assert baseline.parse_args(["run", "--keep"]) is None
     assert baseline.parse_args(["run", "--fast"]) is None
+
+
+def test_the_tunnel_avoids_the_ports_the_model_serves_its_apps_on(tmp_path, monkeypatch):
+    """Screen 1: an app the model started bound *:8000 beside a tunnel on 8000."""
+    key = tmp_path / "id"
+    key.write_text("")
+    (tmp_path / "id.pub").write_text("ssh-ed25519 AAAA t")
+    f = tmp_path / "vast.env"
+    f.write_text(f'VAST_API_KEY=k\nVAST_SSH_KEY={key}\n')
+    monkeypatch.setenv("VAST_CONFIG", str(f))
+    assert baseline.config()["LOCAL_PORT"] not in {"3000", "5000", "8000", "8001", "8080"}
+    example = baseline.load_kv(HERE / "vast.env.example")
+    assert example["LOCAL_PORT"] == baseline.config()["LOCAL_PORT"]

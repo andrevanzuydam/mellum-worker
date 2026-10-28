@@ -91,7 +91,7 @@ def config() -> dict[str, str]:
     if not path.is_file():
         raise BaselineError(f"no {path}; copy vast.env.example and fill it in")
     values = {"VAST_SSH_KEY": os.path.expanduser("~/.ssh/id_ed25519"),
-              "VAST_MAX_DPH": "0.55", "VAST_DISK_GB": "80", "LOCAL_PORT": "8000",
+              "VAST_MAX_DPH": "0.55", "VAST_DISK_GB": "80", "LOCAL_PORT": "18000",
               **load_kv(path)}
     if values.get("VAST_API_KEY", "") in ("", PLACEHOLDER):
         raise BaselineError(f"set VAST_API_KEY in {path}")
