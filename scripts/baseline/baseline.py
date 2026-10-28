@@ -433,20 +433,21 @@ def cmd_run(screen: bool = False) -> None:
     }
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     say(f"manifest at {out / 'manifest.json'}")
-    rungs = [arg for n in plan["rungs"] for arg in ("--rung", n)]
-    subprocess.run(
-        ["uv", "run", "python", "-m", "ladder.run_ladder", "--mode", "primary", "--plain",
-         "--profile", "baseline", "--provider", "vllm", "--base-url", url,
-         "--model", f"vllm/{p['BASELINE_SERVED_NAME']}", "--pi-executable", str(pi),
-         "--pi-agent-dir", str(HERE / "pi-profile"),
-         "--repeat", plan["ladder_repeat"], "--deadline", p["BASELINE_LADDER_DEADLINE"],
-         *rungs, "--out", str(out / "ladder")],
-        cwd=ROOT / "ladder", env=env, check=True)
+    # Both parts use one copy of the pinned profile, pointed at the tunnel.
     profile = out / "pi-profile"
     shutil.copytree(HERE / "pi-profile", profile)
     models = json.loads((profile / "models.json").read_text())
     models["providers"]["vllm"]["baseUrl"] = url
     (profile / "models.json").write_text(json.dumps(models, indent=2) + "\n")
+    rungs = [arg for n in plan["rungs"] for arg in ("--rung", n)]
+    subprocess.run(
+        ["uv", "run", "python", "-m", "ladder.run_ladder", "--mode", "primary", "--plain",
+         "--profile", "baseline", "--provider", "vllm", "--base-url", url,
+         "--model", f"vllm/{p['BASELINE_SERVED_NAME']}", "--pi-executable", str(pi),
+         "--pi-agent-dir", str(profile),
+         "--repeat", plan["ladder_repeat"], "--deadline", p["BASELINE_LADDER_DEADLINE"],
+         *rungs, "--out", str(out / "ladder")],
+        cwd=ROOT / "ladder", env=env, check=True)
     with (out / "suites.txt").open("w") as log:
         suites = subprocess.Popen(
             ["uv", "run", "python", "learn/code/harness.py", "run", "--suite", plan["suites"],
