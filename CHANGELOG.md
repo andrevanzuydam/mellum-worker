@@ -6,6 +6,16 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A replicable vLLM baseline, `scripts/baseline/`: Pi and the model with no
+  plugins or extensions, on every ladder rung and eval suite. vLLM runs on a
+  rented GPU (pinned: RTX A6000 48 GB, about $0.45/h on vast.ai); Pi and the
+  harness run on your machine through an SSH tunnel. `uv run
+  scripts/baseline/baseline.py all` installs a pinned, checksummed Node and Pi
+  under `.baseline/`, rents the GPU, serves, runs, fetches and destroys the box,
+  on macOS, Linux and Windows (WSL2 for the run). Everything that defines the
+  baseline is pinned in one file, and the vast.ai token lives in a git-ignored
+  `vast.env`. It has not yet been run on a rented box.
+
 - `harness.py run --profile <dir>` runs the eval suites against another Pi
   profile (provider, model, sampling), so the bare arm can point at the
   baseline's vLLM server.

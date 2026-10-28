@@ -15,3 +15,7 @@ learn/code/profile/auth.json
 learn/code/profile/models-store.json
 learn/code/profile/trust.json
 runs/
+
+# vast.ai credentials and the pinned client for scripts/baseline/baseline.py
+scripts/baseline/vast.env
+.baseline/
