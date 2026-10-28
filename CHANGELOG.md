@@ -104,6 +104,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- The ladder's workspace preflight no longer refuses every Python rung on
+  macOS with Python 3.15: `/var` is a link to `/private/var` there, and 3.15
+  reports the venv's interpreter by its real path, which the preflight compared
+  literally.
+
 - `run_ladder --mode primary` now asks Pi for the model the run names
   (`--model`) instead of the hard-coded oMLX 6-bit id, so a plain baseline on
   another server reaches its model rather than failing before the first request.
