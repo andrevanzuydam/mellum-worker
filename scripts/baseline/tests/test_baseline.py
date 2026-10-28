@@ -82,3 +82,20 @@ def test_a_missing_config_says_how_to_make_one(tmp_path, monkeypatch):
 def test_an_unknown_command_prints_the_usage(capsys):
     assert baseline.main(["frobnicate"]) == 2
     assert "destroys on any exit" in capsys.readouterr().out
+
+
+def test_the_screen_is_a_small_named_subset_of_the_baseline():
+    full, screen = baseline.run_plan(PINS, screen=False), baseline.run_plan(PINS, screen=True)
+    assert full == {"rungs": PINS["BASELINE_LADDER_RUNGS"].split(), "ladder_repeat": "3",
+                    "suites": "all", "suite_repeat": "3", "label": "baseline"}
+    assert screen["label"] == "screen"
+    assert set(screen["rungs"]) < set(full["rungs"])
+    assert screen["ladder_repeat"] == screen["suite_repeat"] == "1"
+    assert screen["suites"] == "easy"
+
+
+def test_run_and_all_take_screen_and_nothing_else(capsys):
+    assert baseline.parse_args(["run", "--screen"]) == ("run", True)
+    assert baseline.parse_args(["all"]) == ("all", False)
+    assert baseline.parse_args(["up", "--screen"]) is None
+    assert baseline.parse_args(["run", "--fast"]) is None

@@ -14,10 +14,12 @@ Windows `run` happens inside WSL2.
     serve    copy the box scripts over, start vLLM, wait for the model
     tunnel   forward the box's vLLM to localhost:LOCAL_PORT (background)
     run      check the GPU, then the ladder and the suites, here
+             (--screen: screen 1's rungs and the easy suite, n = 1)
     fetch    copy the box's vLLM log into the newest baseline run
     ssh      open a shell on the box
     down     close the tunnel and destroy the instance
     all      client, up, serve, tunnel, run, fetch, down — destroys on any exit
+             (--screen as for run)
 
 Configuration: scripts/baseline/vast.env (copy vast.env.example), or the file
 named by VAST_CONFIG.
@@ -46,6 +48,7 @@ CLIENT = ROOT / ".baseline"
 STATE = CLIENT / "state"
 PLACEHOLDER = "<insert vast.ai token>"
 BOX_FILES = ("pins.env", "check-host.sh", "serve.sh")
+LABEL = "mellum-baseline"
 
 
 class BaselineError(SystemExit):
@@ -269,11 +272,20 @@ def cmd_up() -> None:
         raise BaselineError(f"no on-demand {p['BASELINE_GPU_VAST_NAME']} under ${c['VAST_MAX_DPH']}/h right now")
     offer = offers[0]
     say(f"renting offer {offer['id']} at ${offer['dph_total']:.3f}/h ({offer.get('geolocation')})")
-    made = vastai(c, "create", "instance", str(offer["id"]), "--image", p["BASELINE_VLLM_IMAGE"],
-                  "--disk", c["VAST_DISK_GB"], "--ssh", "--direct", "--cancel-unavail",
-                  "--label", "mellum-baseline")
     STATE.mkdir(parents=True, exist_ok=True)
-    (STATE / "instance").write_text(str(made["new_contract"]))
+    try:
+        made = vastai(c, "create", "instance", str(offer["id"]), "--image", p["BASELINE_VLLM_IMAGE"],
+                      "--disk", c["VAST_DISK_GB"], "--ssh", "--direct", "--cancel-unavail",
+                      "--label", LABEL)
+        ident = str(made["new_contract"])
+    except (KeyError, TypeError, BaselineError):
+        # Never leave a billing instance untracked: find it by its label.
+        ident = next((str(i["id"]) for i in vastai(c, "show", "instances") or []
+                      if i.get("label") == LABEL), "")
+        if not ident:
+            raise
+    (STATE / "instance").write_text(ident)
+    say(f"instance {ident} created")
     key = Path(c["VAST_SSH_KEY"] + ".pub").read_text().strip()
     vastai(c, "attach", "ssh", instance_id(), key, raw=False)
     while vastai(c, "show", "instance", instance_id()).get("actual_status") != "running":
@@ -382,7 +394,16 @@ def tool_version(argv: list[str], env=None) -> str:
     return (out.stdout or out.stderr).strip().splitlines()[0] if (out.stdout or out.stderr).strip() else ""
 
 
-def cmd_run() -> None:
+def run_plan(p: dict[str, str], screen: bool) -> dict:
+    """What a run covers: the pinned baseline, or screen 1's presence check."""
+    if screen:
+        return {"rungs": p["BASELINE_SCREEN_RUNGS"].split(), "ladder_repeat": "1",
+                "suites": p["BASELINE_SCREEN_SUITES"], "suite_repeat": "1", "label": "screen"}
+    return {"rungs": p["BASELINE_LADDER_RUNGS"].split(), "ladder_repeat": p["BASELINE_LADDER_REPEAT"],
+            "suites": p["BASELINE_SUITES"], "suite_repeat": p["BASELINE_SUITE_REPEAT"], "label": "baseline"}
+
+
+def cmd_run(screen: bool = False) -> None:
     if os.name == "nt":
         raise BaselineError("the ladder and suites need POSIX process groups; run this step inside WSL2")
     p, c = pins(), config()
@@ -399,25 +420,26 @@ def cmd_run() -> None:
     problems = gpu_problems(gpus, p)
     if problems:
         raise BaselineError("; ".join(problems))
+    plan = run_plan(p, screen)
     commit = git("rev-parse", "HEAD")
-    out = ROOT / "runs" / f"baseline-{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{commit[:7]}"
+    out = ROOT / "runs" / f"{plan['label']}-{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{commit[:7]}"
     out.mkdir(parents=True)
     env = client_env(p)
     manifest = {
-        "commit": commit, "pins": p, "server": server_identity(url), "gpu": gpus,
+        "commit": commit, "run": plan, "pins": p, "server": server_identity(url), "gpu": gpus,
         "client": {"os": f"{platform.system()} {platform.release()} {platform.machine()}",
                    "node": tool_version([str(node_bin(p) / "node"), "--version"]),
                    "pi": tool_version([str(pi), "--version"], env), "uv": tool_version(["uv", "--version"])},
     }
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     say(f"manifest at {out / 'manifest.json'}")
-    rungs = [arg for n in p["BASELINE_LADDER_RUNGS"].split() for arg in ("--rung", n)]
+    rungs = [arg for n in plan["rungs"] for arg in ("--rung", n)]
     subprocess.run(
         ["uv", "run", "python", "-m", "ladder.run_ladder", "--mode", "primary", "--plain",
          "--profile", "baseline", "--provider", "vllm", "--base-url", url,
          "--model", f"vllm/{p['BASELINE_SERVED_NAME']}", "--pi-executable", str(pi),
          "--pi-agent-dir", str(HERE / "pi-profile"),
-         "--repeat", p["BASELINE_LADDER_REPEAT"], "--deadline", p["BASELINE_LADDER_DEADLINE"],
+         "--repeat", plan["ladder_repeat"], "--deadline", p["BASELINE_LADDER_DEADLINE"],
          *rungs, "--out", str(out / "ladder")],
         cwd=ROOT / "ladder", env=env, check=True)
     profile = out / "pi-profile"
@@ -427,9 +449,9 @@ def cmd_run() -> None:
     (profile / "models.json").write_text(json.dumps(models, indent=2) + "\n")
     with (out / "suites.txt").open("w") as log:
         suites = subprocess.Popen(
-            ["uv", "run", "python", "learn/code/harness.py", "run", "--suite", p["BASELINE_SUITES"],
+            ["uv", "run", "python", "learn/code/harness.py", "run", "--suite", plan["suites"],
              "--arm", "bare", "--grade", "--profile", str(profile), "--pi-binary", str(pi),
-             "--repeat", p["BASELINE_SUITE_REPEAT"], "--deadline", p["BASELINE_SUITE_DEADLINE"],
+             "--repeat", plan["suite_repeat"], "--deadline", p["BASELINE_SUITE_DEADLINE"],
              "--runs-dir", str(out / "suites")],
             cwd=ROOT, env=env, stdout=subprocess.PIPE, text=True)
         for line in suites.stdout:
@@ -464,19 +486,20 @@ def cmd_down() -> None:
     say(f"instance {ident} destroyed")
 
 
-def cmd_all() -> None:
+def cmd_all(screen: bool = False) -> None:
     cmd_client()
-    cmd_up()
     try:
+        cmd_up()
         cmd_serve()
         cmd_tunnel()
-        cmd_run()
+        cmd_run(screen)
     finally:
-        try:
-            cmd_fetch()
-        except (subprocess.CalledProcessError, SystemExit) as error:
-            say(f"could not fetch the vLLM log: {error}")
-        cmd_down()
+        if (STATE / "instance").is_file():
+            try:
+                cmd_fetch()
+            except (subprocess.CalledProcessError, SystemExit, OSError) as error:
+                say(f"could not fetch the vLLM log: {error}")
+            cmd_down()
 
 
 COMMANDS = {"client": cmd_client, "offers": cmd_offers, "up": cmd_up, "serve": cmd_serve,
@@ -484,12 +507,24 @@ COMMANDS = {"client": cmd_client, "offers": cmd_offers, "up": cmd_up, "serve": c
             "down": cmd_down, "all": cmd_all}
 
 
+def parse_args(argv: list[str]) -> tuple[str, bool] | None:
+    """(command, screen), or None for a usage error; only run and all take --screen."""
+    if not argv or argv[0] not in COMMANDS:
+        return None
+    if argv[1:] == []:
+        return argv[0], False
+    if argv[1:] == ["--screen"] and argv[0] in ("run", "all"):
+        return argv[0], True
+    return None
+
+
 def main(argv: list[str] | None = None) -> int:
-    argv = sys.argv[1:] if argv is None else argv
-    if len(argv) != 1 or argv[0] not in COMMANDS:
+    parsed = parse_args(sys.argv[1:] if argv is None else argv)
+    if parsed is None:
         print(__doc__)
         return 2
-    COMMANDS[argv[0]]()
+    command, screen = parsed
+    COMMANDS[command](screen) if command in ("run", "all") else COMMANDS[command]()
     return 0
 
 

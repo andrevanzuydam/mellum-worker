@@ -14,7 +14,8 @@ Versions match git tags; pin one in both install lines.
   under `.baseline/`, rents the GPU, serves, runs, fetches and destroys the box,
   on macOS, Linux and Windows (WSL2 for the run). Everything that defines the
   baseline is pinned in one file, and the vast.ai token lives in a git-ignored
-  `vast.env`. It has not yet been run on a rented box.
+  `vast.env`. `--screen` runs screen 1 (two rungs and the easy suite, n = 1)
+  before the full baseline.
 
 - `harness.py run --profile <dir>` runs the eval suites against another Pi
   profile (provider, model, sampling), so the bare arm can point at the
