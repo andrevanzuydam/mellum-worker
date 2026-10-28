@@ -1456,3 +1456,45 @@ def test_mode_args_load_extra_extensions_and_keep_sentence_last():
     assert "/x/mellum-ncm.ts" in args
     assert args.index("/x/mellum-ncm.ts") < args.index("do it")
 
+
+def test_primary_mode_mirrors_the_agent_dir_it_is_given(monkeypatch, tmp_path):
+    """--pi-agent-dir lets a plain baseline use a pinned profile instead of ~/.pi/agent."""
+    import subprocess as sp
+
+    from ladder import run_ladder
+    from ladder.rungs import CheckResult, Rung
+
+    sources = []
+    monkeypatch.setattr(
+        run_ladder.subprocess, "run",
+        lambda args, **kw: sp.CompletedProcess(args, 0, stdout="", stderr=""),
+    )
+    monkeypatch.setattr(run_ladder, "prepare_workspace", lambda rung, scratch, **kw: scratch)
+    monkeypatch.setattr(run_ladder, "baseline_index", lambda ws: (set(), {}))
+    monkeypatch.setattr(run_ladder, "mirror_agent_dir",
+                        lambda s, d, t, **kw: sources.append(s) or d)
+    rung = Rung(1, "calculator", "fix it", ["true"], lambda ws, base: CheckResult(False, True))
+    run_ladder.run_once(rung, "primary", "baseline", 1, tmp_path / "out", 5, {}, False,
+                        plain=True, pi_agent_dir=tmp_path / "pinned")
+    run_ladder.run_once(rung, "primary", "baseline", 2, tmp_path / "out", 5, {}, False,
+                        plain=True)
+    assert sources == [tmp_path / "pinned", Path.home() / ".pi" / "agent"]
+
+
+def test_pi_agent_dir_flag_reaches_run_once(monkeypatch, tmp_path):
+    from ladder import run_ladder
+
+    seen = {}
+    monkeypatch.setattr(run_ladder, "resolve_pi", lambda e: {"executable": e, "version": "t"})
+    monkeypatch.setattr(run_ladder, "tool_version", lambda cmd: "t")
+    monkeypatch.setattr(run_ladder, "server_identity", lambda url: {})
+    monkeypatch.setattr(run_ladder, "gpu_identity", lambda: None)
+    monkeypatch.setattr(run_ladder, "run_once",
+                        lambda *a, **k: seen.update(k) or {"score": {"effective_params": None}})
+    monkeypatch.setattr(run_ladder, "table_row", lambda record: "")
+    run_ladder.main([
+        "--profile", "baseline", "--rung", "1", "--out", str(tmp_path / "o"),
+        "--mode", "primary", "--plain", "--provider", "vllm",
+        "--pi-agent-dir", str(tmp_path / "pinned"),
+    ])
+    assert seen["pi_agent_dir"] == tmp_path / "pinned"

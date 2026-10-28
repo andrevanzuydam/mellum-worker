@@ -568,6 +568,7 @@ def run_once(
     redispatch_temperature_cap: float = 0.5,
     effort_ramp: bool = False,
     extra_extensions: tuple[Path, ...] = (),
+    pi_agent_dir: Path | None = None,
 ) -> dict:
     rung = variant_rung(rung, roadmap)
     if acceptance_test is not None:
@@ -591,7 +592,7 @@ def run_once(
     trace = scratch / "trace.jsonl"
     if mode == "primary":
         agent_dir = mirror_agent_dir(
-            Path.home() / ".pi" / "agent", scratch / "pi-agent", [ws]
+            pi_agent_dir or Path.home() / ".pi" / "agent", scratch / "pi-agent", [ws]
         )
         env = child_env(dict(os.environ), str(trace), agent_dir, offline=False)
         args = build_pi_primary_args(rung.sentence, plain)
@@ -908,6 +909,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="primary mode: Pi's own prompt and tools with no extensions, skills or context files (the plain baseline)",
     )
     parser.add_argument(
+        "--pi-agent-dir",
+        type=Path,
+        default=None,
+        help="primary mode: the Pi agent directory to mirror (default ~/.pi/agent); "
+             "a pinned profile keeps the operator's own configuration out of a baseline",
+    )
+    parser.add_argument(
         "--prompt",
         type=Path,
         default=PROMPT_FILE,
@@ -1106,6 +1114,7 @@ def main(argv: list[str] | None = None) -> None:
                     redispatch_temperature_cap=args.redispatch_temperature_cap,
                     effort_ramp=args.effort_ramp,
                     extra_extensions=tuple(Path(p) for p in args.pi_extension),
+                    pi_agent_dir=args.pi_agent_dir,
                 )
                 row = table_row(record)
                 with table.open("a") as stream:

@@ -6,6 +6,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `run_ladder --pi-agent-dir <dir>` gives primary mode a pinned Pi profile to
+  mirror instead of `~/.pi/agent`, so a plain baseline does not pick up the
+  operator's own Pi configuration.
+
 - A ladder run against a server other than oMLX now records that server's
   version and served models (`/version`, `/v1/models`) and every GPU's name,
   VRAM and driver (`nvidia-smi`) in `run.json`, so a record proves what it ran on.
