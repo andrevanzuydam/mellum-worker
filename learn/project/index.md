@@ -7,11 +7,13 @@ start at [Getting started](../getting-started/index.md).
 
 ## What ships
 
-- **The Pi package**: `extensions/mellum-mode.ts` (the `/mellum` command and
-  its guards), `skills/mellum-setup/`, the agent templates under `templates/`
-  and the prompt under `prompts/`.
-- **The ladder**: `ladder/`, the instrument that reruns rungs 1–9 against a
-  fixture workspace. Its records are evidence, not documentation.
+- **The Pi package**: `extensions/mellum-worker.ts` (the `/mellum` command and
+  its guards), `skills/mellum-setup/` and the prompt under `prompts/`. The
+  subagent worker, its templates and the intercom phases were retired in
+  LC.8; `/mellum` and the run-record path stayed.
+- **The harness**: `learn/code/harness.py` and the easy/medium/hard suites,
+  the instrument the lessons measure with. `ladder/` reruns rungs 1–9
+  internally and is no longer the lessons' instrument.
 
 ## Repo map
 

@@ -8,6 +8,21 @@ of truth is this page; do not hand-link a term in prose.
 
 The whole Zensical site under `learn/`.
 
+### Phase
+
+The container a set of feature cycles runs in: the Learning Center (`LC`), and
+historically the `M` series. A phase has no plan of its own. Not the same as a
+suite phase, which is one step of a multi-phase eval task such as the hard
+suite's seven.
+
+### Feature cycle
+
+One roadmap row inside a phase, named `LC.13A`. It runs the SDD cycle —
+brainstorm, spec, plan, execute, review/close — and delivers one lesson, or,
+when its Ships cell says so, housekeeping or infrastructure. "Phase" was the
+older name for a row and means the same thing wherever it survives in a
+record.
+
 ### Track
 
 A group of lessons with a recommended order: Getting started and Lessons.
@@ -44,8 +59,9 @@ note. It is stronger than a screen and weaker than a `reference-run`.
 
 ### reference-run
 
-A preregistered ladder run on llama.cpp, recorded in `docs/ladder/`, made for
-a lesson.
+A preregistered run on llama.cpp, made for a lesson, on the suites the course
+teaches. Earned with a preregistration written before the run, the record in
+`docs/superpowers/research/`, and raw evidence in a `research-*` release.
 
 ### conjecture
 
@@ -160,7 +176,39 @@ rows. The table’s `Turns` is their mean over n.
 ### failed checks
 
 Expected test IDs that did not appear as `PASSED` in the grader run. They are
-not the same as failed sessions.
+not the same as failed sessions. A run records them by name and groups them by
+grader module, so a suite whose graders are one file per phase reports which
+phase's checks are missing, not only how many.
+
+### checks did not run
+
+A run whose hidden checks never executed: pytest stopped on a collection error,
+usually because the workspace lacks a module the graders import, so every
+expected ID counts as missing. The record carries `checks_ran: false` beside the
+count, so a table cannot read it as the worker failing every check. The session
+still fails; it just says why.
+
+### pathology
+
+A way a small model has been observed to fail on an agentic task, recorded with
+the run that shows it and the shape that answers it. [The Pathologies
+page](pathologies.md) keeps the list; an entry without an observation behind it
+is a hypothesis, not a pathology.
+
+### strip thinking
+
+Removing earlier assistant reasoning from the payload the worker sends, so the
+next request cannot see what the model thought before. Off by default: on this
+backend the prefix cache absorbs repeated reasoning, and removing it made runs
+60% slower (A12). The worker's `MELLUM_STRIP_THINKING=1` opens the seam so the
+claim can be measured, and the harness arm is `--arm strip-thinking`.
+
+### spec variant
+
+An alternative layout of a suite's project and the prompts that go with it,
+selected with `--specs` and recorded in the run as `specs`. It changes how the
+same requirements are laid out — one joined `specs/roadmap.md` against one file
+per phase — so an arm can hold everything else fixed.
 
 ### wall
 
@@ -282,6 +330,12 @@ Large language model: a model trained on large amounts of data to process and ge
 ### agent memory
 
 Information saved outside the model and retrieved for later use.
+
+### working memory
+
+The model's own earlier reasoning, replayed in the request, that it uses to
+keep a plan across tool calls. Removing it from the history makes the model
+re-derive that plan.
 
 ### Multimodal
 

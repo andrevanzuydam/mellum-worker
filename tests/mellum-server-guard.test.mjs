@@ -16,6 +16,18 @@ test("isForegroundServer: foreground server commands that would block", () => {
 	assert.equal(isForegroundServer("python manage.py runserver"), true);
 });
 
+test("isForegroundServer: the python-script forms the ladder-era pattern missed", () => {
+	// LC.19's attempt 1 hung on exactly this shape, which the first pattern did not match.
+	assert.equal(isForegroundServer("uv run --frozen python app.py"), true);
+	assert.equal(isForegroundServer("python app.py"), true);
+	assert.equal(isForegroundServer("python3 server.py"), true);
+	assert.equal(isForegroundServer("uv run python scripts/serve.py --reload"), true);
+	// ... and these must not be caught.
+	assert.equal(isForegroundServer("uv run --frozen python -m pytest tests"), false);
+	assert.equal(isForegroundServer("python tests/test_app.py"), false);
+	assert.equal(isForegroundServer("python -c 'import app'"), false);
+});
+
 test("isForegroundServer: a backgrounded server is not blocking", () => {
 	assert.equal(isForegroundServer("uvicorn app:app &"), false);
 	assert.equal(isForegroundServer("nohup uvicorn app:app >/tmp/s.log 2>&1 &"), false);

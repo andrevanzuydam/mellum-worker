@@ -1,11 +1,11 @@
 # Lessons
 
 Every findings lesson in one place: Paul's from the mellum-worker phases and
-ablations, Andre's from his pull requests. Each is one idea, follows the six
-steps, and is its own phase. Most are independent: each lists its
+ablations, Andre's from his pull requests. Each is one idea and follows the six
+steps. Scheduled lessons are their own phase; the deferred entries are
+candidates until their stated gate. Most are independent: each lists its
 prerequisites, [Getting started](../getting-started/index.md) is the only one
-unless a lesson says otherwise, and you can read them in any order. The Basic
-Remedies lessons share a control and are read as a module.
+unless a lesson says otherwise, and you can read them in any order.
 
 The order below is a recommendation, not a dependency chain: what the ditch
 teaches first, then the remedies, then the shapes. The author is in italics
@@ -15,34 +15,55 @@ what it rests on now.
 ## Start here
 
 - **[The suite baseline](baseline.md)** — Baseline Pi and the Baseline Worker on easy, medium and hard, n = 3, on llama.cpp. *(Paul)*
-1. **[The primary agent is the wrong worker](primary-agent.md)** — Mellum as the main agent passes 8 of 15; bounded, it passes 15. *(Paul)*
+1. **[The primary agent is the wrong worker](primary-agent.md)** — Neither suite separates the two arms on passes at n = 3; what separates them is how they fail. *(Paul)*
 
-## Prompt and project
+## Paul's lessons
 
-2. **[A short prompt, not a procedure](short-prompt.md)** — Prompt v5 is 643 characters, and each line it lost had a run behind it. *(Paul)*
-3. **Project facts** — A 600-character facts section takes a four-phase build from 1/12 to 9/12. *(Paul)*
-4. **Write only the files you list** — Runs pass the hidden tests and still fail by writing outside the layout. *(Paul)*
-5. **One spec file per phase** — A one-file roadmap misses the last phase's id in 5 of 6 runs; n = 3. *(Paul)*
+2. **[A short prompt, not a procedure](short-prompt.md)** — Prompt v5 is 643 characters, and on easy it did not move a pass: a null at n = 3. *(Paul)*
+3. **[Thinking is working memory](thinking-working-memory.md)** — The strip-thinking arm has no instrument on llama.cpp; thinking spends the output budget. *(Paul)*
+4. **[Guards for empty turns and loops](guards-for-empty-turns.md)** — The nudge never fired in ten easy sessions: no empty turn had the shape it answers. *(Paul)*
+5. **[Project facts](project-facts.md)** — The block reaches the model in every request and did not move easy at n = 3. A null, with a lead. *(Paul)*
+6. **[Write only the files you list](write-only-listed.md)** — A file-set check now runs after every session; easy showed no writes outside the layout. *(Paul)*
+7. **Who holds the loop** — *retired 2026-10-24.* It compared worker, Mode and a
+   delegated child; LC.8 renamed Mode to Worker and removed the delegated child,
+   so there is no second policy left to compare. The number is kept so the other
+   entries stay stable. *(Paul)*
+8. **[A prose brief stops at its first reply](prose-brief.md)** — One brief against four:
+   both passed the hidden tests, and the one-brief arm used a third of the
+   context. A `screen` at n = 1, against the old claim. *(Paul)*
+9. **[The intercom block is a prefill tax](intercom-block.md)** — A delegate's
+   transcript is paid on every turn; the worker hands back one summary block per
+   span instead. A rationale, because LC.8 removed the mechanism. *(Paul)*
+10. **[One spec file per phase](one-spec-per-phase.md)** — Writing the acceptance
+    criteria into the spec took a worker from "no check could run" to one missing
+    check; one file against four did not separate at n = 3. *(Paul)*
 
-## Mediation and completeness
+Every scheduled lesson in this track now has a page. Each was a feature cycle
+that re-measured it on llama.cpp when its page was written; a page's badges say
+what it rests on.
 
-6. **The worker moves its own goalposts** — It narrows pytest to one test function, passes that, and calls the file done. *(Andre)*
-7. **The mediated test clears the hard rungs** — A frozen test the worker cannot weaken, re-dispatched: rungs 6–9 at 12/12, rung 9 cracked. *(Andre)*
-8. **Implement the whole spec** — v9 closes the phase-4 id miss: 3/3 on the rung no other arm moved. *(Andre)*
-9. **Mediation is a completeness gate** — It leaves the rung the worker can do alone and drags it back only when it stops short. *(Andre)*
+## Andre's mediation
 
-## Loop and handoff
-
-10. **Thinking is working memory** — Stripping earlier thinking cuts prefill 57% and makes the run slower. *(Paul)*
-11. **Who holds the loop** — Worker, Mode and a delegated child pass alike and cost differently. *(Paul)*
-12. **A prose brief stops at its first reply** — The same brief as one prompt loses four passes; as steps it costs 2.4× the time. *(Paul)*
-13. **The intercom block is a prefill tax** — Off: the child prompt halves and prefill drops 20%, with the same passes. *(Paul)*
+11. **The worker moves its own goalposts** — It narrows pytest to one test function, passes that, and calls the file done. *(Andre)*
+12. **The mediated test clears the hard rungs** — A frozen test the worker cannot weaken, re-dispatched: rungs 6–9 at 12/12, rung 9 cracked. *(Andre)*
+13. **Implement the whole spec** — v9 lifts the phase-4 id miss from 0 to 2/3; v11's self-check takes it to 3/3. *(Andre)*
+14. **Mediation is a completeness gate** — It leaves the rung the worker can do alone and drags it back only when it stops short. *(Andre)*
 
 ## Context and inputs
 
-14. **Rungs 10–12: what the hard gates catch** — An archive decoy, a trap row and an overflowing file separate capability from completeness. *(Andre)*
-15. **Context search for large code** — Index and search the few relevant lines instead of loading whole files. *(Andre)*
-16. **Skeptical rethink** — Check a human's checkable claim before encoding the premise. *(Andre)*
-17. **Documents and images as inputs** — Read the PDF, the spreadsheet or the screenshot the file tools cannot. *(Andre)*
-18. **Live control and replay** — Watch the turns, edit the prompt, replay a bad one, pause at a boundary. *(Andre)*
-19. **Next-concept verify** — Re-dispatch on the failing test functions, not the whole file. *(Andre)*
+Entries #16–#20 are **Intermediate candidates** (INT.3), not scheduled
+Lessons; #15 remains a lesson candidate. Each needs a recorded screen before
+it becomes a lesson page.
+
+15. **Rungs 10–12: what the hard gates catch** — An archive decoy, a trap row and an overflowing file separate capability from completeness. *(Andre)*
+16. **Context search for large code** — Index and search the few relevant lines instead of loading whole files. *(Andre)*
+17. **Skeptical rethink** — Check a human's checkable claim before encoding the premise. *(Andre)*
+18. **Documents and images as inputs** — Read the PDF, the spreadsheet or the screenshot the file tools cannot. *(Andre)*
+19. **Live control and replay** — Watch the turns, edit the prompt, replay a bad one, pause at a boundary. *(Andre)*
+20. **Next-concept verify** — Re-dispatch on the failing test functions, not the whole file. *(Andre)*
+
+## Pathologies
+
+21. **The runaway search** — A recursive search that leaves the workspace can hang the whole run; the guard is proposed on branch `lc11b-confinement` ([code](https://github.com/pauleveritt/mellum-worker/blob/176922f05702d6f8e87a9b2570ed6fe9807db733/extensions/mellum-guards.ts#L145-L185), [tests](https://github.com/pauleveritt/mellum-worker/blob/176922f05702d6f8e87a9b2570ed6fe9807db733/tests/mellum-guards.test.mjs#L13-L40)). *(Andre)*
+22. **The server that never returns** — It started `uvicorn` in the foreground and burned the deadline; exercise the endpoint in process, or detach it and keep the pid ([guard](https://github.com/pauleveritt/mellum-worker/blob/420ba1d/extensions/mellum-guards.ts), [prompt v10](https://github.com/pauleveritt/mellum-worker/blob/4666612/prompts/mellum-worker.md)). *(Andre)*
+23. **The rule it knew and skipped** — It read the rule, then left the field `None` in one run of three; a clause-by-clause check against the spec closed it ([prompt v11](https://github.com/pauleveritt/mellum-worker/blob/da04888/prompts/mellum-worker.md)). *(Andre)*

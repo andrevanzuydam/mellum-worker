@@ -5,7 +5,6 @@ position: 0
 prerequisites: []
 authors: [Andre van Zuydam]
 backends: []
-music: [dire straits - wild theme, kate bush - wuthering heights, la folia - el retiro, u2 - one]
 ---
 
 # Introduction

@@ -143,7 +143,7 @@ function commandOf(input: unknown): string | undefined {
 
 /** Commands that run a long-lived server in the foreground and never return. */
 const SERVER_START =
-	/\b(uvicorn|gunicorn|hypercorn|daphne|waitress-serve)\b|\bflask\s+run\b|\bpython\d?\s+-m\s+(http\.server|flask)\b|\bmanage\.py\s+runserver\b|\bfastapi\s+(dev|run)\b|\brails\s+server\b|\bnpm\s+(start|run\s+dev)\b/;
+	/\b(uvicorn|gunicorn|hypercorn|daphne|waitress-serve)\b|\bflask\s+run\b|\bpython\d?\s+-m\s+(http\.server|flask)\b|\bmanage\.py\s+runserver\b|\bfastapi\s+(dev|run)\b|\brails\s+server\b|\bnpm\s+(start|run\s+dev)\b|\bpython\d?(?:\.\d+)?\s+(?:-[\w-]+\s+)*(?:[\w.-]+\/)*(?:app|main|server|serve|asgi|wsgi)\.py\b/;
 
 /** Whether a shell command is already detached (nohup, or a background `&` operator). */
 export function isBackgrounded(command: string): boolean {

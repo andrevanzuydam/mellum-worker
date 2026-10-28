@@ -1,4 +1,6 @@
 import json
+import time
+import re
 import os
 import shutil
 import subprocess
@@ -72,6 +74,37 @@ def test_arms_select_the_extension_and_guards():
     no_loop = harness.arm_settings("no-loop")
     assert json.loads(no_loop["env"]["MELLUM_GUARDS"]) == {"emptyFinalNudge": 3}
     assert harness.arm_settings("bare")["extension"] is None
+
+
+def test_the_strip_thinking_arm_opens_exactly_one_seam():
+    env = harness.arm_settings("strip-thinking")["env"]
+    assert env == {"MELLUM_MODE": "1", "MELLUM_STRIP_THINKING": "1"}, "one seam, not three"
+    assert harness.arm_settings("worker")["env"].get("MELLUM_STRIP_THINKING") is None
+
+
+def test_the_record_says_whether_reasoning_was_stripped(tmp_path):
+    suite = harness.load_suite(SUITES, "add")
+    for arm, expected in (("worker", False), ("strip-thinking", True)):
+        results = harness._run_sessions(
+            suite, runs_dir=tmp_path / arm, pi_binary=str(FIX / "fake-pi.sh"),
+            repeat=1, grade_run=False, deadline=None, arm=arm,
+        )
+        record = json.loads((results[0][0] / "run.json").read_text())
+        assert record["strip_thinking"] is expected, arm
+        assert record["arm"] == arm
+
+
+def test_the_server_guard_arm_keeps_the_other_guards_on():
+    env = harness.arm_settings("server-guard")["env"]
+    # MELLUM_GUARDS replaces ENABLED, so the arm must carry the whole set or it
+    # would change three things and be no arm at all.
+    assert json.loads(env["MELLUM_GUARDS"]) == harness.GUARDS_WITH_SERVER
+    assert harness.GUARDS_WITH_SERVER == {"emptyFinalNudge": 3, "loopBreaker": True,
+                                          "blockForegroundServer": True}
+    assert "MELLUM_MODE_FACTS" not in env
+    alone = harness.arm_settings("no-facts-guard")["env"]
+    assert alone["MELLUM_MODE_FACTS"] == "0"
+    assert json.loads(alone["MELLUM_GUARDS"]) == harness.GUARDS_WITH_SERVER
 
 
 def test_two_prompts_share_one_session(tmp_path):
@@ -194,7 +227,7 @@ def test_report_counts_the_trace(tmp_path):
     assert harness.report(run_dir) == {
         "requests": 2, "turns": 2, "tool_calls": 1, "tool_errors": 1,
         "final_reply": "done", "context": 1500, "output_tokens": 30,
-        "wall": 2.0,
+        "wall": 2.0, "nudges": 0, "empty_finals": 0, "guard_blocks": 0,
     }
 
 
@@ -205,7 +238,48 @@ def test_report_without_text(tmp_path):
     assert harness.report(run_dir) == {
         "requests": 0, "turns": 0, "tool_calls": 0, "tool_errors": 0,
         "final_reply": "", "context": None, "output_tokens": None, "wall": None,
+        "nudges": 0, "empty_finals": 0, "guard_blocks": 0,
     }
+
+
+def test_report_separates_a_nudge_from_an_empty_final(tmp_path):
+    run_dir = tmp_path / "r"
+    run_dir.mkdir()
+    empty = {"role": "assistant", "stopReason": "stop", "content": []}
+    _write_trace(run_dir, [
+        {"type": "instance_start"},
+        {"type": "provider_request", "request": 1},
+        {"type": "message_end", "message": empty},
+        {"type": "provider_request", "request": 2},
+        {"type": "message_end", "message": {"role": "assistant",
+                                            "content": [{"type": "text", "text": "ok"}]}},
+        {"type": "provider_request", "request": 3},
+        {"type": "message_end", "message": dict(empty, stopReason="length")},
+    ])
+    report = harness.report(run_dir)
+    assert report["nudges"] == 1
+    assert report["empty_finals"] == 1
+
+
+def test_report_counts_a_guard_refusal_the_model_was_told_about(tmp_path):
+    run_dir = tmp_path / "r"
+    run_dir.mkdir()
+    rows = [
+        {"type": "instance_start", "timestamp": "2026-10-27T01:00:00Z"},
+        {"type": "provider_request", "timestamp": "2026-10-27T01:00:01Z"},
+        {"type": "tool_call", "toolName": "bash", "input": {"command": "uvicorn app:app"},
+         "timestamp": "2026-10-27T01:00:02Z"},
+        {"type": "message_end", "timestamp": "2026-10-27T01:00:03Z",
+         "message": {"role": "toolResult", "content": [
+             {"type": "text", "text": "That starts a server in the foreground; it blocks forever."}]}},
+        {"type": "message_end", "timestamp": "2026-10-27T01:00:05Z",
+         "message": {"role": "assistant", "content": [
+             {"type": "text", "text": "Using TestClient instead."}]}},
+    ]
+    (run_dir / "trace.jsonl").write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+    counts = harness.report(run_dir)
+    assert counts["guard_blocks"] == 1
+    assert counts["nudges"] == 0
 
 
 def test_score_details_counts_expected_failures(tmp_path):
@@ -220,10 +294,207 @@ def test_score_details_counts_expected_failures(tmp_path):
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     (workspace / "add.py").write_text("def add(a, b):\n    return 0\n")
-    passed, tail, failed = harness.score_workspace_details(workspace, suite)
+    passed, tail, missing, checks_ran = harness.score_workspace_details(workspace, suite)
     assert not passed
-    assert failed == 1
+    assert checks_ran
+    assert missing == ["grader_tests/test_add.py::test_add"]
     assert "test_add" in tail
+
+
+def test_check_groups_counts_each_module_both_ways(tmp_path):
+    suite_dir = tmp_path / "suites" / "twophase"
+    (suite_dir / "tests").mkdir(parents=True)
+    (suite_dir / "tests" / "test_phase1_home.py").write_text(
+        "def test_home():\n    assert True\n")
+    (suite_dir / "tests" / "test_phase2_board.py").write_text(
+        "def test_board():\n    assert False\n")
+    (suite_dir / "expected.json").write_text(json.dumps([
+        "grader_tests/test_phase1_home.py::test_home",
+        "grader_tests/test_phase2_board.py::test_board",
+    ]))
+    (suite_dir / "task.md").write_text("Build it.\n")
+    suite = harness.load_suite(tmp_path / "suites", "twophase")
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    _passed, _tail, missing, _ran = harness.score_workspace_details(workspace, suite)
+    assert missing == ["grader_tests/test_phase2_board.py::test_board"]
+    assert harness.check_groups(suite.expected, missing) == {
+        "test_phase1_home.py": {"missing": 0, "total": 1},
+        "test_phase2_board.py": {"missing": 1, "total": 1},
+    }
+
+
+def _phased_suite(tmp_path):
+    suite_dir = tmp_path / "suites" / "phased"
+    (suite_dir / "base" / "specs").mkdir(parents=True)
+    (suite_dir / "base" / "specs" / "roadmap.md").write_text("all phases, one file\n")
+    (suite_dir / "base" / "AGENTS.md").write_text("the phases are in specs/roadmap.md\n")
+    (suite_dir / "prompts").mkdir()
+    (suite_dir / "prompts" / "01.md").write_text("default prompt\n")
+    (suite_dir / "tests").mkdir()
+    (suite_dir / "tests" / "test_ok.py").write_text("def test_ok():\n    assert True\n")
+    joined = suite_dir / "spec-variants" / "joined" / "prompts"
+    joined.mkdir(parents=True)
+    (joined / "01.md").write_text("joined prompt\n")
+    split = suite_dir / "spec-variants" / "split"
+    (split / "prompts").mkdir(parents=True)
+    (split / "specs").mkdir()
+    (split / "prompts" / "01.md").write_text("split prompt\n")
+    (split / "AGENTS.md").write_text("one file per phase in specs/\n")
+    (split / "specs" / "phase-1.md").write_text("phase one\n")
+    (split / "delete.json").write_text(json.dumps(["specs/roadmap.md"]))
+    return harness.load_suite(tmp_path / "suites", "phased")
+
+
+def _variant_run(tmp_path, suite, specs):
+    return harness.run_suite(
+        suite, runs_dir=tmp_path / "runs", profile=PROFILE,
+        pi_binary=str(FIX / "fake-pi.sh"), specs=specs,
+    )
+
+
+def test_checks_that_never_ran_are_recorded_as_such(tmp_path):
+    suite_dir = tmp_path / "suites" / "broken"
+    (suite_dir / "tests").mkdir(parents=True)
+    (suite_dir / "tests" / "test_board.py").write_text(
+        "import models\n\ndef test_board():\n    assert models.complaints\n")
+    (suite_dir / "expected.json").write_text(json.dumps([
+        "grader_tests/test_board.py::test_board"]))
+    (suite_dir / "task.md").write_text("Build it.\n")
+    suite = harness.load_suite(tmp_path / "suites", "broken")
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    passed, tail, missing, checks_ran = harness.score_workspace_details(workspace, suite)
+    assert not passed
+    assert not checks_ran, "a collection error is not the same finding as a failing check"
+    assert missing == ["grader_tests/test_board.py::test_board"]
+    assert "ModuleNotFoundError" in tail
+
+
+def test_the_record_says_when_the_checks_never_ran(tmp_path):
+    suite_dir = tmp_path / "suites" / "broken"
+    (suite_dir / "tests").mkdir(parents=True)
+    (suite_dir / "tests" / "test_board.py").write_text(
+        "import models\n\ndef test_board():\n    assert models.complaints\n")
+    (suite_dir / "expected.json").write_text(json.dumps([
+        "grader_tests/test_board.py::test_board"]))
+    (suite_dir / "task.md").write_text("Build add.py with add(a, b).\n")
+    suite = harness.load_suite(tmp_path / "suites", "broken")
+    results = harness._run_sessions(
+        suite, runs_dir=tmp_path / "runs", pi_binary=str(FIX / "fake-pi.sh"),
+        repeat=1, grade_run=False, deadline=None,
+    )
+    record = json.loads((results[0][0] / "run.json").read_text())
+    assert record["checks_ran"] is False
+
+
+def test_a_suite_without_a_variant_is_unchanged(tmp_path):
+    suite = _phased_suite(tmp_path)
+    run_dir = _variant_run(tmp_path, suite, None)
+    assert (Path(run_dir) / "prompt.txt").read_text().strip() == "default prompt"
+    workspace = Path(run_dir) / "workspace"
+    assert (workspace / "specs" / "roadmap.md").is_file()
+    assert (workspace / "AGENTS.md").read_text().strip() == (
+        "the phases are in specs/roadmap.md")
+
+
+def test_specs_joined_takes_the_variants_prompts(tmp_path):
+    suite = _phased_suite(tmp_path)
+    run_dir = _variant_run(tmp_path, suite, "joined")
+    assert (Path(run_dir) / "prompt.txt").read_text().strip() == "joined prompt"
+    assert (Path(run_dir) / "workspace" / "specs" / "roadmap.md").is_file()
+
+
+def test_specs_split_overlays_the_project_and_deletes_the_roadmap(tmp_path):
+    suite = _phased_suite(tmp_path)
+    run_dir = _variant_run(tmp_path, suite, "split")
+    workspace = Path(run_dir) / "workspace"
+    assert (Path(run_dir) / "prompt.txt").read_text().strip() == "split prompt"
+    assert (workspace / "specs" / "phase-1.md").is_file()
+    assert not (workspace / "specs" / "roadmap.md").exists()
+    assert (workspace / "AGENTS.md").read_text().strip() == (
+        "one file per phase in specs/")
+
+
+def test_unknown_specs_variant_names_the_ones_available(tmp_path):
+    suite = _phased_suite(tmp_path)
+    with pytest.raises(SystemExit) as error:
+        _variant_run(tmp_path, suite, "stepwise")
+    assert "joined" in str(error.value) and "split" in str(error.value)
+
+
+def test_medium_ships_both_spec_variants():
+    suite = harness.load_suite(harness.SUITES, "medium")
+    joined = harness.load_variant(suite, "joined")
+    split = harness.load_variant(suite, "split")
+    assert (split / "specs" / "phase-4.md").is_file()
+    assert json.loads((split / "delete.json").read_text()) == ["specs/roadmap.md"]
+    joined_prompts = sorted((joined / "prompts").glob("*.md"))
+    split_prompts = sorted((split / "prompts").glob("*.md"))
+    assert len(joined_prompts) == len(split_prompts) == 4
+    for index, (left, right) in enumerate(zip(joined_prompts, split_prompts), 1):
+        # the arms differ in one thing only: the file the pointer names
+        assert left.read_text().replace("specs/roadmap.md", "SPEC") == \
+            right.read_text().replace(f"specs/phase-{index}.md", "SPEC")
+
+
+def test_the_split_keeps_the_roadmaps_phases():
+    suite = harness.load_suite(harness.SUITES, "medium")
+    roadmap = (suite.root / "base" / "specs" / "roadmap.md").read_text()
+    blocks, current = {}, None
+    for line in roadmap.splitlines():
+        if line.startswith("## Phase"):
+            current = line.removeprefix("## ").split(" \u2014 ")[0].lower().replace(" ", "-")
+            blocks[current] = [line.removeprefix("## ")]
+        elif line.startswith("## "):
+            current = None
+        elif current is not None and line.strip():
+            blocks[current].append(line.strip())
+    assert sorted(blocks) == ["phase-1", "phase-2", "phase-3", "phase-4"]
+    split = harness.load_variant(suite, "split")
+    for name, lines in blocks.items():
+        text = (split / "specs" / f"{name}.md").read_text()
+        for line in lines:
+            assert line in text, f"{name} lost: {line}"
+
+
+def test_the_thin_briefs_name_the_verification_loop():
+    suite = harness.load_suite(harness.SUITES, "medium")
+    for arm in ("joined", "split"):
+        prompts = sorted((harness.load_variant(suite, arm) / "prompts").glob("*.md"))
+        assert len(prompts) == 4
+        for prompt in prompts:
+            text = " ".join(prompt.read_text().split())
+            assert "python -m pytest tests" in text, f"{arm}/{prompt.name} names no test command"
+            assert "do not check it by starting a server" in text, (
+                f"{arm}/{prompt.name} does not rule out a server as the check")
+
+
+def test_medium_base_ships_a_phase1_smoke_test():
+    suite = harness.load_suite(harness.SUITES, "medium")
+    test = suite.root / "base" / "tests" / "test_home.py"
+    assert test.is_file(), "the base project ships no test, so its test command has nothing to run"
+    text = test.read_text()
+    assert "TestClient" in text
+    assert "Come in. Sit down." in text
+
+
+def test_medium_asks_for_the_home_page_in_process():
+    suite = harness.load_suite(harness.SUITES, "medium")
+    roadmap = (suite.root / "base" / "specs" / "roadmap.md").read_text()
+    assert "TestClient" in roadmap, "the roadmap never asks for an in-process check"
+    split = (harness.load_variant(suite, "split") / "specs" / "phase-1.md").read_text()
+    assert "TestClient" in split
+
+
+def test_run_sessions_records_the_variant(tmp_path):
+    suite = _phased_suite(tmp_path)
+    results = harness._run_sessions(
+        suite, runs_dir=tmp_path / "runs", pi_binary=str(FIX / "fake-pi.sh"),
+        repeat=1, grade_run=False, deadline=None, specs="split",
+    )
+    record = json.loads((results[0][0] / "run.json").read_text())
+    assert record["specs"] == "split"
 
 
 def test_run_sessions_writes_metrics(tmp_path):
@@ -237,9 +508,38 @@ def test_run_sessions_writes_metrics(tmp_path):
     assert record["suite"] == "add"
     assert record["passed"] is True
     assert record["failed_checks"] == 0
+    assert record["missing_checks"] == []
+    # the fixture suite declares no expected.json, so there are no groups to report
+    assert record["checks_ran"] is True
+    assert record["check_groups"] == {}
     assert record["turns"] == 0
     assert record["context"] is None
     assert record["wall"] is None
+
+
+def test_grade_ignores_the_workspace_venv(tmp_path):
+    workspace = _workspace(
+        tmp_path, "def fizz(n: int) -> str:\n    return str(n)\n")
+    venv = workspace / ".venv"
+    venv.mkdir()
+    (venv / "bad.py").write_text("def broken():\n    return missing\n")
+    grades = {name: ok for name, ok, _ in harness.grade(workspace)}
+    assert grades["ruff"] is True
+
+
+def test_run_suites_orders_easy_medium_hard(tmp_path, capsys):
+    for name in ("hard", "easy", "medium"):
+        suite = tmp_path / "suites" / name
+        (suite / "tests").mkdir(parents=True)
+        (suite / "task.md").write_text("Write add.py with add(a, b).\n")
+        (suite / "tests" / "test_add.py").write_text(
+            "from add import add\n\ndef test_add():\n    assert add(2, 3) == 5\n")
+    harness.run_suites(
+        ["all"], suites_dir=tmp_path / "suites", runs_dir=tmp_path / "runs",
+        pi_binary=str(FIX / "fake-pi.sh"),
+    )
+    out = capsys.readouterr().out
+    assert out.index("easy") < out.index("medium") < out.index("hard")
 
 
 def test_suite_runs_every_named_task(tmp_path):
@@ -415,3 +715,168 @@ def test_qualify_proves_both_directions():
     ok, results = harness.qualify(suite)
     assert ok
     assert results == {"known-good": True, "known-broken": False}
+
+
+def test_the_arm_owns_the_facts_knob(tmp_path, monkeypatch):
+    task = harness.load_suite(SUITES, "add")
+    monkeypatch.setenv("MELLUM_MODE_FACTS", "1")
+
+    def seen(arm):
+        run_dir = harness.run_suite(
+            task, runs_dir=tmp_path / arm, profile=PROFILE,
+            pi_binary=str(FIX / "fake-pi-env.sh"), arm=arm,
+        )
+        return (run_dir / "workspace" / "env.txt").read_text().strip()
+
+    assert seen("no-facts") == "MELLUM_MODE_FACTS=0"
+    assert seen("worker") == "MELLUM_MODE_FACTS="
+
+
+def test_the_recorder_loads_after_the_worker_extension():
+    # Pi runs before_provider_request handlers in extension load order and each
+    # may replace the payload, so a recorder placed first sees the messages
+    # before the worker appends its facts block.
+    argv = harness.pi_argv(
+        "pi", PROFILE, Path("rec.mjs"), "llamacpp", "model", "task",
+        extension=harness.arm_settings("worker")["extension"],
+    )
+    assert argv.index(str(harness.arm_settings("worker")["extension"])) < argv.index("rec.mjs")
+
+
+def _trace(*rows):
+    return "".join(json.dumps(dict(traceSchema=1, timestamp="2026-10-24T00:00:0%dZ" % i, **r)) + "\n"
+                   for i, r in enumerate(rows))
+
+
+def test_an_empty_final_at_a_prompt_boundary_is_not_a_nudge(tmp_path):
+    # Medium and hard run one Pi process per prompt. An empty turn that ends one
+    # prompt is followed by the next prompt's request, which is not a nudge.
+    run = tmp_path / "run"
+    run.mkdir()
+    (run / "trace.jsonl").write_text(_trace(
+        {"type": "instance_start"},
+        {"type": "provider_request", "request": 1},
+        {"type": "message_end", "message": {"role": "assistant", "content": []}},
+        {"type": "agent_settled", "aborted": False},
+        {"type": "instance_start"},
+        {"type": "provider_request", "request": 1},
+        {"type": "message_end", "message": {"role": "assistant",
+         "content": [{"type": "text", "text": "done"}]}},
+        {"type": "agent_settled", "aborted": False},
+    ))
+    counts = harness.report(run)
+    assert counts["nudges"] == 0
+    assert counts["empty_finals"] == 1
+
+
+def test_an_empty_turn_inside_one_prompt_is_a_nudge(tmp_path):
+    run = tmp_path / "run"
+    run.mkdir()
+    (run / "trace.jsonl").write_text(_trace(
+        {"type": "instance_start"},
+        {"type": "provider_request", "request": 1},
+        {"type": "message_end", "message": {"role": "assistant", "content": []}},
+        {"type": "provider_request", "request": 2},
+        {"type": "message_end", "message": {"role": "assistant",
+         "content": [{"type": "text", "text": "done"}]}},
+        {"type": "agent_settled", "aborted": False},
+    ))
+    counts = harness.report(run)
+    assert counts["nudges"] == 1
+    assert counts["empty_finals"] == 0
+
+
+def _write(root, rel, text="x\n"):
+    path = root / rel
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text)
+
+
+def test_layout_report_names_created_and_modified_files_outside_it(tmp_path):
+    root = tmp_path / "workspace"
+    _write(root, "app.py", "one\n")
+    _write(root, "tests/test_home.py", "pass\n")
+    pristine = harness.file_hashes(root)
+    _write(root, "app.py", "two\n")            # modified, allowed
+    _write(root, "templates/home.html")        # created, allowed
+    _write(root, "notes.txt")                  # created, outside the layout
+    _write(root, "tests/test_extra.py")        # created, allowed by tests/**
+    _write(root, ".venv/lib/python3.14/x.py")  # ignored
+    _write(root, "app.log")                    # ignored
+    layout = {"allow": ["app.py", "templates/**", "tests/**"],
+              "ignore": [".venv/**", "*.log"]}
+    report = harness.layout_report(root, pristine, layout)
+    assert report["modified"] == ["app.py"]
+    assert "templates/home.html" in report["created"]
+    assert "tests/test_extra.py" in report["created"]
+    assert report["out_of_layout"] == ["notes.txt"]
+
+
+def test_a_clean_workspace_has_nothing_outside_its_layout(tmp_path):
+    root = tmp_path / "workspace"
+    _write(root, "app.py", "one\n")
+    pristine = harness.file_hashes(root)
+    _write(root, "app.py", "two\n")
+    report = harness.layout_report(root, pristine, {"allow": ["app.py"], "ignore": []})
+    assert report["out_of_layout"] == []
+    assert report["modified"] == ["app.py"]
+
+
+def test_loading_a_suite_reads_its_layout(tmp_path):
+    suite_dir = tmp_path / "suites" / "demo"
+    (suite_dir / "prompts").mkdir(parents=True)
+    (suite_dir / "prompts" / "01.md").write_text("do it")
+    (suite_dir / "layout.json").write_text(json.dumps({"allow": ["a.py"], "ignore": []}))
+    suite = harness.load_suite(tmp_path / "suites", "demo")
+    assert suite.layout == {"allow": ["a.py"], "ignore": []}
+
+
+def test_a_suite_can_run_all_its_prompts_as_one(tmp_path):
+    # "One prose brief" against "the same brief as steps" has to be one change,
+    # so the flag concatenates the suite's own prompts instead of copying it.
+    task = harness.load_suite(SUITES, "steps")
+    assert len(task.prompts) > 1
+    run_dir = harness.run_suite(
+        task, runs_dir=tmp_path / "one", profile=PROFILE,
+        pi_binary=str(FIX / "fake-pi-session.sh"), single_prompt=True,
+    )
+    # The brief carries newlines, so the log is not one line per invocation.
+    log = (run_dir / "workspace" / "session-log.txt").read_text()
+    invocations = re.findall(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\|", log)
+    assert len(invocations) == 1, f"expected one invocation, saw {len(invocations)}"
+    for text in task.prompts:
+        assert text in log, f"brief lost {text}"
+
+
+def test_a_record_says_which_machine_and_deadline_it_ran_on(tmp_path):
+    # An M1 Pro and an M5 Max produce very different walls; a record that does
+    # not name the machine invites the wrong comparison.
+    task = harness.load_suite(SUITES, "add")
+    harness._run_sessions(task, runs_dir=tmp_path / "runs",
+                          pi_binary=str(FIX / "fake-pi.sh"), repeat=1,
+                          grade_run=False, deadline=600, arm="worker")
+    record = json.loads((next((tmp_path / "runs").iterdir()) / "run.json").read_text())
+    assert record["deadline"] == 600
+    assert record["machine"] == harness.machine_label()
+    assert record["machine"], "machine label is empty"
+
+
+def test_a_run_sweeps_the_processes_it_leaves_behind():
+    # A worker that backgrounds `python app.py &` and then settles leaves a
+    # server holding a port. The sweep finds it and ends it, and the run record
+    # names what it found.
+    child = subprocess.Popen(["sleep", "30"], start_new_session=True)
+    try:
+        time.sleep(0.2)
+        found = harness.sweep_group(child.pid)
+        assert any("sleep 30" in command for _, command in found), found
+        child.wait(timeout=5)  # killed by the sweep, not by us
+    finally:
+        if child.poll() is None:
+            child.kill()
+
+
+def test_a_group_with_nothing_left_reports_nothing(tmp_path):
+    child = subprocess.Popen(["sh", "-c", "true"], start_new_session=True)
+    child.wait(timeout=5)
+    assert harness.sweep_group(child.pid) == []

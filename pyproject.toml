@@ -7,6 +7,15 @@ requires-python = ">=3.14"
 [tool.uv]
 package = false
 
+[dependency-groups]
+# The Learning Center build: `uv run zensical build`. zensical-glossary must be
+# importable by the interpreter that zensical re-launches, which `uvx --with`
+# could not supply to `zensical serve`.
+dev = [
+  "zensical",
+  "zensical-glossary",
+]
+
 [tool.mellum]
 model = "JetBrains/Mellum2.1-12B-A2.5B-Thinking-GGUF:Q4_K_M"
 context = 50000

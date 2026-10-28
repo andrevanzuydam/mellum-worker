@@ -1,0 +1,4 @@
+{
+  "allow": ["app.py", "templates/**", "tests/**", "specs/**"],
+  "ignore": [".venv/**", "__pycache__/**", "*.pyc", "*.log", "*.db", ".git/**", ".pytest_cache/**", "grader_tests/**"]
+}

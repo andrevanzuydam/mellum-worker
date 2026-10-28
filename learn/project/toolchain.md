@@ -53,19 +53,23 @@ tests are copied in. A grader's failure never changes a task's score.
 npm test                      # the Node suite, including the ladder's recorder tests
 uv run pytest                 # from ladder/, the ladder's own tests
 node build.mjs                # regenerate the agent templates
-uvx --with zensical-glossary zensical build   # build the Learning Center into site/
+uv run zensical build         # build the Learning Center into site/
+uv run zensical serve         # live preview, rebuilding on change
 ```
 
-The glossary extension is not installed into the repo; `--with` supplies it
-to the build, and the same command runs in CI.
+Zensical and the glossary extension are `dev` dependencies in
+`pyproject.toml`, so `uv sync` puts them in the project virtualenv and
+`uv run` uses them. Installing them there rather than supplying them per
+command is what makes the extension importable by `zensical serve`'s reload
+worker; the same `uv run zensical build` runs in CI.
 
 `npm test` includes tests that spawn `uv run scripts/backend.py`, so `uv` is
 a development prerequisite even though most of the suite is Node.
 
 ## Records and release
 
-Measured work lands in `docs/ladder/` with its spec and plan; raw evidence
-goes to a `research-*` release, never into Git. A release is a tag that
+Measured work lands in `docs/superpowers/research/` with its preregistration;
+raw evidence goes to a `research-*` release, never into Git. A release is a tag that
 matches `package.json` and both README install lines, with a
 [`CHANGELOG.md`](https://github.com/pauleveritt/mellum-worker/blob/main/CHANGELOG.md)
 section; `[Unreleased]` is kept current as work lands.

@@ -1,5 +1,5 @@
 [project]
-site_name = "Andre/Paul Learning Center"
+site_name = "Small AI Learning Center"
 site_url = "https://pauleveritt.github.io/mellum-worker/"
 site_description = "Small coding models, measured: problems, fixes, evidence."
 repo_url = "https://github.com/pauleveritt/mellum-worker"
@@ -11,9 +11,16 @@ nav = [
   { "Introduction" = "introduction/index.md" },
   { "Getting started" = ["getting-started/index.md", "getting-started/base-pi-on-llamacpp.md", "getting-started/ditch.md",
     "getting-started/harness.md",
-    "getting-started/suite.md", "getting-started/worker-extension.md"] },
+    "getting-started/suite.md", "getting-started/worker-extension.md",
+    "getting-started/troubleshoot.md"] },
+  { "Pathologies" = "pathologies.md" },
   { "Lessons" = ["lessons/index.md", "lessons/baseline.md",
-    "lessons/primary-agent.md", "lessons/short-prompt.md"] },
+    "lessons/primary-agent.md", "lessons/short-prompt.md",
+    "lessons/thinking-working-memory.md",
+    "lessons/guards-for-empty-turns.md",
+    "lessons/project-facts.md", "lessons/write-only-listed.md",
+    "lessons/prose-brief.md", "lessons/intercom-block.md",
+    "lessons/one-spec-per-phase.md"] },
   { "About" = [
     "about/index.md", "about/how-to-read.md",
     "about/evidence.md", "about/contributing.md",

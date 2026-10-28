@@ -20,7 +20,7 @@ test("pi extensions list is explicit and never includes the guards file", () => 
 test("package version matches the newest git tag when one exists", () => {
 	let tag = "";
 	try {
-		tag = execSync("git describe --tags --abbrev=0", { cwd: ROOT, stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+		tag = execSync("git describe --tags --abbrev=0 --match 'v*'", { cwd: ROOT, stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
 	} catch {
 		return; // no tags yet
 	}

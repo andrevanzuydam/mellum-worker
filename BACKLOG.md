@@ -4,9 +4,9 @@ Deferred work. Read [`ROADMAP.md`](ROADMAP.md) for what is in flight.
 
 Every entry states a reopen condition; an entry over 1,200 characters owes a
 research doc and shrinks to a summary, a link, and its reopen condition.
-Resolved entries are removed once their outcome is recorded in a phase row or
-a research doc that the row links. Cite entries by heading anchor, never by
-line number.
+Resolved entries are removed once their outcome is recorded in a feature-cycle
+row or a research doc that the row links. Cite entries by heading anchor,
+never by line number.
 
 Reopen conditions, not promises.
 
@@ -38,6 +38,95 @@ context — north star, a running summary of what is built, the last phase's
 context — plus its own slice, not the whole wall. *Reopens when* a
 non-phase-structured task is measured on `flow_run`, or the harness is pointed
 at real-world, non-suite commands.
+
+**Lesson 10's layout question needs a sample it does not have.** The
+preregistered `joined`-against-`split` arm came back null at n = 3: phase-4
+missing {5, 0} against {0, 3}, two usable sessions per arm, and medium 0/3 on
+passes for both arms
+([record](docs/superpowers/research/2026-10-25-lesson10-run.md#attempt-4-2026-10-2527-the-arm-ran-and-the-layout-did-not-separate-it)).
+The reading had to be the per-module one because medium floors on passes, so a
+claim about spec layout needs a task above that floor **and** n above 3.
+*Reopens when* a suite with pass headroom exists, or a lesson or default needs
+the layout claim.
+
+**Checks that never ran read as every check missing.** `score_workspace_details`
+counts as many missing checks as `expected.json` lists whenever pytest aborts
+before running them: LC.19's attempt 3 scored 18/18 with `passed: false` because
+two grader modules hit `ModuleNotFoundError: No module named 'models'` and pytest
+stopped with `Interrupted: 2 errors during collection`
+([record](docs/superpowers/research/2026-10-25-lesson10-run.md#attempt-3-2026-10-26-the-hang-is-fixed-the-scoring-is-not-yet-measuring)).
+Phase 1 alone passed 3 of 4. A record could not tell "the worker failed everything"
+from "the checks never ran" without the tail. LC.19A-adjacent work added
+`checks_ran: false` for that case; what is still owed is a lesson table column
+that shows it wherever a record reports missing checks.
+*Reopens when* a lesson table quotes a full set of missing checks without
+saying whether they ran.
+
+**The leak sweep misses a foreground server that made its own process group.**
+`pi`'s bash tool runs each command in a new session, so a model-started server
+lands in its own group; `run_suite` kills and sweeps `child.pid`'s group, which
+is `pi`'s, so `leaked.json` reports nothing. LC.19's attempt 2 hung on
+`uv run python -m uvicorn app:app --reload` in its own group, and a
+`uv run uvicorn app:app --port 9000` from run `20261025T112212Z-medium-31816b`
+was still alive 1 day 7 h later, holding its port
+([preregistration](docs/superpowers/research/2026-10-25-lesson10-preregistration.md#amendment-2026-10-26-attempt-1-aborted-before-any-session-completed)).
+A censored session therefore leaves a server behind and the next session
+inherits the port. The fix is to sweep children by ppid as well as by group.
+*Reopens when* a censored session's `leaked.json` is empty while a server
+survived, or the sweep is next changed.
+
+**The deadline is counted on a clock that stops when the Mac sleeps.**
+`run_suite` bounds each child with `child.wait(timeout=remaining)` from
+`time.monotonic()`, and on Darwin that clock does not advance while the system
+sleeps: LC.19's attempt 1 hung on a foreground server and had counted roughly 8
+minutes of its 2,700 s after 62 minutes of wall, so no `deadline` marker existed
+and the session outlived its budget by the sleep
+([preregistration](docs/superpowers/research/2026-10-25-lesson10-preregistration.md#amendment-2026-10-26-attempt-1-aborted-before-any-session-completed)).
+A `deadline` marker is therefore only honest on a machine that stayed awake; a
+run that quotes one should say it was caffeinated. The fix is a wall-clock
+deadline, or a `deadline` row in the trace carrying both clocks.
+*Reopens when* a run's deadline marker is missing past its budget, or the harness
+deadline is next changed.
+
+**`run.json`'s `wall` under-reports a censored or stalled session.** `report()`
+in `learn/code/harness.py` derives wall from trace timestamps, so a session
+the deadline ends reports its last traced event: LC.24's two censored `bare`
+sessions report 70 s and 180 s against a 2,700 s deadline, one session killed at
+600 s recorded 164 s, and LC.19's censored session recorded 448 s against 2,700 s
+([LC.24 run](docs/superpowers/research/2026-10-25-lesson1-run.md),
+[context screen](docs/superpowers/research/2026-10-24-context-budget-screen.md),
+[LC.19 run](docs/superpowers/research/2026-10-25-lesson10-run.md)).
+Only the `deadline` marker tells the truth, so any table quoting wall beside a
+censored session is understating it. The fix is a wall from process lifetime,
+or a `deadline` row in the trace; it changes a column the Getting Started
+suite lesson teaches, so it needs its own test and a re-read of the records
+that quote a wall, not a mid-arm patch.
+*Reopens when* a page or an arm quotes a wall for a session that hit its
+deadline, or when the harness report is next changed.
+
+**The foreground-server pathology is measured but not placed.** Three
+`no-facts` sessions hung on `uvicorn app:app --reload` / `python app.py` after
+143–460 s of silence and died at the 600 s deadline
+([record](docs/superpowers/research/2026-10-24-project-facts-screen.md)); LC.24's
+`bare` easy arm and LC.19's first two attempts hung the same way. It is Andre's
+(index P2) and belongs to **LC.7A**. 2026-10-27: the guard fired **0** times on
+medium — neither arm issued a foreground command, because the briefs now name the
+verification loop
+([run](docs/superpowers/research/2026-10-26-server-guard-run.md)) — so it stays
+dormant and the pathology is instructional, not unfixed.
+*Reopens when* LC.5 closes and LC.7A starts, or the arm's three-way question
+(facts bullet, dormant guard, both) can land on a page.
+
+**The recorder cannot have the payload and the refusal at once.** Pi runs
+`before_provider_request` handlers in extension load order and each may
+replace the payload, so a recorder loaded first sees messages before the
+worker appends its facts block (79 requests counted zero injected blocks,
+[record](docs/superpowers/research/2026-10-24-context-budget-screen.md)), and
+a recorder loaded last never sees a compaction the worker cancels. The split
+is a second, tiny watcher extension for `session_before_compact` alone, with
+its own trace file so the two writers do not share a `seq` counter.
+*Reopens when* an arm needs both a payload reading and a refused-compaction
+count in one session, or when the recorder is next changed.
 
 **Discovery/output policy beyond M.7E.** Seven tools do not prevent shell
 dependency scans. Throwaway discovery interception blocked scans, but its
@@ -100,6 +189,19 @@ the run stopped unfinished. A check for a final turn that announces an action
 without making a tool call would catch it, but it is a guard change on a
 single observed miss in 30 Mode runs (A14, A17). *Reopens when* a second
 announce-and-stop miss is recorded in a ladder phase or a run record.
+
+**The worker refuses compaction, so a long suite run overflows.** While the
+worker is on, `session_before_compact` refuses Pi's auto-compaction, so a run
+whose history outgrows the window has no way down. On the easy suite against
+llama.cpp at `n_ctx` 50,176, three of ten sessions in the LC.13A guard arm
+ended with an `error` final: `request (51697 tokens) exceeds the available
+context size (50176 tokens), try increasing it`. The empty-final nudge cannot
+answer these — it continues only a `stop` turn — and the same refusal will
+truncate every later arm. *Reopens when* an easy-suite run is expected to
+finish on the taught backend: choose a window the task fits inside, or a
+compaction policy that does not refuse while the mode is on, then re-baseline
+the suite, because the change moves a setting the baseline was measured with.
+[arm record](docs/superpowers/research/2026-10-24-nudge-llamacpp-screen.md).
 
 **Write-only guard: refuse writes outside the facts block's list.** Mode
 forwards the `## Mellum` section's `Write only:` line as text; nothing
@@ -184,7 +286,7 @@ Andre's [PR #1](https://github.com/pauleveritt/mellum-worker/pull/1) is a
 candidate implementation (`--acceptance-test`; an n = 1 rung 9 screen on
 mlx-lm, [digest](docs/superpowers/research/2026-10-20-pr-digest.md)).
 *Reopens when* someone can run the rung 9 screen and wants the result; the
-closed phase and its design inputs are in [`ROADMAP-M.md`](ROADMAP-M.md).
+closed cycle and its design inputs are in [`ROADMAP-M.md`](ROADMAP-M.md).
 2026-10-24, on Andre's fork: `--acceptance-test` and `--redispatch` are on
 `main` again after a merge dropped them ([LEARNING](LEARNING.md) §VII.1).
 
@@ -218,7 +320,7 @@ becomes `mellum-worker.ts` and "Mellum Mode" becomes mellum-worker in the
 docs, skill and templates. `/mellum` and the run-record path stay; `learn`
 and `last` keep reading old `kind: "worker"` records; a rung 1 and a rung 6
 smoke show the rename launches the same requests. *Reopens when* the mediated
-test lands, or the rename is worth doing on its own; the closed phase and its
+test lands, or the rename is worth doing on its own; the closed cycle and its
 exclusions are in [`ROADMAP-M.md`](ROADMAP-M.md). 2026-10-20: taken as LC.8
 because the Learning Center needs one worker; the entry stays until it lands.
 
@@ -249,6 +351,20 @@ needs that evidence, and the settings come from a checked-in project file so an
 arm can differ by one value ([spec](docs/superpowers/specs/2026-10-20-learning-center-design.md)
 §12). *Reopens when* LC.3's harness can run a rung fixture twice with one
 parameter changed.
+
+**PR #1 prompt and guard extraction.** The prompt v6–v11 triage is recorded: v6 is a null arm, v7–v9/v11 are ladder evidence, and v10’s foreground-server guard is dormant on branch `lc11b-server-guard` at `420ba1d`; workspace confinement is on branch `lc11b-confinement` at `176922f`. No guard is enabled and Baseline Worker is unchanged. Prospective Lessons #20–#22 are index entries only, not feature cycles. The source map is the decision ledger. PR #1 stays open; the digest ends with a comment, not a close. *Reopens when* Getting Started is closed and a screen repeats a foreground-server or outside-workspace hang, or a prompt version has a suite-shaped arm worth measuring; enabling a guard needs a baseline v2 and re-baseline. [prompt triage](docs/superpowers/research/2026-10-24-prompt-v8-v11-triage.md), [PR #1 digest](docs/superpowers/research/2026-10-24-pr1-digest.md), [source map](docs/superpowers/research/2026-10-24-andre-lessons-map.md).
+
+**PR measurement support.** The PRs carry measurement machinery that is not a lesson: the mlx-lm backend, the effort-ramp flags, the mediation scripts, rungs 10–12, `scripts/screen.sh` and `product.sh`, `halve-model.sh`, and the workflow/tests. None is in the installed package or the Lessons track. *Reopens when* a preregistered ladder run or a Flow phase needs one of them; port only the part that run uses and keep the record with the run. [harvest](docs/superpowers/research/2026-10-24-pr-harvest-index.md), [PR #1 source map](docs/superpowers/research/2026-10-24-pr1-digest.md).
+
+**Dashboard and replay.** PR #1/#4's dependency-free server, feed and replay page watch, launch and steer runs. It is not a lesson and is not installed. *Reopens when* a live run needs operator control that the trace and `/mellum last` cannot show, or a lesson asks the learner to replay a turn. [harvest](docs/superpowers/research/2026-10-24-pr-harvest-index.md), [Flow triage](docs/superpowers/research/2026-10-24-flow-triage.md).
+
+**Content-tool-call assist.** PR #2's extension promotes a tool call the model emitted inside text content to a real call, gated on known tool names. It is unit-tested but not ladder-measured, and PR #1 carries the same extension. *Reopens when* a suite or ladder run records a stall where the model emits a valid call in text and never reaches the tool field. [harvest](docs/superpowers/research/2026-10-24-pr-harvest-index.md), [PR digest](docs/superpowers/research/2026-10-20-pr-digest.md).
+
+**Experimental agent extensions.** Plan, surgical, quality, NCM, loop and knowledge are PR #4 extensions with unit tests, not ladder results. Context, rethink, files and vision already route to INT.3 candidates; this entry is the remainder. *Reopens when* a screen or a Flow phase needs one extension and has a record that distinguishes it from the Baseline Worker; do not install the group speculatively. [harvest](docs/superpowers/research/2026-10-24-pr-harvest-index.md), [follow-up digest](docs/superpowers/research/2026-10-21-andre-follow-up-digest.md).
+
+**Tier-1 contract test.** The PR #1 structural gate checks that routes exist; it is not the behavioral examiner Flow needs. *Reopens when* the INT.2 spec needs a cheap structural pre-check before the frozen behavioral gate, and a Flow run shows the examiner alone is too slow or too broad. [source map](docs/superpowers/research/2026-10-24-pr1-digest.md), [Flow triage](docs/superpowers/research/2026-10-24-flow-triage.md).
+
+**Andre's context and input lessons.** Lessons #15–#20 in the track index — rungs 10–12, context search, skeptical rethink, documents/images, live control and next-concept verify — are candidates, not feature cycles. #16–#20 are INT.3 workflow candidates; #15 remains a lesson candidate. They need LC.5's written consent and a recorded screen for the extension each describes; several may be dropped. *Reopens when* LC.5 closes and one candidate has a record that supports a six-step page. [harvest](docs/superpowers/research/2026-10-24-pr-harvest-index.md#lesson-map), [re-plan](docs/superpowers/research/2026-10-24-curriculum-replan.md).
 
 **Pathologies page.** A reference in `learn/` of the ways small models fail:
 announce-and-stop, false success, test-command thrash, a bent project, long

@@ -28,6 +28,31 @@ test("after the on-marker: system replaced, earlier history and the bootstrap dr
 	assert.equal(payload.messages.length, 8, "input not mutated");
 });
 
+test("stripThinking removes earlier reasoning and nothing else", () => {
+	const payload = {
+		model: "x",
+		messages: [
+			{ role: "system", content: "pi base prompt" },
+			text("user", MARK_ON),
+			text("user", "fix the cart total"),
+			{ role: "assistant", content: "", reasoning_content: "mine", tool_calls: [{ id: "1" }] },
+			{ role: "tool", tool_call_id: "1", content: "r" },
+			{ role: "assistant", content: "done", reasoning: "provider-style thinking" },
+		],
+	};
+	const kept = filterForMellum(payload, "v5");
+	const stripped = filterForMellum(payload, "v5", { stripThinking: true });
+	assert.equal(kept.messages[2].reasoning_content, "mine", "off by default (A12)");
+	assert.equal(stripped.messages[2].reasoning_content, undefined, "reasoning_content dropped");
+	assert.equal(stripped.messages[2].content, "", "content untouched");
+	assert.deepEqual(stripped.messages[2].tool_calls, [{ id: "1" }], "tool calls untouched");
+	assert.equal(stripped.messages[3].content, "r", "tool messages untouched");
+	assert.equal(stripped.messages[4].reasoning, undefined, "a reasoning field is dropped too");
+	assert.equal(stripped.messages[4].content, "done");
+	assert.equal(stripped.messages[1].content[0].text, "fix the cart total");
+	assert.equal(payload.messages[3].reasoning_content, "mine", "input not mutated");
+});
+
 test("keepSystem leaves Pi's system message while still narrowing the tools", () => {
 	const payload = {
 		messages: [{ role: "system", content: "pi base prompt" }, text("user", "task")],

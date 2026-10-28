@@ -11,9 +11,8 @@ backends: [llamacpp]
 
 A harness runs a model on a task and scores the result. The one in this repo
 is small enough to read: each run gets a fresh directory, its own copy of the
-profile, a child `pi` and a score. It is a teaching tool; the ladder in
-`ladder/` is the measured instrument, and findings lessons cite the ladder
-only.
+profile, a child `pi` and a score. It is a teaching tool; `learn/code/harness.py` is the measured instrument, and
+findings lessons cite the suites.
 
 ## Why a fresh directory
 
@@ -80,8 +79,22 @@ uv run learn/code/harness.py run --suite easy --repeat 3
 
 Each repeat starts from a fresh workspace; the lines are tagged `[1/3]` and
 the summary is `easy: 3/3 sessions passed`. Two or three sessions are still a
-lead, not a rate; lesson 4 explains why, and the ladder is the measuring
-instrument.
+lead, not a rate; lesson 4 explains why, and a rate needs a preregistered run
+with its arms and n fixed first.
+
+A suite may also ship a **spec variant**: the same project with its phased
+requirements laid out another way. `--specs joined|split` runs the suite with
+that variant's prompts and workspace, and the run record carries `specs`, so two
+arms are told apart by the record rather than by memory.
+
+```bash
+uv run learn/code/harness.py run --suite medium --specs split --repeat 3
+```
+
+Only a suite with `spec-variants/` has them; `medium` ships `joined`, whose
+briefs point at one `specs/roadmap.md`, and `split`, whose briefs each point at
+their own `specs/phase-4.md`. Without the flag the suite runs exactly as
+shipped.
 
 The suite is `learn/code/suites/easy/`: a base AgentClinic project, one
 prompt asking for phase 1, and the tests that check it. The prompt goes to
@@ -103,7 +116,8 @@ thing, or wrote something the tests could not import.
 
 ## What this does not measure
 
-The numbers here are for you while you learn. They are not preregistered, they
-run on one machine, and they do not replace `docs/ladder/`. Lesson 4 runs the eval
+The numbers here are for you while you learn. They are not preregistered and they
+run on one machine; a lesson's `reference-run` is the preregistered version of
+the same run. Lesson 4 runs the eval
 suites and reads the traces; the reference run on llama.cpp is a separate
 phase.

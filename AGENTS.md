@@ -14,9 +14,9 @@ plan, or roadmap edit**; it carries the document caps and why each exists.
 - Plans: `docs/superpowers/plans/YYYY-MM-DD-<topic>.md`
 - Research: `docs/superpowers/research/YYYY-MM-DD-<topic>.md`
 
-[`ROADMAP.md`](ROADMAP.md) is the phase list and current pointer;
+[`ROADMAP.md`](ROADMAP.md) is the feature-cycle list and current pointer;
 [`BACKLOG.md`](BACKLOG.md) is deferred work with reopen conditions. Brainstorm
-within a phase; do not re-open settled, measured decisions without a ladder
+within a cycle; do not re-open settled, measured decisions without a ladder
 run in `ladder/`.
 
 **Evals are screens first, preregistered runs to decide** (`docs/sdd.md`):
@@ -33,7 +33,7 @@ fenced, a spec at 400 lines. `tests/docs-caps.test.mjs` enforces them. Over
 cap means a research doc is owed, not that the wording gets trimmed.
 
 Caps apply at every update. `## Now` is a pointer, never a narrative;
-detail belongs in a phase row, backlog entry or linked research doc.
+detail belongs in a feature-cycle row, backlog entry or linked research doc.
 Remove resolved, retired and superseded backlog entries. Preserve decisions
 and evidence with dated corrections; never edit archived plans.
 
@@ -95,7 +95,9 @@ a term is linked automatically. Do not hand-link a term.
   glossary before finishing the page.
 - Check the page’s first occurrences after a build; the extension skips code,
   headings and links by design.
-- Build with `uvx --with zensical-glossary zensical build`; CI does the same.
+- Build with `uv run zensical build` (preview with `uv run zensical serve`); CI
+  does the same. Both packages are `dev` dependencies, so run `uv sync` after
+  pulling a change to `pyproject.toml` or `uv.lock`.
 - Borrow shared terms from `../satyrn-evals/_engine/glossary.md` when they
   mean the same thing (`guard`, `finish nudge`), but define the local meaning
   rather than copying a Satyrn-specific contract.
@@ -126,7 +128,7 @@ not written at release time. This is a standing rule.
   `[Unreleased]` in the same commit, in the existing `Added` / `Changed` /
   `Fixed` / `Removed` headings. Internal-only commits (SDD records,
   backlog, roadmap, tests alone) need no entry.
-- **At checkpoints:** at the end of each plan task, at phase close, and
+- **At checkpoints:** at the end of each plan task, at cycle close, and
   before a tag, compare `[Unreleased]` against
   `git log <last tag>..HEAD --oneline` and add anything missing.
 - **At release:** `[Unreleased]` becomes `## [x.y.z] - YYYY-MM-DD` in the
@@ -135,11 +137,13 @@ not written at release time. This is a standing rule.
 - Entries say what changed for the user and why, in a sentence or two, not
   the commit subject.
 
-## Finishing a phase
+## Finishing a feature cycle
 
-Update the phase's Status cell and the `## Now` pointer in `ROADMAP.md`, close
+Update the cycle's Status cell and the `## Now` pointer in `ROADMAP.md`, close
 the plan with `## Result`, move it to `plans/archive/`, and remove any backlog
-entry the phase resolved. Confirm claims against linked evidence, pass
+entry the cycle resolved. At close, also add a glossary entry for any concept the
+cycle introduced, and a `learn/pathologies.md` entry for any failure shape its
+evidence showed — or nothing, if it showed none. Confirm claims against linked evidence, pass
 `node --test tests/docs-caps.test.mjs` and `npm test`, and reconcile the
-changelog before finishing the branch. A phase may close before a release
+changelog before finishing the branch. A cycle may close before a release
 tag. This is a standing rule.

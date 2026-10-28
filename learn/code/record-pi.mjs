@@ -39,6 +39,12 @@ export function installRecorder(pi, options = {}) {
     record({ type: "message_end", message: event.message });
     activeRequest = null;
   });
+  // Compaction is a budget question: whether Pi asked, and whether the worker
+  // let it. The recorder loads after the worker so it logs the rewritten
+  // payload, which means a compaction the worker cancels never reaches this
+  // handler: these rows only appear when a compaction was allowed to run.
+  pi.on("session_before_compact", (event) =>
+    record({ type: "before_compact", reason: event?.reason ?? null }));
   pi.on("tool_call", (event) =>
     record({ type: "tool_call", toolName: event.toolName, input: event.input }));
   pi.on("tool_result", (event) =>

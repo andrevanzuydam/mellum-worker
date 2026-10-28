@@ -83,6 +83,16 @@ Pi's seven built-in tools, so Baseline Pi and the Baseline Worker offer the same
 restriction matters when another extension or MCP server has added tools.
 Project facts are another prompt-side remedy, added later.
 
+## Stay in the workspace
+
+A worker can hang a whole run by searching the machine instead of its
+workspace: `grep -rl pattern /Users /var /tmp …` crawls everything and keeps
+the tool call open. Keep searches relative (`grep -rl pattern .`). PR #1
+proposes a **runaway search** guard that blocks recursive searches whose
+absolute paths leave the workspace
+([code](https://github.com/pauleveritt/mellum-worker/blob/176922f05702d6f8e87a9b2570ed6fe9807db733/extensions/mellum-guards.ts#L145-L185));
+it is not shipped yet.
+
 ## See it run
 
 The wrappers set the profile, session, model, isolation flags and extension.

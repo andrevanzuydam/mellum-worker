@@ -14,12 +14,12 @@ test("ROADMAP.md is at most 400 lines", () => {
 
 test("roadmap cells: Ships and Excludes at most 900 chars, Status at most 1000", () => {
 	const rows = read("ROADMAP.md").split("\n").filter((l) => /^\| \*\*/.test(l));
-	assert.ok(rows.length > 0, "no phase rows found");
+	assert.ok(rows.length > 0, "no feature-cycle rows found");
 	for (const row of rows) {
-		const [, phase, ships, excludes, status] = row.split("|").map((c) => c.trim());
-		assert.ok(ships.length <= 900, `${phase} Ships cell is ${ships.length} chars`);
-		assert.ok(excludes.length <= 900, `${phase} Excludes cell is ${excludes.length} chars`);
-		assert.ok(status.length <= 1000, `${phase} Status cell is ${status.length} chars`);
+		const [, cycle, ships, excludes, status] = row.split("|").map((c) => c.trim());
+		assert.ok(ships.length <= 900, `${cycle} Ships cell is ${ships.length} chars`);
+		assert.ok(excludes.length <= 900, `${cycle} Excludes cell is ${excludes.length} chars`);
+		assert.ok(status.length <= 1000, `${cycle} Status cell is ${status.length} chars`);
 	}
 });
 

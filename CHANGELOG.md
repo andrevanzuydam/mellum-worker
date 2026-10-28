@@ -302,6 +302,255 @@ Versions match git tags; pin one in both install lines.
   to silence when ruff cannot run. Load it with `-e extensions/mellum-quality.ts`
   and tune it with `MELLUM_QUALITY` (JSON, e.g. `{"max":1,"select":"F"}`).
 
+- A **strip-thinking seam** in the worker, so lesson 3's claim can be measured at
+  all: `MELLUM_STRIP_THINKING=1` drops earlier assistant reasoning from the
+  payload, the harness runs it as `--arm strip-thinking`, and `run.json` carries
+  `strip_thinking`. It replaces only `reasoning_content`/`reasoning` and leaves
+  content, tool calls and tool messages untouched, which a test pins both ways —
+  the default stays as shipped, because A12 found stripping made runs 60% slower.
+
+- The **Pathologies page**, `learn/pathologies.md`: thirteen named failure
+  modes in four sections, each with a plain one-sentence statement of the
+  problem, the record that shows it, and the shape that answers it. Harvested
+  for form from the sibling `swiftstar` and `ds4-engine` catalogues — an entry
+  needs an observation, and the list is a reference, not a rate — and it carries
+  two entries that are harness faults rather than model faults, because a
+  harness fault that reads as a model fault is the misfiling worth avoiding. The
+  ditch's placeholder link now points at it.
+
+- Lesson 9, **The intercom block is a prefill tax**, as a rationale: the
+  delegated mechanism it measured was removed in LC.8, so the page argues from
+  the removal and from the handoff block that replaced it — one summary per
+  finished span, never a transcript per turn — with `conjecture` badges and no
+  restated percentage.
+
+- The **foreground-server guard** is on `main` but dormant upstream (this fork
+  enables it by default): it refuses a `bash`
+  call that starts a server in the foreground and points at the in-process
+  `TestClient` form or a detached `nohup … &`. Its pattern now covers
+  `python app.py` and `uv run python scripts/serve.py`, the shapes LC.19's first
+  attempt actually hung on, and read-only or backgrounded commands still pass.
+  It stays off until an arm measures it: `--arm server-guard` and
+  `--arm no-facts-guard` run it with or without the facts bullet, and a run
+  record now counts `guard_blocks` — a blocked call never reaches the recorder,
+  so the count is taken from the refusal the model was told about.
+
+- Lesson 10, **One spec file per phase**. Written from a preregistered
+  `joined`-against-`split` arm on the medium suite: the spec's acceptance
+  criteria took a worker from a workspace no check could import to 1 of 18
+  checks missing, and the layout of the spec did not separate the arms at n = 3
+  — a null, stated as one, with the old ladder claim retired.
+
+- A run whose hidden checks never executed now says so. When pytest stops on a
+  collection error — usually a module the workspace lacks — `run.json` carries
+  `checks_ran: false` beside the count, because "18 checks failed" and "the
+  checks never ran" are different findings. It is still a failure; the record
+  just stops hiding why.
+
+- The harness records more than a count when a session fails its hidden checks:
+  `run.json` now carries `missing_checks`, the expected test IDs that did not
+  pass, and `check_groups`, the same tally per grader module. A suite whose
+  graders are one file per phase can now be read phase by phase, where passes
+  alone floors.
+
+- `--specs joined|split` runs a suite with one of its spec variants: the same
+  project and requirements, laid out as one joined `specs/roadmap.md` or as one
+  file per phase, with thin briefs that point at whichever applies. The run
+  record carries `specs`, and without the flag a suite runs exactly as shipped.
+  `medium` ships `joined` and `split`; the Getting Started pages and the
+  glossary describe both.
+
+### Removed
+
+- The ladder's dead **delegated** reporting: `parse_parent_json` analysed a
+  `subagent` tool call that no shipped worker can make, the run record carried
+  a `parent` that was always `None`, and the results table had two columns
+  (`deleg`, `brief_chars`) that were therefore always empty. Left over from
+  LC.8's retirement of the delegated child.
+
+- Lesson 7, **Who holds the loop**, from the Lessons track. It compared worker,
+  Mode and a delegated child; LC.8 renamed Mode to Worker and removed the
+  delegated child, so there is no second policy left to compare. The index keeps
+  the number so the other entries and the roadmap rows stay stable.
+
+### Fixed
+
+- Two Getting Started pages still called the ladder the measuring instrument a
+  cycle after `reference-run` moved to the suites, and the suite page told the
+  learner that findings lessons cite `docs/ladder/`, which lesson pages may not
+  link. The harness and suite pages now name the suites as the instrument and a
+  preregistered record in `docs/superpowers/research/` as the citation.
+
+- `learn/project/index.md` named `extensions/mellum-mode.ts` and the retired
+  `templates/` agent files, two cycles after LC.8 renamed the former and
+  removed the latter.
+
+### Changed
+
+- Lesson 8, **A prose brief stops at its first reply**, now rests on six
+  sessions at n = 3 per arm instead of one each — and the finding flipped again:
+  all three joined-brief sessions finished faster and cheaper and left a project
+  the checks could not import, while all three stepped sessions produced a
+  runnable project. The one-session screen that had the joined arm passing is
+  retired with the original claim.
+
+- Closing a feature cycle now names two habits: a glossary entry for any concept
+  the cycle introduced, and a Pathologies entry for any failure shape its
+  evidence showed — or nothing, if it showed none, because an entry without an
+  observation is a hypothesis. Both are in `docs/sdd.md`'s closing list and
+  `AGENTS.md`.
+
+- The medium suite's specs now carry the acceptance criteria its hidden checks
+  read — the file layout (`app.py`, `models.py`, `templates/`, `tests/`), the
+  markup conventions, and each phase's criteria — so a brief that points at the
+  spec asks for what is graded. Two LC.19 attempts hung, then a third completed
+  every phase and scored 18/18 for a reason the spec never mentioned: nothing
+  had asked for `models.py`.
+
+- The medium suite no longer leaves verification to chance. Its roadmap asks for
+  the home page to be exercised in process with `TestClient` as well as for a
+  runnable `app.py`, the base project ships `tests/test_home.py` so the promised
+  test command has something to run on the first turn, and both spec variants'
+  briefs end by naming the loop: check with `uv run --frozen python -m pytest
+  tests`, not by starting a server. Two LC.19 attempts hung on a foreground
+  server before these were in place. The visible test is the worker's loop, not
+  a gate — `known-broken` passes it, and the hidden grader still fails it.
+
+- All seven older lessons now open the way Lesson 1 does: two sentences
+  between the title and the first heading, the problem then the answer, 45
+  words or fewer. The rule is in `learn/lesson-template.md` and is now held by
+  `tests/learn-site.test.mjs` for every lesson page. Wording only — no page's
+  evidence, badges or numbers changed.
+
+- Lesson 1, "The primary agent is the wrong worker", now opens with a
+  two-sentence summary, names the pathology before the measurement, says
+  which three decisions leave the model's hands instead of advising against
+  a role, and stops claiming every medium session was killed at 600 s. Its
+  preregistered easy and medium run came back null on both suites — 1/3
+  against 1/3 and 0/3 against 0/3 — so the page argues from the cost of
+  failing, not from a pass rate, and the baseline's medium 2/3 against 0/3 is
+  recorded as not reproduced.
+
+- `reference-run` is earned on the suites now, not on `ladder/`: the badge
+  names a preregistration, a record in `docs/superpowers/research/` and a
+  `research-*` release. `ladder/` and `docs/ladder/` stay as the internal
+  instrument and the A0–A21 archive.
+
+- The Learning Center builds from the project virtualenv: `zensical` and
+  `zensical-glossary` are `dev` dependencies in `pyproject.toml`, and the
+  README, the toolchain page and CI all use `uv run zensical build` instead of
+  `uvx --with zensical-glossary zensical build`. `uvx` supplied the extension
+  only to the process it launched, so `zensical serve` — which re-launches a
+  reload worker with the same interpreter — died with `No module named
+  'zensical_glossary'`. `uv run zensical serve` now previews the site.
+
+- The Lessons track is re-based on llama.cpp. `primary-agent`, `short-prompt`,
+  `thinking-working-memory` and `guards-for-empty-turns` no longer cite oMLX
+  ladder records: lesson 1 retires its 8/15 because an unbounded Pi passed a
+  session, lesson 2 is a null at n=3, lesson 4 is a void arm (the nudge never
+  fired), and lesson 3 states that the strip-thinking arm has no instrument
+  on this backend.
+
+- The suites harness counts a **nudge** only when an empty assistant turn is
+  continued inside the same Pi process. Medium and hard start one process per
+  prompt, and the old rule counted the empty final that ended one prompt as
+  continued by the next prompt's request, inflating the column on exactly the
+  suites where it matters.
+
+- The roadmap's vocabulary now separates the two things it used to call a
+  "phase": **`LC` is the phase**, and **each row is a feature cycle** that runs
+  brainstorm → spec → plan → execute → close. A feature cycle delivers one
+  lesson, or says in its Ships cell that it is housekeeping or infrastructure.
+  Plan front matter gains `feature_cycle:` beside `phase:` and `cycle:`;
+  archived plans are unchanged.
+
+### Added
+
+- The suites harness records **which machine and which deadline** produced a
+  run (`machine`, `deadline` in `run.json`). Peak token counts transfer between
+  machines and walls do not, so a record that names neither invites a
+  comparison nobody can make.
+
+- `--single-prompt` sends a suite's own prompts as one brief instead of steps,
+  so "one prose brief" and "the same brief as steps" differ by exactly one
+  thing: the base, the grader and the brief text stay identical.
+
+- Lesson 8, **[A prose brief stops at its first reply](learn/lessons/prose-brief.md)**:
+  a screen at n = 1 where both shapes passed the hidden tests and the
+  one-brief arm used a third of the context — against the claim the lesson used
+  to make, which is retired.
+
+- The suites harness **sweeps what a run leaves running**. A child that
+  backgrounds `python app.py &` and then settles used to leave its server
+  holding a port — five such processes were still listening hours later. The
+  sweep ends the run's process group, falls back to per-pid signals when the
+  group refuses, and records what it found as `leaked` in `run.json`.
+
+- A **file-set check** in the suites harness: each suite declares `allow` and
+  `ignore` globs in `layout.json`, the run's workspace is hashed before and
+  after the child, and anything created or modified outside the layout is
+  reported as `out_of_layout` in `run.json`. A run can pass every hidden test
+  and still leave the project as it did not ask.
+
+- Lesson 6, **[Write only the files you list](learn/lessons/write-only-listed.md)**:
+  the check on three easy sessions, where no session wrote outside the layout.
+
+- Lesson 5, **[Project facts](learn/lessons/project-facts.md)**: the facts arm
+  measured on llama.cpp, where the block reaches the model on every request
+  and did not move the easy suite at n=3. The page states the null with the
+  injection count beside it, and carries the foreground-server observation as
+  a lead attributed to the Pathologies page.
+
+- The suites harness records **attempted compaction** as a `before_compact`
+  trace row, and a `no-facts` arm sets `MELLUM_MODE_FACTS=0`; the harness now
+  clears all four arm knobs from the inherited environment first, so an
+  exported value cannot quietly make two arms the same policy. A refused
+  compaction is only visible with the recorder loaded before the worker,
+  which costs payload fidelity — that split is backlogged.
+
+- The preregistration and record for the **context-budget** arm:
+  [`2026-10-24-context-budget-preregistration.md`](docs/superpowers/research/2026-10-24-context-budget-preregistration.md)
+  and its [record](docs/superpowers/research/2026-10-24-context-budget-screen.md).
+  The arm is void — peak demand of 857–4,699 tokens never approached either
+  window — but it fixes the shipped 50,000 wherever a lesson quotes easy.
+
+- The preregistration and record for the **project facts** arm:
+  [`2026-10-24-project-facts-preregistration.md`](docs/superpowers/research/2026-10-24-project-facts-preregistration.md)
+  and its [record](docs/superpowers/research/2026-10-24-project-facts-screen.md).
+  Passes are null at n=3, the block injects in every `worker` request, and the
+  record carries the lead that all three `no-facts` sessions hung on a
+  foreground server once the `Do not: start servers` bullet was gone.
+
+- The suites harness now reports **nudge fires** beside the passes: it counts
+  an empty assistant turn that was followed by another request as a nudge and
+  one that ended the run as an empty final, printing them on the score line and
+  as a `Nudges` column in the evidence table. The lesson template requires the
+  fire count in Quality and budget, because a guard whose fires are invisible
+  cannot be told from a guard with nothing to do.
+
+- The preregistration for the first arm of the Lessons re-base:
+  [`2026-10-24-nudge-llamacpp-preregistration.md`](docs/superpowers/research/2026-10-24-nudge-llamacpp-preregistration.md)
+  fixes the arms (worker against no-nudge), n = 5, the easy→medium→hard
+  staircase and four decision rules before any run.
+
+- Paul's finding **Guards for empty turns and loops**: with the guard
+  extension loaded A0 passed 15/15, and without it A1 passed 13/15 on the
+  same oMLX rungs, where both failures are an empty final the bounded nudge
+  answers. The lesson quotes the shipped nudge, keeps the claim to one
+  benchmark, and names the open llama.cpp arm.
+
+- Paul's finding **Thinking is working memory**: stripping earlier turns'
+  `reasoning_content` cut prefill 57% and made the runs slower, on the cited
+  oMLX A3/A12 records. The lesson keeps the thinking in history, names the
+  open llama.cpp re-run, and adds `working memory` to the glossary.
+
+- Three prospective Pathologies lessons: **The runaway search**, with links to
+  the confinement guard and tests in PR #1; **The server that never returns**,
+  from prompt v10 and the dormant foreground-server guard; and **The rule it
+  knew and skipped**, from prompt v11's clause-by-clause self-check. The
+  worker-extension lesson now warns against machine-wide searches and points at
+  the confinement proposal.
+
 - A `zensical-glossary` build for `learn/glossary.md`: the page now has
   `###` entries for `screen`, `nudge`, `empty-final nudge`, `no-nudge`,
   `Baseline Worker`, `Baseline Pi`, `arm`, `ablation`, the telemetry columns
@@ -339,9 +588,11 @@ Versions match git tags; pin one in both install lines.
   10–12, context, rethink, documents and images, live control, next-concept
   verify), each badged, with support items listed separately.
 
-- The Lessons index is one recommended list of twenty, each with a one-line
-  description and an italic author tag, *(Paul)* or *(Andre)*.
-
+- The Lessons index is one recommended list of twenty-three, each with a one-line
+  description and an italic author tag, *(Paul)* or *(Andre)*. It now follows
+  the roadmap order, so "Guards for empty turns and loops" is lesson 4 rather
+  than 11, and says which entries are scheduled and which are deferred
+  candidates.
 - A GitHub Actions workflow builds the Zensical site on pull requests and
   deploys it to Pages from `main`.
 
@@ -597,6 +848,24 @@ Versions match git tags; pin one in both install lines.
   thing and seen it pass), beside the existing named acceptance test (`NCM_TEST`,
   mediation). Adds a `verifyCommand` helper; the gate is inert unless `NCM_TEST`
   or `NCM_ALL` is set.
+
+### Changed
+
+- The Lessons index now marks the context/input workflows as INT.3
+  Intermediate candidates, and every scheduled lesson row links to the new
+  PR harvest index. The index joins the PR digests, prompt triage and source
+  map; it adds no run.
+
+- The lesson template now separates quality from budget in Validation and
+  asks what to try next in Interpretation: a lesson must say which passes
+  moved, which budget column paid for them, and which screen would improve
+  the weaker side. The Thinking lesson carries both analyses.
+
+- Lesson tests moved out of the shared suite into
+  `tests/lesson-<slug>.test.mjs`, and the site-wide test now discovers lesson
+  pages automatically, so parallel lesson branches no longer collide in
+  `tests/learn-site.test.mjs`. The lesson template records the convention,
+  including pinned code links and no copied production source.
 
 - The suite baseline now shows the actual TypeScript that activates the
   Baseline Worker: `setActiveTools`, `createGuardSet`, the request hook and the
@@ -872,9 +1141,22 @@ Versions match git tags; pin one in both install lines.
   keeping ruff's default `.venv`/`__pycache__` exclusions and linting only the
   worker's own code.
 
+### Fixed
+
+- Getting Started now has continuous lesson-1 steps 1–7, including
+  `complexipy` in the tool fetch; the troubleshooting page is in the nav,
+  linked from the track index and no longer has a self-prerequisite; the home
+  page links the Introduction and says five lessons; and the ditch drops its
+  author notes while explaining why its recorded run is Python.
+
+- The lesson harness uses one `F,E9` grade, excludes the workspace `.venv`,
+  and runs `--suite all` easiest-first (easy, medium, hard).
+
 - The Lessons sidebar now lists the two completed findings lessons instead of
   only the index; a test requires every published lesson page to be in the
   nav.
+
+### Fixed
 
 - Fenced code blocks render again: adding the glossary extension had replaced
   Zensical’s default `pymdownx.superfences`; it is now enabled explicitly.
