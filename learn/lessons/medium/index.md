@@ -35,7 +35,7 @@ is the only prerequisite.
 
     ---
 
-    One brief against four: both passed the hidden tests, and the one-brief arm
-    used a third of the context. *(Paul)*
+    Checks ran in all three stepped sessions and none of the one-brief ones;
+    the one brief was cheaper but left nothing a check could import. *(Paul)*
 
 </div>

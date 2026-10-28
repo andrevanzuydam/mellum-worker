@@ -1,7 +1,8 @@
 # A replicable vLLM baseline for Mellum 2.1
 
-**What is measured.** Screen 1 ran on 2026-10-28 (n = 1 per session; results
-below). Checked the same day:
+**What is measured.** The baseline ran on 2026-10-28: ladder rungs 1–12 and
+the Bronze, Silver and Gold suites, n = 3 each (results below), after screen 1
+(n = 1). Checked the same day:
 vLLM v0.32.0 lists `MellumForCausalLM` (served through its Transformers MoE
 backend since vLLM PR 59679); vLLM's recipe and JetBrains' model card serve it
 with `--reasoning-parser qwen3` and `--tool-call-parser hermes`; the 2.1 chat
@@ -110,10 +111,46 @@ tunnel shared port 8000 with the apps the model writes (now 18000),
 `watch_ladder.py` was too slow to print on macOS, and `all` had no way to keep
 the box (now `--keep`).
 
-Before the full run: decide whether to add a harness-side stall cutoff (a
-single tool call running past a pinned limit ends the session as stalled,
-Pi untouched), since at 600 s and 2,700 s deadlines a full run spends most of
-its time waiting on servers; then preregister the reading.
+After the screen the suites gained a pinned stall cutoff (one tool call open
+120 s ends the session as stalled, Pi untouched): at a 2,700 s deadline a
+single hung server cost 45 minutes.
+
+## The baseline (2026-10-28)
+
+Record: [`docs/ladder/2026-10-28-vllm-baseline/`](../../ladder/2026-10-28-vllm-baseline/).
+The ladder ran at commit `6264a2b`; the suites were rerun at `bd416f0` with the
+stall cutoff, after a first attempt hung on a server for 45 minutes and was
+stopped by hand. The reading was not preregistered; the pins were fixed before
+the run.
+
+| Instrument | Level | Passes | Mean wall | What failed |
+| --- | --- | --- | --- | --- |
+| Ladder | rungs 1–4 | **12/12** | 13–80 s | nothing |
+| Ladder | rung 5 | **2/3** | 87–150 s | one stopped with the work incomplete |
+| Ladder | rungs 6–9 | **4/12** | up to 600 s | foreground servers to the deadline (rung 6 all three), early stops |
+| Ladder | rungs 10–12 | **8/9** | 67–220 s, two at 600 s | a rung 10 deadline; a rung 11 pass also ran to its deadline after finishing |
+| Suites | Bronze | **1/3** | 53 s | one wrote `main.py` (checks could not run); one stalled on `uvicorn` |
+| Suites | Silver | **1/3** | 337 s | one missed 14 of 18; one passed all 18 checks and failed the quality gate |
+| Suites | Gold | **0/3** | 1,634 s | checks could not run in two; the best missed 4 of 34 |
+
+Totals: ladder **26/36**, suites **2/9**.
+
+What it shows about vanilla Pi with BF16 Mellum, at n = 3 (a screen, not a
+rate):
+
+- Small, bounded fixes are solid (rungs 1–4, and rungs 11–12 at 3/3).
+- The multi-phase web-app build is where vanilla Pi fails, and mostly by its
+  own hand: it starts the app in the foreground and waits, or names the app
+  differently from the spec. Those are the pathologies the worker's guards and
+  project facts were built for.
+- Gold passes for no setup measured so far; the closest session here missed 4
+  of 34 checks.
+- Against the earlier oMLX 6-bit plain run (rungs 1–5: 8/15), rungs 1–5 here
+  are 14/15. Weights, output cap (4,096 then, 16,384 now), server and Pi
+  version all differ, so the gap is not attributable to any one of them; the
+  planned llama.cpp BF16 and Q6_K arms are what would separate quantization.
+
+
 
 ## What would falsify this
 

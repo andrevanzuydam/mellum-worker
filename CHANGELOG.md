@@ -6,6 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- The replicable vLLM baseline's record, `docs/ladder/2026-10-28-vllm-baseline/`:
+  vanilla Pi with Mellum 2.1 BF16 on vLLM passed 26/36 ladder rungs (12/12 on
+  rungs 1–4, 4/12 on the web-app rungs 6–9, 8/9 on 10–12) and 1/3 Bronze, 1/3
+  Silver, 0/3 Gold. It is the score to beat on The Challenge page and the
+  reference later changes are measured against (a screen at n = 3, not a rate).
+
 - **The Challenge**: the three eval suites are presented on the site as
   Bronze, Silver and Gold, a challenge learners can attempt to test what they
   have learnt, with the baseline as the score to beat. The CLI keeps

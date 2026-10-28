@@ -45,12 +45,15 @@ judged on.
 
 The [suite baseline](../lessons/easy/baseline.md) is the reference: three
 sessions per level on llama.cpp, with the same Mellum model you set up in
-[Getting Started](../getting-started/index.md).
+[Getting Started](../getting-started/index.md). The last row is the replicable
+baseline: the same model at full precision on a rented GPU, rebuilt with
+`scripts/baseline/baseline.py`.
 
 | Setup | Bronze | Silver | Gold |
 | --- | --- | --- | --- |
 | Pi on its own | 0/3 | 0/3 | 0/3 |
 | The Baseline Worker | 1/3 | 2/3 | 0/3 |
+| Pi on its own, BF16 on vLLM (the replicable baseline) | 1/3 | 1/3 | 0/3 |
 
 A pass means every hidden check passed. Anything less is a fail, and the
 record tells you which checks were missing and why.
