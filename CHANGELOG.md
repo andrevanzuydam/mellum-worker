@@ -134,9 +134,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
-- `scripts/baseline/baseline.py serve` starts vLLM again. Its "already
-  running?" check matched its own command line, so it never started the
-  server and waited 30 minutes on an idle, billing box.
+- `scripts/baseline/baseline.py serve` starts and tracks vLLM by the PID
+  `serve.sh` keeps. Its process-name check matched its own command line (so
+  vLLM was never started), and vLLM 0.32 renames its process, so a live
+  server read as dead.
 - `learn/code/flow_run.py` runs again. A relative `--runs-dir` sent Pi's
   recorder and profile paths into the workspace, so every round failed with
   "Unknown provider" before the model was called; the runs dir is now made

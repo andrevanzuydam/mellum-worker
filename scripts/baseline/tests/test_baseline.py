@@ -224,10 +224,21 @@ def test_lesson_commands_run_in_parallel_and_keep_their_order(monkeypatch):
     assert [r[1] for r in results] == [str(i) for i in range(6)]
 
 
-def test_vllm_pgrep_pattern_does_not_match_its_own_command_line():
-    # The guard runs inside `bash -c "...pgrep -f <pattern>..."`, so a pattern
-    # that matches its own text always finds itself and vLLM is never started.
-    import re
-    shell_line = f"bash -c (pgrep -f '{baseline.VLLM_RUNNING}' >/dev/null || nohup ./serve.sh)"
-    assert not re.search(baseline.VLLM_RUNNING, shell_line)
-    assert re.search(baseline.VLLM_RUNNING, "python3 /usr/bin/vllm serve JetBrains/Mellum")
+
+def test_serve_start_and_alive_track_the_server_by_pid(tmp_path):
+    # vLLM renames its own process, so a name match calls a live server dead;
+    # the start command records the PID and the alive check uses only that.
+    import subprocess, time
+    (tmp_path / "serve.sh").write_text("#!/bin/sh\nexec sleep 30\n")
+    (tmp_path / "serve.sh").chmod(0o755)
+    sh = lambda cmd: subprocess.run(["bash", "-c", cmd], cwd=tmp_path, capture_output=True, text=True)
+    assert sh(baseline.ALIVE).returncode != 0
+    assert sh(baseline.START).returncode == 0
+    time.sleep(0.5)
+    pid = int((tmp_path / "vllm.pid").read_text())
+    assert sh(baseline.ALIVE).returncode == 0
+    assert sh(baseline.START).returncode == 0
+    assert int((tmp_path / "vllm.pid").read_text()) == pid  # never a second server
+    subprocess.run(["kill", str(pid)])
+    time.sleep(0.5)
+    assert sh(baseline.ALIVE).returncode != 0

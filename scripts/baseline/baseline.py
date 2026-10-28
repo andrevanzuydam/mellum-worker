@@ -299,8 +299,10 @@ def cmd_up() -> None:
     say(f"instance {instance_id()} is up")
 
 
-# Bracketed so the pgrep that looks for vLLM never matches its own command line.
-VLLM_RUNNING = "[v]llm serve"
+# vLLM renames its own process, so it is tracked by the PID serve.sh keeps (it execs vLLM).
+# Both run in the box's baseline/ directory.
+ALIVE = "[ -f vllm.pid ] && kill -0 \"$(cat vllm.pid)\" 2>/dev/null"
+START = f"{ALIVE} || {{ nohup ./serve.sh > vllm.log 2>&1 < /dev/null & echo $! > vllm.pid; }}"
 
 
 def cmd_serve() -> None:
@@ -310,13 +312,13 @@ def cmd_serve() -> None:
     subprocess.run(["scp", "-i", c["VAST_SSH_KEY"], "-P", port, "-o", "StrictHostKeyChecking=accept-new",
                     *(str(HERE / f) for f in BOX_FILES), f"{host}:baseline/"], check=True)
     started = remote(c, "cd baseline && chmod +x *.sh && ./check-host.sh && "
-                        f"(pgrep -f '{VLLM_RUNNING}' >/dev/null || (nohup ./serve.sh > vllm.log 2>&1 &))")
+                        f"({START})")
     if started.returncode:
         raise BaselineError("the box failed its check; see above")
     p = pins()
     for _ in range(120):
         probe = remote(c, f"curl -sf http://127.0.0.1:{p['BASELINE_PORT']}/v1/models >/dev/null && echo up || "
-                          f"(pgrep -f '{VLLM_RUNNING}' >/dev/null && echo starting || echo dead)", capture=True)
+                          f"(cd baseline && {ALIVE} && echo starting || echo dead)", capture=True)
         state = probe.stdout.strip()
         if state == "up":
             say("the model is serving")
