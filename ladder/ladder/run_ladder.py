@@ -34,6 +34,7 @@ from .pi_profile import (
 )
 from .pi_trace import load_trace, stdout_settlement, summarize_trace
 from .leftovers import stop_leftovers
+from .host_record import gpu_identity, server_identity
 from .rungs import FIXTURES, RUNGS, Rung, copy_fixture
 from .score import score
 
@@ -1061,6 +1062,8 @@ def main(argv: list[str] | None = None) -> None:
         context = profile(client, MODEL_ID, args.profile, settings_path)
     else:
         versions["backend"] = tool_version(["llama-server", "--version"])
+        versions["server"] = server_identity(args.base_url)
+        versions["gpu"] = gpu_identity()
         context = nullcontext({})
     with context as live:
         versions["model_settings"] = {

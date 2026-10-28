@@ -1085,6 +1085,31 @@ def test_main_runs_the_admin_profile_only_for_the_omlx_provider(monkeypatch, tmp
     assert calls == []
 
 
+def test_main_records_the_server_and_gpu_for_a_non_omlx_provider(monkeypatch, tmp_path):
+    """A run on a server the ladder does not administer still records what served it and on what GPU."""
+    from ladder import run_ladder
+
+    seen = {}
+    monkeypatch.setattr(run_ladder, "resolve_pi", lambda e: {"executable": e, "version": "t"})
+    monkeypatch.setattr(run_ladder, "tool_version", lambda cmd: "t")
+    monkeypatch.setattr(run_ladder, "server_identity", lambda url: {"base": url})
+    monkeypatch.setattr(run_ladder, "gpu_identity", lambda: [{"name": "g"}])
+
+    def capture(*a, **k):
+        seen.update(a[6])
+        return {"score": {"effective_params": None}}
+
+    monkeypatch.setattr(run_ladder, "run_once", capture)
+    monkeypatch.setattr(run_ladder, "table_row", lambda record: "")
+    run_ladder.main([
+        "--profile", "tuned", "--rung", "1", "--out", str(tmp_path / "o"),
+        "--mode", "direct", "--provider", "vllm",
+        "--base-url", "http://127.0.0.1:8000/v1", "--model", "vllm/m",
+    ])
+    assert seen["server"] == {"base": "http://127.0.0.1:8000/v1"}
+    assert seen["gpu"] == [{"name": "g"}]
+
+
 @pytest.mark.parametrize("outcome", ["normal", "signal", "deadline"])
 def test_runner_process_outcomes_do_not_invent_settlement(
     monkeypatch, tmp_path, outcome
@@ -1430,3 +1455,4 @@ def test_mode_args_load_extra_extensions_and_keep_sentence_last():
     assert args[-1] == "do it"
     assert "/x/mellum-ncm.ts" in args
     assert args.index("/x/mellum-ncm.ts") < args.index("do it")
+
