@@ -15,6 +15,7 @@ Windows `run` happens inside WSL2.
     tunnel   forward the box's vLLM to localhost:LOCAL_PORT (background)
     run      check the GPU, then the ladder and the suites, here
              (--screen: screen 1's rungs and the easy suite, n = 1)
+    lessons  run every lesson's "Run it yourself" commands once per arm, here
     fetch    copy the box's vLLM log into the newest baseline run
     ssh      open a shell on the box
     down     close the tunnel and destroy the instance
@@ -28,6 +29,8 @@ named by VAST_CONFIG.
 from __future__ import annotations
 
 import hashlib
+import re
+import shlex
 import json
 import os
 import platform
@@ -464,6 +467,87 @@ def cmd_run(screen: bool = False) -> None:
     say(f"done — {out}")
 
 
+def lesson_commands(page: str) -> list[list[str]]:
+    """The harness commands in a lesson's "Run it yourself" block, one argv per arm.
+
+    Line continuations are joined and a `for x in a b; do ... done` loop is
+    expanded, so each returned command runs one suite and one arm.
+    """
+    if "### Run it yourself" not in page:
+        return []
+    section = page.split("### Run it yourself", 1)[1].split('!!! success', 1)[0]
+    commands = []
+    for block in re.findall(r"```bash\n(.*?)```", section, re.S):
+        lines = [line.strip() for line in re.sub(r"\\\n\s*", " ", block).splitlines() if line.strip()]
+        loops, body = [], []
+        for line in lines:
+            loop = re.match(r"for (\w+) in (.+?); do$", line)
+            if loop:
+                loops.append((loop.group(1), loop.group(2).split()))
+            elif line != "done":
+                body.append(line)
+        for line in body:
+            variants = [line]
+            for var, values in loops:
+                variants = [v.replace(f'"${var}"', value).replace(f"${var}", value)
+                            for v in variants for value in values]
+            commands += [shlex.split(v) for v in variants if "harness.py" in v]
+    return commands
+
+
+def smoke_argv(command: list[str], profile: Path, pi: Path, runs: Path) -> list[str]:
+    """One session per arm, through the pinned profile and Pi, into `runs`."""
+    argv, skip = [], False
+    for i, arg in enumerate(command):
+        if skip:
+            skip = False
+            continue
+        if arg in ("--repeat", "--profile", "--pi-binary", "--runs-dir"):
+            skip = True
+            continue
+        argv.append(arg)
+    return argv + ["--repeat", "1", "--profile", str(profile), "--pi-binary", str(pi), "--runs-dir", str(runs)]
+
+
+def cmd_lessons() -> None:
+    if os.name == "nt":
+        raise BaselineError("the suites need POSIX process groups; run this step inside WSL2")
+    p, c = pins(), config()
+    pi = pi_executable(p)
+    url = local_url(c)
+    if not pi.is_file():
+        raise BaselineError("no pinned Pi; run client first")
+    if not serving(url):
+        raise BaselineError(f"no model at {url}; run tunnel first")
+    out = ROOT / "runs" / f"lessons-{datetime.now(UTC):%Y%m%dT%H%M%SZ}-{git('rev-parse', 'HEAD')[:7]}"
+    profile = out / "pi-profile"
+    shutil.copytree(HERE / "pi-profile", profile)
+    models = json.loads((profile / "models.json").read_text())
+    models["providers"]["vllm"]["baseUrl"] = url
+    (profile / "models.json").write_text(json.dumps(models, indent=2) + "\n")
+    results = []
+    for page in sorted((ROOT / "learn" / "lessons").glob("*/*.md")):
+        if page.name == "index.md":
+            continue
+        number = re.search(r"^number: (\S+)", page.read_text(), re.M)
+        commands = lesson_commands(page.read_text())
+        if not commands:
+            results.append((number.group(1) if number else page.stem, page.stem, "no command", ""))
+            continue
+        for command in commands:
+            argv = smoke_argv(command, profile, pi, out / page.stem)
+            say(f"{page.stem}: {' '.join(argv[argv.index('--suite'):])}")
+            done = subprocess.run(argv, cwd=ROOT, env=client_env(p), capture_output=True, text=True)
+            last = (done.stdout.strip().splitlines() or [done.stderr.strip()[-200:]])[-1]
+            results.append((number.group(1) if number else page.stem, page.stem,
+                            "ran" if done.returncode == 0 else f"exit {done.returncode}", last))
+            print(last, flush=True)
+    lines = ["| Lesson | Page | Command | Result |", "| --- | --- | --- | --- |"]
+    lines += [f"| {n} | {s} | {status} | {last} |" for n, s, status, last in results]
+    (out / "summary.md").write_text("\n".join(lines) + "\n")
+    say(f"done — {out / 'summary.md'}")
+
+
 def cmd_fetch() -> None:
     c = config()
     last = STATE / "last-run"
@@ -506,7 +590,7 @@ def cmd_all(screen: bool = False, keep: bool = False) -> None:
 
 
 COMMANDS = {"client": cmd_client, "offers": cmd_offers, "up": cmd_up, "serve": cmd_serve,
-            "tunnel": cmd_tunnel, "run": cmd_run, "fetch": cmd_fetch, "ssh": cmd_ssh,
+            "tunnel": cmd_tunnel, "run": cmd_run, "lessons": cmd_lessons, "fetch": cmd_fetch, "ssh": cmd_ssh,
             "down": cmd_down, "all": cmd_all}
 
 

@@ -115,3 +115,59 @@ def test_the_tunnel_avoids_the_ports_the_model_serves_its_apps_on(tmp_path, monk
     assert baseline.config()["LOCAL_PORT"] not in {"3000", "5000", "8000", "8001", "8080"}
     example = baseline.load_kv(HERE / "vast.env.example")
     assert example["LOCAL_PORT"] == baseline.config()["LOCAL_PORT"]
+
+
+PAGE = '''# E9 · Example
+
+### Run it yourself
+
+Run both arms:
+
+```bash
+uv run python learn/code/harness.py run --suite medium --arm worker \\
+  --specs joined --repeat 3 --grade --deadline 2700
+uv run python learn/code/harness.py run --suite medium --arm worker \\
+  --single-prompt --repeat 3 --grade --deadline 2700
+```
+
+!!! success "Key points"
+'''
+
+LOOP = '''### Run it yourself
+
+```bash
+for suite in easy medium; do
+  for arm in bare worker; do
+    uv run python learn/code/harness.py run --suite "$suite" --arm "$arm" --repeat 3 --grade --deadline 2700
+  done
+done
+```
+
+!!! success "Key points"
+'''
+
+
+def test_lesson_commands_are_read_from_run_it_yourself():
+    cmds = baseline.lesson_commands(PAGE)
+    assert [c[c.index("--suite"):c.index("--suite") + 2] for c in cmds] == [["--suite", "medium"]] * 2
+    assert "--specs" in cmds[0] and "--single-prompt" in cmds[1]
+
+
+def test_a_shell_loop_expands_into_one_command_per_arm():
+    cmds = baseline.lesson_commands(LOOP)
+    pairs = [(c[c.index("--suite") + 1], c[c.index("--arm") + 1]) for c in cmds]
+    assert pairs == [("easy", "bare"), ("easy", "worker"), ("medium", "bare"), ("medium", "worker")]
+
+
+def test_a_page_with_no_command_yields_none():
+    assert baseline.lesson_commands("### Run it yourself\n\nNo arm to run.\n\n!!! success \"Key points\"\n") == []
+
+
+def test_a_smoke_run_is_one_session_per_arm_through_the_pinned_client(tmp_path):
+    cmd = baseline.lesson_commands(PAGE)[0]
+    out = baseline.smoke_argv(cmd, profile=tmp_path / "p", pi=tmp_path / "pi", runs=tmp_path / "r")
+    assert out[out.index("--repeat") + 1] == "1"
+    assert out[out.index("--profile") + 1] == str(tmp_path / "p")
+    assert out[out.index("--pi-binary") + 1] == str(tmp_path / "pi")
+    assert out[out.index("--runs-dir") + 1] == str(tmp_path / "r")
+    assert "--grade" in out and out[out.index("--deadline") + 1] == "2700"
