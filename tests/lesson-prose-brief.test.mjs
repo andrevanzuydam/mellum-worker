@@ -32,5 +32,5 @@ test("the prose-brief lesson rests on six sessions, three per arm", () => {
   // The old claims must be retired, not merely left out - both of them.
   assert.match(l, /retired/);
   assert.match(l, /one session per arm/i);
-  assert.match(page("lessons/index.md"), /prose-brief\.md/);
+  assert.match(page("lessons/medium/index.md"), /prose-brief\.md/);
 });

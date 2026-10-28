@@ -29,6 +29,8 @@ the arms here show the nudge never fired rather than that it worked.
     - Recognise which empty finals the nudge answers (`stop`) and which it does not (`error`, `length`).
     - Read the `Nudges` fire count before the pass count when judging a guard arm.
 
+![A small robot with an empty speech bubble being tapped on the shoulder by a guard](../../assets/illustrations/guards-for-empty-turns.webp){ .illustration }
+
 ## Problem
 
 **Badge:** `screen`
@@ -36,7 +38,7 @@ the arms here show the nudge never fired rather than that it worked.
 A small model sometimes ends a turn having said nothing and called no tool:
 an empty turn. Nothing is wrong with the request, the model is simply not
 finished, and without help the run stops there. The shipped worker answers it
-with a bounded nudge — one message, at most three times — and it answers
+with a bounded nudge (one message, at most three times) and it answers
 repetition with a loop breaker.
 
 ## Eval case
@@ -47,8 +49,8 @@ The easy suite from [Getting started](../../getting-started/suite.md), one
 prompt, graded by hidden pytest plus `ruff`, `pyrefly` and `complexipy`.
 Three sessions per arm on llama.cpp, and the arm is the guard:
 
-- `worker` — prompt v5, seven tools, nudge on, loop breaker on.
-- `no-nudge` — the same, with `MELLUM_GUARDS={"loopBreaker":true}`.
+- `worker`: prompt v5, seven tools, nudge on, loop breaker on.
+- `no-nudge`: the same, with `MELLUM_GUARDS={"loopBreaker":true}`.
 
 An arm is only an arm if the guard it removes *fires*. The reading that
 decides whether these guards are load-bearing is the fire count, not the
@@ -132,15 +134,15 @@ both are budgets, not lapses. That is the useful output of a void arm.
 
 The weakest badge is `screen`, and this page is weaker than its predecessors
 in a specific way: it has no evidence that either guard lifts a pass on this
-backend. The number it used to quote — 13/15 to 15/15 — came from oMLX rungs
+backend. The number it used to quote (13/15 to 15/15) came from oMLX rungs
 and is retired here.
 
 What survives is the mechanism and its bound, both visible in the code above,
 and a sharpened problem statement: an empty turn has several causes and the
 nudge answers exactly one. What the guards are worth is still open.
 
-What would upgrade this: a task on which an empty final carries `stop` — the
-hard suite's longer builds are the candidate — with the `Nudges` column as the
+What would upgrade this: a task on which an empty final carries `stop` (the
+hard suite's longer builds are the candidate) with the `Nudges` column as the
 reading, and a deadline long enough for that suite to finish. Until then the
 loop breaker's share is unmeasured and the nudge's is zero-fired.
 

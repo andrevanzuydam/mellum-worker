@@ -28,13 +28,15 @@ summary block per finished span instead, built after the fact.
     - Recognise how `collapseHandoffs` replaces a closed span with one summary block.
     - Tell a rationale with no arm apart from a measured finding.
 
+![Two robots buried in a growing paper tape, beside a single card passed by hand](../../assets/illustrations/intercom-block.webp){ .illustration }
+
 ## Problem
 
 **Badge:** `conjecture`
 
 When a worker delegates, the framework has a choice about what the parent sees:
 the child's transcript, kept in the parent's context, or a summary of it. Keeping
-the transcript feels safer — the parent "sees everything" — but the parent's
+the transcript feels safer (the parent "sees everything"), but the parent's
 context is re-sent on every subsequent request, so each read, edit and test run
 is paid for again on every turn of the rest of the session.
 
@@ -48,7 +50,7 @@ per request for a feature that might never be exercised.
 **Badge:** `conjecture`
 
 There is **no arm**, and the page says why: LC.8 retired the delegated child on
-2026-10-20 — the agent template, the child-only guard loading, the Worker run
+2026-10-20: the agent template, the child-only guard loading, the Worker run
 records, the skill's intercom phases and the ladder's `delegated` mode all went
 with it. A measurement needs a mechanism that ships, and this one does not.
 
@@ -86,7 +88,7 @@ the whole session's transcript.
 That is what `collapseHandoffs` in
 [`extensions/mellum-worker.ts`](https://github.com/pauleveritt/mellum-worker/blob/main/extensions/mellum-worker.ts)
 does: at the context event it replaces a closed span's messages with one handoff
-message, built from the span's own rows — the task, the files it touched, files
+message, built from the span's own rows: the task, the files it touched, files
 that are missing at handoff, and the state of its last command. An open span is
 left untouched.
 
@@ -145,7 +147,7 @@ session rather than with the work. The same reasoning applies to any framework
 that offers to keep a child's history in the parent's window.
 
 What would upgrade this: re-add a delegate mechanism, give it an arm, and measure
-the transcript against the summary on the suites — the pairing this page cannot
+the transcript against the summary on the suites, the pairing this page cannot
 do for a feature that no longer exists. Until then, the honest reading is "do not
 add this back unmeasured", which is also the rule the rest of this track follows.
 

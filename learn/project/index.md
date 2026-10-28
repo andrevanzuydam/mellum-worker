@@ -1,9 +1,11 @@
 # How this project works
 
-`mellum-worker` ships Mellum 2.1 as a bounded coding worker for Pi and
+`mellum-worker` ships Mellum 2.1 as a bounded coding worker for Pi
 and keeps the ladder that measures it and the Learning Center that
 teaches it. This section is for people working on the repository. Learners
 start at [Getting started](../getting-started/index.md).
+
+![A small robot in a tidy workshop with a pegboard of tools and a checklist](../assets/illustrations/project.webp){ .illustration }
 
 ## What ships
 

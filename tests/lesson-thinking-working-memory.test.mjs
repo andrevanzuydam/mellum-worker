@@ -28,7 +28,7 @@ test("the thinking lesson says the arm has no instrument on llama.cpp", () => {
   for (const text of ["no supported way to strip thinking", "not run: no strip arm exists",
     "max_tokens", "output budget"])
     assert.ok(l.includes(text), `lesson lacks ${text}`);
-  // A missing measurement is —, never 0.
-  assert.ok(l.includes("| — |"), "missing metrics must be —");
-  assert.match(page("lessons/index.md"), /thinking-working-memory\.md/);
+  // A missing measurement is n/a, never 0.
+  assert.ok(l.includes("| n/a |"), "missing metrics must be n/a");
+  assert.match(page("lessons/medium/index.md"), /thinking-working-memory\.md/);
 });

@@ -29,5 +29,5 @@ test("the intercom lesson is a rationale, not a measurement", () => {
     "LC.8", "2,711", "1,220"].slice(0, 5))
     assert.ok(l.toLowerCase().includes(text.toLowerCase()), `lesson lacks ${text}`);
   assert.match(l, /no arm/i);
-  assert.match(page("lessons/index.md"), /intercom-block\.md/);
+  assert.match(page("lessons/hard/index.md"), /intercom-block\.md/);
 });

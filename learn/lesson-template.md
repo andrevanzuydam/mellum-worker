@@ -26,6 +26,8 @@ backends: [omlx, mlx-lm] # where the badged evidence ran; llama.cpp once re-run
 
     - What the reader can do or recognise after the page, verb first.
 
+![A small robot filling in an empty page layout of boxes in a fixed order](assets/illustrations/lesson-template.webp){ .illustration }
+
 ## Problem
 
 **Badge:** `conjecture` ([badges](about/evidence.md#badges))
@@ -74,7 +76,7 @@ easy/medium/hard. **Size the screen by what you read:**
   One session settles presence, and it is the cheapest evidence a lesson can
   carry.
 - **An absence or a comparison needs n = 3 or more.** "The nudge never fired",
-  "no arm separated", "the layout did not change what the worker reached" — one
+  "no arm separated", "the layout did not change what the worker reached": one
   quiet session is not an absence, and one session per arm is not a comparison.
   At n = 1 the only honest comparative sentence is *"one session each, and X did
   Y"*, which is an observation, not a result.
@@ -90,7 +92,7 @@ A `screen` badge is required at either size, and no screen is worded as a rate.
 | hard | before | | | | | | | | |
 | hard | after | | | | | | | | |
 
-A missing metric is `—`, never `0`. A code-only lesson may use Checks alone and
+A missing metric is `n/a`, never `0`. A code-only lesson may use Checks alone and
 say why there is no arm.
 
 ### Quality and budget
@@ -106,7 +108,7 @@ Report the **nudge fires** in the same breath as the passes. A nudge only
 fires on an empty turn, so the fire count is what separates "the guard was
 needed" from "the guard had nothing to do", and an arm table without it
 leaves the pathology it exists for invisible. If the run records no fire
-count, the cell is `—` and the page says the reading is missing rather than
+count, the cell is `n/a` and the page says the reading is missing rather than
 implying zero.
 
 ### Checks
@@ -156,8 +158,8 @@ uv run python learn/code/harness.py run --suite easy --arm worker --repeat 3 --g
 
 ### Repository conventions
 
-- A lesson opens with a two-sentence paragraph — the problem, then the
-  solution — 45 words or fewer, no heading, no badge and no link.
+- A lesson opens with a two-sentence paragraph (the problem, then the
+  solution) 45 words or fewer, no heading, no badge and no link.
 
 - One lesson is one Markdown file under `learn/lessons/<tier>/`, with the
   frame above: the Overview box after the opening, the six steps, then Run it

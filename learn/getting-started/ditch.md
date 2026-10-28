@@ -7,12 +7,12 @@ authors: [Paul Everitt, Andre van Zuydam]
 backends: [llamacpp]
 ---
 
-# The Ditch
+# The ditch
 
-![img.png](img.png)
+![A small robot cheerfully driving a little car that has tipped off the road into a ditch](../assets/illustrations/ditch.webp){ .illustration }
 
 Give a small model an open-ended job, and it will drive, just not where you want it to. It is fast, and it
-will tell you it succeeded. This lesson is the ditch: one session, three prompts, and a final report that does 
+will tell you it succeeded. This step is the ditch: one session, three prompts, and a final report that does
 not survive being checked.
 
 ## The prompts
@@ -44,7 +44,7 @@ pi -p --session-id clinic --session-dir /tmp/clinic-session \
   --no-themes --no-context-files "Build AgentClinic: a small clinic appointment app. Patients book appointments with doctors, and a doctor can see their day. Make it work."
 ```
 
-Windows(cmd)
+Windows (cmd)
 ```cmd
 set "PI_CODING_AGENT_DIR=%CD%\learn\code\profile"
 ```
@@ -56,7 +56,7 @@ pi -p --session-id clinic --session-dir "%TEMP%\clinic-session" ^
   --no-themes --no-context-files "Build AgentClinic: a small clinic appointment app. Patients book appointments with doctors, and a doctor can see their day. Make it work."
 ```
 
-Windows(Powershell)
+Windows (PowerShell)
 ```powershell
 $env:PI_CODING_AGENT_DIR = "$PWD\learn\code\profile"
 ```
@@ -89,7 +89,7 @@ Get-Content "$env:TEMP\llamacpp-mellum.log" -Wait -Tail 5
 
 
 Run the same command with prompts 2 and 3. Stop it if it runs long; without a
-bound the first attempt at this ran fifteen minutes and took Node's heap with
+bound, the first attempt at this ran fifteen minutes and took Node's heap with
 it.
 
 ## What it said
@@ -131,7 +131,7 @@ This is a catalogue in one session: **false success** (a final report that
 claims a working app), **fabricated evidence** (a test run that never
 happened), **a dropped requirement** (the date filter), **no self-check**,
 and, unbounded, a run that grows until the host gives up. The full list is the
-[Pathologies page](../pathologies.md) the center keeps — every known failure
+[Pathologies page](../pathologies.md) the center keeps: every known failure
 with the record that shows it and the shape that answers it.
 
 The model is not lazy; it is confident. It answered the request it imagined,
@@ -147,6 +147,6 @@ the tests and the command yourself, which is what exposed both failures.
 
 This is n = 1: one session, on the author's machine, with one model. It shows
 what can happen, not how often. Read it as a lead, not a rate. The next
-lesson builds the harness that makes this failure repeatable — the same
+lesson builds the harness that makes this failure repeatable: the same
 prompts, an isolated directory, and the tests hidden until the end.
 

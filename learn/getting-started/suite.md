@@ -9,10 +9,12 @@ backends: [llamacpp]
 
 # Eval suites and the telemetry
 
-Lesson 3 made one isolated run. This one runs **eval suites**: whole projects
+Step 3 made one isolated run. This one runs **eval suites**: whole projects
 the model has to build, with a mission, a tech stack, a roadmap, a sequence of
 prompts, and a hidden grader. You run them, read the score, and read the trace
 to see why.
+
+![A small robot facing three crates of increasing size beside a wall gauge](../assets/illustrations/suite.webp){ .illustration }
 
 ## What an eval suite is
 
@@ -106,20 +108,20 @@ one thing wrong. A grader that cannot tell them apart is not a grader.
 
 1. The prompts are sent, in order, in one isolated session.
 2. The child exits; only then are the hidden graders copied into the run.
-3. pytest runs it. Every test ID in `expected.json` must appear as `PASSED`;
+3. pytest runs them. Every test ID in `expected.json` must appear as `PASSED`;
    a missing test is a finding, not a silent pass.
 4. `--grade` adds static analysis on the model's files, before the tests are
    copied in:
-   - **`ruff`** — correctness rules `F,E9` (undefined names, unused imports);
+   - **`ruff`**: correctness rules `F,E9` (undefined names, unused imports);
      a finding fails the session.
-   - **`complexipy`** — cognitive complexity above 10; a finding fails the
+   - **`complexipy`**: cognitive complexity above 10; a finding fails the
      session.
-   - **`pyrefly`** — types, advisory. It reports, it does not fail the session.
+   - **`pyrefly`**: types, advisory. It reports, it does not fail the session.
 5. The line prints the verdict and the counts; the grader lines print beside
    it. The run's `run.json` also names the expected tests that did not pass and
    groups them by grader module, so a session that fails four of six checks
-   says which module those four came from. A grader that cannot run at all —
-   a collection error, a module the workspace never created — records
+   says which module those four came from. A grader that cannot run at all (
+   a collection error, a module the workspace never created) records
    `checks_ran: false` beside the count, because "the checks failed" and "the
    checks never ran" are different findings. It is still a failure: nothing
    passed.
@@ -144,11 +146,11 @@ the result cannot be trusted.
 
 Every run writes `trace.jsonl` beside its workspace. The rows to read first:
 
-- `provider_request` — one turn sent to the model;
-- `tool_call` and `tool_result` — what it reached for, and whether the call
+- `provider_request`: one turn sent to the model;
+- `tool_call` and `tool_result`: what it reached for, and whether the call
   errored;
-- `message_end` — a message, including the final reply's text;
-- `agent_settled` — the run ended.
+- `message_end`: a message, including the final reply's text;
+- `agent_settled`: the run ended.
 
 A hard run that fails with 11 requests and 2 tool errors kept going and kept
 hitting errors; a run that fails with 1 request and no tool calls wrote
@@ -167,8 +169,8 @@ not one session.
 ## What this does and does not say
 
 These suites are a teaching harness: one machine, one model, one session per
-suite. They show you *where* to look — a tool error, a missing file, a final
-reply that claims success, a test that was never collected — not how often a
+suite. They show you *where* to look (a tool error, a missing file, a final
+reply that claims success, a test that was never collected), not how often a
 model fails. A single session shows you where to look; a preregistered
 reference run on llama.cpp, recorded in `docs/superpowers/research/`, is what
 findings lessons cite.

@@ -28,5 +28,5 @@ test("the facts lesson is a null with the injection count beside it", () => {
     "Do not: start servers", "null"])
     assert.ok(l.includes(text), `lesson lacks ${text}`);
   assert.match(l, /llama\.cpp/);
-  assert.match(page("lessons/index.md"), /project-facts\.md/);
+  assert.match(page("lessons/easy/index.md"), /project-facts\.md/);
 });

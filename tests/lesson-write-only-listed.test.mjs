@@ -27,5 +27,5 @@ test("the layout lesson names its instrument and its null", () => {
   for (const text of ["layout.json", "out_of_layout", "0", "none",
     "The ditch", "ignore"])
     assert.ok(l.toLowerCase().includes(text.toLowerCase()), `lesson lacks ${text}`);
-  assert.match(page("lessons/index.md"), /write-only-listed\.md/);
+  assert.match(page("lessons/easy/index.md"), /write-only-listed\.md/);
 });

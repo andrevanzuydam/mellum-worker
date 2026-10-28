@@ -14,6 +14,8 @@ is small enough to read: each run gets a fresh directory, its own copy of the
 profile, a child `pi` and a score. It is a teaching tool; `learn/code/harness.py` is the measured instrument, and
 findings lessons cite the suites.
 
+![A small robot working inside a glass test box while an arm outside holds a clipboard and stopwatch](../assets/illustrations/harness.webp){ .illustration }
+
 ## Why a fresh directory
 
 Three things make a score mean something:
@@ -58,7 +60,7 @@ not that run.
 ## Run it
 
 ```bash
-uv run scripts/backend.py start      # the server from lesson 1
+uv run scripts/backend.py start      # the server from step 1
 uv run learn/code/harness.py run --suite easy
 ```
 
@@ -79,7 +81,7 @@ uv run learn/code/harness.py run --suite easy --repeat 3
 
 Each repeat starts from a fresh workspace; the lines are tagged `[1/3]` and
 the summary is `easy: 3/3 sessions passed`. Two or three sessions are still a
-lead, not a rate; lesson 4 explains why, and a rate needs a preregistered run
+lead, not a rate; step 4 explains why, and a rate needs a preregistered run
 with its arms and n fixed first.
 
 A suite may also ship a **spec variant**: the same project with its phased
@@ -104,10 +106,10 @@ prompt asking for phase 1, and the tests that check it. The prompt goes to
 
 The run directory keeps everything the score rested on:
 
-- `prompt.txt` — exactly what the child was asked;
-- `workspace/` — what it wrote, with `tests/` copied in once it exited;
-- `profile/` — the private Pi profile used for this run;
-- `trace.jsonl` — the recorder's rows: requests, tool calls, tool errors and
+- `prompt.txt`: exactly what the child was asked;
+- `workspace/`: what it wrote, with `tests/` copied in once it exited;
+- `profile/`: the private Pi profile used for this run;
+- `trace.jsonl`: the recorder's rows: requests, tool calls, tool errors and
   the final message.
 
 `PASS` means the tests passed. `FAIL` still leaves the run in place and prints
@@ -118,6 +120,6 @@ thing, or wrote something the tests could not import.
 
 The numbers here are for you while you learn. They are not preregistered and they
 run on one machine; a lesson's `reference-run` is the preregistered version of
-the same run. Lesson 4 runs the eval
+the same run. Step 4 runs the eval
 suites and reads the traces; the reference run on llama.cpp is a separate
 phase.

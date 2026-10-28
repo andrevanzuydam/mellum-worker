@@ -22,7 +22,6 @@ const PAGES = [
   "getting-started/suite.md",
   "getting-started/worker-extension.md",
   "lessons/index.md",
-  "lessons/retired.md",
   ...["easy", "medium", "hard"].flatMap((tier) =>
     readdirSync(resolve(ROOT, "learn/lessons", tier))
       .filter((f) => f.endsWith(".md"))
@@ -57,7 +56,7 @@ test("the glossary is parsed by zensical-glossary", () => {
   const glossary = page("glossary.md");
   for (const term of ["screen", "nudge", "empty-final nudge", "no-nudge",
     "Baseline Worker", "Baseline Pi"])
-    assert.match(glossary, new RegExp(`^### ${term}$`, "m"));
+    assert.match(glossary, new RegExp(`^### ${term}$`, "mi"));
 });
 
 test("the site build runs from the project virtualenv", () => {
@@ -84,7 +83,7 @@ test("CI builds the site with uv run, not uvx", () => {
 
 test("credits name both authors and Tina4", () => {
   const c = page("credits.md");
-  assert.match(c, /a collaboration between Andre van Zuydam and Paul Everitt/);
+  assert.match(c, /a collaboration between Paul Everitt and Andre van Zuydam/);
   assert.match(c, /\[Tina4\]\(https?:\/\//);
 });
 
@@ -123,9 +122,9 @@ test("troubleshooting is a standalone Getting Started page", () => {
 
 test("the home page links the Introduction and counts five lessons", () => {
   const index = page("index.md");
-  assert.match(index, /\[Introduction\]\(introduction\/index\.md\) — Demystifying/);
-  assert.match(index, /five lessons/);
-  assert.doesNotMatch(index, /three lessons/);
+  assert.match(index, /\[Introduction\]\(introduction\/index\.md\): Demystifying/);
+  assert.match(index, /five steps/);
+  assert.doesNotMatch(index, /three (lessons|steps)/);
 });
 
 test("the ditch drops author notes and states why it checked Python", () => {
@@ -209,7 +208,7 @@ test("the first findings lesson follows the six steps and names its badge", () =
   sections.forEach((s, i) => assert.equal(badge(s), i < 5, `step ${i + 1}`));
   assert.match(l, /weakest badge (?:here )?is `(?:reference-run|cited|screen|conjecture)`/);
   assert.ok(!/docs\/ladder\//.test(l), "lesson links a ladder record");
-  assert.match(page("lessons/index.md"), /primary-agent\.md/);
+  assert.match(page("lessons/hard/index.md"), /primary-agent\.md/);
 });
 
 test("the baseline shows the actual worker code", () => {
@@ -219,14 +218,11 @@ test("the baseline shows the actual worker code", () => {
     assert.ok(l.includes(text), `baseline lacks ${text}`);
 });
 
-test("the Lessons index introduces the tiers and maps the old numbers", () => {
+test("the Lessons index introduces the three tiers", () => {
   const index = page("lessons/index.md");
   for (const tier of ["easy", "medium", "hard"]) assert.match(index, new RegExp(`\\(${tier}/index\\.md\\)`));
   assert.match(index, /grid cards/);
-  assert.match(index, /^## Where the old numbers went$/m);
-  for (const n of ["E1", "E3", "E4", "E5", "M1", "M2", "M3", "M4", "H1", "H2"])
-    assert.match(index, new RegExp(`\\| ${n} \\|`), `index does not map ${n}`);
-  assert.match(page("lessons/retired.md"), /Who holds the loop/);
+  assert.doesNotMatch(index, /old numbers|retired/i);
 });
 
 test("the lesson template asks for evidence and records the conventions", () => {
@@ -275,7 +271,7 @@ test("the second findings lesson follows the six steps and names its badge", () 
   sections.forEach((s, i) => assert.equal(badge(s), i < 5, `step ${i + 1}`));
   assert.match(l, /weakest badge is `(?:reference-run|cited|screen|conjecture)`/);
   assert.ok(!/docs\/ladder\//.test(l), "lesson links a ladder record");
-  assert.match(page("lessons/index.md"), /short-prompt\.md/);
+  assert.match(page("lessons/easy/index.md"), /short-prompt\.md/);
 });
 
 test("learn/ never says tutorial or case study", () => {
@@ -290,7 +286,7 @@ test("reference-run is earned on the suites, not the ladder", () => {
   assert.match(row, /preregistration/);
   assert.doesNotMatch(row, /docs\/ladder\//);
   assert.match(evidence.split("\n").find((l) => l.startsWith("| `cited`")), /docs\/ladder\//);
-  const entry = page("glossary.md").split("### reference-run")[1].split("###")[0];
+  const entry = page("glossary.md").split("### Reference-run")[1].split("###")[0];
   assert.match(entry, /preregistered run on llama\.cpp/);
   assert.doesNotMatch(entry, /ladder run/);
 });
@@ -314,10 +310,10 @@ test("the run record groups the failed checks by module", () => {
   const harness = page("getting-started/harness.md");
   assert.match(harness, /--specs joined\|split/);
   assert.match(harness, /spec-variants|spec variant/);
-  const entry = page("glossary.md").split("### failed checks")[1].split("###")[0];
+  const entry = page("glossary.md").split("### Failed checks")[1].split("###")[0];
   assert.match(entry, /module/);
   assert.match(suite, /checks_ran: false/);
-  assert.match(page("glossary.md"), /^### checks did not run$/m);
+  assert.match(page("glossary.md"), /^### checks did not run$/mi);
 });
 
 test("the lesson template opens with the two-sentence paragraph", () => {

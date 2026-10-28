@@ -5,6 +5,8 @@ of the task it is handed. Each lesson stands on its own; you will read a trace,
 so [Getting started](../../getting-started/index.md) through its harness page
 is the only prerequisite.
 
+![A small robot studying a long unrolled scroll through a magnifying glass](../../assets/illustrations/tier-medium.webp){ .illustration }
+
 <div class="grid cards" markdown>
 
 -   **[M1 · Thinking is working memory](thinking-working-memory.md)**
@@ -36,13 +38,3 @@ is the only prerequisite.
     used a third of the context. *(Paul)*
 
 </div>
-
-## Not yet written
-
-These are candidates: each needs a recorded screen before it gets a page.
-
-- **M5 · The rule it knew and skipped** — It read the rule, then left the
-  field `None` in one run of three; a clause-by-clause check against the spec
-  closed it. *(Andre)*
-- **M6 · Does quantization cost passes?** — The same pinned stack with BF16
-  and 6-bit weights, everything else held fixed.

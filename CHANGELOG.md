@@ -6,6 +6,17 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `uv run scripts/baseline/baseline.py lessons` runs every lesson's "Run it
+  yourself" commands once per arm against the baseline's vLLM box, with the
+  pinned Pi, and writes a summary, so each lesson's command is proven to run
+  and grade end to end.
+
+- Every page of the Learning Center has an illustration in one shared flat
+  style, generated from `learn/assets/illustrations/prompts.toml` by
+  `uv run scripts/illustrate.py` (fixed seed per image, so they regenerate the
+  same), and evidence badges render as icon pills that link to their
+  definitions.
+
 - A replicable vLLM baseline, `scripts/baseline/`: Pi and the model with no
   plugins or extensions, on every ladder rung and eval suite. vLLM runs on a
   rented GPU (pinned: RTX A6000 48 GB, about $0.45/h on vast.ai); Pi and the
@@ -427,6 +438,13 @@ Versions match git tags; pin one in both install lines.
   removed the latter.
 
 ### Changed
+
+- The Learning Center is ready to read: every page was proofread and has no
+  em dashes; headings are sentence case; Getting started is five numbered
+  steps (not "lessons"); the glossary is grouped into sections; Home, the
+  Introduction and Pathologies have side menus; About sits last with Project,
+  the lesson template and Credits under it; Paul is credited first; and the
+  Tina4 link goes to tina4.com.
 
 - The Lessons section is now three tiers that rise in level — Easy, Medium and
   Hard (orchestration and advanced concepts) — each in its own folder with a

@@ -1,7 +1,7 @@
 ---
 title: Project facts
 tier: easy
-number: E4
+number: E3
 time: 5 min read · 45 min to run
 track: lessons
 position: 5
@@ -10,12 +10,12 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# E4 · Project facts
+# E3 · Project facts
 
 A small model dropped into a workspace has to infer how the project is built,
 and a plausible guess survives several turns. The worker appends a short,
-switchable block of project facts to every request, and this run found no pass
-moved.
+switchable block of project facts to every request, and this run found it moved
+no pass.
 
 !!! abstract "Overview"
 
@@ -29,6 +29,8 @@ moved.
     - Switch the facts block off with `MELLUM_MODE_FACTS=0` to make a comparison arm.
     - Count injected requests before counting passes.
     - Recognise a null result, and a lead that is not yet a finding.
+
+![A small robot at a workbench reading an index card pinned above it](../../assets/illustrations/project-facts.webp){ .illustration }
 
 ## Problem
 
@@ -50,8 +52,8 @@ The easy suite from [Getting started](../../getting-started/suite.md), one
 prompt, graded by hidden pytest plus `ruff`, `pyrefly` and `complexipy`. Three
 sessions per arm on llama.cpp, one change between them:
 
-- `worker` — prompt v5, seven tools, guards on, facts on.
-- `no-facts` — the same with `MELLUM_MODE_FACTS=0`, which makes
+- `worker`: prompt v5, seven tools, guards on, facts on.
+- `no-facts`: the same with `MELLUM_MODE_FACTS=0`, which makes
   [`extensions/mellum-facts.ts`](https://github.com/pauleveritt/mellum-worker/blob/main/extensions/mellum-facts.ts)
   return `source: "off"` and append nothing.
 
@@ -78,8 +80,8 @@ counts requests carrying `Project facts:` before it counts passes:
 `7009b6` is excluded: the grader was touched during the run, so the worker is
 **1 of 2 valid sessions**, not 1 of 3.
 
-The counts do what the arm needs — every worker request carries the block, no
-`no-facts` request does — so the arm is neither void nor thin. It simply found
+The counts do what the arm needs (every worker request carries the block, no
+`no-facts` request does), so the arm is neither void nor thin. It simply found
 no difference in passes: 1/2 against 0/3, one valid session apart.
 
 ## Solution
@@ -134,9 +136,9 @@ killed the child at 600 s.
 | `64c6ec` | `uv run --offline python app.py` | 143 s |
 
 The bullet they did not receive is `- Do not: start servers`. The same day's
-`worker` sessions reach for servers too — `pip install uvicorn`,
-`python -c "import uvicorn"`, and one `python app.py > app.log 2>&1 &` — and
-none of them ended a run, and the one that started the app backgrounded it.
+`worker` sessions reach for servers too (`pip install uvicorn`,
+`python -c "import uvicorn"`, and one `python app.py > app.log 2>&1 &`), and
+none of them ended a run; the one that started the app backgrounded it.
 So the axis is not "servers" but "foreground and never returns".
 
 **This is a lead, not a finding.** One difference, n=3, on a machine whose
@@ -150,15 +152,15 @@ The weakest badge is `screen`: one suite of one task, three sessions, one
 machine, and a null. Project facts did not change what the easy suite passed
 here.
 
-The claim this page used to carry — a 600-character facts section taking a
-four-phase build from 1/12 to 9/12 — came from a different instrument on a
+The claim this page used to carry, a 600-character facts section taking a
+four-phase build from 1/12 to 9/12, came from a different instrument on a
 different backend and is retired. What replaces it is narrower and more
 useful: the block provably reaches the model on every request, and on this
 backend it is not what moves a pass rate.
 
 What would upgrade this: a task where the test command is genuinely unknown
 (the suites all ship one), and an arm whose reading is hung tool calls rather
-than passes — the foreground-server question above, which needs its own
+than passes: the foreground-server question above, which needs its own
 preregistration and belongs to the Pathologies page.
 
 ### Run it yourself

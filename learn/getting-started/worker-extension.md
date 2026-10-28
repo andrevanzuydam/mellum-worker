@@ -14,10 +14,12 @@ that factory with an `ExtensionAPI`; the extension registers commands, tools,
 or event handlers. It runs inside the Pi process with the same permissions, so
 load only extensions you trust.
 
-The worker is `extensions/mellum-worker.ts`. This lesson is about the
+The worker is `extensions/mellum-worker.ts`. This step is about the
 mechanism: the hooks, events and callbacks that let one extension change the
 prompt, the tool set and the guards. What each change buys is measured in the
 Lessons track.
+
+![A small robot clicking a new modular attachment onto its arm](../assets/illustrations/worker-extension.webp){ .illustration }
 
 ## A minimal extension
 

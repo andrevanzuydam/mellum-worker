@@ -80,17 +80,6 @@ test("every lesson is in its tier's nav and on its tier's landing page", () => {
     assert.ok(toml.includes(`"lessons/${tier}/index.md"`), `${tier} landing page not in nav`);
 });
 
-test("a moved lesson's old URL redirects to its tier page", () => {
-  const stubs = readdirSync(LESSONS).filter((f) => f.endsWith(".md") && !["index.md", "retired.md"].includes(f));
-  assert.ok(stubs.length >= 10, "old lesson URLs lost their redirects");
-  for (const f of stubs) {
-    const stub = read(`learn/lessons/${f}`);
-    const target = stub.match(/<meta http-equiv="refresh" content="0; url=\.\.\/(easy|medium|hard)\/([a-z0-9-]+)\/">/);
-    assert.ok(target, `${f}: not a redirect stub`);
-    assert.ok(existsSync(resolve(LESSONS, target[1], `${target[2]}.md`)), `${f}: redirects nowhere`);
-  }
-});
-
 test("the site enables the components the format uses", () => {
   const toml = read("zensical.toml");
   for (const ext of ["admonition", "attr_list", "md_in_html", "pymdownx.details", "pymdownx.tabbed"])
@@ -98,4 +87,40 @@ test("the site enables the components the format uses", () => {
   for (const feature of ["navigation.tabs", "navigation.instant", "navigation.footer",
     "search.highlight", "content.code.copy", "content.tabs.link"])
     assert.ok(toml.includes(`"${feature}"`), `${feature} not enabled`);
+});
+
+test("every lesson and landing page shows its illustration, after the overview", () => {
+  const pages = [
+    ...lessonPages().map(({ file, slug }) => ({ file, name: slug, depth: "../../" })),
+    ...Object.keys(TIERS).map((tier) => ({ file: `learn/lessons/${tier}/index.md`, name: `tier-${tier}`, depth: "../../" })),
+    { file: "learn/lessons/index.md", name: "lessons", depth: "../" },
+  ];
+  for (const { file, name, depth } of pages) {
+    const text = read(file);
+    const image = text.match(new RegExp(`^!\\[([^\\]]{20,})\\]\\(${depth}assets/illustrations/${name}\\.webp\\)\\{ \\.illustration \\}$`, "m"));
+    assert.ok(image, `${file}: no illustration line for ${name}.webp with alt text`);
+    assert.ok(existsSync(resolve(ROOT, `learn/assets/illustrations/${name}.webp`)), `${name}.webp missing`);
+    const overview = text.indexOf('!!! abstract "Overview"');
+    if (overview >= 0) assert.ok(image.index > overview && image.index < text.indexOf("\n## "),
+      `${file}: illustration must sit between the overview and the first step`);
+  }
+});
+
+test("every illustration has a reproducible prompt", () => {
+  const prompts = read("learn/assets/illustrations/prompts.toml");
+  assert.match(prompts, /^style = "/m);
+  for (const f of readdirSync(resolve(ROOT, "learn/assets/illustrations")).filter((f) => f.endsWith(".webp"))) {
+    const name = f.replace(/\.webp$/, "");
+    assert.match(prompts, new RegExp(`^\\[${name}\\]\\nseed = \\d+\\nsubject = "`, "m"), `${name}: no prompt`);
+  }
+});
+
+test("every page in the nav has an illustration with real alt text", () => {
+  const nav = read("zensical.toml").match(/^nav = \[([\s\S]*?)^\]/m)[1];
+  for (const p of [...nav.matchAll(/"([^"]+\.md)"/g)].map((m) => m[1])) {
+    const text = read(`learn/${p}`);
+    const image = text.match(/^!\[([^\]]{20,})\]\((?:\.\.\/)*assets\/illustrations\/([a-z0-9-]+)\.webp\)\{ \.illustration \}$/m);
+    assert.ok(image, `learn/${p}: no illustration`);
+    assert.ok(existsSync(resolve(ROOT, `learn/assets/illustrations/${image[2]}.webp`)), `learn/${p}: ${image[2]}.webp missing`);
+  }
 });

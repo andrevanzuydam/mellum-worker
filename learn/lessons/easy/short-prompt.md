@@ -1,7 +1,7 @@
 ---
 title: A short prompt, not a procedure
 tier: easy
-number: E5
+number: E4
 time: 4 min read · 35 min to run
 track: lessons
 position: 2
@@ -10,7 +10,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# E5 · A short prompt, not a procedure
+# E4 · A short prompt, not a procedure
 
 A prompt that narrates a six-step procedure gives a small model more to
 follow than the project needs, and every line is paid on every request. What
@@ -30,6 +30,8 @@ buying a pass.
     - Keep two samples apart rather than pooling them.
     - Recognise a null and say what it does and does not rule out.
 
+![A small robot holding a short note beside a long unused scroll on the floor](../../assets/illustrations/short-prompt.webp){ .illustration }
+
 ## Problem
 
 **Badge:** `screen`
@@ -40,7 +42,7 @@ from the files, and every line has to be paid for on every request.
 
 That is the argument. The measurement below does something less comfortable
 with it: it shows the prompt not changing the pass count at all, while the
-context cost moves — in the direction nobody wants.
+context cost moves, in the direction nobody wants.
 
 ## Eval case
 
@@ -50,8 +52,8 @@ The easy suite from [Getting started](../../getting-started/suite.md), one
 prompt, graded by hidden pytest plus `ruff`, `pyrefly` and `complexipy`.
 Three sessions per arm on llama.cpp, one change between them:
 
-- `worker` — prompt v5, the 643-character task prompt replacing Pi's own.
-- `no-prompt` — `MELLUM_WORKER_PROMPT=pi`: Pi's base prompt kept, everything
+- `worker`: prompt v5, the 643-character task prompt replacing Pi's own.
+- `no-prompt`: `MELLUM_WORKER_PROMPT=pi`: Pi's base prompt kept, everything
   else in the worker unchanged. The facts block, the guards and the seven
   tools are identical in both arms.
 
@@ -78,9 +80,9 @@ Per session, easy only:
 | `no-prompt` | 3 | no | 26 | 6 | 4,853 | 179 s |
 
 The pass counts are one session apart in both samples: **3/9 against 3/9**
-and **2/3 against 1/3**. The context numbers are not so consistent — this
+and **2/3 against 1/3**. The context numbers are not so consistent: this
 run's passing `no-prompt` session peaked at 20,773 against the worker's 3,404
-in its passing session, and the worker's losing session peaked at 33,443 — so
+in its passing session, and the worker's losing session peaked at 33,443, so
 the direction of the context saving is not established here either. It was in
 the 45-session record, on three suites.
 
@@ -94,7 +96,7 @@ prompt.
 
 The design rule that built it survives the null: a line earns its place when a
 run says so, and the one that cost a pass came back. That rule was exercised
-on the oMLX ladder, which is why this page no longer shows those arms — the
+on the oMLX ladder, which is why this page no longer shows those arms; the
 current surface is `prompts/mellum-worker.md`, and it is worth reading as one
 page rather than as a procedure.
 
@@ -116,8 +118,8 @@ table separates them.
 
 The weakest badge is `screen`, and this page is a **null**: on the easy suite
 at n=3 the worker prompt did not beat Pi's own prompt, and the same was true
-at 3/9 against 3/9 across three suites. The claim this page used to make —
-that removing each line was paid for by a pass — rested on ladder ablations
+at 3/9 against 3/9 across three suites. The claim this page used to make,
+that removing each line was paid for by a pass, rested on ladder ablations
 that are no longer cited here.
 
 What survives is the shape and the shipped artifact: 643 characters, no
@@ -125,7 +127,7 @@ procedure, a rule for what earns a line. What does not survive is any
 statement that the prompt is worth a pass.
 
 What would upgrade this: a longer prompt actually measured against v5 on the
-suites — the arms exist, and the comparison has never been run on this
+suites: the arms exist, and the comparison has never been run on this
 backend. A null against Pi's prompt is not a null against a bloated one.
 
 ### Run it yourself

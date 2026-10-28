@@ -6,6 +6,8 @@ repo_url = "https://github.com/pauleveritt/mellum-worker"
 docs_dir = "learn"
 site_dir = "site"
 exclude_docs = "code/"
+extra_css = ["stylesheets/extra.css"]
+extra_javascript = ["javascripts/badges.js"]
 nav = [
   { "Home" = "index.md" },
   { "Introduction" = "introduction/index.md" },
@@ -13,7 +15,6 @@ nav = [
     "getting-started/harness.md",
     "getting-started/suite.md", "getting-started/worker-extension.md",
     "getting-started/troubleshoot.md"] },
-  { "Pathologies" = "pathologies.md" },
   { "Lessons" = [
     "lessons/index.md",
     { "Easy" = ["lessons/easy/index.md", "lessons/easy/baseline.md",
@@ -25,16 +26,16 @@ nav = [
       "lessons/medium/one-spec-per-phase.md", "lessons/medium/prose-brief.md"] },
     { "Hard" = ["lessons/hard/index.md", "lessons/hard/primary-agent.md",
       "lessons/hard/intercom-block.md"] },
-    "lessons/retired.md",
   ] },
+  { "Pathologies" = "pathologies.md" },
+  { "Glossary" = "glossary.md" },
   { "About" = [
     "about/index.md", "about/how-to-read.md",
     "about/evidence.md", "about/contributing.md",
+    { "Project" = ["project/index.md", "project/toolchain.md"] },
+    { "Lesson template" = "lesson-template.md" },
+    "credits.md",
   ] },
-  { "Project" = ["project/index.md", "project/toolchain.md"] },
-  { "Glossary" = "glossary.md" },
-  { "Lesson template" = "lesson-template.md" },
-  { "Credits" = "credits.md" },
 ]
 
 [project.theme]
@@ -54,6 +55,7 @@ features = [
   "navigation.top",
   "navigation.tracking",
   "search.highlight",
+  "toc.integrate",
 ]
 
 [[project.theme.palette]]

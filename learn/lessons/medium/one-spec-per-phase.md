@@ -28,19 +28,21 @@ spec can be checked before the next arrives.
     - Recognise a workspace that does not import by reading `checks_ran` before `failed_checks`.
     - Write acceptance criteria into the spec where the brief points.
 
+![A small robot picking up the first of four cards laid out in a row](../../assets/illustrations/one-spec-per-phase.webp){ .illustration }
+
 ## Problem
 
 **Badge:** `screen`
 
 A four-phase build can carry its requirements as one `specs/roadmap.md` holding
 every phase, or as one file per phase. The old claim was that the joined file
-loses the last phase — the model cannot find the line that asks for it, so the
+loses the last phase: the model cannot find the line that asks for it, so the
 final id never lands. That claim came from ladder rungs that are retired, and it
 does not reproduce here.
 
 What this run produced instead is worse and more common: a workspace that no
 longer imports. Twice in six sessions the worker finished having reported
-success while the project could not be loaded — `SyntaxError: unterminated
+success while the project could not be loaded: `SyntaxError: unterminated
 triple-quoted string literal` in `app.py`, and a `Complaint` whose `timestamp`
 had no default, so `models.py` could not seed itself. Nothing was checked in
 either session, and both look identical to "every check failed" if you only read
@@ -55,8 +57,8 @@ phases of an AgentClinic complaints app, graded by hidden pytest plus `ruff`,
 `pyrefly` and `complexipy`. The arm is the *layout of the spec*, and nothing
 else:
 
-- `joined` — `specs/roadmap.md` holds all four phases, and `AGENTS.md` says so.
-- `split` — `specs/roadmap.md` is gone; `specs/phase-1.md` … `phase-4.md` carry
+- `joined`: `specs/roadmap.md` holds all four phases, and `AGENTS.md` says so.
+- `split`: `specs/roadmap.md` is gone; `specs/phase-1.md` … `phase-4.md` carry
   the same stories, each phase's brief points at its own file, and `AGENTS.md`
   says one file per phase.
 
@@ -75,8 +77,8 @@ uv run learn/code/harness.py run --suite medium --arm worker \
 | Sampling | `temperature 1`, `top_p 0.95`, `top_k 20`, `max_tokens 16384` |
 
 The reading is not passes. Medium floors at 0/3 for every arm, so the reading is
-`check_groups` in each run's `run.json` — how many of each phase's hidden checks
-are missing — with the phase-4 group as the primary one, because the last phase
+`check_groups` in each run's `run.json` (how many of each phase's hidden checks
+are missing) with the phase-4 group as the primary one, because the last phase
 is where the old finding lived.
 
 ## Evidence of the problem
@@ -90,16 +92,16 @@ except once:
 | --- | --- | --- | --- | --- |
 | `joined` | `5d07a2` | 0 / 5 / 3 / **5** | yes | 1048 s |
 | `joined` | `0eefd4` | 0 / 0 / 1 / **0** | yes | 1145 s |
-| `joined` | `6e7fdb` | — | **no** | 1607 s |
+| `joined` | `6e7fdb` | n/a | **no** | 1607 s |
 | `split` | `995575` | 3 / 1 / 0 / **0** | yes | 1294 s |
 | `split` | `b3eaae` | 0 / 4 / 3 / **3** | yes | 839 s |
-| `split` | `29dbd6` | — | **no** | 1227 s |
+| `split` | `29dbd6` | n/a | **no** | 1227 s |
 
 Phase-4 missing is `joined` {5, 0} against `split` {0, 3}. The rule fixed before
-the run — one arm separates only if *every* session of it misses strictly fewer
-than every session of the other — sees 0 against 0 and stops. **This is a null.**
+the run (one arm separates only if *every* session of it misses strictly fewer
+than every session of the other) sees 0 against 0 and stops. **This is a null.**
 
-The two `—` rows are the pathology, not a measurement: `checks_ran: false` means
+The two `n/a` rows are the pathology, not a measurement: `checks_ran: false` means
 the hidden checks never executed because the workspace would not import. `joined`
 `6e7fdb` left a syntax error; `split` `29dbd6` left a dataclass that cannot
 construct with two arguments, so the module that seeds the board fails on import.
@@ -108,7 +110,7 @@ finding and points at the wrong file.
 
 `split` `995575` deserves its own line: it passed every phase-3 and phase-4
 check while missing 3 of the 4 phase-1 checks. The later phases overwrote
-`templates/base.html`'s conventions — doctype, `lang="en"`, nav — instead of
+`templates/base.html`'s conventions (doctype, `lang="en"`, nav) instead of
 extending them. Cumulative checks catch that; a per-phase score would not.
 
 ## Solution
@@ -140,7 +142,7 @@ its checks require:
 In the `split` arm those lists live in `specs/phase-N.md`; in the `joined` arm
 they sit in the one roadmap. Before they existed, the same briefs produced
 sessions where no check could run at all, because nothing had asked for
-`models.py` — the prompts had, and the briefs were pointing at the spec.
+`models.py`; the prompts had, and the briefs were pointing at the spec.
 
 ## Validation
 
@@ -164,8 +166,8 @@ release.
 ### Quality and budget
 
 Quality is the column that moved: from a workspace no check could open, to four
-sessions missing 1, 4, 10 and 13 of 18. Budget moved with it — 62–88 requests and
-839–1294 s — and no nudge fired in any session, so the guard was not what carried
+sessions missing 1, 4, 10 and 13 of 18. Budget moved with it (62–88 requests and
+839–1294 s) and no nudge fired in any session, so the guard was not what carried
 them. Passes stayed at 0/3 for both arms, which is why the pass column is not the
 claim.
 
@@ -185,8 +187,8 @@ them is smaller than the difference between sessions of the same arm.
 The weakest badge is `screen`, and it is the whole page: one machine, one
 backend, n = 3 per arm with two usable sessions in each.
 
-The claim this lesson used to carry — a one-file roadmap misses the last phase's
-id in 5 of 6 runs — rested on ladder rungs and is **retired**. Nothing here
+The claim this lesson used to carry (a one-file roadmap misses the last phase's
+id in 5 of 6 runs) rested on ladder rungs and is **retired**. Nothing here
 reproduces it: the last phase came back clean in one session of each arm, and the
 sessions that lost it lost the whole workspace instead.
 

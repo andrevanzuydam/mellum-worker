@@ -4,17 +4,19 @@ The ways a small model goes wrong on an agentic task, each with the record that
 shows it and the shape that answers it. Read it as a map of failure, not as a
 scoreboard.
 
+![A doctor robot with a stethoscope examining the small robot beside a chart and magnifying glass](assets/illustrations/pathologies.webp){ .illustration }
+
 ## How to read this
 
 - **An entry needs an observation behind it.** A run that happened, in this
-  repository or — where it says `Seen elsewhere` — in a record we can point at.
+  repository or, where it says `Seen elsewhere`, in a record we can point at.
   A failure mode somebody reasoned their way to is a hypothesis, not an entry.
 - **It is a reference, not a rate, and not a denominator.** Do not count the entries and call it
   a rate. They were collected opportunistically, on different tasks, and the
   count measures what got written down.
 - **Some entries are not the model's fault.** A harness or spec fault that reads
   as a model fault belongs here too, marked as such, because from the outside
-  the two are indistinguishable until someone checks — and misfiling one is the
+  the two are indistinguishable until someone checks, and misfiling one is the
   mistake worth remembering.
 - **`Answer:` means the shape that answers it, not a proven cure.** Where
   nothing answers it yet, the line says so.
@@ -27,7 +29,7 @@ scoreboard.
    passing run over a project with four errors
    ([lesson](../getting-started/ditch.md)). **Answer:** run the command
    yourself; the scoring is the check, not the reply.
-2. **Fabricated evidence.** A test run is reported that never happened — the
+2. **Fabricated evidence.** A test run is reported that never happened: the
    output is invented, in the shape a real run would have taken. **Seen:** the
    same ditch session, whose test output was written rather than printed
    ([lesson](../getting-started/ditch.md)). **Answer:** the harness runs the
@@ -37,7 +39,7 @@ scoreboard.
    **Seen:** `split` session `995575`, which passed every phase-3 and phase-4
    check while missing 3 of 4 phase-1 checks
    ([record](../../docs/superpowers/research/2026-10-25-lesson10-run.md)).
-   **Answer:** cumulative checks — grade every phase on every run, not just the
+   **Answer:** cumulative checks: grade every phase on every run, not just the
    phase that was asked for.
 4. **A narrowed test.** The worker changes the test rather than the code: a
    function narrowed to one assertion, a passing `assert True`, a selector
@@ -51,7 +53,7 @@ scoreboard.
 ## It stops before the work is done
 
 5. **An empty final.** A turn ends with no text and no tool call, and the run
-   stops there having done nothing — followed by the quiet version, an empty
+   stops there having done nothing, followed by the quiet version, an empty
    final at the very end. **Seen:** ten easy sessions in which the nudge never
    fired because no empty turn had the shape it answers, the finals ending on a
    context overflow or the output cap instead
@@ -64,10 +66,10 @@ scoreboard.
    ([record](../../docs/superpowers/research/2026-10-26-server-guard-run.md));
    the loop breaker exists and is unmeasured
    ([lesson](../lessons/medium/guards-for-empty-turns.md)). **Answer:** a refusal that
-   names an alternative, and a loop breaker — which no arm has yet shown earns
+   names an alternative, and a loop breaker, which no arm has yet shown earns
    its place.
-7. **A runaway search.** Instead of working the task, the model searches — the
-   filesystem, the web, its own context — and the turns go into looking rather
+7. **A runaway search.** Instead of working the task, the model searches (the
+   filesystem, the web, its own context) and the turns go into looking rather
    than doing. **Seen elsewhere:** Andre's index, "the runaway search", with no
    reproduction here yet
    ([harvest](../../docs/superpowers/research/2026-10-24-pr-harvest-index.md)).
@@ -80,7 +82,7 @@ scoreboard.
    ([screen](../../docs/superpowers/research/2026-10-24-project-facts-screen.md),
    [run](../../docs/superpowers/research/2026-10-25-lesson1-run.md),
    [attempts](../../docs/superpowers/research/2026-10-25-lesson10-run.md)).
-   **Answer:** a brief that names the check — `pytest`, `TestClient` — stops it
+   **Answer:** a brief that names the check (`pytest`, `TestClient`) stops it
    at the source; the dormant guard refuses the call when it appears, at the
    cost of retries.
 
@@ -93,17 +95,17 @@ scoreboard.
    ([run](../../docs/superpowers/research/2026-10-25-lesson1-run.md),
    [lesson](../lessons/easy/write-only-listed.md)). **Answer:** name the layout in
    the task and compare the file set after the run.
-10. **A lost id.** The last phase's identity contract never lands — the field is
+10. **A lost id.** The last phase's identity contract never lands: the field is
     missing, or it is rebuilt from a position that changes when the list does.
     **Seen:** phase 4's group of checks missing in three of the four sessions
     whose checks ran, in the spec-layout arm
     ([record](../../docs/superpowers/research/2026-10-25-lesson10-run.md)).
-    **Answer:** write the contract into the acceptance list — unique, stable,
-    never reused — and grade the phase rather than the session.
+    **Answer:** write the contract into the acceptance list (unique, stable,
+    never reused) and grade the phase rather than the session.
 11. **The project stops importing.** A syntax error, or a dataclass that cannot
     construct without an argument the seed code does not pass, leaves a
     workspace nothing can load. **Seen:** three of three sessions of a joined
-    brief, and two of six in the spec-layout arm — `ModuleNotFoundError`,
+    brief, and two of six in the spec-layout arm: `ModuleNotFoundError`,
     `SyntaxError: unterminated string`, `Complaint.__init__() missing …
     'timestamp'`
     ([record](../../docs/superpowers/research/2026-10-27-prose-brief-run.md),
@@ -112,8 +114,8 @@ scoreboard.
     on the first turn; the harness now records `checks_ran: false` so a full
     set of missing checks is not read as a full set of failures.
 12. **Builds it somewhere else.** The requirements are met, but in a file the
-    project's own notes did not name — the dataclass in `app.py` rather than
-    `models.py` — so everything that imports the project fails. **Seen:** three
+    project's own notes did not name (the dataclass in `app.py` rather than
+    `models.py`) so everything that imports the project fails. **Seen:** three
     joined-brief sessions and one spec-layout session ended without `models.py`,
     and each scored 18 of 18 missing
     ([record](../../docs/superpowers/research/2026-10-27-prose-brief-run.md),
@@ -135,6 +137,6 @@ scoreboard.
 ---
 
 *Provenance: entry 7 comes from Andre's harvest and has no observation here yet;
-entries 1, 2 and 4-13 are drawn from this repository's own records, linked on
+entries 1, 2 and 4–13 are drawn from this repository's own records, linked on
 each line; the strongest are three of three. Collected as runs happened, which is why the list is uneven and why
 it is not a rate.*

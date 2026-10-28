@@ -34,7 +34,7 @@ test("the page states what it is not", () => {
   assert.match(p, /not a denominator/);
   assert.match(p, /[Rr]eference, not a rate/);
   assert.ok(!/docs\/ladder\//.test(p), "page links a ladder record");
-  const opening = p.split(/^# .+$/m)[1].split(/^## /m)[0].trim();
+  const opening = p.split(/^# .+$/m)[1].split(/^## |^!\[/m)[0].trim();
   assert.equal(opening.split(/(?<=\.)\s+/).filter(Boolean).length, 2);
   assert.ok(opening.split(/\s+/).length <= 45, "opening is over 45 words");
 });

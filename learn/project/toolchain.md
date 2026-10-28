@@ -3,6 +3,8 @@
 Everything here runs from a clone, and every Python command is `uv run` from
 the repository root.
 
+![A row of tools on a workbench, each checked, inspected by a small robot](../assets/illustrations/toolchain.webp){ .illustration }
+
 ## Python, uv and `pyproject.toml`
 
 The root `pyproject.toml` pins `requires-python = ">=3.14"` and declares
@@ -10,7 +12,7 @@ The root `pyproject.toml` pins `requires-python = ">=3.14"` and declares
 machine has none, then runs the command in a throwaway project environment.
 `uvx` follows the same idea for tools: nothing is installed globally.
 
-`[tool.mellum]` in that file is the single source of model settings —
+`[tool.mellum]` in that file is the single source of model settings:
 `model`, `context`, `max_tokens`, `temperature`, `top_p`, `top_k`. Do not
 edit sampling anywhere else: `learn/code/profile/models.json` is generated
 from it, and `tests/backend-profile.test.mjs` fails when the two disagree.

@@ -30,6 +30,8 @@ lessons change.
     - Name the parts of the Baseline Worker: prompt, seven tools, guards and project facts.
     - Recognise why the parts are treated as one unit rather than separate lessons.
 
+![A small robot at the starting line of three running tracks with a measuring tape](../../assets/illustrations/baseline.webp){ .illustration }
+
 ## Problem
 
 **Badge:** `screen`
@@ -141,7 +143,7 @@ failing. The worker's context is lower on every suite, so the gain is not
 from seeing more.
 
 An earlier screen removed the prompt, the empty-final nudge and the loop
-breaker one at a time. The prompt and loop did not separate; removing the
+breaker one at a time. The prompt and loop breaker did not separate; removing the
 nudge was a lead (3/3 easy against 1/3), not a rate. The parts are therefore
 not separate lessons. The [screen](https://github.com/pauleveritt/mellum-worker/blob/main/docs/superpowers/research/2026-10-21-basic-remedies-runs.md)
 keeps the null result; the Baseline Worker is the unit.

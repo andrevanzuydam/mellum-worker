@@ -1,7 +1,7 @@
 ---
 title: Write only the files you list
 tier: easy
-number: E3
+number: E2
 time: 4 min read · 30 min to run
 track: lessons
 position: 6
@@ -10,7 +10,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# E3 · Write only the files you list
+# E2 · Write only the files you list
 
 A run can pass every hidden test and still be wrong, leaving scratch files, a
 second app copy or a test edited to pass. The page names the layout and checks
@@ -28,6 +28,8 @@ the file set after each run, which the easy suite never tripped.
     - Declare a suite's layout with `allow` and `ignore` lists in `layout.json`.
     - Read the `out_of_layout` list in a run's `run.json`.
     - Recognise why a check is tested both ways before it is trusted.
+
+![A small robot filing sheets into labelled folders, leaving one folder untouched](../../assets/illustrations/write-only-listed.webp){ .illustration }
 
 ## Problem
 
@@ -87,7 +89,7 @@ fires on a well-behaved task is how you learn where the task is well-behaved.
 
 The behaviour was seen by hand first, in [The ditch](../../getting-started/ditch.md):
 a loose session that reported success while writing outside the layout. That
-is one hand-driven session — a screen, not a rate — and it is why the check
+is one hand-driven session (a screen, not a rate) and it is why the check
 exists rather than why it fires.
 
 ## Solution
@@ -99,7 +101,7 @@ Name the layout, then check it. Two habits:
 1. **In the task:** list the files or directories the work may touch, and say
    that everything else is out of scope.
 2. **In the harness:** compare the file set after the run with the one before
-   it, and ignore the artefacts a run cannot avoid — the virtualenv, bytecode,
+   it, and ignore the artefacts a run cannot avoid: the virtualenv, bytecode,
    logs, the test cache. Without the ignore list a run is accused of writing
    its own `.venv`, which is how a good check becomes noise.
 
@@ -113,12 +115,12 @@ Name the layout, then check it. Two habits:
 | --- | --- | --- | --- | --- |
 | easy | `worker` | 3 | 2/3 | **0** |
 
-A missing measurement is `—`, never `0`.
+A missing measurement is `n/a`, never `0`.
 
 ### Quality and budget
 
 The two sessions that passed and the one that failed are equally clean, so the
-check is independent of the outcome — which is the point of measuring it
+check is independent of the outcome, which is the point of measuring it
 separately. Medium was not run: every medium session in this cycle's other
 arms hit the 600 s deadline, so a medium reading here would measure the
 deadline, not the layout.
@@ -134,8 +136,8 @@ rate. It is the only lesson in this track whose value did not depend on the
 model: the check runs after every session from now on, and the run's
 `out_of_layout` list is what a later arm reads.
 
-What would upgrade this: a task with more freedom than the easy suite — the
-hard suite's seven-phase build, or a loose prompt like the ditch's — where
+What would upgrade this: a task with more freedom than the easy suite (the
+hard suite's seven-phase build, or a loose prompt like the ditch's), where
 writing outside the layout is a tempting shortcut. That needs a deadline the
 suite can finish inside, which this machine did not offer.
 

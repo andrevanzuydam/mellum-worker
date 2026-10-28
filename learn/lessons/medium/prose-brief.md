@@ -12,7 +12,7 @@ backends: [llamacpp]
 
 # M4 · A prose brief stops at its first reply
 
-A four-phase build handed over as one joined brief finishes faster and cheaper,
+A four-phase build handed over as one joined brief finished faster and cheaper,
 and left a project the checks could not open in all three sessions. Sent as
 steps, the same briefs produced a runnable project every time.
 
@@ -28,18 +28,20 @@ steps, the same briefs produced a runnable project every time.
     - Recognise a confident final message over a project the checks cannot import.
     - Separate an outcome the run measured from a mechanism it did not show.
 
+![A small robot that stopped after the first page of a very long letter](../../assets/illustrations/prose-brief.webp){ .illustration }
+
 ## Problem
 
 **Badge:** `screen`
 
-A multi-phase build can be handed to a worker two ways: as **steps** — one brief
-per phase, each answered before the next arrives — or as **one prose brief** that
+A multi-phase build can be handed to a worker two ways: as **steps** (one brief
+per phase, each answered before the next arrives) or as **one prose brief** that
 describes every phase at once and expects the model to work through them in
 order.
 
 The worry is that the second shape invites a first reply: the model answers the
 first thing it read, calls that done, and never comes back for the rest. That is
-not quite what happens. What happens is worse and quieter — the run finishes,
+not quite what happens. What happens is worse and quieter: the run finishes,
 sometimes with a confident "implemented, the test command exits 0", over a
 project that is missing a file the checks import.
 
@@ -52,8 +54,8 @@ phases of a FastAPI complaints app, graded by hidden pytest plus `ruff`,
 `pyrefly` and `complexipy`. The same four brief files, the same base, the same
 grader, and one change between the arms:
 
-- **steps** — the suite's four `prompts/*.md`, one request each.
-- **one brief** — `--single-prompt`, which joins those same four files with
+- **steps**: the suite's four `prompts/*.md`, one request each.
+- **one brief**: `--single-prompt`, which joins those same four files with
   blank lines and sends them once.
 
 **Three sessions per arm**, because this page states a comparison and a screen
@@ -89,12 +91,12 @@ session failed for its own reason, and none of them said so:
 
 | Session | What was missing | The grader's error | What the model said |
 | --- | --- | --- | --- |
-| `5d9dfb` | `models.py`, `templates/` | `ModuleNotFoundError: No module named 'models'` | nothing — no final text |
+| `5d9dfb` | `models.py`, `templates/` | `ModuleNotFoundError: No module named 'models'` | nothing, no final text |
 | `705bdd` | `models.py` | `ModuleNotFoundError: No module named 'models'` | "implemented. The test command … exits 0" |
-| `a26728` | `templates/`, a file that does not parse | `SyntaxError: unterminated string literal` | nothing — no final text |
+| `a26728` | `templates/`, a file that does not parse | `SyntaxError: unterminated string literal` | nothing, no final text |
 
-The steps arm had bad sessions of its own — 11 and 9 missing checks in two of
-three, including 3 of 4 phase-1 checks lost in `d534ce` — but it always produced
+The steps arm had bad sessions of its own (11 and 9 missing checks in two of
+three, including 3 of 4 phase-1 checks lost in `d534ce`) but it always produced
 something the checks could run.
 
 An earlier version of this page reported one session per arm, in which the
@@ -106,13 +108,13 @@ disagree with it.
 
 **Badge:** `screen`
 
-Send phases as steps when the task has phases. That is what the Getting Started
-suite teaches and the harness's default shape, and this run gives it two
+Send phases as steps when the task has phases. That is what the Getting started
+suite teaches and is the harness's default shape, and this run gives it two
 reasons rather than one:
 
 1. **A checkpoint per phase.** A stepped run can be checked before the next
    phase arrives; a one-brief run hands over everything and gets one grade at
-   the end, or — as here — no grade at all.
+   the end, or, as here, no grade at all.
 2. **A project that loads.** Three of three one-brief sessions ended with a
    workspace missing a module the checks import. Whatever the joined brief does
    to the model's reading, its practical effect is an incomplete project.
@@ -135,7 +137,7 @@ cheaper, and not runnable in any of three sessions.
 
 - **Quality:** checks ran in 3 of 3 stepped sessions and 0 of 3 joined ones. That
   is the claim, and it is a presence claim about the workspace, not a pass rate.
-- **Budget:** the joined shape was cheaper in every session — fewer requests
+- **Budget:** the joined shape was cheaper in every session: fewer requests
   (16–49 against 67–95) and less wall (421–1029 s against 990–1867 s). **Peak
   context did not follow:** one joined session peaked at 21,100 against the
   stepped arm's highest 11,683, so the page does not claim a context saving.
@@ -153,14 +155,14 @@ PASS`, `known-broken: FAIL`, `medium: QUALIFIED`. `learn/code/tests` 64/64,
 The weakest badge is `screen`, and it is the whole page: six sessions on one
 machine, one backend, one task family, n = 3 per arm.
 
-The claim this page used to carry — a one-prompt brief loses four passes, and
-stepping it costs 2.4× the time — is **retired**, twice over. The n = 1 screen
+The claim this page used to carry (a one-prompt brief loses four passes, and
+stepping it costs 2.4× the time) is **retired**, twice over. The n = 1 screen
 that replaced it is retired too: it had the one-brief arm passing while the
 stepped arm failed lint, and three sessions per arm reverse that.
 
 What survives is the design advice, now with an outcome behind it. **Steps buy a
 checkpoint per phase, and the joined shape produced nothing a check could open
-in three of three sessions.** What does not survive is any claim about *why* —
+in three of three sessions.** What does not survive is any claim about *why*:
 "stops at its first reply" is a mechanism the trace does not show: one session
 had no final text at all, and the most confident of the six sat over a project
 that would not import.

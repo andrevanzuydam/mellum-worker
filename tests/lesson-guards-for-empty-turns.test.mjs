@@ -38,5 +38,5 @@ test("the guards lesson quotes the real nudge, not a paraphrase", () => {
   assert.match(code, /used >= max/);
   assert.match(code, /NUDGE_TEXT/);
   assert.match(l, /blob\/[0-9a-f]{7,}\/extensions\/mellum-guards\.ts#L\d+-L\d+/);
-  assert.match(page("lessons/index.md"), /guards-for-empty-turns\.md/);
+  assert.match(page("lessons/medium/index.md"), /guards-for-empty-turns\.md/);
 });
