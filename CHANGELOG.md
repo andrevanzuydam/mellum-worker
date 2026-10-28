@@ -127,6 +127,16 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- Lesson text that contradicted its own evidence is corrected: H1's pass
+  counts are identical on Bronze and Silver (not "one session apart"); E4's
+  are identical in one sample and one apart in the other, and its worker had
+  two passing sessions; E2 had one failing session, not two; E3's facts-on
+  peak input is the valid sessions' 13,813, not the excluded session's 19,721;
+  M2's eval case says five sessions per arm, as its table and preregistration
+  do; M3's `models.py` sentence now says what happened; M1 says the
+  strip-thinking arm exists but has not run, and gives its command; How to
+  read a lesson counts five Getting Started steps.
+
 - The ladder's workspace preflight no longer refuses every Python rung on
   macOS with Python 3.15: `/var` is a link to `/private/var` there, and 3.15
   reports the venv's interpreter by its real path, which the preflight compared

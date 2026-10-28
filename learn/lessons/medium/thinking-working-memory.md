@@ -2,7 +2,7 @@
 title: Thinking Is Working Memory
 tier: medium
 number: M1
-time: 4 min read
+time: 4 min read · about 2 h to run
 track: lessons
 position: 3
 prerequisites: [getting-started/worker-extension]
@@ -41,24 +41,23 @@ saving: the payload gets smaller and the prefill gets cheaper. The story
 this page used to tell is that the saving is an illusion: you pay again in
 output tokens, and sometimes in passes.
 
-On llama.cpp that story currently has **no arm**. It is kept here because the
+On llama.cpp that story now has an instrument but **no result yet**. It is kept here because the
 mechanism matters and because the page is the honest place to say so.
 
 ## Eval case
 
 **Badge:** `conjecture`
 
-There is no supported way to strip thinking on this backend today. The arm
-that measured it before was a request-layer middleware in the ladder, which
-rewrote outgoing payloads; the suites harness launches `pi` directly and has
-no such seam. The settings the worker does expose (prompt, guards, facts)
+The worker now has the seam: `MELLUM_STRIP_THINKING=1` removes earlier
+reasoning from the context it forwards, and the harness turns it on with
+`--arm strip-thinking`. The arm that measured it before was a request-layer
+middleware in the ladder, which rewrote outgoing payloads. The settings the worker does expose (prompt, guards, facts)
 say nothing about thinking, and `llama-server` is served with thinking on.
 
 So the eval case this page wants is: Bronze and Silver, the first two levels
 of [The Challenge](../../challenge/index.md), three sessions each,
 `worker` against `worker` with every prior assistant `reasoning` block
-removed from the forwarded context. It has not been run, and
-an arm_settings entry alone cannot express it.
+removed from the forwarded context. It has not been run yet.
 
 ## Evidence of the problem
 
@@ -103,7 +102,7 @@ page is waiting on.
 
 | Suite | Arm | Passes | Peak input | Wall | Status |
 | --- | --- | --- | --- | --- | --- |
-| Bronze | `worker` | n/a | n/a | n/a | not run: no strip arm exists |
+| Bronze | `worker` | n/a | n/a | n/a | not run yet |
 | Silver | `worker` | n/a | n/a | n/a | not run: same |
 
 A missing measurement is `n/a`, never `0`.
@@ -111,22 +110,29 @@ A missing measurement is `n/a`, never `0`.
 ## Interpretation
 
 The weakest badge is `conjecture`, and this page is deliberately thin: it
-names a mechanism, a cost and a missing instrument. The numbers it used to
+names a mechanism, a cost and an arm that has not been run. The numbers it used to
 quote (a 57% prefill saving and a slower run) came from oMLX ladder arms and
 are retired here rather than re-stated.
 
 What survives is a testable shape: on this backend, prefill is cheap because
 the layer cache absorbs the repeated prefix, so removing thinking from the
 payload mostly moves cost from prefill into output. The suites can show that,
-once the payload seam exists.
+now that the payload seam exists.
 
-What would upgrade this: one instrument (a strip-thinking option in the
-harness or the extension) and then the arm above, at n=3 on Bronze and Silver.
-Until it exists this page should be read as a question, not a finding.
+What would upgrade this: run the arm above, at n = 3 on Bronze and Silver.
+Until it has run, this page should be read as a question, not a finding.
 
 ### Run it yourself
 
-This page has no runnable arm: the strip-thinking arm it describes has not been run, so there is no command to reproduce.
+Run the worker with and without earlier reasoning in its context, on Bronze and Silver, three sessions each. No result is recorded yet, so yours would be the first:
+
+```bash
+for suite in easy medium; do
+  for arm in worker strip-thinking; do
+    uv run python learn/code/harness.py run --suite "$suite" --arm "$arm" --repeat 3 --grade --deadline 2700
+  done
+done
+```
 
 !!! success "Key points"
 

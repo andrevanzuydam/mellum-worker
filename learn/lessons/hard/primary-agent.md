@@ -77,7 +77,7 @@ learner's profile. Passes, and what each arm did on the way:
 | Silver | `bare` | 0/3 | 18, 18, 18 | 45, 54, 60 | 3, 0, 9 | 11,508 | 827, 997, 1,051 s |
 | Silver | `worker` | 0/3 | 2, 12, 2 | 60, 26, 38 | 7, 1, 1 | 37,110 | 1,351, 587, 956 s |
 
-The pass counts are one session apart on Bronze and identical on Silver, so the
+The pass counts are identical on both Bronze (1/3 each) and Silver (0/3 each), so the
 rule reads **null on both suites**. The baseline's Silver sample (the worker
 at 2/3 against the primary agent's 0/3 on an M5 Max) did not reproduce here,
 and the page no longer leans on it.

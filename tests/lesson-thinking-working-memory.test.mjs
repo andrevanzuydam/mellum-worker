@@ -21,11 +21,11 @@ test("the third findings lesson follows the six steps and names its badge", () =
   assert.match(l, /^backends: \[llamacpp\]$/m);
 });
 
-test("the thinking lesson says the arm has no instrument on llama.cpp", () => {
+test("the thinking lesson says the arm exists but has not run", () => {
   const l = page("lessons/medium/thinking-working-memory.md");
   assert.ok(!/docs\/ladder\//.test(l), "lesson links a ladder record");
   assert.ok(!/ablation-a/.test(l), "lesson cites an ablation");
-  for (const text of ["no supported way to strip thinking", "not run: no strip arm exists",
+  for (const text of ["MELLUM_STRIP_THINKING=1", "not run yet",
     "max_tokens", "output budget"])
     assert.ok(l.includes(text), `lesson lacks ${text}`);
   // A missing measurement is n/a, never 0.

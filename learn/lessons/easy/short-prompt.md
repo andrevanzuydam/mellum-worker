@@ -79,10 +79,10 @@ Per session, Bronze only:
 | `no-prompt` | 2 | no | 26 | 3 | 4,762 | 419 s |
 | `no-prompt` | 3 | no | 26 | 6 | 4,853 | 179 s |
 
-The pass counts are one session apart in both samples: **3/9 against 3/9**
-and **2/3 against 1/3**. The context numbers are not so consistent: this
-run's passing `no-prompt` session peaked at 20,773 against the worker's 3,404
-in its passing session, and the worker's losing session peaked at 33,443, so
+The pass counts are identical in the 45-session record (**3/9 against 3/9**)
+and one session apart in this run (**2/3 against 1/3**). The context numbers are not so consistent: this
+run's passing `no-prompt` session peaked at 20,773 against 1,639 and 3,404
+in the worker's two passing sessions, and the worker's losing session peaked at 33,443, so
 the direction of the context saving is not established here either. It was in
 the 45-session record, on three suites.
 

@@ -47,7 +47,7 @@ repetition with a loop breaker.
 
 Bronze, the first level of [The Challenge](../../challenge/index.md), as set up
 in [Getting started](../../getting-started/suite.md): one prompt, graded by hidden pytest plus `ruff`, `pyrefly` and `complexipy`.
-Three sessions per arm on llama.cpp, and the arm is the guard:
+Five sessions per arm on llama.cpp, and the arm is the guard:
 
 - `worker`: prompt v5, seven tools, nudge on, loop breaker on.
 - `no-nudge`: the same, with `MELLUM_GUARDS={"loopBreaker":true}`.

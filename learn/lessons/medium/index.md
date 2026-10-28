@@ -13,8 +13,8 @@ is the only prerequisite.
 
     ---
 
-    The strip-thinking arm has no instrument on llama.cpp; thinking spends the
-    output budget. *(Paul)*
+    Thinking spends the output budget; the strip-thinking arm now exists on
+    llama.cpp but has not been run yet. *(Paul)*
 
 -   **[M2 · Guards for Empty Turns and Loops](guards-for-empty-turns.md)**
 

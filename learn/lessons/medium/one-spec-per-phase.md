@@ -142,8 +142,9 @@ its checks require:
 
 In the `split` arm those lists live in `specs/phase-N.md`; in the `joined` arm
 they sit in the one roadmap. Before they existed, the same briefs produced
-sessions where no check could run at all, because nothing had asked for
-`models.py`; the prompts had, and the briefs were pointing at the spec.
+sessions where no check could run at all: the spec never asked for
+`models.py`, which the graders import. The prompts did ask for it, but the
+briefs pointed the worker at the spec, so it never saw that request.
 
 ## Validation
 

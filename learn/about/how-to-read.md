@@ -6,7 +6,7 @@ The center has two [tracks](../glossary.md). The **Getting started** track is a 
 
 ## Getting started steps
 
-Three lessons, done in order, from a clone of this repo:
+Five steps, done in order, from a clone of this repo:
 
 1. [Base Pi on llama.cpp](../getting-started/base-pi-on-llamacpp.md): a server, a `chat` command, and Pi answering through a private profile.
 2. [The ditch](../getting-started/ditch.md): one AgentClinic session, and a report that does not survive a check.
@@ -15,8 +15,8 @@ Three lessons, done in order, from a clone of this repo:
 5. [The worker extension](../getting-started/worker-extension.md): the vehicle, `/mellum`, before any remedy.
 
 Every command is `uv run` from the repository root. Each page ends with
-**What you have**, which is what the next lesson starts from, so you know a
-lesson worked when its check prints what the page says: a reply, a `PASS`
+**What you have**, which is what the next step starts from, so you know a
+step worked when its check prints what the page says: a reply, a `PASS`
 score line, or the static graders reporting.
 
 ## The six steps

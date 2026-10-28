@@ -113,7 +113,7 @@ last bullet is the one this page will come back to.
 
 | Suite | Arm | Passes | Turns | Tool errors | Peak input | Wall |
 | --- | --- | --- | --- | --- | --- | --- |
-| Bronze | facts on (`worker`) | 1/2 | 24 | 3.5 | 19,721 | 316 s, 199 s |
+| Bronze | facts on (`worker`) | 1/2 | 24 | 3.5 | 13,813 | 316 s, 199 s |
 | Bronze | facts off (`no-facts`) | 0/3 | 38.7 | 10.0 | 880 | 139–457 s |
 
 ### Quality and budget

@@ -129,7 +129,7 @@ deadline, not the layout.
 
 The weakest badge is `screen`, and the honest summary is that on Bronze
 the pathology is **absent**: three of three sessions wrote only what the task
-allowed, and two of them failed for other reasons.
+allowed, and the one that failed did so for other reasons.
 
 What this page is worth right now is the instrument and the habit, not a pass
 rate. It is the only lesson in this track whose value did not depend on the
