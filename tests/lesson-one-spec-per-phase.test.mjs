@@ -8,7 +8,7 @@ const page = (p) => readFileSync(resolve(ROOT, "learn", p), "utf8");
 const BADGE = (s) => /^\*\*Badge:\*\* `(reference-run|cited|screen|conjecture)`$/m.test(s);
 
 test("the tenth findings lesson follows the six steps and names its badge", () => {
-  const l = page("lessons/one-spec-per-phase.md");
+  const l = page("lessons/medium/one-spec-per-phase.md");
   const heads = [...l.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
   assert.deepEqual(heads, ["Problem", "Eval case", "Evidence of the problem",
     "Solution", "Validation", "Interpretation"]);
@@ -21,7 +21,7 @@ test("the tenth findings lesson follows the six steps and names its badge", () =
 });
 
 test("the spec-layout lesson states its null and its mechanism", () => {
-  const l = page("lessons/one-spec-per-phase.md");
+  const l = page("lessons/medium/one-spec-per-phase.md");
   assert.ok(!/docs\/ladder\//.test(l), "lesson links a ladder record");
   for (const text of ["--specs", "joined", "split", "check_groups",
     "checks_ran", "models.py", "n = 3", "Apple M1 Pro", "0eefd4", "995575"])

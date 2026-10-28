@@ -1,69 +1,69 @@
 # Lessons
 
-Every findings lesson in one place: Paul's from the mellum-worker phases and
-ablations, Andre's from his pull requests. Each is one idea and follows the six
-steps. Scheduled lessons are their own phase; the deferred entries are
-candidates until their stated gate. Most are independent: each lists its
-prerequisites, [Getting started](../getting-started/index.md) is the only one
-unless a lesson says otherwise, and you can read them in any order.
+Each lesson takes one thing a small coding model gets wrong, measures it, and
+shows what changes it. The lessons are grouped in three tiers that rise in
+level, and every lesson stands on its own: [Getting started](../getting-started/index.md)
+is the only thing you need first, unless a lesson's prerequisites say
+otherwise.
 
-The order below is a recommendation, not a dependency chain: what the ditch
-teaches first, then the remedies, then the shapes. The author is in italics
-at the end of each line. Every lesson is being re-measured; its badges say
-what it rests on now.
+<div class="grid cards" markdown>
 
-## Start here
+-   **[Easy](easy/index.md)**
 
-- **[The suite baseline](baseline.md)** — Baseline Pi and the Baseline Worker on easy, medium and hard, n = 3, on llama.cpp. *(Paul)*
-1. **[The primary agent is the wrong worker](primary-agent.md)** — Neither suite separates the two arms on passes at n = 3; what separates them is how they fail. *(Paul)*
+    ---
 
-## Paul's lessons
+    One setting, one visible effect. You read the result in a table, and you
+    can follow it from Getting started alone.
 
-2. **[A short prompt, not a procedure](short-prompt.md)** — Prompt v5 is 643 characters, and on easy it did not move a pass: a null at n = 3. *(Paul)*
-3. **[Thinking is working memory](thinking-working-memory.md)** — The strip-thinking arm has no instrument on llama.cpp; thinking spends the output budget. *(Paul)*
-4. **[Guards for empty turns and loops](guards-for-empty-turns.md)** — The nudge never fired in ten easy sessions: no empty turn had the shape it answers. *(Paul)*
-5. **[Project facts](project-facts.md)** — The block reaches the model in every request and did not move easy at n = 3. A null, with a lead. *(Paul)*
-6. **[Write only the files you list](write-only-listed.md)** — A file-set check now runs after every session; easy showed no writes outside the layout. *(Paul)*
-7. **Who holds the loop** — *retired 2026-10-24.* It compared worker, Mode and a
-   delegated child; LC.8 renamed Mode to Worker and removed the delegated child,
-   so there is no second policy left to compare. The number is kept so the other
-   entries stay stable. *(Paul)*
-8. **[A prose brief stops at its first reply](prose-brief.md)** — One brief against four:
-   both passed the hidden tests, and the one-brief arm used a third of the
-   context. A `screen` at n = 1, against the old claim. *(Paul)*
-9. **[The intercom block is a prefill tax](intercom-block.md)** — A delegate's
-   transcript is paid on every turn; the worker hands back one summary block per
-   span instead. A rationale, because LC.8 removed the mechanism. *(Paul)*
-10. **[One spec file per phase](one-spec-per-phase.md)** — Writing the acceptance
-    criteria into the spec took a worker from "no check could run" to one missing
-    check; one file against four did not separate at n = 3. *(Paul)*
+-   **[Medium](medium/index.md)**
 
-Every scheduled lesson in this track now has a page. Each was a feature cycle
-that re-measured it on llama.cpp when its page was written; a page's badges say
-what it rests on.
+    ---
 
-## Andre's mediation
+    How the model spends its session: its thinking, its empty turns, the
+    shape of the task it is handed. You will read a trace.
 
-11. **The worker moves its own goalposts** — It narrows pytest to one test function, passes that, and calls the file done. *(Andre)*
-12. **The mediated test clears the hard rungs** — A frozen test the worker cannot weaken, re-dispatched: rungs 6–9 at 12/12, rung 9 cracked. *(Andre)*
-13. **Implement the whole spec** — v9 lifts the phase-4 id miss from 0 to 2/3; v11's self-check takes it to 3/3. *(Andre)*
-14. **Mediation is a completeness gate** — It leaves the rung the worker can do alone and drags it back only when it stops short. *(Andre)*
+-   **[Hard](hard/index.md)**
 
-## Context and inputs
+    ---
 
-Entries #16–#20 are **Intermediate candidates** (INT.3), not scheduled
-Lessons; #15 remains a lesson candidate. Each needs a recorded screen before
-it becomes a lesson page.
+    Orchestration and advanced concepts: who drives the model, how work is
+    split, checked and re-dispatched.
 
-15. **Rungs 10–12: what the hard gates catch** — An archive decoy, a trap row and an overflowing file separate capability from completeness. *(Andre)*
-16. **Context search for large code** — Index and search the few relevant lines instead of loading whole files. *(Andre)*
-17. **Skeptical rethink** — Check a human's checkable claim before encoding the premise. *(Andre)*
-18. **Documents and images as inputs** — Read the PDF, the spreadsheet or the screenshot the file tools cannot. *(Andre)*
-19. **Live control and replay** — Watch the turns, edit the prompt, replay a bad one, pause at a boundary. *(Andre)*
-20. **Next-concept verify** — Re-dispatch on the failing test functions, not the whole file. *(Andre)*
+</div>
 
-## Pathologies
+## How every lesson reads
 
-21. **The runaway search** — A recursive search that leaves the workspace can hang the whole run; the guard is proposed on branch `lc11b-confinement` ([code](https://github.com/pauleveritt/mellum-worker/blob/176922f05702d6f8e87a9b2570ed6fe9807db733/extensions/mellum-guards.ts#L145-L185), [tests](https://github.com/pauleveritt/mellum-worker/blob/176922f05702d6f8e87a9b2570ed6fe9807db733/tests/mellum-guards.test.mjs#L13-L40)). *(Andre)*
-22. **The server that never returns** — It started `uvicorn` in the foreground and burned the deadline; exercise the endpoint in process, or detach it and keep the pid ([guard](https://github.com/pauleveritt/mellum-worker/blob/420ba1d/extensions/mellum-guards.ts), [prompt v10](https://github.com/pauleveritt/mellum-worker/blob/4666612/prompts/mellum-worker.md)). *(Andre)*
-23. **The rule it knew and skipped** — It read the rule, then left the field `None` in one run of three; a clause-by-clause check against the spec closed it ([prompt v11](https://github.com/pauleveritt/mellum-worker/blob/da04888/prompts/mellum-worker.md)). *(Andre)*
+Every lesson page has the same shape, so you know where to look:
+
+1. **Two sentences:** the problem and the solution.
+2. **Overview:** the questions the lesson answers and what you will be able to
+   do after it.
+3. **Six steps:** Problem, Eval case, Evidence of the problem, Solution,
+   Validation, Interpretation. Each step carries its own evidence badge
+   ([what the badges mean](../about/evidence.md#badges)).
+4. **Run it yourself:** the command that reproduces the lesson's arms, or a
+   plain statement that it has none yet.
+5. **Key points:** what to take away, never stronger than the evidence.
+
+## Where the old numbers went
+
+The lessons were one numbered list until 2026-10-28. Old references still
+resolve:
+
+| Old | New | Lesson |
+| --- | --- | --- |
+| Start here | E1 | [The suite baseline](easy/baseline.md) |
+| 1 | H1 | [The primary agent is the wrong worker](hard/primary-agent.md) |
+| 2 | E5 | [A short prompt, not a procedure](easy/short-prompt.md) |
+| 3 | M1 | [Thinking is working memory](medium/thinking-working-memory.md) |
+| 4 | M2 | [Guards for empty turns and loops](medium/guards-for-empty-turns.md) |
+| 5 | E4 | [Project facts](easy/project-facts.md) |
+| 6 | E3 | [Write only the files you list](easy/write-only-listed.md) |
+| 7 | — | [Retired: Who holds the loop](retired.md) |
+| 8 | M4 | [A prose brief stops at its first reply](medium/prose-brief.md) |
+| 9 | H2 | [The intercom block is a prefill tax](hard/intercom-block.md) |
+| 10 | M3 | [One spec file per phase](medium/one-spec-per-phase.md) |
+| 11–20 | H3–H8 | Hard candidates, listed on the [Hard](hard/index.md) page |
+| 21 | E6 | Easy candidate: The runaway search |
+| 22 | E2 | Easy candidate: The server that never returns |
+| 23 | M5 | Medium candidate: The rule it knew and skipped |

@@ -428,6 +428,15 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The Lessons section is now three tiers that rise in level — Easy, Medium and
+  Hard (orchestration and advanced concepts) — each in its own folder with a
+  landing page of lesson cards. Every lesson keeps Paul's six evidence steps
+  and gains a standard frame: a number (E1, M2, H1…), reading and run time, an
+  Overview box with questions and objectives, a Run it yourself command, and a
+  Key points box. Old lesson URLs redirect, the overview maps old numbers to
+  new, and the site gains top tabs, instant navigation, a light/dark toggle
+  and copy buttons on code.
+
 - Lesson 8, **A prose brief stops at its first reply**, now rests on six
   sessions at n = 3 per arm instead of one each — and the finding flipped again:
   all three joined-brief sessions finished faster and cheaper and left a project

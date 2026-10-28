@@ -14,13 +14,19 @@ nav = [
     "getting-started/suite.md", "getting-started/worker-extension.md",
     "getting-started/troubleshoot.md"] },
   { "Pathologies" = "pathologies.md" },
-  { "Lessons" = ["lessons/index.md", "lessons/baseline.md",
-    "lessons/primary-agent.md", "lessons/short-prompt.md",
-    "lessons/thinking-working-memory.md",
-    "lessons/guards-for-empty-turns.md",
-    "lessons/project-facts.md", "lessons/write-only-listed.md",
-    "lessons/prose-brief.md", "lessons/intercom-block.md",
-    "lessons/one-spec-per-phase.md"] },
+  { "Lessons" = [
+    "lessons/index.md",
+    { "Easy" = ["lessons/easy/index.md", "lessons/easy/baseline.md",
+      "lessons/easy/write-only-listed.md", "lessons/easy/project-facts.md",
+      "lessons/easy/short-prompt.md"] },
+    { "Medium" = ["lessons/medium/index.md",
+      "lessons/medium/thinking-working-memory.md",
+      "lessons/medium/guards-for-empty-turns.md",
+      "lessons/medium/one-spec-per-phase.md", "lessons/medium/prose-brief.md"] },
+    { "Hard" = ["lessons/hard/index.md", "lessons/hard/primary-agent.md",
+      "lessons/hard/intercom-block.md"] },
+    "lessons/retired.md",
+  ] },
   { "About" = [
     "about/index.md", "about/how-to-read.md",
     "about/evidence.md", "about/contributing.md",
@@ -31,8 +37,49 @@ nav = [
   { "Credits" = "credits.md" },
 ]
 
+[project.theme]
+language = "en"
+features = [
+  "content.code.copy",
+  "content.code.select",
+  "content.tabs.link",
+  "content.tooltips",
+  "navigation.footer",
+  "navigation.indexes",
+  "navigation.instant",
+  "navigation.instant.prefetch",
+  "navigation.path",
+  "navigation.sections",
+  "navigation.tabs",
+  "navigation.top",
+  "navigation.tracking",
+  "search.highlight",
+]
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"
+
 [project.markdown_extensions]
+admonition = {}
+attr_list = {}
+md_in_html = {}
+pymdownx.details = {}
 pymdownx.superfences = {}
+pymdownx.tabbed.alternate_style = true
 
 [project.markdown_extensions.zensical_glossary]
 glossary_file = "glossary.md"

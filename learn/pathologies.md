@@ -55,7 +55,7 @@ scoreboard.
    final at the very end. **Seen:** ten easy sessions in which the nudge never
    fired because no empty turn had the shape it answers, the finals ending on a
    context overflow or the output cap instead
-   ([lesson](../lessons/guards-for-empty-turns.md)). **Answer:** the bounded
+   ([lesson](../lessons/medium/guards-for-empty-turns.md)). **Answer:** the bounded
    nudge answers a self-ended empty turn; a capped or aborted one is a budget
    question and needs its own fix.
 6. **A loop.** The same text or the same call repeats until the budget is gone,
@@ -63,7 +63,7 @@ scoreboard.
    minutes retrying refused command shapes, each a slightly different call
    ([record](../../docs/superpowers/research/2026-10-26-server-guard-run.md));
    the loop breaker exists and is unmeasured
-   ([lesson](../lessons/guards-for-empty-turns.md)). **Answer:** a refusal that
+   ([lesson](../lessons/medium/guards-for-empty-turns.md)). **Answer:** a refusal that
    names an alternative, and a loop breaker — which no arm has yet shown earns
    its place.
 7. **A runaway search.** Instead of working the task, the model searches — the
@@ -91,7 +91,7 @@ scoreboard.
    workspace is no longer the project. **Seen:** the file-set check found
    `main.py` outside the layout twice, and `pyproject.toml` once
    ([run](../../docs/superpowers/research/2026-10-25-lesson1-run.md),
-   [lesson](../lessons/write-only-listed.md)). **Answer:** name the layout in
+   [lesson](../lessons/easy/write-only-listed.md)). **Answer:** name the layout in
    the task and compare the file set after the run.
 10. **A lost id.** The last phase's identity contract never lands — the field is
     missing, or it is rebuilt from a position that changes when the list does.
@@ -128,7 +128,7 @@ scoreboard.
     in every request and both attempts started one
     ([record](../../docs/superpowers/research/2026-10-25-lesson10-run.md)), and
     the facts block that carried it moved no pass at n = 3
-    ([run](../lessons/project-facts.md)). **Answer:** a fact is a reminder, not
+    ([run](../lessons/easy/project-facts.md)). **Answer:** a fact is a reminder, not
     an enforcement; the guard is the enforcement, and it stays dormant until an
     arm needs it.
 

@@ -8,7 +8,7 @@ const page = (p) => readFileSync(resolve(ROOT, "learn", p), "utf8");
 const BADGE = (s) => /^\*\*Badge:\*\* `(reference-run|cited|screen|conjecture)`$/m.test(s);
 
 test("the ninth findings lesson follows the six steps and names its badge", () => {
-  const l = page("lessons/intercom-block.md");
+  const l = page("lessons/hard/intercom-block.md");
   const heads = [...l.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
   assert.deepEqual(heads, ["Problem", "Eval case", "Evidence of the problem",
     "Solution", "Validation", "Interpretation"]);
@@ -21,7 +21,7 @@ test("the ninth findings lesson follows the six steps and names its badge", () =
 });
 
 test("the intercom lesson is a rationale, not a measurement", () => {
-  const l = page("lessons/intercom-block.md");
+  const l = page("lessons/hard/intercom-block.md");
   assert.ok(!/docs\/ladder\//.test(l), "lesson links a ladder record");
   assert.ok(!/reference-run/.test(l), "a rationale cannot claim reference-run");
   assert.ok(!/prefill (down|fell) ?\d|20 ?%/.test(l), "lesson restates A11's retired numbers");

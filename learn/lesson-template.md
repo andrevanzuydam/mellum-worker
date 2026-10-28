@@ -5,6 +5,9 @@ The problem in one sentence. The solution in one sentence.
 ```yaml
 ---
 title: The worker decides when it is done
+tier: medium            # easy | medium | hard (see "Choosing a tier" below)
+number: M7              # tier letter + its next free number
+time: 6 min read · 45 min to run
 track: lessons          # getting-started | lessons
 position: 2             # recommended order within the track
 prerequisites: [getting-started/harness]
@@ -12,6 +15,16 @@ authors: [Andre van Zuydam, Paul Everitt]
 backends: [omlx, mlx-lm] # where the badged evidence ran; llama.cpp once re-run
 ---
 ```
+
+!!! abstract "Overview"
+
+    **Questions**
+
+    - The question a learner would ask, in their words.
+
+    **Objectives**
+
+    - What the reader can do or recognise after the page, verb first.
 
 ## Problem
 
@@ -115,19 +128,47 @@ One or two changes that could improve the weaker side without giving back
 the other. For each, name the budget column it targets, the quality risk,
 and the screen or badge that would test it.
 
+### Run it yourself
+
+One sentence, then the command that reproduces the page's arms, with the
+suites, n and deadline the page names. A page with no runnable arm says so in
+one sentence and gives no command.
+
+```bash
+uv run python learn/code/harness.py run --suite easy --arm worker --repeat 3 --grade
+```
+
+!!! success "Key points"
+
+    - Three or four bullets that restate the findings, never stronger than the
+      evidence: keep the page's own screen, n and null wording.
+
 ---
+
+### Choosing a tier
+
+- **Easy:** one setting, one visible effect, read in a table; needs only
+  Getting started.
+- **Medium:** how the model spends its session (thinking, empty turns, the
+  shape of the task); the reader will look at a trace.
+- **Hard:** orchestration and advanced concepts: who drives the model, how
+  work is split, checked and re-dispatched.
 
 ### Repository conventions
 
 - A lesson opens with a two-sentence paragraph — the problem, then the
   solution — 45 words or fewer, no heading, no badge and no link.
 
-- One lesson is one Markdown file under `learn/lessons/`.
+- One lesson is one Markdown file under `learn/lessons/<tier>/`, with the
+  frame above: the Overview box after the opening, the six steps, then Run it
+  yourself and the Key points box last. `tests/lesson-format.test.mjs` checks
+  the frame, the tier, the number and the nav.
   Do not copy a production source file into the lesson; quote the smallest
   real snippet and link to the exact file, commit and line range so the page
   cannot drift with `main`.
 - Put a lesson's own test in `tests/lesson-<slug>.test.mjs`. The shared
   `tests/learn-site.test.mjs` auto-discovers lesson pages and holds only
   site-wide checks, so a lesson-specific test is not a shared-file edit.
-- Add the Lessons index link, the `zensical.toml` nav entry, the
+- Add the card on the tier's landing page, the `zensical.toml` nav entry under
+  the tier, the
   `[Unreleased]` changelog entry and the roadmap update by hand.

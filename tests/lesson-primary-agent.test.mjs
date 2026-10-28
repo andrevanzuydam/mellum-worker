@@ -3,11 +3,11 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
-const l = readFileSync(resolve(import.meta.dirname, "..", "learn/lessons/primary-agent.md"), "utf8");
+const l = readFileSync(resolve(import.meta.dirname, "..", "learn/lessons/hard/primary-agent.md"), "utf8");
 const section = (h) => l.split(`## ${h}`)[1].split(/\n## /)[0];
 
 test("lesson 1 opens with the two-sentence paragraph", () => {
-  const opening = l.split(/^# .+$/m)[1].split(/^## /m)[0].trim();
+  const opening = l.split(/^# .+$/m)[1].split(/^## |^!!! /m)[0].trim();
   assert.equal(opening.split(/(?<=\.)\s+/).filter(Boolean).length, 2);
   assert.ok(opening.split(/\s+/).length <= 45, "opening is over 45 words");
   assert.doesNotMatch(opening, /`|\]\(|\*\*Badge/);

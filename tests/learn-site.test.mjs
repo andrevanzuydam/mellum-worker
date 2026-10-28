@@ -22,10 +22,12 @@ const PAGES = [
   "getting-started/suite.md",
   "getting-started/worker-extension.md",
   "lessons/index.md",
-  ...readdirSync(resolve(ROOT, "learn/lessons"))
-    .filter((f) => f.endsWith(".md") && f !== "index.md")
-    .sort()
-    .map((f) => `lessons/${f}`),
+  "lessons/retired.md",
+  ...["easy", "medium", "hard"].flatMap((tier) =>
+    readdirSync(resolve(ROOT, "learn/lessons", tier))
+      .filter((f) => f.endsWith(".md"))
+      .sort()
+      .map((f) => `lessons/${tier}/${f}`)),
   "lesson-template.md",
   "project/index.md",
   "project/toolchain.md",
@@ -198,7 +200,7 @@ test("lesson 3 runs the suite, grading and the trace", () => {
 });
 
 test("the first findings lesson follows the six steps and names its badge", () => {
-  const l = page("lessons/primary-agent.md");
+  const l = page("lessons/hard/primary-agent.md");
   const heads = [...l.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
   assert.deepEqual(heads, ["Problem", "Eval case", "Evidence of the problem",
     "Solution", "Validation", "Interpretation"]);
@@ -211,25 +213,20 @@ test("the first findings lesson follows the six steps and names its badge", () =
 });
 
 test("the baseline shows the actual worker code", () => {
-  const l = page("lessons/baseline.md");
+  const l = page("lessons/easy/baseline.md");
   for (const text of ["extensions/mellum-worker.ts", "setActiveTools",
     "createGuardSet"])
     assert.ok(l.includes(text), `baseline lacks ${text}`);
 });
 
-test("the Lessons index is grouped without Basic Remedies", () => {
+test("the Lessons index introduces the tiers and maps the old numbers", () => {
   const index = page("lessons/index.md");
-  const items = index.match(/^\d+\. \*\*/gm) ?? [];
-  assert.equal(items.length, 23);
-  assert.match(index, /\*\((Paul|Andre)\)\*$/m);
-  assert.equal((index.match(/\*\(Paul\)\*/g) ?? []).length, 11);
-  assert.equal((index.match(/\*\(Andre\)\*/g) ?? []).length, 13);
-  for (const text of ["Start here", "Paul's lessons"])
-    assert.ok(index.includes(text), `index lacks ${text}`);
-  assert.ok(!index.includes("Basic Remedies"));
-  assert.match(index, /The runaway search/);
-  assert.match(index, /^3\. \*\*(?:\[Thinking is working memory\]|Thinking is working memory)/m);
-  assert.match(index, /^4\. \*\*(?:\[Guards for empty turns and loops\]|Guards for empty turns and loops)/m);
+  for (const tier of ["easy", "medium", "hard"]) assert.match(index, new RegExp(`\\(${tier}/index\\.md\\)`));
+  assert.match(index, /grid cards/);
+  assert.match(index, /^## Where the old numbers went$/m);
+  for (const n of ["E1", "E3", "E4", "E5", "M1", "M2", "M3", "M4", "H1", "H2"])
+    assert.match(index, new RegExp(`\\| ${n} \\|`), `index does not map ${n}`);
+  assert.match(page("lessons/retired.md"), /Who holds the loop/);
 });
 
 test("the lesson template asks for evidence and records the conventions", () => {
@@ -269,7 +266,7 @@ test("the worker-extension lesson teaches the extension mechanism", () => {
 });
 
 test("the second findings lesson follows the six steps and names its badge", () => {
-  const l = page("lessons/short-prompt.md");
+  const l = page("lessons/easy/short-prompt.md");
   const heads = [...l.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
   assert.deepEqual(heads, ["Problem", "Eval case", "Evidence of the problem",
     "Solution", "Validation", "Interpretation"]);
@@ -325,7 +322,7 @@ test("the run record groups the failed checks by module", () => {
 
 test("the lesson template opens with the two-sentence paragraph", () => {
   const t = page("lesson-template.md");
-  const opening = t.split(/^# .+$/m)[1].split(/^## /m)[0].replace(/```[\s\S]*?```/g, "").trim();
+  const opening = t.split(/^# .+$/m)[1].split(/^## |^!!! /m)[0].replace(/```[\s\S]*?```/g, "").trim();
   assert.ok(opening.length > 0, "template has no opening paragraph");
   assert.equal(opening.split(/(?<=\.)\s+/).filter(Boolean).length, 2);
   assert.ok(opening.split(/\s+/).length <= 45, "opening is over 45 words");
@@ -333,7 +330,7 @@ test("the lesson template opens with the two-sentence paragraph", () => {
 });
 
 test("a lesson screen is sized by what it reads", () => {
-  const lessons = PAGES.filter((p) => p.startsWith("lessons/") && p !== "lessons/index.md");
+  const lessons = PAGES.filter((p) => /^lessons\/(easy|medium|hard)\/(?!index\.md$)/.test(p));
   for (const p of lessons) {
     const l = page(p).replace(/\s+/g, " ");
     // The rule is about the evidence the page rests on, so it reads the
@@ -358,11 +355,11 @@ test("a lesson screen is sized by what it reads", () => {
 });
 
 test("every lesson page opens with the two-sentence paragraph", () => {
-  const lessons = PAGES.filter((p) => p.startsWith("lessons/") && p !== "lessons/index.md");
+  const lessons = PAGES.filter((p) => /^lessons\/(easy|medium|hard)\/(?!index\.md$)/.test(p));
   assert.ok(lessons.length >= 8, "lesson discovery found too few pages");
   for (const p of lessons) {
     const l = page(p);
-    const opening = l.split(/^# .+$/m)[1].split(/^## /m)[0].trim();
+    const opening = l.split(/^# .+$/m)[1].split(/^## |^!!! /m)[0].trim();
     assert.ok(opening.length > 0, `${p} has no opening paragraph`);
     assert.equal(opening.split(/(?<=\.)\s+/).filter(Boolean).length, 2, `${p} opening is not two sentences`);
     assert.ok(opening.split(/\s+/).length <= 45, `${p} opening is over 45 words`);
