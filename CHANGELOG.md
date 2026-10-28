@@ -134,6 +134,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- `learn/code/flow_run.py` runs again. A relative `--runs-dir` sent Pi's
+  recorder and profile paths into the workspace, so every round failed with
+  "Unknown provider" before the model was called; the runs dir is now made
+  absolute. The final hidden grade also crashed after `score_workspace_details`
+  gained a fourth return value; it now reports checks passed out of expected.
+
 - Lesson text that contradicted its own evidence is corrected: H1's pass
   counts are identical on Bronze and Silver (not "one session apart"); E4's
   are identical in one sample and one apart in the other, and its worker had

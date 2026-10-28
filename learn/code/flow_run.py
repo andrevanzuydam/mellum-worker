@@ -825,9 +825,7 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
             lr.emit(f"  restored fixture data before grading: {', '.join(restored)}")
     # Granular hidden grade: full pass (bool) is almost always False on hard (the 31/34 ceiling), so
     # record the COUNT of hidden tests passed — that's what discriminates one run/arm from another.
-    graded, _, missing = harness.score_workspace_details(workspace, suite)
-    hidden_total = len(suite.expected)
-    hidden_passed = hidden_total - missing
+    graded, hidden_passed, hidden_total = hidden_grade(workspace, suite)
     todo = (workspace / "plan" / "TODO.md").exists()
     result = {
         "suite": suite_name, "flow_mode": flow_mode,
@@ -846,6 +844,13 @@ def loop(suite_name: str, *, runs_dir: Path, timeout: float, base_url: str, mode
             f"TODO.md={'yes' if todo else 'NO'} bundle={run}")
     lr._FEED_PATH = None
     return result
+
+
+def hidden_grade(workspace: Path, suite) -> tuple[bool, int, int]:
+    """The suite's hidden grade as (full pass, checks passed, checks expected)."""
+    graded, _, missing, _ = harness.score_workspace_details(workspace, suite)
+    total = len(suite.expected)
+    return graded, total - len(missing), total
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -891,7 +896,7 @@ def main(argv: list[str] | None = None) -> int:
                         "with-vs-without comparison is the deciding experiment (see the research note).")
     args = p.parse_args(argv)
     for name in args.suite.split(","):
-        loop(name.strip(), runs_dir=args.runs_dir, timeout=args.timeout,
+        loop(name.strip(), runs_dir=args.runs_dir.resolve(), timeout=args.timeout,
              base_url=args.base_url, model_id=args.model, thinking=args.thinking,
              attempts=args.attempts, concurrency=args.concurrency,
              start_phase=args.start_phase, seed_from=args.seed_from,

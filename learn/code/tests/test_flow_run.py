@@ -357,3 +357,44 @@ def test_drive_phase_free_injects_memory_grounding_and_learns_from_a_failure(tmp
     assert "no answer" in coder_msgs[0].lower()                        # with the agnostic caveat
     # the schema failure was distilled into a NEW general lesson and persisted — the run learned
     assert len(mem.Memory(tmp_path / "memory.jsonl").lessons) == 2
+
+
+def _one_check_suite(tmp_path):
+    import json
+    import harness
+    suite_dir = tmp_path / "suites" / "onecheck"
+    (suite_dir / "tests").mkdir(parents=True)
+    (suite_dir / "tests" / "test_add.py").write_text(
+        "from add import add\n\ndef test_add():\n    assert add(2, 3) == 5\n\n"
+        "def test_zero():\n    assert add(0, 0) == 0\n")
+    (suite_dir / "expected.json").write_text(json.dumps([
+        "grader_tests/test_add.py::test_add", "grader_tests/test_add.py::test_zero"]))
+    (suite_dir / "task.md").write_text("Write add.py.\n")
+    return harness.load_suite(tmp_path / "suites", "onecheck")
+
+
+def test_hidden_grade_counts_passed_checks_on_a_partial_build(tmp_path):
+    suite = _one_check_suite(tmp_path)
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "add.py").write_text("def add(a, b):\n    return 0\n")
+    assert flow_run.hidden_grade(workspace, suite) == (False, 1, 2)
+
+
+def test_hidden_grade_passes_a_complete_build(tmp_path):
+    suite = _one_check_suite(tmp_path)
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    (workspace / "add.py").write_text("def add(a, b):\n    return a + b\n")
+    assert flow_run.hidden_grade(workspace, suite) == (True, 2, 2)
+
+
+def test_main_hands_loop_an_absolute_runs_dir(tmp_path, monkeypatch):
+    # Pi runs with the workspace as its cwd, so a relative runs dir sends the
+    # recorder and profile paths into the workspace, where they do not exist.
+    seen = {}
+    monkeypatch.setattr(flow_run, "loop", lambda name, **kw: seen.update(kw))
+    monkeypatch.chdir(tmp_path)
+    flow_run.main(["--suite", "easy", "--runs-dir", "runs/flow-x"])
+    assert seen["runs_dir"].is_absolute()
+    assert seen["runs_dir"] == tmp_path.resolve() / "runs" / "flow-x"
