@@ -440,7 +440,7 @@ Versions match git tags; pin one in both install lines.
 ### Changed
 
 - The Learning Center is ready to read: every page was proofread and has no
-  em dashes; headings are sentence case; Getting started is five numbered
+  em dashes; page titles and menus are Title Case and section headings sentence case; Getting started is five numbered
   steps (not "lessons"); the glossary is grouped into sections; Home, the
   Introduction and Pathologies have side menus; About sits last with Project,
   the lesson template and Credits under it; Paul is credited first; and the

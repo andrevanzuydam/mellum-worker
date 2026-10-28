@@ -37,7 +37,7 @@ eval harness. After that, any [lesson](lessons/index.md) stands alone and lists 
     from first principles: models, prompts, context, tools, harnesses, agents
     and the feedback loop.
 
--   **[Getting started](getting-started/index.md)**
+-   **[Getting Started](getting-started/index.md)**
 
     ---
 

@@ -1,5 +1,5 @@
 ---
-title: The worker extension
+title: The Worker Extension
 track: getting-started
 position: 5
 prerequisites: [getting-started/ditch]
@@ -7,7 +7,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# The worker extension
+# The Worker Extension
 
 A Pi extension is a TypeScript module that exports a default factory. Pi calls
 that factory with an `ExtensionAPI`; the extension registers commands, tools,

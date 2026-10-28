@@ -1,4 +1,4 @@
-# Contributing a lesson
+# Contributing a Lesson
 
 If you have an idea for a lesson, follow this process:
 

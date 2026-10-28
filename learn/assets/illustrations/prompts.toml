@@ -8,8 +8,8 @@ width = 1280
 height = 640
 
 [lessons]
-seed = 101
-subject = "the small robot climbing a gentle staircase of three wide steps, the first step low and green, the second amber, the third tall and coral"
+seed = 1011
+subject = "exactly three large wide steps side by side, rising from left to right: a low green step, a middle amber step, and a tall coral step, only three steps and nothing else, the small robot standing on the low green step looking up at the others"
 
 [tier-easy]
 seed = 102
@@ -76,8 +76,10 @@ seed = 602
 subject = "the small robot setting up a laptop on a desk, a small llama figurine standing next to the laptop, a cable running to a tiny server box"
 
 [ditch]
-seed = 603
-subject = "the small robot cheerfully driving a little car that has gone off the road and tipped into a grassy ditch, the road continuing straight behind it"
+seed = 6031
+subject = "the small robot sitting in a little car that has tipped nose-first into a grassy ditch beside a road, the robot grinning and raising one arm, a white speech bubble above the robot containing only the word \"Success!\" in clear bold letters"
+style = "flat vector illustration, muted teal and coral palette with soft grey, clean white background, simple rounded shapes, a small friendly teal robot as the main character, plenty of white space, the only text in the image is the word Success! in the speech bubble"
+negative = "any other text, extra letters, misspelled words, numbers, watermark, logo, photo, realistic, gradient, clutter"
 
 [harness]
 seed = 604

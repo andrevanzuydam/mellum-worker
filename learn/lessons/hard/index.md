@@ -1,4 +1,4 @@
-# Hard lessons
+# Hard Lessons
 
 Orchestration and advanced concepts: who drives the model, how work is split,
 checked and re-dispatched. Each lesson stands on its own; it helps to know what
@@ -8,14 +8,14 @@ a worker is ([Getting started](../../getting-started/worker-extension.md)).
 
 <div class="grid cards" markdown>
 
--   **[H1 · The primary agent is the wrong worker](primary-agent.md)**
+-   **[H1 · The Primary Agent Is the Wrong Worker](primary-agent.md)**
 
     ---
 
     Neither suite separates the two arms on passes at n = 3; what separates
     them is how they fail. *(Paul)*
 
--   **[H2 · The intercom block is a prefill tax](intercom-block.md)**
+-   **[H2 · The Intercom Block Is a Prefill Tax](intercom-block.md)**
 
     ---
 

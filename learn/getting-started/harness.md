@@ -1,5 +1,5 @@
 ---
-title: Make a mini harness
+title: Make a Mini Harness
 track: getting-started
 position: 3
 prerequisites: [getting-started/ditch]
@@ -7,7 +7,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# Make a mini harness
+# Make a Mini Harness
 
 A harness runs a model on a task and scores the result. The one in this repo
 is small enough to read: each run gets a fresh directory, its own copy of the

@@ -1,5 +1,5 @@
 ---
-title: Eval suites and the telemetry
+title: Eval Suites and the Telemetry
 track: getting-started
 position: 4
 prerequisites: [getting-started/harness]
@@ -7,7 +7,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# Eval suites and the telemetry
+# Eval Suites and the Telemetry
 
 Step 3 made one isolated run. This one runs **eval suites**: whole projects
 the model has to build, with a mission, a tech stack, a roadmap, a sequence of

@@ -1,4 +1,4 @@
-# How this project works
+# How This Project Works
 
 `mellum-worker` ships Mellum 2.1 as a bounded coding worker for Pi
 and keeps the ladder that measures it and the Learning Center that

@@ -1,5 +1,5 @@
 ---
-title: A prose brief stops at its first reply
+title: A Prose Brief Stops at Its First Reply
 tier: medium
 number: M4
 time: 6 min read · 100 min to run
@@ -10,7 +10,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# M4 · A prose brief stops at its first reply
+# M4 · A Prose Brief Stops at Its First Reply
 
 A four-phase build handed over as one joined brief finished faster and cheaper,
 and left a project the checks could not open in all three sessions. Sent as

@@ -1,5 +1,5 @@
 ---
-title: Thinking is working memory
+title: Thinking Is Working Memory
 tier: medium
 number: M1
 time: 4 min read
@@ -10,7 +10,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# M1 · Thinking is working memory
+# M1 · Thinking Is Working Memory
 
 Stripping a reasoning model's thinking blocks looks like a cheaper prefill,
 but the output cap is the budget that binds and the worker's guards read those

@@ -1,5 +1,5 @@
 ---
-title: Project facts
+title: Project Facts
 tier: easy
 number: E3
 time: 5 min read · 45 min to run
@@ -10,7 +10,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# E3 · Project facts
+# E3 · Project Facts
 
 A small model dropped into a workspace has to infer how the project is built,
 and a plausible guess survives several turns. The worker appends a short,

@@ -1,5 +1,5 @@
 ---
-title: Write only the files you list
+title: Write Only the Files You List
 tier: easy
 number: E2
 time: 4 min read · 30 min to run
@@ -10,7 +10,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# E2 · Write only the files you list
+# E2 · Write Only the Files You List
 
 A run can pass every hidden test and still be wrong, leaving scratch files, a
 second app copy or a test edited to pass. The page names the layout and checks

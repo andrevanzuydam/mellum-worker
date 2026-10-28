@@ -1,5 +1,5 @@
 ---
-title: One spec file per phase
+title: One Spec File per Phase
 tier: medium
 number: M3
 time: 7 min read · 120 min to run
@@ -10,7 +10,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# M3 · One spec file per phase
+# M3 · One Spec File per Phase
 
 A phased build given one joined spec leaves the worker guessing which phase it
 was asked for, and the phase it drops is the last one. Written per phase, each

@@ -1,4 +1,4 @@
-# Easy lessons
+# Easy Lessons
 
 One setting, one visible effect, read in a table. Each lesson stands on its
 own and assumes only [Getting started](../../getting-started/index.md).
@@ -7,28 +7,28 @@ own and assumes only [Getting started](../../getting-started/index.md).
 
 <div class="grid cards" markdown>
 
--   **[E1 · The suite baseline](baseline.md)**
+-   **[E1 · The Suite Baseline](baseline.md)**
 
     ---
 
     Baseline Pi and the Baseline Worker on easy, medium and hard, n = 3, on
     llama.cpp: the numbers every other lesson changes. *(Paul)*
 
--   **[E2 · Write only the files you list](write-only-listed.md)**
+-   **[E2 · Write Only the Files You List](write-only-listed.md)**
 
     ---
 
     A file-set check runs after every session; easy showed no writes outside
     the layout. *(Paul)*
 
--   **[E3 · Project facts](project-facts.md)**
+-   **[E3 · Project Facts](project-facts.md)**
 
     ---
 
     The block reaches the model in every request and did not move easy at
     n = 3. A null, with a lead. *(Paul)*
 
--   **[E4 · A short prompt, not a procedure](short-prompt.md)**
+-   **[E4 · A Short Prompt, Not a Procedure](short-prompt.md)**
 
     ---
 

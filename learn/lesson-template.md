@@ -1,10 +1,10 @@
-# Lesson title
+# Lesson Title
 
 The problem in one sentence. The solution in one sentence.
 
 ```yaml
 ---
-title: The worker decides when it is done
+title: The Worker Decides When It Is Done
 tier: medium            # easy | medium | hard (see "Choosing a tier" below)
 number: M7              # tier letter + its next free number
 time: 6 min read · 45 min to run

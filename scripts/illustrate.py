@@ -41,9 +41,11 @@ def load() -> tuple[dict, dict[str, dict]]:
 
 
 def request(shared: dict, entry: dict) -> dict:
+    # An entry may override the shared style or negative prompt, e.g. to allow
+    # one short word in a speech bubble where the shared style forbids text.
     return {
-        "prompt": f"{entry['subject']}, {shared['style']}",
-        "negative_prompt": shared.get("negative"),
+        "prompt": f"{entry['subject']}, {entry.get('style', shared['style'])}",
+        "negative_prompt": entry.get("negative", shared.get("negative")),
         "width": entry.get("width", shared["width"]),
         "height": entry.get("height", shared["height"]),
         "seed": entry["seed"],

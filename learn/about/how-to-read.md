@@ -1,4 +1,4 @@
-# How to read a lesson
+# How to Read a Lesson
 
 The center has two [tracks](../glossary.md). The **Getting started** track is a course in a fixed order; **Lessons** are findings that stand alone: each lists its prerequisites, and you can read them in any order.
 

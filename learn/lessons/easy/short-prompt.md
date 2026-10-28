@@ -1,5 +1,5 @@
 ---
-title: A short prompt, not a procedure
+title: A Short Prompt, Not a Procedure
 tier: easy
 number: E4
 time: 4 min read · 35 min to run
@@ -10,7 +10,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# E4 · A short prompt, not a procedure
+# E4 · A Short Prompt, Not a Procedure
 
 A prompt that narrates a six-step procedure gives a small model more to
 follow than the project needs, and every line is paid on every request. What

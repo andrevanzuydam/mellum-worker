@@ -1,4 +1,4 @@
-# Toolchain and checks
+# Toolchain and Checks
 
 Everything here runs from a clone, and every Python command is `uv run` from
 the repository root.

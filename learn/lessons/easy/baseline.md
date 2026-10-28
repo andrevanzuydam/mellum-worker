@@ -1,5 +1,5 @@
 ---
-title: The suite baseline
+title: The Suite Baseline
 tier: easy
 number: E1
 time: 4 min read · 90 min to run
@@ -10,7 +10,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# E1 · The suite baseline
+# E1 · The Suite Baseline
 
 Given the whole job, a small model fails most of the suite's sessions and
 never passes hard, whether it plans or only answers. The page measures the

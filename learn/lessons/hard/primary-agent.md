@@ -1,5 +1,5 @@
 ---
-title: The primary agent is the wrong worker
+title: The Primary Agent Is the Wrong Worker
 tier: hard
 number: H1
 time: 6 min read · about 2 h to run
@@ -10,7 +10,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# H1 · The primary agent is the wrong worker
+# H1 · The Primary Agent Is the Wrong Worker
 
 The primary agent lets one small model plan, choose and decide it is finished,
 so its failures arrive as yours: a server that never returns, a file outside

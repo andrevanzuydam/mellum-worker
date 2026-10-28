@@ -1,4 +1,4 @@
-# What this is
+# What This Is
 
 This Learning Center teaches you how to run a small coding model locally behind Pi, and fix what goes wrong, with evidence. It is built for developers on macOS, Linux, or Windows who know a terminal and Python or Node.
 

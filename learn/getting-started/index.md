@@ -1,4 +1,4 @@
-# Getting started
+# Getting Started
 
 This track is in a fixed order: each step builds on the one before, and
 each ends with a check you can run. Five steps, then the Lessons.

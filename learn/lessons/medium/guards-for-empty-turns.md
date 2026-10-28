@@ -1,5 +1,5 @@
 ---
-title: Guards for empty turns and loops
+title: Guards for Empty Turns and Loops
 tier: medium
 number: M2
 time: 5 min read · 60 min to run
@@ -10,7 +10,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# M2 · Guards for empty turns and loops
+# M2 · Guards for Empty Turns and Loops
 
 A small model can end a turn having said nothing and called no tool, and the
 run stops there. The shipped guards answer that empty turn and repetition, and

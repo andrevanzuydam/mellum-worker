@@ -1,4 +1,4 @@
-# Evidence and badges
+# Evidence and Badges
 
 Each step of a lesson (except the Interpretation) opens with an evidence badge. The badge tells you what the step rests on, from a preregistered run to a reasoned conjecture.
 

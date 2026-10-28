@@ -1,5 +1,5 @@
 ---
-title: The ditch
+title: The Ditch
 track: getting-started
 position: 2
 prerequisites: [getting-started/base-pi-on-llamacpp]
@@ -7,7 +7,7 @@ authors: [Paul Everitt, Andre van Zuydam]
 backends: [llamacpp]
 ---
 
-# The ditch
+# The Ditch
 
 ![A small robot cheerfully driving a little car that has tipped off the road into a ditch](../assets/illustrations/ditch.webp){ .illustration }
 
@@ -19,7 +19,7 @@ not survive being checked.
 
 One session, these three prompts in order:
 
-1. `Build AgentClinic: a small clinic appointment app. Patients book appointments with doctors, and a doctor can see their day. Make it work!`
+1. `Build AgentClinic: a small clinic appointment app. Patients book appointments with doctors, and a doctor can see their day. Make it work.`
 2. `Now add tests and make them pass`
 3. `Add a command-line tool that lists a doctor's appointments for a given date`
 

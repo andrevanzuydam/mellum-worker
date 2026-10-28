@@ -1,5 +1,5 @@
 ---
-title: The intercom block is a prefill tax
+title: The Intercom Block Is a Prefill Tax
 tier: hard
 number: H2
 time: 5 min read
@@ -10,7 +10,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# H2 · The intercom block is a prefill tax
+# H2 · The Intercom Block Is a Prefill Tax
 
 A delegate's protocol text sent on every turn is context you pay for again on
 every request, for a channel the parent may never open. The worker hands back one
