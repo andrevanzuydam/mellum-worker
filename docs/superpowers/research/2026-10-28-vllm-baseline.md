@@ -1,6 +1,7 @@
 # A replicable vLLM baseline for Mellum 2.1
 
-**What is measured.** No baseline session has run. Checked on 2026-10-28:
+**What is measured.** Screen 1 ran on 2026-10-28 (n = 1 per session; results
+below). Checked the same day:
 vLLM v0.32.0 lists `MellumForCausalLM` (served through its Transformers MoE
 backend since vLLM PR 59679); vLLM's recipe and JetBrains' model card serve it
 with `--reasoning-parser qwen3` and `--tool-call-parser hermes`; the 2.1 chat
@@ -8,12 +9,10 @@ template honours `enable_thinking: false`; the pinned image is built on CUDA
 13.0 (driver 580+). `baseline.py client` installed the pinned Node (checksum
 verified) and Pi 1.3.0 on macOS arm64, and `baseline.py offers` returned three
 verified on-demand RTX A6000 offers at $0.40–0.48/h with drivers 580 and 595.
-Nothing has been rented.
 
-**What is conjecture.** That the pinned stack serves Pi's tool calls and
-thinking correctly; how fast a session runs over the tunnel; that results are
-stable enough across hosts and client machines of the pinned kind to call a
-run elsewhere a replicate.
+**What is conjecture.** Any rate: three sessions say what happens, not how
+often. That results are stable enough across hosts and client machines of the
+pinned kind to call a run elsewhere a replicate.
 
 ## Why a new baseline
 
@@ -67,21 +66,54 @@ numerics. The 48 GB "4090" is a modified card nobody can count on renting. An
 H100 SXM was the first pick, but the only one with a new enough driver cost
 $4.19/h.
 
-## Screen 1 (not yet run)
+## Screen 1 (2026-10-28)
 
-Presence questions, so n = 1 each, on one rung and the easy suite:
+Record: [`docs/ladder/2026-10-28-vllm-screen1/`](../../ladder/2026-10-28-vllm-screen1/)
+(manifest, ladder table and `run.json`s, the suite's `run.json`; raw traces
+stripped). Box: vast.ai instance 58114859, RTX A6000 (49140 MiB, driver
+595.104.02), $0.402/h; client: an Apple M3 laptop over the SSH tunnel.
 
-1. `up` rents the pinned GPU, `serve` passes the box check and starts vLLM
-   (including whether 131,072 tokens of context fit beside the weights in 48 GB).
-2. A plain ladder session and a bare suite session complete over the tunnel:
-   Pi's tool calls arrive as tool calls and thinking arrives as reasoning.
-3. `manifest.json` and `run.json` carry the server, GPU and client blocks.
-4. Wall per session, to size the full run and its cost.
+| Session | Result | Requests | Wall | What happened |
+| --- | --- | --- | --- | --- |
+| Ladder rung 1 (plain) | pass | 11 | 33.8 s | built and stopped |
+| Ladder rung 6 (plain) | FAIL, deadline | 20 | 600 s | ran `python app.py`, which serves forever, and waited |
+| Easy suite (bare) | FAIL, checks did not run | 20 | 46.9 s | wrote `main.py` instead of the layout's `app.py` and stopped without testing |
 
-Sessions run one at a time; concurrency would change wall and is not a pin
-yet. After the screen, preregister the baseline's reading — what is reported
-per rung and per suite, and what a later arm must beat — before the full run.
-At about $0.45/h the screen costs well under $5.
+An earlier easy session in the same screen (stopped by hand, not recorded)
+ran `uvicorn app:app --reload` in the foreground and waited too.
+
+The presence questions:
+
+1. **Box and server — yes.** The pinned GPU passed the box check; vLLM 0.32.0
+   started with 131,072 tokens of context, with 18.9 GiB of KV cache left
+   (1.27 M tokens; 9.7 concurrent full-length requests). Start to serving took
+   about 6 minutes: 264 s downloading weights from Hugging Face, 7 s loading,
+   56 s engine warm-up.
+2. **Pi over the tunnel — yes.** Tool calls arrived as tool calls and thinking
+   as reasoning (rung 1 passed; the live trace showed both). Single-request
+   generation ran at roughly 75–110 tokens/s.
+3. **Records — yes.** `manifest.json` carries the server, the box's GPU and the
+   client; each ladder `run.json` carries the server and the Pi version. Its
+   `gpu` field is empty because the client has no GPU; the manifest is where
+   the box's GPU lives.
+4. **Wall.** A session that works takes under a minute here; a session that
+   starts a foreground server costs its whole deadline.
+
+What the screen shows about vanilla Pi, at n = 1: the foreground-server
+pathology appeared in two of the three sessions, and Pi has no default bash
+timeout to end it, so the deadline does. That is a baseline result, not a
+harness fault, and it is what later arms are measured against.
+
+Harness faults found and fixed on the way: `--mode primary` ignored
+`--model` (rungs failed in 0.2 s), the ladder got an unrewritten profile, the
+tunnel shared port 8000 with the apps the model writes (now 18000),
+`watch_ladder.py` was too slow to print on macOS, and `all` had no way to keep
+the box (now `--keep`).
+
+Before the full run: decide whether to add a harness-side stall cutoff (a
+single tool call running past a pinned limit ends the session as stalled,
+Pi untouched), since at 600 s and 2,700 s deadlines a full run spends most of
+its time waiting on servers; then preregister the reading.
 
 ## What would falsify this
 
@@ -99,7 +131,10 @@ At about $0.45/h the screen costs well under $5.
 - The A6000 offers are few (three on the day), so a replicator may wait for
   one. The pin is the card, not the provider: any host with it and the image
   will do.
-- Tunnel latency and the client machine change wall time, not scores; a run
-  that hits a deadline is the exception, and the manifest shows where it ran.
+- Tunnel latency and the client machine change wall time, not scores; the
+  manifest shows where a run ran.
+- A model-started server on the client outlives its session when it is not in
+  the harness's process group (the BACKLOG "leak sweep" entry): screen 1 left
+  one on port 8000, killed by hand.
 - Pins age: the image or revision may be pulled upstream. The digest and
   revision still identify exactly what was run.

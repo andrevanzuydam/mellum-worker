@@ -17,6 +17,11 @@ Versions match git tags; pin one in both install lines.
   `vast.env`. `--screen` runs screen 1 (two rungs and the easy suite, n = 1)
   before the full baseline.
 
+- The vLLM baseline's screen 1 record, `docs/ladder/2026-10-28-vllm-screen1/`:
+  vanilla Pi passed ladder rung 1, hung on its own foreground server at rung 6,
+  and wrote the easy suite's app under the wrong name. The pinned stack works
+  end to end; the numbers are n = 1 leads, not rates.
+
 - `harness.py run --profile <dir>` runs the eval suites against another Pi
   profile (provider, model, sampling), so the bare arm can point at the
   baseline's vLLM server.
