@@ -1,9 +1,12 @@
 # Cross-model convergence on the flow — a second 12B hits the same wall
 
 Date: 2026-10-27. Lifecycle: screen (directional, n=1). The point of this run
-was to swap a *different* model onto the unchanged flow and see where it breaks,
-not to produce a hidden grade — examine never completed, so there is no grade to
-report. See also `2026-10-27-dense-phase-wall-levers.md` (the wall) and
+was to swap a *different* model onto the unchanged flow and see where it breaks.
+As first run, examine never completed, so there was no grade. A dated follow-up
+(**Update 2026-10-28**, below) adds a third cascadable knob — a content/
+over-generation cap — that lets the same model terminate examine and reach a
+hidden grade; that supersedes the "no grade" statements in the original screen.
+See also `2026-10-27-dense-phase-wall-levers.md` (the wall) and
 `2026-10-27-proxy-oracle-gap.md` (the examine gate).
 
 ## What is measured / What is conjecture
@@ -60,4 +63,45 @@ that does not either loops tool calls (capped now) or over-generates content
   an untried lever that would separate fit from capacity.
 - **The open lever is still adaptive decomposition** (per the dense-phase-wall
   note) plus, new here, a *stop-and-emit* bound on examine's content length —
-  the loop-breaker's content-channel analogue. Neither is measured yet.
+  the loop-breaker's content-channel analogue. The content bound is now built
+  and shown to reach a grade (**Update 2026-10-28**); adaptive decomposition is
+  still unmeasured.
+
+## Update 2026-10-28 — the content cap reaches a grade
+
+The screen above ended with two open content-channel levers: a per-phase output
+ceiling, and an arg-agnostic step budget for the runaway the exact-match
+loop-breaker misses. Both are now built as cascadable knobs (no-ops for the
+default worker when unset) and re-run on the same network 12B:
+
+1. `MELLUM_FLOW_MAXTOKENS` caps a phase's output tokens (examine ran at 12000,
+   down from the worker's 32000), so the content stream cannot run unbounded.
+2. The `mellum-loopguard` step budget blocks after a generous call count with a
+   "you already have every result — produce your final answer now" nudge. It is
+   arg-agnostic, so it catches the varying-arg runaway (`.`, `./`, `./probe_N`)
+   that never trips the identical-call breaker.
+
+With both in place the same model reached a hidden grade on the exact seed where
+the default worker stalls:
+
+| Run | Hidden | Phases | Visible |
+|-----|--------|--------|---------|
+| easy smoke (full pipeline) | 4/4 | 1/1 | PASS |
+| hard, seeded phases 5→7 | 26/34 | 3/7 | PASS |
+
+**What this changes.** The "no grade" conclusion was an artefact of an uncapped
+content channel, not a hard ceiling: examine *can* be made to terminate, and the
+flow then grades. The dense-phase wall is still real — 3/7 phases, not 7/7 — but
+it now produces a number, which is the comparison that matters against a worker
+that gets none there.
+
+**The honest texture of 26/34.** The phase-5 transcript shows the model fighting
+its own plumbing, not the problem: repeated failed `write migrations.py` calls
+drove ~15 turns of `ls`/`cat`-heredoc/absolute-path workarounds before the file
+landed, and it still cleared phase 7's gate (`try0`, `try1` PASS). A share of the
+8 missing points is this write-tool friction, a model-calling lead worth chasing
+next — and still agnostic, nothing codes to the eval.
+
+**New risks.** The cap value (12000) is a lever, not a measured default; too low
+would truncate a legitimate examine. n is still 1 per arm. The 3/7 phase count is
+a single seeded run, not a rate.
