@@ -293,6 +293,30 @@ def load_variant(suite: Suite, name: str) -> Path:
     return variant
 
 
+def open_tool_call(trace_lines, now: float) -> tuple[float, str] | None:
+    """The oldest tool call still waiting for its result: (seconds open, command).
+
+    A foreground server never returns, so its call stays open; a stall cutoff
+    reads this to end the session instead of waiting out the whole deadline.
+    """
+    pending: list[dict] = []
+    for line in trace_lines:
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        if row.get("type") == "tool_call":
+            pending.append(row)
+        elif row.get("type") == "tool_result" and pending:
+            pending.pop(0)
+    if not pending:
+        return None
+    call = pending[0]
+    opened = datetime.fromisoformat(call["timestamp"].replace("Z", "+00:00")).timestamp()
+    command = (call.get("input") or {}).get("command") or call.get("toolName", "")
+    return round(now - opened, 1), command
+
+
 def run_suite(
     suite: Suite,
     *,
@@ -301,6 +325,7 @@ def run_suite(
     profile: Path = PROFILE,
     pi_binary: str = "pi",
     deadline: float | None = None,
+    stall: float | None = None,
     single_prompt: bool = False,
     specs: str | None = None,
 ) -> Path:
@@ -369,12 +394,8 @@ def run_suite(
             groups.append(child.pid)
         except FileNotFoundError:
             raise SystemExit(f"pi not found: {pi_binary}; install Pi before running a suite")
-        try:
-            child.wait(timeout=remaining)
-        except subprocess.TimeoutExpired:
-            os.killpg(child.pid, signal.SIGKILL)
-            child.wait()
-            (run / "deadline").write_text("hit\n")
+        ended = wait_or_stall(child, run, trace, remaining, stall)
+        if ended:
             break
     leaked: list[dict] = []
     for pgid in groups:
@@ -387,6 +408,44 @@ def run_suite(
     if grader_touched(run, suite):
         (run / "contaminated").write_text("grader touched\n")
     return run
+
+
+def wait_or_stall(child, run: Path, trace: Path, remaining: float | None,
+                  stall: float | None) -> str | None:
+    """Wait for one Pi child; end it at the deadline, or when a command stalls.
+
+    Returns "deadline" or "stalled" when the session was ended, else None.
+    """
+    if stall is None:
+        try:
+            child.wait(timeout=remaining)
+            return None
+        except subprocess.TimeoutExpired:
+            reason = "deadline"
+    else:
+        until = None if remaining is None else time.monotonic() + remaining
+        reason = None
+        while child.poll() is None:
+            if until is not None and time.monotonic() >= until:
+                reason = "deadline"
+                break
+            open_call = open_tool_call(trace.read_text().splitlines(), time.time())
+            if open_call and open_call[0] >= stall:
+                (run / "stalled").write_text(json.dumps(
+                    {"seconds": open_call[0], "limit": stall, "command": open_call[1]}) + "\n")
+                reason = "stalled"
+                break
+            time.sleep(1)
+        if reason is None:
+            return None
+    try:
+        os.killpg(child.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    child.wait()
+    if reason == "deadline":
+        (run / "deadline").write_text("hit\n")
+    return reason
 
 
 def grader_touched(run: Path, suite: Suite) -> bool:
@@ -598,13 +657,14 @@ def _run_sessions(
     single_prompt: bool = False,
     specs: str | None = None,
     profile: Path = PROFILE,
+    stall: float | None = None,
 ) -> list[tuple]:
     results = []
     for _ in range(repeat):
         run_dir = run_suite(suite, runs_dir=runs_dir, pi_binary=pi_binary,
                             deadline=deadline, arm=arm,
                             single_prompt=single_prompt, specs=specs,
-                            profile=profile)
+                            profile=profile, stall=stall)
         grades = grade(run_dir / "workspace") if grade_run else []
         tests_passed, tail, missing, checks_ran = score_details(run_dir, suite)
         failed_checks = len(missing)
@@ -628,6 +688,9 @@ def _run_sessions(
             "strip_thinking": arm_settings(arm)["env"].get("MELLUM_STRIP_THINKING") == "1",
             "machine": machine_label(),
             "deadline": deadline,
+            "stall": stall,
+            "stalled": (json.loads((run_dir / "stalled").read_text())
+                        if (run_dir / "stalled").exists() else None),
             "passed": passed,
             "tests_passed": tests_passed,
             "quality_ok": quality_ok,
@@ -674,6 +737,7 @@ def run_suites(
     single_prompt: bool = False,
     specs: str | None = None,
     profile: Path = PROFILE,
+    stall: float | None = None,
 ) -> tuple[int, int]:
     # Run easiest first and hardest last, so a slow hard suite never blocks the
     # quicker ones; unknown suites keep alphabetical order after the known tiers.
@@ -699,7 +763,7 @@ def run_suites(
         results = _run_sessions(
             suite, runs_dir=runs_dir, pi_binary=pi_binary,
             repeat=repeat, grade_run=grade_run, deadline=deadline, arm=arm,
-            single_prompt=single_prompt, specs=specs, profile=profile,
+            single_prompt=single_prompt, specs=specs, profile=profile, stall=stall,
         )
         sessions_passed += _print_task(suite, results, repeat)
         sessions_total += len(results)
@@ -723,7 +787,8 @@ def _line(
 ) -> str:
     tag = suite.name + (f" [{index}/{repeat}]" if repeat > 1 else "")
     n_text = f"n={repeat}; " if repeat == 1 else ""
-    deadline = " deadline" if (Path(run_dir) / "deadline").exists() else ""
+    deadline = (" deadline" if (Path(run_dir) / "deadline").exists()
+                else " stalled" if (Path(run_dir) / "stalled").exists() else "")
     label = "CONTAMINATED" if contaminated else ("PASS" if passed else "FAIL")
     notes = []
     if not quality_ok:
@@ -744,7 +809,7 @@ def _print_grades(grades: list[tuple[str, bool, str]]) -> None:
         print(f"{label}: {'PASS' if ok else 'FAIL'}" + (f" ({detail})" if not ok else ""))
 
 
-def main(argv: list[str] | None = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
     run = sub.add_parser("run", help="run one eval suite or all of them")
@@ -760,6 +825,9 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--repeat", type=int, default=1)
     run.add_argument("--deadline", type=float, default=600)
     run.add_argument("--arm", choices=ARMS, default="bare")
+    run.add_argument("--stall", type=float, default=None, metavar="SECONDS",
+                     help="end a session as stalled when one tool call has run this long "
+                          "with no result (a foreground server); off by default")
     run.add_argument("--profile", type=Path, default=PROFILE,
                      help="the Pi profile directory (models.json) the sessions use; "
                           "default the pinned llama.cpp profile")
@@ -767,6 +835,11 @@ def main(argv: list[str] | None = None) -> int:
                      help="send the suite's prompts as one brief instead of steps")
     run.add_argument("--specs", metavar="VARIANT", default=None, choices=["joined", "split"],
                      help="use the suite's spec variant: one joined roadmap, or one file per phase")
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = build_parser()
     args = parser.parse_args(argv)
 
     if args.command == "qualify":
@@ -784,7 +857,7 @@ def main(argv: list[str] | None = None) -> int:
                    pi_binary=args.pi_binary, grade_run=args.grade,
                    repeat=args.repeat, deadline=args.deadline, arm=args.arm,
                    single_prompt=args.single_prompt, specs=args.specs,
-                   profile=args.profile)
+                   profile=args.profile, stall=args.stall)
         return 0
 
     suite = load_suite(args.suites_dir, args.suite)
@@ -804,7 +877,7 @@ def main(argv: list[str] | None = None) -> int:
         suite, runs_dir=args.runs_dir, pi_binary=args.pi_binary,
         repeat=args.repeat, grade_run=args.grade, deadline=args.deadline,
         arm=args.arm, single_prompt=args.single_prompt, specs=args.specs,
-        profile=args.profile,
+        profile=args.profile, stall=args.stall,
     )
     _print_task(suite, results, args.repeat)
     return 0

@@ -1,5 +1,6 @@
 import json
 import time
+from datetime import datetime
 import re
 import os
 import shutil
@@ -908,3 +909,45 @@ def test_run_suites_hand_run_suite_the_profile_they_are_given(tmp_path, monkeypa
     with pytest.raises(Seen) as seen:
         harness.run_suites(["easy"], runs_dir=tmp_path, profile=tmp_path / "p")
     assert seen.value.args == (tmp_path / "p",)
+
+
+def _rows(*rows):
+    return [json.dumps(r) for r in rows]
+
+
+def test_open_tool_call_finds_a_call_with_no_result():
+    t0 = "2026-10-28T18:11:25.000Z"
+    trace = _rows({"type": "tool_call", "timestamp": t0, "toolName": "bash", "input": {"command": "uvicorn main:app"}})
+    now = datetime.fromisoformat("2026-10-28T18:13:25+00:00").timestamp()
+    assert harness.open_tool_call(trace, now) == (120.0, "uvicorn main:app")
+
+
+def test_open_tool_call_ignores_a_call_that_returned():
+    trace = _rows(
+        {"type": "tool_call", "timestamp": "2026-10-28T18:11:20.000Z", "toolName": "bash", "input": {"command": "pytest"}},
+        {"type": "tool_result", "timestamp": "2026-10-28T18:11:22.000Z", "toolName": "bash"},
+    )
+    assert harness.open_tool_call(trace, datetime.fromisoformat("2026-10-28T19:00:00+00:00").timestamp()) is None
+
+
+def test_a_stalled_command_ends_the_session_and_is_recorded(tmp_path):
+    started = time.monotonic()
+    run_dir = harness.run_suite(
+        harness.load_suite(SUITES, "add"), runs_dir=tmp_path / "runs", profile=PROFILE,
+        pi_binary=str(FIX / "fake-pi-stall.sh"), deadline=None, stall=2,
+    )
+    assert time.monotonic() - started < 20, "the stall cutoff did not end the session"
+    stalled = json.loads((run_dir / "stalled").read_text())
+    assert stalled["command"] == "uvicorn main:app" and stalled["seconds"] >= 2
+    assert not (run_dir / "deadline").exists()
+
+
+def test_the_stall_limit_reaches_the_record_and_the_summary(tmp_path, capsys):
+    results = harness._run_sessions(
+        harness.load_suite(SUITES, "add"), runs_dir=tmp_path, pi_binary=str(FIX / "fake-pi-stall.sh"),
+        repeat=1, grade_run=False, deadline=None, profile=PROFILE, stall=2,
+    )
+    run_dir = results[0][0]
+    record = json.loads((run_dir / "run.json").read_text())
+    assert record["stall"] == 2 and record["stalled"]["command"] == "uvicorn main:app"
+    assert harness.build_parser().parse_args(["run", "--suite", "easy", "--stall", "120"]).stall == 120
