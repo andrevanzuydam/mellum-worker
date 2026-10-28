@@ -299,6 +299,10 @@ def cmd_up() -> None:
     say(f"instance {instance_id()} is up")
 
 
+# Bracketed so the pgrep that looks for vLLM never matches its own command line.
+VLLM_RUNNING = "[v]llm serve"
+
+
 def cmd_serve() -> None:
     c = config()
     host, port = ssh_address(c)
@@ -306,13 +310,13 @@ def cmd_serve() -> None:
     subprocess.run(["scp", "-i", c["VAST_SSH_KEY"], "-P", port, "-o", "StrictHostKeyChecking=accept-new",
                     *(str(HERE / f) for f in BOX_FILES), f"{host}:baseline/"], check=True)
     started = remote(c, "cd baseline && chmod +x *.sh && ./check-host.sh && "
-                        "(pgrep -f 'vllm serve' >/dev/null || (nohup ./serve.sh > vllm.log 2>&1 &))")
+                        f"(pgrep -f '{VLLM_RUNNING}' >/dev/null || (nohup ./serve.sh > vllm.log 2>&1 &))")
     if started.returncode:
         raise BaselineError("the box failed its check; see above")
     p = pins()
     for _ in range(120):
         probe = remote(c, f"curl -sf http://127.0.0.1:{p['BASELINE_PORT']}/v1/models >/dev/null && echo up || "
-                          "(pgrep -f 'vllm serve' >/dev/null && echo starting || echo dead)", capture=True)
+                          f"(pgrep -f '{VLLM_RUNNING}' >/dev/null && echo starting || echo dead)", capture=True)
         state = probe.stdout.strip()
         if state == "up":
             say("the model is serving")

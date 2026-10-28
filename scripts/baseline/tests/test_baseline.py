@@ -222,3 +222,12 @@ def test_lesson_commands_run_in_parallel_and_keep_their_order(monkeypatch):
     results = baseline.run_all([["x", str(i)] for i in range(6)], fake, parallel=3)
     assert peak[0] == 3
     assert [r[1] for r in results] == [str(i) for i in range(6)]
+
+
+def test_vllm_pgrep_pattern_does_not_match_its_own_command_line():
+    # The guard runs inside `bash -c "...pgrep -f <pattern>..."`, so a pattern
+    # that matches its own text always finds itself and vLLM is never started.
+    import re
+    shell_line = f"bash -c (pgrep -f '{baseline.VLLM_RUNNING}' >/dev/null || nohup ./serve.sh)"
+    assert not re.search(baseline.VLLM_RUNNING, shell_line)
+    assert re.search(baseline.VLLM_RUNNING, "python3 /usr/bin/vllm serve JetBrains/Mellum")
