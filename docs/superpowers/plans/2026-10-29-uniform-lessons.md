@@ -21,6 +21,16 @@ of E1's new challenge (`runs/E1-screen-20261029T212553Z-00cae9e`, one bare
 session, a lead) also passed: the model read the 12,000-line file once, then
 used `grep`, in 10 requests, without looping.
 
+**Dated correction 2026-10-29, screen first.** The spec's correction of the
+same date rebuilds the track from condition-produced pathologies. The order
+of the remaining tasks changes: for each candidate in the rethink
+([note](../research/2026-10-29-lessons-rethink.md)), a one-session bare
+screen under its condition comes first; only a failing screen leads to its
+challenge, preregistration, check and page. First, the harness records the
+plumbing failures in `run.json` and the think-tag adapter becomes a unit.
+The per-lesson tasks 8–27 below are superseded where a candidate replaces
+them; the infrastructure tasks stand.
+
 ## Why
 
 The lessons are not one kind of thing: some run, some do not, some run a

@@ -9,6 +9,37 @@ A lesson check is therefore a demonstration on the reference model, not a
 rate, and pages say so; rates stay with the suites and the ladder. The rule,
 risk and line-form passages below read as written otherwise.
 
+**Dated correction 2026-10-29, the track is rebuilt from conditions.**
+Approved by Andre after the rethink
+([note](../research/2026-10-29-lessons-rethink.md)). Two lesson checks and
+two screens showed the 6-bit avoiding luck-dependent traps in small clean
+challenges (E4 left the track; E1's harder challenge passed bare). From now:
+
+1. **A lesson's pathology is produced on demand by a condition the lesson
+   states** (a serving stack, a window, a cap, a task trap, a length). The
+   before line sets up the condition; one remedy removes the failure under it.
+2. **Screen first.** One bare session under the condition comes before any
+   challenge polish, preregistration or page. Only a pathology whose before
+   arm fails on its screen becomes a lesson.
+3. **FAIL may be read from the record**, not only from hidden tests. The
+   harness grades serving and session failures from the trace into
+   `run.json` (for example, turns whose reasoning came back as text), and the
+   tutor names them on the FAIL screen as it names a missed check.
+4. **The track is the rethink's candidates**: Easy is the plumbing (serving
+   and context: reasoning as text, overflow from a tool, the output cap,
+   runaway turns); Medium the task traps (an API past the cutoff, a decoy, a
+   trap row, the test command, lint); Hard orchestration (as before). A
+   current lesson with no condition that produces its pathology leaves the
+   track the way E4 did; its guard stays in the remedies list for The
+   Challenge.
+5. **The think-tag adapter becomes a unit** (Easy's first lesson), not a
+   harness default: every later lesson's before line lists it, so the
+   failure is shown once and then kept fixed, like every other unit.
+
+The contract, the one-session rule, the check and the enforcement below read
+as written otherwise; the track table and "leaving the track" table are
+superseded by the rethink's candidates as they pass their screens.
+
 ## Intent
 
 The remedy-units cycle (LC.27) gave every remedy one role in one file, and
