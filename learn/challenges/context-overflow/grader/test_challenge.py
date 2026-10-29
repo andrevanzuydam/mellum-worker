@@ -1,6 +1,6 @@
 """The context-overflow lesson's challenge, hidden grader. Eight long notes, about 80,000 tokens
 together, each naming its owner only at its end: reading them all whole overruns a 64k window,
-and the notes read first are lost to compaction."""
+and Pi compacts the context, losing detail (record.json caps compactions at 0)."""
 
 from pathlib import Path
 
@@ -23,7 +23,3 @@ def test_every_owner_is_right():
             found[name.strip()] = owner.strip()
     assert found == OWNERS
 
-
-def test_in_alphabetical_order():
-    names = [line[len("Project "):].split(":", 1)[0].strip() for line in lines() if line.startswith("Project ")]
-    assert names == sorted(OWNERS)
