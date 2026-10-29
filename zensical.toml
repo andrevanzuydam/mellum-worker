@@ -29,12 +29,9 @@ nav = [
       "lessons/medium/tell-it-how-to-test.md",
       "lessons/medium/a-short-prompt.md",
       "lessons/medium/nudge-an-empty-turn.md",
-      "lessons/medium/thinking-is-working-memory.md",
       "lessons/medium/run-long-commands-safely.md",
       "lessons/medium/look-it-up.md",
-      "lessons/medium/check-before-finishing.md",
-      "lessons/medium/one-spec-per-phase.md",
-      "lessons/medium/steps-not-one-brief.md"] },
+      "lessons/medium/check-before-finishing.md"] },
     { "Hard" = [
       "lessons/hard/index.md",
       "lessons/hard/who-drives.md",

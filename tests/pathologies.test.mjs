@@ -42,3 +42,9 @@ test("the page states what it is not", () => {
 test("false success cites the ditch session's record", () => {
   assert.match(page("pathologies.md"), /False success\.[\s\S]*?2026-10-29-the-ditch-session\.md/);
 });
+
+test("lessons that left the track keep their evidence: the thinking pathology and the task-shaping backlog entry", () => {
+  assert.match(page("pathologies.md"), /\*\*Thinking spends the answer budget\.\*\*[\s\S]*?2026-10-29-lessons-left-the-track\.md/);
+  const backlog = readFileSync(resolve(ROOT, "BACKLOG.md"), "utf8");
+  assert.match(backlog, /\*\*A unit that shapes the task in a session\.\*\*[\s\S]*?\*Reopens when\*/);
+});

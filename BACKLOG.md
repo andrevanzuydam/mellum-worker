@@ -397,3 +397,14 @@ module not yet built. The 2026-10-29 rerun added a second shape: an
 assertion that contradicts the test's own setup (four audit-worthy calls, three
 entries expected), which raises nothing. *Reopens when* a design can flag
 either shape without the reference app, or a third flow run hits one.
+
+**A unit that shapes the task in a session.** Two lessons left the track on
+2026-10-29 because their remedy was a harness flag, not a unit: one spec file
+per phase (`--specs split`) and one brief per phase instead of one joined
+brief (leaving out `--single-prompt`). Their evidence is in
+[the note](docs/superpowers/research/2026-10-29-lessons-left-the-track.md):
+stepped sessions produced projects the checks could open where one-brief
+sessions did not, and per-phase Acceptance lists mattered more than the file
+layout. *Reopens when* a remedy unit can shape the task inside a Pi session
+(feeding phases one at a time, or pointing each at its own spec), so a lesson
+could show the FAIL turning into a PASS.

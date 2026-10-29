@@ -89,23 +89,30 @@ scoreboard.
    at the source; the dormant guard refuses the call when it appears, at the
    cost of retries.
 
+9. **Thinking spends the answer budget.** The model reasons until the output
+   cap is gone, and the turn ends with no answer. **Seen:** a one-turn smoke at
+   `max_tokens 32` that spent all 32 tokens thinking and returned empty content,
+   and suite finals on Bronze and Silver ended by `length`
+   ([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-29-lessons-left-the-track.md)). **Answer:** an output cap with room for the answer;
+   stripping earlier reasoning does not give the turn its budget back.
+
 ## It damages the project while finishing
 
-9. **Writes outside the layout.** The run passes every hidden test and still
+10. **Writes outside the layout.** The run passes every hidden test and still
    leaves scratch files, a second copy of the app, or an edited test, so the
    workspace is no longer the project. **Seen:** the file-set check found
    `main.py` outside the layout twice, and `pyproject.toml` once
    ([run](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson1-run.md),
    no lesson yet). **Answer:** name the layout in the task and compare the file
    set after the run; a guard that confines writes is planned.
-10. **A lost id.** The last phase's identity contract never lands: the field is
+11. **A lost id.** The last phase's identity contract never lands: the field is
     missing, or it is rebuilt from a position that changes when the list does.
     **Seen:** phase 4's group of checks missing in three of the four sessions
     whose checks ran, in the spec-layout arm
     ([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson10-run.md)).
     **Answer:** write the contract into the acceptance list (unique, stable,
     never reused) and grade the phase rather than the session.
-11. **The project stops importing.** A syntax error, or a dataclass that cannot
+12. **The project stops importing.** A syntax error, or a dataclass that cannot
     construct without an argument the seed code does not pass, leaves a
     workspace nothing can load. **Seen:** three of three sessions of a joined
     brief, and two of six in the spec-layout arm: `ModuleNotFoundError`,
@@ -116,7 +123,7 @@ scoreboard.
     **Answer:** the test command in the brief and a seeded test give the signal
     on the first turn; the harness now records `checks_ran: false` so a full
     set of missing checks is not read as a full set of failures.
-12. **Builds it somewhere else.** The requirements are met, but in a file the
+13. **Builds it somewhere else.** The requirements are met, but in a file the
     project's own notes did not name (the dataclass in `app.py` rather than
     `models.py`) so everything that imports the project fails. **Seen:** three
     joined-brief sessions and one spec-layout session ended without `models.py`,
@@ -128,7 +135,7 @@ scoreboard.
 
 ## It ignores what it was told
 
-13. **A skipped rule.** An instruction is in every request, in the project's own
+14. **A skipped rule.** An instruction is in every request, in the project's own
     words, and the run does the opposite. **Seen:** `Do not: start servers` sat
     in every request and both attempts started one
     ([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson10-run.md)), and

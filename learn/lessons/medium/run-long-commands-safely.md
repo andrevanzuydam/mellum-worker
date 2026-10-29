@@ -5,7 +5,7 @@ number: M6
 time: 3 min read · 20 min to run
 track: lessons
 position: 5
-prerequisites: [lessons/medium/thinking-is-working-memory]
+prerequisites: [lessons/medium/nudge-an-empty-turn]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---

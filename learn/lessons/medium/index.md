@@ -3,7 +3,7 @@
 You start where Easy ended, from `preset:easy`, so every failure here is one
 the Easy remedies cannot fix. Each lesson adds one thing: what the model is
 told, how its turns end, a tool of ours, a check, or the shape of the task.
-After M10 you have `preset:medium`, where Hard starts.
+After the last Medium lesson you have `preset:medium`, where Hard starts.
 
 ![A small robot studying a long unrolled scroll through a magnifying glass](../../assets/illustrations/tier-medium.webp){ .illustration }
 
@@ -30,13 +30,6 @@ After M10 you have `preset:medium`, where Hard starts.
     A turn that ends with nothing, part-way through.
     Adds `nudge/nudge-empty-turn`.
 
--   **[M5 · Thinking Is Working Memory](thinking-is-working-memory.md)**
-
-    ---
-
-    What happens when earlier reasoning is dropped.
-    Keeps reasoning, the default.
-
 -   **[M6 · Run Long Commands Safely](run-long-commands-safely.md)**
 
     ---
@@ -57,19 +50,5 @@ After M10 you have `preset:medium`, where Hard starts.
 
     Lint and type checks before the model may stop.
     Adds `check/check-code-quality`.
-
--   **[M9 · One Spec per Phase](one-spec-per-phase.md)**
-
-    ---
-
-    How the brief is laid out: one spec file per phase.
-    Task shaping, `--specs split`.
-
--   **[M10 · Steps, Not One Brief](steps-not-one-brief.md)**
-
-    ---
-
-    How the brief is delivered: phase by phase, not all at once.
-    Task shaping, against `--single-prompt`.
 
 </div>

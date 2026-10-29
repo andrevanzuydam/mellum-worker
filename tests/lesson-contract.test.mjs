@@ -15,8 +15,8 @@ const PENDING = new Set([
 	"looking-around", "searching", "creating-files",
 	"running-commands", "too-many-tools",
 	"tell-it-how-to-test", "a-short-prompt", "nudge-an-empty-turn",
-	"thinking-is-working-memory", "run-long-commands-safely", "look-it-up",
-	"check-before-finishing", "one-spec-per-phase", "steps-not-one-brief",
+	"run-long-commands-safely", "look-it-up",
+	"check-before-finishing",
 	"who-drives", "the-handoff", "plan-examine-code", "frozen-gates-and-checkpoints",
 	"dont-trust-the-self-exit", "best-of-n", "build-a-tool", "build-a-remedy",
 ]);

@@ -579,6 +579,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Removed
 
+- Lessons M5 Thinking Is Working Memory, M9 One Spec per Phase and M10 Steps,
+  Not One Brief left the lesson track: their remedies were harness arms or
+  flags, not units a learner can apply. Their evidence is in a dated research
+  note; the pathologies page gains "Thinking spends the answer budget", and
+  the backlog gains "A unit that shapes the task in a session".
+
 - Lesson M1 Build a Harness moved to Getting Started as "The Harness", step
   4: it builds the instrument every lesson measures with, rather than
   applying a remedy, so it is setup, not a lesson.

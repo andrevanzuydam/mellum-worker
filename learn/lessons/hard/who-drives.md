@@ -5,7 +5,7 @@ number: H1
 time: 4 min read · about 2 h to run
 track: lessons
 position: 0
-prerequisites: [lessons/medium/steps-not-one-brief]
+prerequisites: [lessons/medium/check-before-finishing]
 authors: [Paul Everitt, Andre van Zuydam]
 backends: [llamacpp]
 ---
