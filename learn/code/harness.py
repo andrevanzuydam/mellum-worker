@@ -32,6 +32,9 @@ SUITES = CODE / "suites"
 RECORDER = CODE / "record-pi.mjs"
 PROFILE = CODE / "profile"
 EXTENSION = CODE.parents[1] / "extensions" / "mellum-worker.ts"
+# Loaded first in every session: reasoning a host returns as <think> text goes back into a thinking
+# block, so every host gives the model the same context. A no-op on a correctly served reply.
+THINK_TAGS = CODE.parents[1] / "extensions" / "mellum-think-tags.ts"
 REMEDIES = CODE.parents[1] / "remedies"
 GUARDS_WITH_SERVER = {"emptyFinalNudge": 3, "loopBreaker": True,
                       "blockForegroundServer": True}
@@ -362,7 +365,9 @@ def pi_argv(
         if session_id and session_dir
         else []
     )
-    extra = ["-e", str(extension)] if extension is not None else []
+    extra = ["-e", str(THINK_TAGS)]
+    if extension is not None:
+        extra += ["-e", str(extension)]
     for path in extras:
         extra += ["-e", str(path)]
     # The recorder goes last: Pi runs before_provider_request handlers in load

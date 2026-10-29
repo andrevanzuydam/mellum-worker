@@ -128,7 +128,7 @@ def run_top(task: str, *, workspace: Path, profile: Path, recorder: Path, provid
         "pi", *harness.FLAGS, "--provider", provider, "--model", model,
         "--thinking", thinking, "--no-session",
         "--tools", tools,
-        *(["-e", str(FLOW)] if load_flow else []), "-e", str(recorder),
+        "-e", str(harness.THINK_TAGS), *(["-e", str(FLOW)] if load_flow else []), "-e", str(recorder),
         "--system-prompt", system_prompt, task,
     ]
     # MELLUM_PHASE tells the examiner which phase it is writing for, so each phase's
@@ -256,7 +256,7 @@ def run_orient(titles: str, *, workspace: Path, profile: Path, recorder: Path, p
     argv = [
         "pi", *harness.FLAGS, "--provider", provider, "--model", model,
         "--thinking", "off", "--no-session", "--tools", "read,grep,find,ls",
-        "-e", str(recorder), "--system-prompt", ORIENT,
+        "-e", str(harness.THINK_TAGS), "-e", str(recorder), "--system-prompt", ORIENT,
         f"Phase titles, in order:\n{titles}\n\nState the north star in one line.",
     ]
     env = {**os.environ, "PI_CODING_AGENT_DIR": str(profile), "MELLUM_TRACE_FILE": str(trace)}

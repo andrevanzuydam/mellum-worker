@@ -260,6 +260,14 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- Reasoning that a serving host returns as `<think>` text is turned back into
+  a thinking block, by a new adapter, `extensions/mellum-think-tags.ts`. Some
+  vLLM builds' streaming reasoning parser misses every turn after the first;
+  Pi then showed the reasoning as the reply and sent it back as things the
+  model said. The adapter loads in every harness and flow session, in Pi in
+  this checkout, and in each lesson's project folder; on a correctly served
+  reply it does nothing.
+
 - A harness run that is stopped part-way (as `/lesson` does when you leave
   a lesson while `r` is running) now still ends the Pi session and any
   server it started. Before, `SIGTERM` ended the harness before its sweep and

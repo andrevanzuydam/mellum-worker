@@ -426,3 +426,12 @@ def test_no_pi_session_in_the_flow_reads_stdin():
     source = (Path(__file__).resolve().parents[1] / "flow_run.py").read_text()
     launches = re.findall(r"subprocess\.Popen\(argv[^)]*\)", source)
     assert launches and all("stdin=subprocess.DEVNULL" in call for call in launches), launches
+
+
+def test_every_pi_in_the_flow_loads_the_think_tag_adapter():
+    # Same reason as the harness: a host that returns reasoning as <think> text
+    # must not change the model's context (research note 2026-10-29-lan-reasoning-leak).
+    source = (Path(__file__).resolve().parents[1] / "flow_run.py").read_text()
+    recorders = source.count('"-e", str(recorder)')
+    assert recorders == 2
+    assert source.count('"-e", str(harness.THINK_TAGS)') == recorders

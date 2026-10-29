@@ -134,6 +134,8 @@ test("prepareProject sets up project/<number> with the lesson's starting files, 
 	assert.equal(readFileSync(join(dir, "TASK.md"), "utf8"), "Build it.\n\nThen test it.\n");
 	assert.match(readFileSync(join(dir, ".pi", "extensions", "remedies.ts"), "utf8"), /extensions\/mellum-remedies\.ts/);
 	assert.match(readFileSync(join(dir, ".pi", "extensions", "lessons.ts"), "utf8"), /extensions\/mellum-lesson-tutor\.ts/);
+	assert.match(readFileSync(join(dir, ".pi", "extensions", "think-tags.ts"), "utf8"), /extensions\/mellum-think-tags\.ts/);
+	assert.match(readFileSync(join(ROOT, ".pi", "extensions", "think-tags.ts"), "utf8"), /extensions\/mellum-think-tags\.ts/);
 	writeFileSync(join(dir, "stray.py"), "x = 1\n");
 	prepareProject(root, lesson);
 	assert.equal(existsSync(join(dir, "stray.py")), false, "a second prepare starts fresh");

@@ -263,6 +263,8 @@ export function prepareProject(root: string, lesson: Pick<Lesson, "number" | "be
 	mkdirSync(join(dir, ".pi", "extensions"), { recursive: true });
 	writeFileSync(join(dir, ".pi", "extensions", "remedies.ts"),
 		`// /remedy for this lesson's project folder (written by /lesson).\nexport { default } from ${JSON.stringify(join(root, "extensions", "mellum-remedies.ts"))};\n`);
+	writeFileSync(join(dir, ".pi", "extensions", "think-tags.ts"),
+		`// Reasoning a host returns as <think> text goes back into a thinking block (written by /lesson).\nexport { default } from ${JSON.stringify(join(root, "extensions", "mellum-think-tags.ts"))};\n`);
 	writeFileSync(join(dir, ".pi", "extensions", "lessons.ts"),
 		`// /lesson in this lesson's project folder (written by /lesson): /lesson back returns to the lesson.\nexport { default } from ${JSON.stringify(join(root, "extensions", "mellum-lesson-tutor.ts"))};\n`);
 	return dir;
