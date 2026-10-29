@@ -48,7 +48,7 @@ for (const url of pages) {
 		assert.ok(unit[1].startsWith(EXPECTED[number]), `${number}: ${unit[1]}`);
 		const check = text.match(/^\*\*Lesson check:\*\* (.+)$/m);
 		assert.ok(check, "no **Lesson check:** line");
-		assert.match(check[1], /^(not built yet|run once on \d{4}-\d{2}-\d{2}, and it did not show)/,
+		assert.match(check[1], /^(not built yet|run (once|twice) on \d{4}-\d{2}-\d{2}, and it did not show)/,
 			"no lesson has shown FAIL -> PASS on its own challenge, so none may claim it");
 	});
 }

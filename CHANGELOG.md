@@ -6,6 +6,15 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- The Running Commands lesson check, revision 2, recorded with revision 1
+  (`docs/ladder/2026-10-29-running-commands-check/`): a challenge that makes
+  every session start a server. Without the guard the model backgrounded it
+  itself and passed; with it, six foreground starts were refused and those
+  sessions passed. The lesson says so: no FAIL → PASS on a short task. Two
+  new failures were seen: `killall -f uvicorn`, and tests run through this
+  repository's `.venv` from outside the workspace. The challenge folder is
+  now `learn/challenges/running-commands/`.
+
 - Manual lesson work has its own folder: in `/lesson`, `p` on a run step
   sets up `project/<lesson number>` with the lesson's starting files, its
   task as `TASK.md`, and `/remedy` ready, so the model never builds in the

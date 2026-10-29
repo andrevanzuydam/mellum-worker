@@ -55,9 +55,9 @@ The most common failure on the vLLM host: in nine bare sessions on 2026-10-29, f
 
 **Remedy unit:** `guard/block-foreground-server`; apply it with `--remedy guard/block-foreground-server`.
 
-**Lesson check:** run once on 2026-10-29, and it did not show FAIL → PASS:
-the challenge did not provoke the failure often enough (see Validation).
-A revised challenge is next.
+**Lesson check:** run twice on 2026-10-29, and it did not show FAIL → PASS:
+on a short task this model rarely starts a server in the foreground, so
+the arm without the guard passed too (see Validation).
 
 The guard reads every `bash` command. A server start (`python app.py`, `uvicorn`, `flask run`, `npm run dev`, …) that is not backgrounded is refused, with the background form to use instead and the advice to exercise endpoints in process, the way the tests do. Read-only commands that only mention a server (`grep uvicorn app.py`) pass.
 
@@ -70,14 +70,16 @@ return { block: true, reason: "That starts a server in the foreground; it blocks
 
 **Badge:** `conjecture`
 
-**Lesson check, 2026-10-29** (its own challenge, vLLM host, n = 3 per arm;
+**Lesson check, 2026-10-29** (its own challenge, two revisions, vLLM host,
+n = 3 per arm;
 [record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-29-e5-check.md)):
-before 3 of 3 passed, after 3 of 3. No before session started a server in
-the foreground, so there was nothing for the guard to fix there. One after
-session did (`uvicorn app:app --port 8000`); the guard refused it, the model
-restarted it in the background, and the session passed. The guard works when
-the failure happens; this challenge does not make it happen often enough to
-show FAIL → PASS.
+in both, before passed 3 of 3 and after 3 of 3. Revision 2 made every
+session start a server (a live `curl` saved to `health.txt`); without the
+guard the model backgrounded it itself or got its answer before moving on,
+and none hung. With the guard, six foreground starts were refused across two
+sessions and both went on to pass. The guard works when the failure happens;
+on a short task this model rarely makes it, and the recorded stalls came from
+long sessions.
 
 This page says FAIL → PASS only once a challenge has shown it.
 
