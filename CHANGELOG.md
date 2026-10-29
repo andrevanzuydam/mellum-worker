@@ -6,6 +6,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- New remedy unit `context/trim-tool-output`: a read, bash, grep, find or ls
+  result over 8,000 characters is trimmed, with a note saying how much was
+  cut and how to search for the part needed, so a model that reads everything
+  whole does not fill the context and set off Pi's compaction.
 - `run.json` records `compactions`: how many times Pi compacted a context that
   neared its window, summarising away detail the model had read.
 - E1 Reasoning Returned as Text is the first lesson whose check held: on the

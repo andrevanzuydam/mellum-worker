@@ -270,3 +270,19 @@ test("context/repair-think-tags turns reasoning returned as <think> text back in
 	assert.deepEqual(fixed.message.content, [{ type: "thinking", thinkingSignature: "reasoning", thinking: "r" }, { type: "text", text: "ok" }]);
 	assert.equal(pi.fire("message_end", { type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "ok" }] } }), undefined);
 });
+
+test("context/trim-tool-output trims a tool result too big for the context and says how to get the rest", async () => {
+	const pi = fakePi();
+	(await import("../remedies/context/trim-tool-output.ts")).default(pi);
+	assert.deepEqual(pi.events(), ["tool_result"]);
+	const big = "x".repeat(40571);
+	const out = pi.fire("tool_result", { type: "tool_result", toolName: "read", input: { path: "docs/a.md" }, content: [{ type: "text", text: big }] });
+	const text = out.content[0].text;
+	assert.ok(text.length < 9000, `${text.length}`);
+	assert.ok(text.startsWith("x".repeat(8000)));
+	assert.match(text, /showing 8,000 of 40,571 characters/);
+	assert.match(text, /grep -n/);
+	assert.match(text, /offset/);
+	assert.equal(pi.fire("tool_result", { type: "tool_result", toolName: "read", input: {}, content: [{ type: "text", text: "small" }] }), undefined);
+	assert.equal(pi.fire("tool_result", { type: "tool_result", toolName: "write", input: {}, content: [{ type: "text", text: big }] }), undefined, "only output a model asked to see is trimmed");
+});
