@@ -29,3 +29,9 @@ arm ran after a by-hand kill of that session's leftover server, the leak fixed
 in `57011a9`. Guard blocks are counted in each session's final context.
 Revision 3 is preregistered in
 `docs/superpowers/research/2026-10-29-running-commands-check-v3-prereg.md`.
+
+**Serving confound (found 2026-10-29, after the runs).** The LAN host returns
+reasoning as `<think>` text on every streamed turn after the first (236 of
+244 turns in its traces; 0 of 136 on the pinned BF16 host), so the 6-bit
+sessions ran with their reasoning fed back as plain text. Read the 6-bit rows
+with that in mind: `docs/superpowers/research/2026-10-29-lan-reasoning-leak.md`.
