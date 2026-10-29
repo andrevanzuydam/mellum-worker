@@ -78,8 +78,9 @@ Run the before line (in `/lesson`, press `r` on this step's Eval case). The
 result reads `FAIL`, one line per session, with the reason: here, "the
 hidden tests failed". Each session also leaves a `run.json`: `passed`,
 `checks_ran`, `stalled` and `missing_checks` say what happened, in that
-order of importance. Lesson E2 teaches reading them in full. No arm has run,
-so there is no n to report.
+order of importance. Reading a failed session is the first skill: every
+later lesson adds one remedy for one named failure. No arm of this lesson has
+run, so there is no n to report.
 
 ## Solution
 
@@ -111,6 +112,36 @@ No arm has run, so there is no n to report.
 
 ## Interpretation
 
+### Reading a real failure
+
+Read a failed session in this order:
+
+1. `run.json`: `passed`, then `checks_ran` (did the checks even run?), then
+   `stalled` (which command hung?), `empty_finals` and `tool_errors`.
+2. `trace.jsonl`: the last few tool calls before the end. The failure is
+   almost always there.
+3. The [remedies list](index.md#pathologies-and-their-remedies): find the row
+   whose pathology matches, and go to its lesson.
+
+Nine bare sessions on the vLLM host (Bronze, Silver and Gold, n = 3 each,
+2026-10-29) show why the order matters. Three passed. The six failures, by
+what the record shows:
+
+| What the record shows | Sessions | The failure |
+| --- | --- | --- |
+| `stalled` names `python app.py` or `uvicorn …` | 4 (3 of them failed) | a server started in the foreground hung the session |
+| `checks_ran: false` without a stall (one wrote `main.py`) | 2 | the hidden checks import a module that was never created |
+| `empty_finals: 1` and 21 `tool_errors` | 1 | it kept retrying failing calls, then ended a turn with nothing |
+
+A session can show more than one. That table is a `screen`, nine sessions on
+one host, though the foreground-server stall also showed on a second, the
+local 6-bit lessons smoke ([note](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-29-local-lessons-smoke.md)). Read
+`checks_ran` and `stalled` before `failed_checks`: a session whose checks
+never ran reports every check missing for a reason that has nothing to do
+with the checks.
+
+### The loop
+
 That is the whole loop every lesson repeats: name the failure, run before,
 add one change, run after, and read the record rather than the model's own
 claim of success. The only differences later are a real model, a real task,
@@ -130,3 +161,4 @@ uv run python learn/code/harness.py run --suites-dir learn/code/tests/fixtures/s
     - Every lesson shows two states of one command: before, and after one change.
     - Read the result line first, then `run.json`: `passed`, `checks_ran`, `stalled`, `missing_checks`.
     - Apply a remedy with `--remedy` on the command line, or `/remedy on` by hand in Pi.
+    - Name a real failure before fixing it: `checks_ran` and `stalled` first, then the trace's last calls.

@@ -55,7 +55,7 @@ runs are on Bronze and Silver.
 
 Nothing here is measured. The template unit's own pathology is recorded (245
 identical `ls -R` calls in one run); yours starts as a failure you can point
-to in a `trace.jsonl` ([E2](../easy/read-the-failure.md)).
+to in a `trace.jsonl` ([S0](../start-here.md#reading-a-real-failure)).
 
 ## Solution
 

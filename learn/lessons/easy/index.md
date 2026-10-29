@@ -1,6 +1,6 @@
 # Easy Lessons
 
-E2 shows how to read a failure. Then Pi's own tools, one per lesson: what each gives the model, the
+Pi's own tools, one per lesson: what each gives the model, the
 failure it invites, and the one remedy for that failure. You start from bare
 Pi; each lesson's *before* is everything the earlier lessons added, and its
 *after* adds one unit. After E7 you have `preset:easy`, where Medium starts.
@@ -8,13 +8,6 @@ Pi; each lesson's *before* is everything the earlier lessons added, and its
 ![A small robot turning one large dial while a light bulb switches on](../../assets/illustrations/tier-easy.webp){ .illustration }
 
 <div class="grid cards" markdown>
-
--   **[E2 · Read the Failure](read-the-failure.md)**
-
-    ---
-
-    Run bare Pi, read `run.json` and the trace, and name what went wrong.
-    Adds nothing; every later lesson depends on it.
 
 -   **[E3 · Looking Around](looking-around.md)**
 

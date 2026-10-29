@@ -44,7 +44,7 @@ judged on.
 ## The score to beat
 
 The suite baseline is the reference: Pi with no remedies, three sessions per
-level on llama.cpp ([Read the Failure](../lessons/easy/read-the-failure.md)
+level on llama.cpp ([Start Here](../lessons/start-here.md#reading-a-real-failure)
 shows what it gets wrong), with the same Mellum model you set up in
 [Getting Started](../getting-started/index.md). The last row is the replicable
 baseline: the same model at full precision on a rented GPU, rebuilt with

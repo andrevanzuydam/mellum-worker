@@ -355,3 +355,11 @@ test("every lesson page opens with the two-sentence paragraph", () => {
     assert.doesNotMatch(opening, /`|\]\(|\*\*Badge/, `${p} opening carries markup`);
   }
 });
+
+test("Start Here teaches reading a failed session (folded in from Read the Failure)", () => {
+  const l = page("lessons/start-here.md");
+  for (const text of ["checks_ran", "stalled", "trace.jsonl", "pathologies-and-their-remedies",
+    "Nine bare sessions", "foreground"])
+    assert.ok(l.includes(text), `Start Here lacks ${text}`);
+  assert.doesNotMatch(l, /Lesson E2/);
+});

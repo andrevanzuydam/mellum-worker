@@ -12,7 +12,7 @@ const tutor = () => import("../extensions/mellum-lessons.ts");
 // Lessons that do not conform yet, by slug. The list may only shrink: a lesson leaves it when it
 // conforms, and the cycle (LC.28) closes when it is empty.
 const PENDING = new Set([
-	"read-the-failure", "looking-around", "searching", "creating-files",
+	"looking-around", "searching", "creating-files",
 	"running-commands", "too-many-tools",
 	"build-a-harness", "tell-it-how-to-test", "a-short-prompt", "nudge-an-empty-turn",
 	"thinking-is-working-memory", "run-long-commands-safely", "look-it-up",

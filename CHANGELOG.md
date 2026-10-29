@@ -579,6 +579,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Removed
 
+- Lesson E2 Read the Failure folded into S0 Start Here, as its "Reading a
+  real failure" section with the same reading order and the nine-session
+  evidence: it taught a habit, not a remedy, so it could not show a FAIL
+  turning into a PASS of its own.
+
 - Lesson E1 The Ditch left the lesson track: it shows a failure but applies
   no remedy, so it has no FAIL turning into a PASS, which every lesson now
   must. Its session evidence is kept in a dated research note that the

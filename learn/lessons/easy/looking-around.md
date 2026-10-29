@@ -5,7 +5,7 @@ number: E3
 time: 3 min read · 20 min to run
 track: lessons
 position: 2
-prerequisites: [lessons/easy/read-the-failure]
+prerequisites: [lessons/start-here]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---

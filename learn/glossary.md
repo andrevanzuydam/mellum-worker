@@ -93,8 +93,8 @@ is a hypothesis, not a pathology.
 ### Baseline lesson
 
 Until 2026-10-29, the n=3 comparison of Baseline Pi and the Baseline Worker on
-easy, medium and hard. Lesson 1 is now Read the Failure, which runs Baseline
-Pi alone and names what went wrong; the worker is a preset, not a lesson.
+easy, medium and hard. S0 Start Here now teaches reading
+Baseline Pi's failures and naming what went wrong; the worker is a preset, not a lesson.
 
 ### Baseline Worker
 

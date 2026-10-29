@@ -56,7 +56,7 @@ for now both runs are on Bronze and Silver.
 Nothing here is measured. `lookup` exists because the model guessed an API it
 never saw, such as a redirect status default; as a remedy it is unit-tested
 but not measured on the suites. Your tool starts from the same place: a
-failure you named in a trace ([E2](../easy/read-the-failure.md)).
+failure you named in a trace ([S0](../start-here.md#reading-a-real-failure)).
 
 ## Solution
 
