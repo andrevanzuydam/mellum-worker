@@ -56,7 +56,7 @@ Recorded once: a 942-line file became 2 lines under a write-only tool set. The g
 **Remedy unit:** `guard/refuse-whole-file-rewrite`; apply it with `--remedy guard/refuse-whole-file-rewrite`.
 
 **Lesson check:** not built yet. A small challenge of this lesson's own,
-failing without the remedy and passing with it, is planned under LC.26; until
+failing without the remedy and passing with it, is planned; until
 then the evidence below is the suites'.
 
 The guard refuses a `write` to a path that already exists, and says why: `write` replaces the entire file, so use `edit` with the exact old text and the new text. A `write` to a new file passes.

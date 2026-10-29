@@ -68,7 +68,7 @@ the answer.
 
 **Remedy unit:** none: a default. Keeping earlier reasoning is what happens when nothing strips it; the opt-out is `MELLUM_STRIP_THINKING=1`, which `--arm strip-thinking` sets.
 
-**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned under LC.26; until then the evidence below is the suites'.
+**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned; until then the evidence below is the suites'.
 
 Keep the thinking blocks, for three reasons in order:
 

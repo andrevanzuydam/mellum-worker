@@ -74,7 +74,7 @@ worker did neither.
 **Remedy unit:** none: the driver is a role, the operator's or the harness's, not a unit; the measured comparison uses the `worker` arm.
 
 **Lesson check:** not built yet. A small challenge of this lesson's own,
-failing without the remedy and passing with it, is planned under LC.26; until
+failing without the remedy and passing with it, is planned; until
 then the evidence below is the suites'.
 
 The model stays the same. What moves is which decisions its own text may make

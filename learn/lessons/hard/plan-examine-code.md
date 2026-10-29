@@ -67,7 +67,7 @@ been run on this host.
 **Remedy unit:** `workflow/spec-driven-flow`; it runs through `learn/code/flow_run.py`, which loads it for you.
 
 **Lesson check:** not built yet. A small challenge of this lesson's own,
-failing without the remedy and passing with it, is planned under LC.26; until
+failing without the remedy and passing with it, is planned; until
 then the evidence below is the suites'.
 
 The driver gets only the phase tools and `read`, and every tool takes no

@@ -46,7 +46,7 @@ answer.
 
 **Before:** `--remedy preset:hard`. **After:** the same line plus
 `--extension your-tool.ts`, your own file. The lesson's own challenge is a
-task only a new tool can pass; it is not built yet (planned under LC.26), so
+task only a new tool can pass; it is not built yet (planned), so
 for now both runs are on Bronze and Silver.
 
 ## Evidence of the problem
@@ -65,7 +65,7 @@ failure you named in a trace ([E2](../easy/read-the-failure.md)).
 **Remedy unit:** none: you write it; the worked example is `extensions/mellum-knowledge.ts` (`lookup`, packaged as `tool/lookup-library-docs`).
 
 **Lesson check:** not built yet. A small challenge of this lesson's own,
-failing without the remedy and passing with it, is planned under LC.26; until
+failing without the remedy and passing with it, is planned; until
 then the evidence below is the suites'.
 
 A tool file has a default export that takes `pi` and registers the tool.

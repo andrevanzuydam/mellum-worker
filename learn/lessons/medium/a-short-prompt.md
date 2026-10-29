@@ -65,7 +65,7 @@ for the short prompt's two passes.
 
 **Remedy unit:** `context/use-short-prompt`; apply it with `--remedy context/use-short-prompt`.
 
-**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned under LC.26; until then the evidence below is the suites'.
+**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned; until then the evidence below is the suites'.
 
 The unit drops every system message and puts `prompts/mellum-worker.md` in
 their place: **643 characters**, the test-command facts and the missing-files

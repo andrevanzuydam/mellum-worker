@@ -56,7 +56,7 @@ Recorded on the oMLX ladder: a worker ran `grep -rl pattern /Users /var /tmp …
 **Remedy unit:** `guard/stay-in-workspace`; apply it with `--remedy guard/stay-in-workspace`.
 
 **Lesson check:** not built yet. A small challenge of this lesson's own,
-failing without the remedy and passing with it, is planned under LC.26; until
+failing without the remedy and passing with it, is planned; until
 then the evidence below is the suites'.
 
 The guard reads every `bash` command that walks a tree (`find`, `rg`, `grep -r`, `ls -R`). If one names an absolute path outside the workspace, it is refused, with the relative form to use instead. Searches inside the workspace pass untouched.

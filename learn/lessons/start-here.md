@@ -89,7 +89,7 @@ so there is no n to report.
 other lesson names a unit from the remedies list.
 
 **Lesson check:** not built yet. A small challenge of this lesson's own,
-failing without the remedy and passing with it, is planned under LC.26; until
+failing without the remedy and passing with it, is planned; until
 then the evidence below is the suites'.
 
 Real lessons apply their remedy in one of two ways, and you can use both:

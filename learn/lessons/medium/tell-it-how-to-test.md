@@ -67,7 +67,7 @@ guard.
 
 **Remedy unit:** `context/add-project-facts`; apply it with `--remedy context/add-project-facts`.
 
-**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned under LC.26; until then the evidence below is the suites'.
+**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned; until then the evidence below is the suites'.
 
 The unit reads the first `## Mellum` section of `AGENTS.md`, adds a detected
 test command when the section names none, caps the result at 600 characters

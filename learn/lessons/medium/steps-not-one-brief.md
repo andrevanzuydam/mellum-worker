@@ -66,7 +66,7 @@ sat over one of the projects that would not import.
 
 **Remedy unit:** none: task shaping. The remedy is sending phases as steps, the harness default, by leaving out `--single-prompt`; it is not an extension.
 
-**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned under LC.26; until then the evidence below is the suites'.
+**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned; until then the evidence below is the suites'.
 
 Send phases as steps. Two reasons, both from this run:
 

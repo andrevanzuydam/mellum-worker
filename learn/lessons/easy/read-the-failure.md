@@ -70,7 +70,7 @@ A session can show more than one; read them in the order below.
 others depend on.
 
 **Lesson check:** not built yet. A small challenge of this lesson's own,
-failing without the remedy and passing with it, is planned under LC.26; until
+failing without the remedy and passing with it, is planned; until
 then the evidence below is the suites'.
 
 Read a failed session in this order:

@@ -63,7 +63,7 @@ stalls [E6](running-commands.md) fixes.
 **Remedy unit:** `guard/break-repeat-loops`; apply it with `--remedy guard/break-repeat-loops`.
 
 **Lesson check:** not built yet. A small challenge of this lesson's own,
-failing without the remedy and passing with it, is planned under LC.26; until
+failing without the remedy and passing with it, is planned; until
 then the evidence below is the suites'.
 
 The guard keeps the last 20 calls. The sixth identical call with nothing in

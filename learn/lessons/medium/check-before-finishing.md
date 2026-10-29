@@ -62,7 +62,7 @@ a session fails on them alone.
 
 **Remedy unit:** `check/check-code-quality`; apply it with `--remedy check/check-code-quality`.
 
-**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned under LC.26; until then the evidence below is the suites'.
+**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned; until then the evidence below is the suites'.
 
 When the model tries to finish, the unit runs `ruff check --select F,E9` over
 the workspace, skipping the tests. If real errors remain it lists each one and

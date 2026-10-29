@@ -69,7 +69,7 @@ pointing at the wrong file.
 
 **Remedy unit:** none: task shaping. The remedy is the brief's layout, `--specs split`, a harness flag, not an extension.
 
-**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned under LC.26; until then the evidence below is the suites'.
+**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned; until then the evidence below is the suites'.
 
 Split the spec per phase, and, what actually moved every usable session off
 the floor, write each phase's **Acceptance** list into the file the brief

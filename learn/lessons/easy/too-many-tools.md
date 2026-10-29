@@ -56,7 +56,7 @@ Part of the Baseline Worker since the first ladder runs, added because pi-subage
 **Remedy unit:** `context/narrow-tools`; apply it with `--remedy context/narrow-tools`.
 
 **Lesson check:** not built yet. A small challenge of this lesson's own,
-failing without the remedy and passing with it, is planned under LC.26; until
+failing without the remedy and passing with it, is planned; until
 then the evidence below is the suites'.
 
 The unit rewrites each outgoing request: it keeps the seven worker tools and drops every other one, and drops a `tool_choice` that names a dropped tool. It is the same code the worker uses (`narrowTools`), so the two cannot drift.

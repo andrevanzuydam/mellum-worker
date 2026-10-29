@@ -66,7 +66,7 @@ A later Bronze pairing recorded zero fires across nine sessions in three arms.
 
 **Remedy unit:** `nudge/nudge-empty-turn`; apply it with `--remedy nudge/nudge-empty-turn`.
 
-**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned under LC.26; until then the evidence below is the suites'.
+**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned; until then the evidence below is the suites'.
 
 When a turn ends by `stop` with no text and no tool call, the unit restates
 the completion fact and asks for one more turn. The whole bound is one

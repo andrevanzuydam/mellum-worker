@@ -62,7 +62,7 @@ on. Neither failure has a before-and-after count on the suites.
 
 **Remedy unit:** `tool/lookup-library-docs`; apply it with `--remedy tool/lookup-library-docs`.
 
-**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned under LC.26; until then the evidence below is the suites'.
+**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned; until then the evidence below is the suites'.
 
 The unit registers a `lookup` tool. A query runs a BM25 search over the
 installed packages in the workspace's environment (every class and function

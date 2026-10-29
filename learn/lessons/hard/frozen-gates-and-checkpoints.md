@@ -78,7 +78,7 @@ hand:
 **Remedy unit:** none: frozen per-phase gates and the checkpoint revert are built into `learn/code/flow_run.py` and cannot be switched off on their own.
 
 **Lesson check:** not built yet. A small challenge of this lesson's own,
-failing without the remedy and passing with it, is planned under LC.26; until
+failing without the remedy and passing with it, is planned; until
 then the evidence below is the suites'.
 
 - **Frozen:** before the gate runs, the harness copies every frozen

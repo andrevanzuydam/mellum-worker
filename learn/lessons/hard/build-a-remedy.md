@@ -46,7 +46,7 @@ behaving.
 
 **Before:** `--remedy preset:hard`. **After:** the same line plus your unit,
 loaded with `--extension`. The lesson's own challenge is a task only a new
-remedy can pass; it is not built yet (planned under LC.26), so for now both
+remedy can pass; it is not built yet (planned), so for now both
 runs are on Bronze and Silver.
 
 ## Evidence of the problem
@@ -64,7 +64,7 @@ to in a `trace.jsonl` ([E2](../easy/read-the-failure.md)).
 **Remedy unit:** none: you write it; the template is `remedies/guard/break-repeat-loops.ts`, wired by `remedies/install.ts`.
 
 **Lesson check:** not built yet. A small challenge of this lesson's own,
-failing without the remedy and passing with it, is planned under LC.26; until
+failing without the remedy and passing with it, is planned; until
 then the evidence below is the suites'.
 
 The whole template unit:

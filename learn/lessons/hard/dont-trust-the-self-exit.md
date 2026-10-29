@@ -69,7 +69,7 @@ passed, and the hidden grader missed all five phase 4 checks.
 **Remedy unit:** none: the verified exit is `--flow-mode free` in `learn/code/flow_run.py`, not a unit.
 
 **Lesson check:** not built yet. A small challenge of this lesson's own,
-failing without the remedy and passing with it, is planned under LC.26; until
+failing without the remedy and passing with it, is planned; until
 then the evidence below is the suites'.
 
 A self-exit is safe only when the test that defines done is:

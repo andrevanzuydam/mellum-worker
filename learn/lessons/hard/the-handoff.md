@@ -68,7 +68,7 @@ because the mechanism no longer ships. The removal itself is checkable:
 **Remedy unit:** none: the handoff block (`collapseHandoffs`) ships inside `extensions/mellum-worker.ts`, not as a unit.
 
 **Lesson check:** not built yet. A small challenge of this lesson's own,
-failing without the remedy and passing with it, is planned under LC.26; until
+failing without the remedy and passing with it, is planned; until
 then the evidence below is the suites'.
 
 At the context event, `collapseHandoffs` replaces a closed span's messages

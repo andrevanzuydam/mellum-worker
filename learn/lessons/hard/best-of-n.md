@@ -70,7 +70,7 @@ assertion of three audit entries). No sample can pass that gate.
 **Remedy unit:** none: parallel attempts are `--retry-concurrency` in `learn/code/flow_run.py`, not a unit.
 
 **Lesson check:** not built yet. A small challenge of this lesson's own,
-failing without the remedy and passing with it, is planned under LC.26; until
+failing without the remedy and passing with it, is planned; until
 then the evidence below is the suites'.
 
 On a retry round with `--retry-concurrency N`, the harness:

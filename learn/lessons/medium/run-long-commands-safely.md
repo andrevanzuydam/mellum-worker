@@ -69,7 +69,7 @@ command run instead.
 
 **Remedy unit:** `tool/background-long-commands`; apply it with `--remedy tool/background-long-commands`.
 
-**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned under LC.26; until then the evidence below is the suites'.
+**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned; until then the evidence below is the suites'.
 
 On each `bash` call the unit matches the command against known launchers
 (`uvicorn`, `gunicorn`, `flask run`, `http.server`, `--reload`, `npm run dev`,
