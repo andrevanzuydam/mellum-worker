@@ -15,6 +15,11 @@ Versions match git tags; pin one in both install lines.
   and `context/narrow-tools`, each changing one part of the request exactly as
   the worker does (the worker now exports `withFacts` and `narrowTools` so the
   units share its code; its behaviour is unchanged).
+- Opt-in remedy units for the experimental extensions:
+  `tool/background-long-commands`, `tool/lookup-library-docs`,
+  `tool/keep-a-plan`, `check/check-code-quality` and
+  `workflow/spec-driven-flow`. Each loads its extension unchanged; none is
+  installed by default or measured as a remedy yet.
 
 - `scripts/baseline/baseline.py lessons --full` runs every lesson's commands at
   the page's own n and deadline (the default stays one session per arm, capped

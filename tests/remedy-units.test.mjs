@@ -178,3 +178,26 @@ test("context/narrow-tools keeps the seven worker tools, as the worker does", as
 	assert.deepEqual(out.tools.map((t) => t.function.name), WORKER_TOOLS);
 	assert.deepEqual(out.messages, PAYLOAD().messages);
 });
+
+// Opt-in units: each re-exports an existing extension unchanged, with the list's metadata.
+const OPT_IN = {
+	"tool/background-long-commands": "mellum-nonblock",
+	"tool/lookup-library-docs": "mellum-knowledge",
+	"tool/keep-a-plan": "mellum-plan",
+	"check/check-code-quality": "mellum-quality",
+	"workflow/spec-driven-flow": "mellum-flow",
+};
+
+for (const [unit, ext] of Object.entries(OPT_IN)) {
+	test(`${unit} installs exactly what ${ext} installs`, async () => {
+		const mod = await import(`../remedies/${unit}.ts`);
+		assert.ok(mod.meta.pathology && mod.meta.does && mod.meta.evidence);
+		const viaUnit = fakePi();
+		const direct = fakePi();
+		mod.default(viaUnit);
+		(await import(`../extensions/${ext}.ts`)).default(direct);
+		assert.deepEqual(viaUnit.events(), direct.events());
+		assert.deepEqual(viaUnit.tools.map((t) => t.name), direct.tools.map((t) => t.name));
+		assert.ok(viaUnit.events().length + viaUnit.tools.length > 0);
+	});
+}
