@@ -32,6 +32,7 @@ SUITES = CODE / "suites"
 RECORDER = CODE / "record-pi.mjs"
 PROFILE = CODE / "profile"
 EXTENSION = CODE.parents[1] / "extensions" / "mellum-worker.ts"
+REMEDIES = CODE.parents[1] / "remedies"
 GUARDS_WITH_SERVER = {"emptyFinalNudge": 3, "loopBreaker": True,
                       "blockForegroundServer": True}
 ARMS = ("bare", "worker", "no-prompt", "no-nudge", "no-loop", "no-facts",
@@ -250,6 +251,43 @@ def layout_report(root: Path, pristine: dict[str, str],
     return {"created": created, "modified": modified, "out_of_layout": outside}
 
 
+def resolve_extras(remedy: str | None, extensions: list[Path]) -> tuple[list[str], list[Path]]:
+    """The remedy units (`--remedy`, names or `preset:<name>`) and a learner's own extensions
+    (`--extension`), as (unit names, files to load in order). Unknown names are refused."""
+    names: list[str] = []
+    for item in (remedy or "").split(","):
+        item = item.strip()
+        if not item:
+            continue
+        if item.startswith("preset:"):
+            preset = REMEDIES / "presets" / f"{item.removeprefix('preset:')}.json"
+            if not preset.is_file():
+                known = sorted(f"preset:{q.stem}" for q in (REMEDIES / "presets").glob("*.json"))
+                raise SystemExit(f"no preset {item!r}; known: {', '.join(known)}")
+            names += json.loads(preset.read_text())
+        else:
+            names.append(item)
+    paths: list[Path] = []
+    for name in names:
+        path = REMEDIES / f"{name}.ts"
+        if not path.is_file():
+            known = sorted(str(q.relative_to(REMEDIES).with_suffix(""))
+                           for q in REMEDIES.glob("*/*.ts"))
+            raise SystemExit(f"no remedy unit {name!r}; known: {', '.join(known)}")
+        paths.append(path)
+    for path in extensions:
+        if not Path(path).is_file():
+            raise SystemExit(f"no extension file {path}")
+        paths.append(Path(path).resolve())
+    return names, paths
+
+
+def extension_record(paths: list[Path]) -> list[dict]:
+    """Each loaded file and its SHA-256, so a record says exactly what ran."""
+    return [{"path": str(p), "sha256": hashlib.sha256(Path(p).read_bytes()).hexdigest()}
+            for p in paths]
+
+
 def pi_argv(
     pi_binary: str,
     profile: Path,
@@ -261,6 +299,7 @@ def pi_argv(
     extension: Path | None = None,
     session_id: str | None = None,
     session_dir: Path | None = None,
+    extras: list[Path] = (),
 ) -> list[str]:
     session = (
         ["--session-id", session_id, "--session-dir", str(session_dir)]
@@ -268,6 +307,8 @@ def pi_argv(
         else []
     )
     extra = ["-e", str(extension)] if extension is not None else []
+    for path in extras:
+        extra += ["-e", str(path)]
     # The recorder goes last: Pi runs before_provider_request handlers in load
     # order and each may replace the payload, so a recorder placed first would
     # log the messages before the worker appends its facts block. The cost is
@@ -328,6 +369,7 @@ def run_suite(
     stall: float | None = None,
     single_prompt: bool = False,
     specs: str | None = None,
+    extras: list[Path] = (),
 ) -> Path:
     run = new_run(runs_dir, suite.name)
     workspace = run / "workspace"
@@ -386,7 +428,7 @@ def run_suite(
         argv = pi_argv(
             pi_binary, run / "profile", recorder, provider, model, prompt,
             extension=settings["extension"],
-            session_id=session_id, session_dir=sessions,
+            session_id=session_id, session_dir=sessions, extras=extras,
         )
         try:
             child = subprocess.Popen(argv, cwd=workspace, env=env,
@@ -658,13 +700,15 @@ def _run_sessions(
     specs: str | None = None,
     profile: Path = PROFILE,
     stall: float | None = None,
+    remedies: list[str] = (),
+    extras: list[Path] = (),
 ) -> list[tuple]:
     results = []
     for _ in range(repeat):
         run_dir = run_suite(suite, runs_dir=runs_dir, pi_binary=pi_binary,
                             deadline=deadline, arm=arm,
                             single_prompt=single_prompt, specs=specs,
-                            profile=profile, stall=stall)
+                            profile=profile, stall=stall, extras=extras)
         grades = grade(run_dir / "workspace") if grade_run else []
         tests_passed, tail, missing, checks_ran = score_details(run_dir, suite)
         failed_checks = len(missing)
@@ -683,6 +727,8 @@ def _run_sessions(
         record = {
             "suite": suite.name,
             "arm": arm,
+            "remedies": list(remedies),
+            "extensions": extension_record(list(extras)),
             "single_prompt": single_prompt,
             "specs": specs,
             "strip_thinking": arm_settings(arm)["env"].get("MELLUM_STRIP_THINKING") == "1",
@@ -738,6 +784,8 @@ def run_suites(
     specs: str | None = None,
     profile: Path = PROFILE,
     stall: float | None = None,
+    remedies: list[str] = (),
+    extras: list[Path] = (),
 ) -> tuple[int, int]:
     # Run easiest first and hardest last, so a slow hard suite never blocks the
     # quicker ones; unknown suites keep alphabetical order after the known tiers.
@@ -764,6 +812,7 @@ def run_suites(
             suite, runs_dir=runs_dir, pi_binary=pi_binary,
             repeat=repeat, grade_run=grade_run, deadline=deadline, arm=arm,
             single_prompt=single_prompt, specs=specs, profile=profile, stall=stall,
+            remedies=remedies, extras=extras,
         )
         sessions_passed += _print_task(suite, results, repeat)
         sessions_total += len(results)
@@ -825,6 +874,11 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--repeat", type=int, default=1)
     run.add_argument("--deadline", type=float, default=600)
     run.add_argument("--arm", choices=ARMS, default="bare")
+    run.add_argument("--remedy", default=None, metavar="LIST",
+                     help="remedy units to load on top of the arm: comma-separated names "
+                          "(guard/break-repeat-loops) or preset:<name>")
+    run.add_argument("--extension", type=Path, action="append", default=[], metavar="PATH",
+                     help="a Pi extension of your own to load (repeatable)")
     run.add_argument("--stall", type=float, default=None, metavar="SECONDS",
                      help="end a session as stalled when one tool call has run this long "
                           "with no result (a foreground server); off by default")
@@ -852,12 +906,14 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.repeat < 1:
         parser.error("--repeat must be at least 1")
+    remedies, extras = resolve_extras(args.remedy, args.extension)
     if args.suite == "all":
         run_suites(["all"], suites_dir=args.suites_dir, runs_dir=args.runs_dir,
                    pi_binary=args.pi_binary, grade_run=args.grade,
                    repeat=args.repeat, deadline=args.deadline, arm=args.arm,
                    single_prompt=args.single_prompt, specs=args.specs,
-                   profile=args.profile, stall=args.stall)
+                   profile=args.profile, stall=args.stall,
+                   remedies=remedies, extras=extras)
         return 0
 
     suite = load_suite(args.suites_dir, args.suite)
@@ -871,13 +927,14 @@ def main(argv: list[str] | None = None) -> int:
             prompt = suite.prompt
         print(shlex.join(pi_argv(args.pi_binary, args.profile, RECORDER, provider,
                                  model, prompt,
-                                 extension=settings["extension"])))
+                                 extension=settings["extension"], extras=extras)))
         return 0
     results = _run_sessions(
         suite, runs_dir=args.runs_dir, pi_binary=args.pi_binary,
         repeat=args.repeat, grade_run=args.grade, deadline=args.deadline,
         arm=args.arm, single_prompt=args.single_prompt, specs=args.specs,
         profile=args.profile, stall=args.stall,
+        remedies=remedies, extras=extras,
     )
     _print_task(suite, results, args.repeat)
     return 0

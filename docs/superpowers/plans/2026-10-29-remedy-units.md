@@ -65,7 +65,8 @@ user-facing surface changes.
    both. `baseline.py lessons` checks the model answers before each command
    and reopens the tunnel, never recording against a dead one (the
    2026-10-29 drop).
-6. **The worker as a preset.** `remedies/presets/baseline-worker.json`, then
+6. **The worker as a preset.** *(Dated 2026-10-29: proven by equivalence tests
+   instead of a rewire; see the spec's phase 2 correction.)* `remedies/presets/baseline-worker.json`, then
    `mellum-worker.ts` composes from the units. Three proofs before the
    inline code goes: request equivalence (byte-identical
    `before_provider_request` output on the worker's recorded payloads),

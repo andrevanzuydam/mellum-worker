@@ -93,6 +93,18 @@ does not drop reasoning) say so in their header and their test.
 
 ## Phase 2: the worker as a preset
 
+**Dated correction 2026-10-29.** The worker is not rewired to call the units.
+The units import the worker's own functions (`createLoopBreaker`,
+`filterForMellum`'s `withFacts` and `narrowTools`, `factsBlock`), so no logic
+is duplicated; rebuilding the mode's span, marker and handoff machinery on
+units would risk the shipped product for no learner-visible gain. What phase 2
+proves instead is that `preset:baseline-worker` **is** the worker: on a fresh
+headless request it sends the same request as the worker's mode, and it makes
+the same guard decision on every call (`tests/remedy-units.test.mjs`; both
+tests shown red on a preset missing a unit). The text below is the original
+plan.
+
+
 `extensions/mellum-worker.ts` composes its remedies from the units instead of
 calling the functions inline. The proof that nothing drifted, all required:
 
@@ -160,6 +172,10 @@ write-confining guard and its screen. Today's pages move with their evidence:
 E3 → M1, E4 → M2, M2 → M3, M1 → M4, M3 → M8, M4 → M9, H1 → H1, H2 → H2; E1
 and E2 are rewritten. `preset:easy` and `preset:medium` list each tier's
 units in order; `preset:baseline-worker` stays for The Challenge.
+
+`preset:hard` lists the same units as `preset:medium`: Hard's orchestration
+(H1 to H6) runs through `learn/code/flow_run.py`, not as harness units, so the
+harness line is the remedies and the flow is the orchestration.
 
 **The end of the track is The Challenge's start.** H6's *after* state is
 `preset:hard`; H7 and H8 then teach building, and in each the learner's own

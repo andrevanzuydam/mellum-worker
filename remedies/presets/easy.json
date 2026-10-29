@@ -1,0 +1,7 @@
+[
+  "guard/break-repeat-loops",
+  "guard/stay-in-workspace",
+  "guard/refuse-whole-file-rewrite",
+  "guard/block-foreground-server",
+  "context/narrow-tools"
+]

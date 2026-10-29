@@ -222,3 +222,42 @@ test("a learner's own tool is kept when it calls keepTool", async () => {
 	payload.tools.push({ type: "function", function: { name: "my_tool" } });
 	assert.ok(pi.fire("before_provider_request", { payload }).tools.some((t) => t.function.name === "my_tool"));
 });
+
+// The preset is the worker: loaded in its order on a fresh headless session, the baseline-worker
+// preset sends the request the worker's mode sends, and makes the same guard decisions.
+test("preset:baseline-worker sends the same request as the worker's headless mode", async () => {
+	const preset = JSON.parse(readFileSync(new URL("../remedies/presets/baseline-worker.json", import.meta.url), "utf8"));
+	const dir = mkdtempSync(join(tmpdir(), "preset-"));
+	writeFileSync(join(dir, "AGENTS.md"), "# P\n\n## Mellum\n\n- Test with `uv run pytest`.\n");
+	const pi = fakePi();
+	for (const name of preset) {
+		const unit = await import(`../remedies/${name}.ts`);
+		unit.install(pi, { cwd: dir, env: {} });
+	}
+	let viaPreset = PAYLOAD();
+	for (const h of pi.handlers.before_provider_request) viaPreset = h({ payload: viaPreset }) ?? viaPreset;
+	const facts = factsBlock(readProjectFacts(dir, { read: (p) => readFileSync(p, "utf8") }, {}));
+	const prompt = readFileSync(new URL("../prompts/mellum-worker.md", import.meta.url), "utf8").trim();
+	const viaWorker = filterForMellum(PAYLOAD(), prompt, { facts });
+	assert.deepEqual(viaPreset, viaWorker);
+});
+
+test("preset:baseline-worker makes the same guard decisions as the worker's guard set", async () => {
+	const { createGuardSet, ENABLED } = await import("../extensions/mellum-guards.ts");
+	const preset = JSON.parse(readFileSync(new URL("../remedies/presets/baseline-worker.json", import.meta.url), "utf8"));
+	const pi = fakePi();
+	for (const name of preset) (await import(`../remedies/${name}.ts`)).install(pi, { cwd: process.cwd() });
+	const worker = createGuardSet(ENABLED);
+	const calls = [
+		...Array(7).fill({ toolName: "ls", input: { path: "." } }),
+		{ toolName: "bash", input: { command: "uv run python app.py" } },
+		{ toolName: "bash", input: { command: "grep -rl x /Users /var" } },
+		{ toolName: "bash", input: { command: "grep -rl x ." } },
+		{ toolName: "write", input: { path: "new.py", content: "" } },
+		...Array(6).fill({ toolName: "bash", input: { command: "python app.py" } }),
+	];
+	for (const call of calls) {
+		const fromPreset = pi.handlers.tool_call.map((h) => h(call)).find((d) => d?.block);
+		assert.deepEqual(fromPreset, worker.toolCall(call), JSON.stringify(call));
+	}
+});
