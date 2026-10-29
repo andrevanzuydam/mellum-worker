@@ -2,6 +2,12 @@
 
 Date: 2026-10-29. Status: approved by Andre on 2026-10-29.
 
+**Dated correction 2026-10-29.** `context/keep-thinking` is not a unit:
+keeping earlier reasoning is what happens when nothing strips it, so the unit
+would install nothing. Thinking retention stays a worker default with its
+opt-out (`MELLUM_STRIP_THINKING=1`), and M1 teaches that default. The tables
+below read as written otherwise.
+
 ## Intent
 
 Every remedy this project has built does one job, but they ship fused. Six

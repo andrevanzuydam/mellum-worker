@@ -101,3 +101,80 @@ test("nudge/nudge-empty-turn installs turn_end and agent_before_settle only, and
 	pi.fire("turn_end", { message: { role: "assistant", stopReason: "stop", content: [{ type: "text", text: "done" }] } });
 	assert.equal(pi.fire("agent_before_settle", {}), undefined);
 });
+
+// Context units: each rewrites one concern of the outgoing request, and matches what the worker's
+// filterForMellum does for that concern.
+const { filterForMellum, WORKER_TOOLS } = await import("../extensions/mellum-worker.ts");
+const { factsBlock, readProjectFacts } = await import("../extensions/mellum-facts.ts");
+import { readFileSync } from "node:fs";
+
+const PAYLOAD = () => ({
+	model: "m",
+	messages: [
+		{ role: "system", content: "Pi's own system prompt" },
+		{ role: "user", content: "Build the home page." },
+		{ role: "assistant", content: [{ type: "text", text: "ok" }], reasoning_content: "thinking" },
+		{ role: "user", content: [{ type: "text", text: "Now the board." }] },
+	],
+	tools: ["read", "grep", "find", "ls", "bash", "edit", "write", "subagent", "todo"].map((name) => ({ type: "function", function: { name } })),
+	tool_choice: { type: "function", function: { name: "subagent" } },
+});
+
+for (const name of ["use-short-prompt", "add-project-facts", "narrow-tools"]) {
+	test(`context/${name} installs one before_provider_request hook and nothing else`, async () => {
+		const pi = fakePi();
+		(await import(`../remedies/context/${name}.ts`)).default(pi);
+		assert.deepEqual(pi.events(), ["before_provider_request"]);
+		const { meta } = await import(`../remedies/context/${name}.ts`);
+		assert.ok(meta.pathology && meta.does && meta.evidence);
+	});
+}
+
+test("context/use-short-prompt replaces only the system message, as the worker does", async () => {
+	const dir = mkdtempSync(join(tmpdir(), "unit-"));
+	writeFileSync(join(dir, "p.md"), "Short prompt.\n");
+	const pi = fakePi();
+	(await import("../remedies/context/use-short-prompt.ts")).install(pi, { promptFile: join(dir, "p.md") });
+	const out = pi.fire("before_provider_request", { payload: PAYLOAD() });
+	assert.deepEqual(out.messages[0], filterForMellum(PAYLOAD(), "Short prompt.").messages[0]);
+	assert.deepEqual(out.messages.slice(1), PAYLOAD().messages.slice(1));
+	assert.deepEqual(out.tools, PAYLOAD().tools);
+});
+
+test("context/use-short-prompt defaults to the shipped prompt file", async () => {
+	const pi = fakePi();
+	(await import("../remedies/context/use-short-prompt.ts")).default(pi);
+	const out = pi.fire("before_provider_request", { payload: PAYLOAD() });
+	assert.equal(out.messages[0].content, readFileSync(new URL("../prompts/mellum-worker.md", import.meta.url), "utf8").trim());
+});
+
+test("context/add-project-facts appends the facts to user messages, as the worker does", async () => {
+	const dir = mkdtempSync(join(tmpdir(), "unit-"));
+	writeFileSync(join(dir, "AGENTS.md"), "# Project\n\n## Mellum\n\n- Test with `uv run pytest`.\n");
+	const facts = factsBlock(readProjectFacts(dir, { read: (p) => readFileSync(p, "utf8") }, {}));
+	assert.ok(facts.includes("uv run pytest"));
+	const pi = fakePi();
+	(await import("../remedies/context/add-project-facts.ts")).install(pi, { cwd: dir, env: {} });
+	const out = pi.fire("before_provider_request", { payload: PAYLOAD() });
+	const worker = filterForMellum(PAYLOAD(), "x", { keepSystem: true, facts });
+	assert.deepEqual(out.messages.filter((m) => m.role === "user"), worker.messages.filter((m) => m.role === "user"));
+	assert.deepEqual(out.messages[0], PAYLOAD().messages[0]);
+});
+
+test("context/add-project-facts leaves the request alone when the project has no facts", async () => {
+	const dir = mkdtempSync(join(tmpdir(), "unit-"));
+	const pi = fakePi();
+	(await import("../remedies/context/add-project-facts.ts")).install(pi, { cwd: dir, env: {} });
+	assert.equal(pi.fire("before_provider_request", { payload: PAYLOAD() }), undefined);
+});
+
+test("context/narrow-tools keeps the seven worker tools, as the worker does", async () => {
+	const pi = fakePi();
+	(await import("../remedies/context/narrow-tools.ts")).default(pi);
+	const out = pi.fire("before_provider_request", { payload: PAYLOAD() });
+	const worker = filterForMellum(PAYLOAD(), "x");
+	assert.deepEqual(out.tools, worker.tools);
+	assert.equal(out.tool_choice, undefined);
+	assert.deepEqual(out.tools.map((t) => t.function.name), WORKER_TOOLS);
+	assert.deepEqual(out.messages, PAYLOAD().messages);
+});

@@ -11,6 +11,10 @@ Versions match git tags; pin one in both install lines.
   (`guard/block-foreground-server`, `break-repeat-loops`, `stay-in-workspace`,
   `refuse-whole-file-rewrite`, `cap-turns`) and `nudge/nudge-empty-turn`, each
   wrapping the worker's existing function. The worker itself is unchanged.
+- Context remedy units: `context/use-short-prompt`, `context/add-project-facts`
+  and `context/narrow-tools`, each changing one part of the request exactly as
+  the worker does (the worker now exports `withFacts` and `narrowTools` so the
+  units share its code; its behaviour is unchanged).
 
 - `scripts/baseline/baseline.py lessons --full` runs every lesson's commands at
   the page's own n and deadline (the default stays one session per arm, capped
