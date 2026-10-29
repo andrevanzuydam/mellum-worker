@@ -6,6 +6,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `run.json` records `reasoning_as_text`: how many assistant turns the model
+  was sent back with its reasoning as `<think>` text, a serving fault. It is
+  counted from the history the model actually received, so a repaired turn
+  counts 0 (35 and 10 on a confounded LAN run, 0 on a clean one).
 - E1 Looking Around runs its own challenge, `learn/challenges/looking-around/`:
   readings spread over 200 site files in 8 region folders; find one reading
   and a region's highest sensor, then write a lookup module with tests. Before is bare Pi, after adds

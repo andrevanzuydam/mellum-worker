@@ -229,7 +229,30 @@ def test_report_counts_the_trace(tmp_path):
         "requests": 2, "turns": 2, "tool_calls": 1, "tool_errors": 1,
         "final_reply": "done", "context": 1500, "output_tokens": 30,
         "wall": 2.0, "nudges": 0, "empty_finals": 0, "guard_blocks": 0,
+        "reasoning_as_text": 0,
     }
+
+
+def test_report_counts_turns_whose_reasoning_reached_the_model_as_text(tmp_path):
+    # A serving stack that misparses reasoning returns it as <think> text, and
+    # Pi feeds it back as things the model said (research note
+    # 2026-10-29-lan-reasoning-leak). The record counts it from the history the
+    # model was sent, so a repaired turn counts 0.
+    run_dir = tmp_path / "r"
+    run_dir.mkdir()
+    history = [
+        {"role": "user", "content": "go"},
+        {"role": "assistant", "content": None, "reasoning": "fine"},
+        {"role": "tool", "content": "ok"},
+        {"role": "assistant", "content": "<think>\nleaked\n</think>\n\nnext"},
+        {"role": "tool", "content": "ok"},
+        {"role": "assistant", "content": "<think>\nagain</think>"},
+    ]
+    _write_trace(run_dir, [
+        {"type": "provider_request", "payload": {"messages": history[:4]}},
+        {"type": "provider_request", "payload": {"messages": history}},
+    ])
+    assert harness.report(run_dir)["reasoning_as_text"] == 2
 
 
 def test_report_without_text(tmp_path):
@@ -239,7 +262,7 @@ def test_report_without_text(tmp_path):
     assert harness.report(run_dir) == {
         "requests": 0, "turns": 0, "tool_calls": 0, "tool_errors": 0,
         "final_reply": "", "context": None, "output_tokens": None, "wall": None,
-        "nudges": 0, "empty_finals": 0, "guard_blocks": 0,
+        "nudges": 0, "empty_finals": 0, "guard_blocks": 0, "reasoning_as_text": 0,
     }
 
 

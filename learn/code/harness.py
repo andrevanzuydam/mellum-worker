@@ -698,6 +698,14 @@ def report(run: Path) -> dict:
         "nudges": continued,
         "empty_finals": len(empties) - continued,
         "guard_blocks": guard_blocks,
+        # Assistant turns the model was sent back with its reasoning as <think>
+        # text (a serving fault; the largest history in the session).
+        "reasoning_as_text": max(
+            (sum("<think>" in str(m.get("content") or "")
+                 for m in (row.get("payload") or {}).get("messages") or []
+                 if m.get("role") == "assistant")
+             for row in rows if row.get("type") == "provider_request"),
+            default=0),
     }
 
 
