@@ -1,0 +1,4 @@
+[
+  "grader_tests/test_challenge.py::test_every_owner_is_right",
+  "grader_tests/test_challenge.py::test_in_alphabetical_order"
+]
