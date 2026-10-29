@@ -1,6 +1,6 @@
 # Uniform lessons: one concept, see it fail, apply one remedy, see it pass
 
-Date: 2026-10-29. Status: draft, for Andre's approval.
+Date: 2026-10-29. Status: approved by Andre on 2026-10-29.
 
 ## Intent
 
