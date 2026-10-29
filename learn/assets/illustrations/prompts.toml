@@ -144,3 +144,63 @@ subject = "the small robot clapping beside a small stage where two friendly figu
 [challenge]
 seed = 901
 subject = "the small robot standing proudly on the top step of a three-step winners' podium, three medals hanging beside the podium on ribbons, one bronze, one silver and one gold, confetti shapes in the air"
+
+[read-the-failure]
+seed = 301
+subject = "the small robot kneeling with a large magnifying glass over a long paper scroll unrolled across the floor, one spot on the scroll circled in coral"
+
+[looking-around]
+seed = 302
+subject = "the small robot walking in a circle around a single filing cabinet, a worn circular groove of footprints on the floor around it"
+
+[searching]
+seed = 303
+subject = "the small robot with a flashlight peering into an enormous dark warehouse of shelves, while a small tidy room with one open drawer sits right behind it"
+
+[creating-files]
+seed = 304
+subject = "the small robot holding up a single small sticky note, while a thick open book lies on the floor beside it with most of its pages blank"
+
+[running-commands]
+seed = 305
+subject = "the small robot standing still in front of a closed door with a server rack symbol on it, a large hourglass beside the robot with the sand almost run out"
+
+[too-many-tools]
+seed = 306
+subject = "the small robot at a workbench with exactly seven neat tools laid in a row, an overflowing toolbox pushed to the far side of the bench"
+
+[run-long-commands]
+seed = 311
+subject = "the small robot pressing a button on a small machine that keeps humming on its own in the background, the robot already walking on to the next task with a clipboard"
+
+[look-it-up]
+seed = 312
+subject = "the small robot standing on a short ladder pulling one thick reference book from a tall bookshelf, a question mark bubble above its head turning into a check mark"
+
+[check-before-finishing]
+seed = 313
+subject = "the small robot at a desk holding a magnifying glass over a finished page with a few small coral marks circled, a checklist beside it"
+
+[plan-examine-code]
+seed = 341
+subject = "three small robots in a row at three desks passing one page along: the first drawing a plan, the second holding up a blank sheet with only coloured lines and no writing, the third typing code"
+
+[frozen-gates]
+seed = 322
+subject = "the small robot walking along a path through a series of gates, each gate behind it closed with a small padlock, a flag planted at the last gate it passed"
+
+[self-exit]
+seed = 323
+subject = "the small robot proudly holding a small paper checkmark at a finish line, while a larger second robot at the line holds up a clipboard with a test to check it"
+
+[best-of-n]
+seed = 324
+subject = "three small robots side by side each building the same small block tower, one tower finished and highlighted in coral, the other two unfinished"
+
+[build-a-tool]
+seed = 325
+subject = "the small robot at a workbench assembling a brand new tool from parts, a blueprint pinned on the wall above the bench"
+
+[build-a-remedy]
+seed = 326
+subject = "the small robot fitting a small new guard rail onto a path where a gap was, a toolbox open beside it and a finish flag in the distance"

@@ -1,26 +1,62 @@
 # Hard Lessons
 
-Orchestration and advanced concepts: who drives the model, how work is split,
-checked and re-dispatched. Each lesson stands on its own; it helps to know what
-a worker is ([Getting started](../../getting-started/worker-extension.md)).
+The orchestration paradigm: who drives the model, how work is handed off,
+split into roles, checked and re-dispatched. You start from `preset:medium`.
+H6 completes `preset:hard`; H7 and H8 then teach you to build your own tool
+and remedy, and in each your own file is what gets the pass. After H8 you
+have everything [The Challenge](../../challenge/index.md) needs.
 
 ![A small robot conducting three smaller robots working at separate desks](../../assets/illustrations/tier-hard.webp){ .illustration }
 
 <div class="grid cards" markdown>
 
--   **[H1 · The Primary Agent Is the Wrong Worker](primary-agent.md)**
+-   **[H1 · Who Drives](primary-agent.md)**
 
     ---
 
-    Neither Bronze nor Silver, the first two levels of
-    [The Challenge](../../challenge/index.md), separates the two arms on passes
-    at n = 3; what separates them is how they fail. *(Paul)*
+    The orchestrator role: a parent hands the task to the worker.
 
--   **[H2 · The Intercom Block Is a Prefill Tax](intercom-block.md)**
+-   **[H2 · The Handoff](intercom-block.md)**
 
     ---
 
-    A delegate's transcript is paid on every turn; the worker hands back one
-    summary block per span instead. *(Paul)*
+    What the parent sees of the worker's span: one block, not every call.
+
+-   **[H3 · Plan, Examine, Code](plan-examine-code.md)**
+
+    ---
+
+    The flow's roles as tools the agent calls.
+    Adds `workflow/spec-driven-flow`.
+
+-   **[H4 · Frozen Gates and Checkpoints](frozen-gates.md)**
+
+    ---
+
+    Per-phase gates the coder cannot weaken, and a revert to the last good phase.
+
+-   **[H5 · Don't Trust the Self-Exit](self-exit.md)**
+
+    ---
+
+    An external acceptance test decides when the work is done.
+
+-   **[H6 · Best of N](best-of-n.md)**
+
+    ---
+
+    Parallel attempts on retry, keeping the one that passes. Completes `preset:hard`.
+
+-   **[H7 · Build a Tool](build-a-tool.md)**
+
+    ---
+
+    Write an extension that gives the model a new capability. Your tool gets the pass.
+
+-   **[H8 · Build a Remedy](build-a-remedy.md)**
+
+    ---
+
+    Write a remedy unit for a failure no unit fixes. Your remedy gets the pass.
 
 </div>

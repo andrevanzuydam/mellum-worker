@@ -1,33 +1,33 @@
 ---
 title: Thinking Is Working Memory
 tier: medium
-number: M1
-time: 4 min read · about 2 h to run
+number: M4
+time: 4 min read · about 1 h to run
 track: lessons
 position: 3
-prerequisites: [getting-started/worker-extension]
+prerequisites: [lessons/medium/guards-for-empty-turns]
 authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# M1 · Thinking Is Working Memory
+# M4 · Thinking Is Working Memory
 
-Stripping a reasoning model's thinking blocks looks like a cheaper prefill,
-but the output cap is the budget that binds and the worker's guards read those
-blocks. This page keeps them and names the arm that would settle the
-question.
+A reasoning model writes before it answers, and stripping that reasoning from
+later requests looks like a cheaper prefill. The worker keeps it: the output
+cap is the budget that binds, and the guards read what the model said.
 
 !!! abstract "Overview"
 
     **Questions**
 
-    - Does stripping a reasoning model's thinking blocks from the forwarded context save anything?
+    - Does stripping earlier thinking from the forwarded context save anything?
+    - Which budget does a reasoning model actually run out of?
 
     **Objectives**
 
-    - Explain why the output cap, not the prefill, is the budget that binds for a reasoning model.
+    - Compare the `strip-thinking` and `worker` arms, which differ only in kept reasoning.
     - Recognise a final ended by `length` as an output cap spent on reasoning.
-    - Name the arm that would settle whether stripping thinking helps on llama.cpp.
+    - Name the run that would settle the question on this backend.
 
 ![A small robot with a thought bubble full of gears beside a jar filling with coins](../../assets/illustrations/thinking-working-memory.webp){ .illustration }
 
@@ -35,64 +35,48 @@ question.
 
 **Badge:** `screen`
 
-A reasoning model writes before it answers, and the worker forwards those
-blocks back to the model on the next request. Stripping them is the obvious
-saving: the payload gets smaller and the prefill gets cheaper. The story
-this page used to tell is that the saving is an illusion: you pay again in
-output tokens, and sometimes in passes.
-
-On llama.cpp that story now has an instrument but **no result yet**. It is kept here because the
-mechanism matters and because the page is the honest place to say so.
+The worker forwards each earlier reasoning block back to the model on the next
+request. Removing them shrinks the payload, so it looks like a saving. The
+worry is that the saving is an illusion, paid back in output tokens and
+perhaps in passes. On llama.cpp that has an instrument but **no result yet**.
 
 ## Eval case
 
 **Badge:** `conjecture`
 
-The worker now has the seam: `MELLUM_STRIP_THINKING=1` removes earlier
-reasoning from the context it forwards, and the harness turns it on with
-`--arm strip-thinking`. The arm that measured it before was a request-layer
-middleware in the ladder, which rewrote outgoing payloads. The settings the worker does expose (prompt, guards, facts)
-say nothing about thinking, and `llama-server` is served with thinking on.
-
-So the eval case this page wants is: Bronze and Silver, the first two levels
-of [The Challenge](../../challenge/index.md), three sessions each,
-`worker` against `worker` with every prior assistant `reasoning` block
-removed from the forwarded context. It has not been run yet.
+Keeping reasoning is a worker default, not a remedy unit, so this lesson's
+before and after are the harness's two arms rather than a `--remedy` line.
+**Before:** `--arm strip-thinking`, the worker with `MELLUM_STRIP_THINKING=1`.
+**After:** `--arm worker`, which keeps every earlier block. Both arms carry
+the facts, the short prompt and the nudge that M1 to M3 add. The run this page wants is Bronze and
+Silver, three sessions each; it has not been run.
 
 ## Evidence of the problem
 
 **Badge:** `screen`
 
-What is measurable here is narrower: **thinking spends the output budget.** A
-one-turn smoke against the running server, `max_tokens 32`, returned
-`content: ''` with 32 completion tokens spent and `finish_reason: stop`: the
-whole allowance went to reasoning. At `max_tokens 200` the same prompt
-returned its reasoning and then `ready`.
-
-The suites show the same budget being hit in anger: the failing runs in this
-cycle's records include finals ended by `length`, the output cap, on both Bronze
-and Silver. An output cap spent on reasoning is a run that never reached its
-answer, and no guard of this worker's shape can answer it.
-
-None of that measures the saving from *keeping* thinking. It measures the
-cost of the budget it draws on.
+What is measured is narrower: **thinking spends the output budget.** A
+one-turn smoke at `max_tokens 32` returned `content: ''` with 32 completion
+tokens spent and `finish_reason: stop`; at `max_tokens 200` the same prompt
+returned its reasoning and then `ready`. The suites' failing runs include
+finals ended by `length` on both Bronze and Silver: an output cap spent before
+the answer.
 
 ## Solution
 
 **Badge:** `screen`
 
-Keep the thinking blocks. Three reasons, in the order they matter:
+**Remedy unit:** none: a default. Keeping earlier reasoning is what happens when nothing strips it; the opt-out is `MELLUM_STRIP_THINKING=1`, which `--arm strip-thinking` sets.
 
-1. The cap is the budget that binds: at `max_tokens 16384`, a run that spends
-   its allowance reasoning ends empty, and stripping earlier thinking does not
-   give that allowance back.
-2. The extensions that need them read them: the loop breaker judges
-   repetition from what the model said, and the nudge continues a turn it
-   ended.
+**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned under LC.26; until then the evidence below is the suites'.
+
+Keep the thinking blocks, for three reasons in order:
+
+1. The cap binds: at `max_tokens 16384`, a turn that spends its allowance
+   reasoning ends empty, and stripping earlier thinking does not give it back.
+2. The extensions read them: the loop breaker judges repetition from what the
+   model said, and the nudge continues a turn it ended.
 3. There is no measured case on this backend for removing them.
-
-If a future arm shows stripping helps, this section changes. That is what the
-page is waiting on.
 
 ## Validation
 
@@ -100,43 +84,36 @@ page is waiting on.
 
 ### Evidence of the solution
 
-| Suite | Arm | Passes | Peak input | Wall | Status |
-| --- | --- | --- | --- | --- | --- |
-| Bronze | `worker` | n/a | n/a | n/a | not run yet |
-| Silver | `worker` | n/a | n/a | n/a | not run: same |
+Not measured as a lesson yet. Neither arm has a recorded Bronze or Silver
+result, so every cell is `n/a`; a missing measurement is never `0`.
 
-A missing measurement is `n/a`, never `0`.
+??? note "The full evidence"
+
+    | Suite | Arm | Passes | Peak input | Wall | Status |
+    | --- | --- | --- | --- | --- | --- |
+    | Bronze | `worker` | n/a | n/a | n/a | not run yet |
+    | Silver | `worker` | n/a | n/a | n/a | not run: same |
 
 ## Interpretation
 
-The weakest badge is `conjecture`, and this page is deliberately thin: it
-names a mechanism, a cost and an arm that has not been run. The numbers it used to
-quote (a 57% prefill saving and a slower run) came from oMLX ladder arms and
-are retired here rather than re-stated.
-
-What survives is a testable shape: on this backend, prefill is cheap because
-the layer cache absorbs the repeated prefix, so removing thinking from the
-payload mostly moves cost from prefill into output. The suites can show that,
-now that the payload seam exists.
-
-What would upgrade this: run the arm above, at n = 3 on Bronze and Silver.
-Until it has run, this page should be read as a question, not a finding.
+The weakest badge is `conjecture`: a mechanism, a cost and an arm not yet run.
+An older pair of numbers, a 57% prefill saving and a slower run, came from oMLX
+ladder arms and is retired. The testable shape: on this backend the layer
+cache absorbs the repeated prefix, so stripping mostly moves cost from prefill
+into output. Read this page as a question until the two arms have run.
 
 ### Run it yourself
 
-Run the worker with and without earlier reasoning in its context, on Bronze and Silver, three sessions each. No result is recorded yet, so yours would be the first:
+Before, then after (swap in `--suite medium --deadline 2700` for Silver):
 
 ```bash
-for suite in easy medium; do
-  for arm in worker strip-thinking; do
-    uv run python learn/code/harness.py run --suite "$suite" --arm "$arm" --repeat 3 --grade --deadline 2700
-  done
-done
+uv run python learn/code/harness.py run --suite easy --arm strip-thinking --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --arm worker --repeat 3 --grade
 ```
 
 !!! success "Key points"
 
-    - Thinking spends the output budget: at `max_tokens 32` the whole allowance went to reasoning and the content came back empty.
-    - Keep the thinking blocks; the guards read them and there is no measured case on this backend for removing them.
-    - The old 57% prefill saving came from oMLX ladder arms and is retired here.
+    - Keeping reasoning is a worker default, so this lesson compares two arms, not a `--remedy` line.
+    - Thinking spends the output budget: at `max_tokens 32` the whole allowance went to reasoning.
+    - Keep the blocks; the guards read them and nothing measured here argues for removing them.
     - The badge is `conjecture`: read this page as a question, not a finding.

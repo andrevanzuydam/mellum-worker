@@ -1,21 +1,20 @@
 ---
-title: A Short Prompt, Not a Procedure
-tier: easy
-number: E4
+title: A Short Prompt
+tier: medium
+number: M2
 time: 4 min read · 35 min to run
 track: lessons
-position: 2
-prerequisites: [getting-started/worker-extension]
+position: 1
+prerequisites: [lessons/medium/project-facts]
 authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# E4 · A Short Prompt, Not a Procedure
+# M2 · A Short Prompt
 
-A prompt that narrates a six-step procedure gives a small model more to
-follow than the project needs, and every line is paid on every request. What
-ships is 643 characters with no procedure, and this run does not show it
-buying a pass.
+Pi's own system prompt is long and general, and a small model can follow the
+procedure it describes instead of the files in front of it. One unit swaps it
+for the worker's 643-character task prompt, with no procedure in it.
 
 !!! abstract "Overview"
 
@@ -26,7 +25,7 @@ buying a pass.
 
     **Objectives**
 
-    - Compare the `worker` and `no-prompt` arms, which differ only in the prompt.
+    - Add `context/use-short-prompt` and read the prompt it installs.
     - Keep two samples apart rather than pooling them.
     - Recognise a null and say what it does and does not rule out.
 
@@ -36,112 +35,94 @@ buying a pass.
 
 **Badge:** `screen`
 
-A prompt that narrates a six-step procedure gives a small model more to
-follow than the project needs. It spends turns on the narration and drifts
-from the files, and every line has to be paid for on every request.
-
-That is the argument. The measurement below does something less comfortable
-with it: it shows the prompt not changing the pass count at all, while the
-context cost moves, in the direction nobody wants.
+A prompt that narrates a procedure gives a small model more to follow than the
+project needs. It spends turns on the narration and drifts from the files, and
+every line is paid for on every request.
 
 ## Eval case
 
 **Badge:** `screen`
 
-Bronze, the first level of [The Challenge](../../challenge/index.md), as set up
-in [Getting started](../../getting-started/suite.md): one prompt, graded by hidden pytest plus `ruff`, `pyrefly` and `complexipy`.
-Three sessions per arm on llama.cpp, one change between them:
-
-- `worker`: prompt v5, the 643-character task prompt replacing Pi's own.
-- `no-prompt`: `MELLUM_WORKER_PROMPT=pi`: Pi's base prompt kept, everything
-  else in the worker unchanged. The facts block, the guards and the seven
-  tools are identical in both arms.
+**Before:** `--remedy preset:easy,context/add-project-facts`. **After:** the
+same plus `context/use-short-prompt`. The lesson's own challenge is not built
+yet; the evidence below is Bronze, three sessions per arm on llama.cpp,
+recorded with the older `worker` (prompt v5) and `no-prompt`
+(`MELLUM_WORKER_PROMPT=pi`) arms, which differ only in the prompt.
 
 ## Evidence of the problem
 
 **Badge:** `screen`
 
-Two samples, not pooled:
-
-| Sample | With v5 | With Pi's prompt | Context |
-| --- | --- | --- | --- |
-| the 45-session record, Bronze/Silver/Gold, n=3 each | 3/9 | 3/9 | v5 7,834 vs 15,167 peak, Bronze |
-| this run, Bronze only, n=3 | **2/3** | **1/3** | v5 peaks 1,639–33,443; no-prompt 4,762–20,773 |
-
-Per session, Bronze only:
-
-| Arm | Session | Passed | Turns | Tool errors | Peak input | Wall |
-| --- | --- | --- | --- | --- | --- | --- |
-| `worker` | 1 | **yes** | 21 | 4 | 1,639 | 185 s |
-| `worker` | 2 | no | 22 | 2 | 33,443 | 275 s |
-| `worker` | 3 | **yes** | 52 | 17 | 3,404 | 405 s |
-| `no-prompt` | 1 | **yes** | 45 | 10 | 20,773 | 486 s |
-| `no-prompt` | 2 | no | 26 | 3 | 4,762 | 419 s |
-| `no-prompt` | 3 | no | 26 | 6 | 4,853 | 179 s |
-
-The pass counts are identical in the 45-session record (**3/9 against 3/9**)
-and one session apart in this run (**2/3 against 1/3**). The context numbers are not so consistent: this
-run's passing `no-prompt` session peaked at 20,773 against 1,639 and 3,404
-in the worker's two passing sessions, and the worker's losing session peaked at 33,443, so
-the direction of the context saving is not established here either. It was in
-the 45-session record, on three suites.
+The argument is the narration; the measurement does not show it. Pi's prompt
+passed as often as the short one in the 45-session record (**3/9 against
+3/9**) and one session behind it in this run (**1/3 against 2/3**). Its one
+passing session here peaked at 20,773 input tokens, against 1,639 and 3,404
+for the short prompt's two passes.
 
 ## Solution
 
 **Badge:** `screen`
 
-Prompt v5: **643 characters**, the six test-command facts and the
-missing-files line, no procedure. It is what ships, and the worker arm is that
-prompt.
+**Remedy unit:** `context/use-short-prompt`; apply it with `--remedy context/use-short-prompt`.
 
-The design rule that built it survives the null: a line earns its place when a
-run says so, and the one that cost a pass came back. That rule was exercised
-on the oMLX ladder, which is why this page no longer shows those arms; the
-current surface is `prompts/mellum-worker.md`, and it is worth reading as one
-page rather than as a procedure.
+**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned under LC.26; until then the evidence below is the suites'.
+
+The unit drops every system message and puts `prompts/mellum-worker.md` in
+their place: **643 characters**, the test-command facts and the missing-files
+line, no procedure. The rule that built it: a line earns its place when a run
+says so. Read the file as one page, not as steps.
 
 ## Validation
 
 **Badge:** `screen`
 
-### Evidence of the solution
+Not separated. Two samples, kept apart: 2/3 against 1/3 on Bronze in this run,
+3/9 against 3/9 across Bronze, Silver and Gold in the 45-session record. The
+context saving held in the record (7,834 against 15,167 peak on Bronze) but
+not in this run, where the short prompt's losing session peaked at 33,443.
 
-| Suite | Arm | Passes | Turns | Tool errors | Peak input | Wall |
-| --- | --- | --- | --- | --- | --- | --- |
-| Bronze | prompt v5 (`worker`) | 2/3 | 31.7 | 7.7 | 33,443 | 288 s |
-| Bronze | Pi's prompt (`no-prompt`) | 1/3 | 32.3 | 6.3 | 20,773 | 361 s |
+??? note "The full evidence"
 
-The two arms are within one session and within 1.4× on wall. Nothing in this
-table separates them.
+    | Sample | With v5 | With Pi's prompt | Context |
+    | --- | --- | --- | --- |
+    | the 45-session record, Bronze/Silver/Gold, n=3 each | 3/9 | 3/9 | v5 7,834 vs 15,167 peak, Bronze |
+    | this run, Bronze only, n=3 | **2/3** | **1/3** | v5 peaks 1,639–33,443; no-prompt 4,762–20,773 |
+
+    | Arm | Session | Passed | Turns | Tool errors | Peak input | Wall |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | `worker` | 1 | **yes** | 21 | 4 | 1,639 | 185 s |
+    | `worker` | 2 | no | 22 | 2 | 33,443 | 275 s |
+    | `worker` | 3 | **yes** | 52 | 17 | 3,404 | 405 s |
+    | `no-prompt` | 1 | **yes** | 45 | 10 | 20,773 | 486 s |
+    | `no-prompt` | 2 | no | 26 | 3 | 4,762 | 419 s |
+    | `no-prompt` | 3 | no | 26 | 6 | 4,853 | 179 s |
+
+    | Suite | Arm | Passes | Turns | Tool errors | Peak input | Wall |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | Bronze | prompt v5 (`worker`) | 2/3 | 31.7 | 7.7 | 33,443 | 288 s |
+    | Bronze | Pi's prompt (`no-prompt`) | 1/3 | 32.3 | 6.3 | 20,773 | 361 s |
 
 ## Interpretation
 
-The weakest badge is `screen`, and this page is a **null**: on Bronze
-at n=3 the worker prompt did not beat Pi's own prompt, and the same was true
-at 3/9 against 3/9 across three suites. The claim this page used to make,
-that removing each line was paid for by a pass, rested on ladder ablations
-that are no longer cited here.
-
-What survives is the shape and the shipped artifact: 643 characters, no
-procedure, a rule for what earns a line. What does not survive is any
-statement that the prompt is worth a pass.
-
-What would upgrade this: a longer prompt actually measured against v5 on the
-suites: the arms exist, and the comparison has never been run on this
-backend. A null against Pi's prompt is not a null against a bloated one.
+The weakest badge is `screen`, and this page is a **null**: the short prompt
+did not beat Pi's own at n = 3, nor across three suites. An older claim, that
+each removed line was paid for by a pass, rested on ladder ablations that are
+no longer cited. What would upgrade this: a long, procedural prompt measured
+against v5. A null against Pi's prompt is not a null against a bloated one,
+and that comparison has not been run on this backend.
 
 ### Run it yourself
 
-Run prompt v5 (`worker`) and Pi's prompt (`no-prompt`) on Bronze, three sessions each:
+Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suite easy --arm worker --repeat 3 --grade --deadline 600
-uv run python learn/code/harness.py run --suite easy --arm no-prompt --repeat 3 --grade --deadline 600
+uv run python learn/code/harness.py run --suite easy --arm bare --remedy preset:easy,context/add-project-facts --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt --repeat 3 --grade
 ```
 
 !!! success "Key points"
 
-    - The prompt did not change the pass count: 2/3 against 1/3 here, 3/9 against 3/9 in the 45-session record (a screen, a null).
-    - The context saving is not established in this run, though it was in the 45-session record.
-    - What ships is 643 characters with no procedure, and a rule that a line earns its place when a run says so.
-    - A null against Pi's prompt is not a null against a bloated one; that comparison has not been run on this backend.
+    - `context/use-short-prompt` replaces the system prompt with 643 characters and no procedure.
+    - It did not change the pass count: 2/3 against 1/3 here, 3/9 against 3/9 in the record (a null).
+    - The context saving held in the record but not in this run.
+    - A line earns its place in the prompt when a run says so.

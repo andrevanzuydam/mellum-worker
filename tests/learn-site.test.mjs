@@ -1,3 +1,4 @@
+// Retired: "the baseline shows the actual worker code" (learn/lessons/easy/baseline.md) and tests/lesson-write-only-listed.test.mjs (learn/lessons/easy/write-only-listed.md); both pages removed 2026-10-29 by the tiered-track restructure.
 import assert from "node:assert/strict";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -211,13 +212,6 @@ test("the first findings lesson follows the six steps and names its badge", () =
   assert.match(page("lessons/hard/index.md"), /primary-agent\.md/);
 });
 
-test("the baseline shows the actual worker code", () => {
-  const l = page("lessons/easy/baseline.md");
-  for (const text of ["extensions/mellum-worker.ts", "setActiveTools",
-    "createGuardSet"])
-    assert.ok(l.includes(text), `baseline lacks ${text}`);
-});
-
 test("the Lessons index introduces the three tiers", () => {
   const index = page("lessons/index.md");
   for (const tier of ["easy", "medium", "hard"]) assert.match(index, new RegExp(`\\(${tier}/index\\.md\\)`));
@@ -262,7 +256,7 @@ test("the worker-extension lesson teaches the extension mechanism", () => {
 });
 
 test("the second findings lesson follows the six steps and names its badge", () => {
-  const l = page("lessons/easy/short-prompt.md");
+  const l = page("lessons/medium/short-prompt.md");
   const heads = [...l.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
   assert.deepEqual(heads, ["Problem", "Eval case", "Evidence of the problem",
     "Solution", "Validation", "Interpretation"]);
@@ -271,7 +265,7 @@ test("the second findings lesson follows the six steps and names its badge", () 
   sections.forEach((s, i) => assert.equal(badge(s), i < 5, `step ${i + 1}`));
   assert.match(l, /weakest badge is `(?:reference-run|cited|screen|conjecture)`/);
   assert.ok(!/docs\/ladder\//.test(l), "lesson links a ladder record");
-  assert.match(page("lessons/easy/index.md"), /short-prompt\.md/);
+  assert.match(page("lessons/medium/index.md"), /short-prompt\.md/);
 });
 
 test("learn/ never says tutorial or case study", () => {

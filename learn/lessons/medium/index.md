@@ -1,41 +1,75 @@
 # Medium Lessons
 
-How the model spends its session: its thinking, its empty turns and the shape
-of the task it is handed. Each lesson stands on its own; you will read a trace,
-so [Getting started](../../getting-started/index.md) through its harness page
-is the only prerequisite.
+You start where Easy ended, from `preset:easy`, so every failure here is one
+the Easy remedies cannot fix. Each lesson adds one thing: what the model is
+told, how its turns end, a tool of ours, a check, or the shape of the task.
+After M9 you have `preset:medium`, where Hard starts.
 
 ![A small robot studying a long unrolled scroll through a magnifying glass](../../assets/illustrations/tier-medium.webp){ .illustration }
 
 <div class="grid cards" markdown>
 
--   **[M1 · Thinking Is Working Memory](thinking-working-memory.md)**
+-   **[M1 · Tell It How to Test](project-facts.md)**
 
     ---
 
-    Thinking spends the output budget; the strip-thinking arm now exists on
-    llama.cpp but has not been run yet. *(Paul)*
+    The project's own test command, in every request.
+    Adds `context/add-project-facts`.
 
--   **[M2 · Guards for Empty Turns and Loops](guards-for-empty-turns.md)**
-
-    ---
-
-    The nudge never fired in ten sessions on Bronze, the first level of
-    [The Challenge](../../challenge/index.md): no empty turn had the shape it
-    answers. *(Paul)*
-
--   **[M3 · One Spec File per Phase](one-spec-per-phase.md)**
+-   **[M2 · A Short Prompt](short-prompt.md)**
 
     ---
 
-    Writing the acceptance criteria into the spec took a worker from "no check
-    could run" to one missing check. *(Paul)*
+    A 643-character prompt in place of a procedure.
+    Adds `context/use-short-prompt`.
 
--   **[M4 · A Prose Brief Stops at Its First Reply](prose-brief.md)**
+-   **[M3 · Nudge an Empty Turn](guards-for-empty-turns.md)**
 
     ---
 
-    Checks ran in all three stepped sessions and none of the one-brief ones;
-    the one brief was cheaper but left nothing a check could import. *(Paul)*
+    A turn that ends with nothing, part-way through.
+    Adds `nudge/nudge-empty-turn`.
+
+-   **[M4 · Thinking Is Working Memory](thinking-working-memory.md)**
+
+    ---
+
+    What happens when earlier reasoning is dropped.
+    Keeps reasoning, the default.
+
+-   **[M5 · Run Long Commands Safely](run-long-commands.md)**
+
+    ---
+
+    A watcher or server run in the background, with its output returned.
+    Adds `tool/background-long-commands`.
+
+-   **[M6 · Look It Up](look-it-up.md)**
+
+    ---
+
+    A `lookup` tool over the installed packages, instead of a guess.
+    Adds `tool/lookup-library-docs`.
+
+-   **[M7 · Check Before Finishing](check-before-finishing.md)**
+
+    ---
+
+    Lint and type checks before the model may stop.
+    Adds `check/check-code-quality`.
+
+-   **[M8 · One Spec per Phase](one-spec-per-phase.md)**
+
+    ---
+
+    How the brief is laid out: one spec file per phase.
+    Task shaping, `--specs split`.
+
+-   **[M9 · Steps, Not One Brief](prose-brief.md)**
+
+    ---
+
+    How the brief is delivered: phase by phase, not all at once.
+    Task shaping, against `--single-prompt`.
 
 </div>

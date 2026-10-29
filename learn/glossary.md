@@ -92,8 +92,9 @@ is a hypothesis, not a pathology.
 
 ### Baseline lesson
 
-The n=3 comparison of Baseline Pi and the Baseline Worker on easy, medium and
-hard. It fixes the starting point for the remedy lessons.
+Until 2026-10-29, the n=3 comparison of Baseline Pi and the Baseline Worker on
+easy, medium and hard. Lesson 1 is now Read the Failure, which runs Baseline
+Pi alone and names what went wrong; the worker is a preset, not a lesson.
 
 ### Baseline Worker
 
@@ -120,9 +121,42 @@ measures the removed part; it is not a lesson module.
 
 ### Remedy
 
-A later change to the Baseline Worker. Facts, write-only scope and spec shape
-are remedies; the worker’s internal prompt and guards are not separate
-lessons.
+A change that corrects one pathology. Since 2026-10-29 each remedy is a
+remedy unit, taught by one lesson, and the worker is the preset of the units
+it uses.
+
+### Remedy unit
+
+One remedy in one file under `remedies/<kind>/`: a guard, a nudge, a context
+change, a check or one of our tools. It installs one behaviour on Pi's hooks
+and nothing else, and exports a `meta` record (the pathology, what it does,
+its lesson, its evidence) that the remedies list is generated from. Load it
+with `--remedy <kind>/<name>`.
+
+### Preset
+
+A named list of remedy units, loaded with `--remedy preset:<name>`.
+`preset:easy` and `preset:medium` are what each tier adds; each tier's
+lessons start from the previous tier's preset. `preset:baseline-worker` is
+the worker's own list, proven to send the same request as the worker.
+
+### Before and after
+
+The two states every lesson shows of one command. Before is everything the
+tier has added up to this lesson, written as one `--remedy` line; after adds
+this lesson's one unit.
+
+### Lesson check
+
+A lesson's test: its own small challenge fails with the before line and passes
+with the after line, at a preregistered n. A passing check also confirms the
+pathology on the host it ran on.
+
+### Tool
+
+A capability the model can call. Pi ships `read`, `write`, `edit`, `bash`,
+`ls`, `find` and `grep`; our tool units add `lookup` and others. A remedy
+changes behaviour; a tool adds a capability.
 
 ### Nudge
 

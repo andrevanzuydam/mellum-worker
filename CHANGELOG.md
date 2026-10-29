@@ -509,6 +509,15 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The lessons are a tiered track, one remedy per lesson. Easy (E1 to E6)
+  introduces Pi's tools from bare Pi, one failure and one remedy unit each;
+  Medium (M1 to M9) starts from `preset:easy`; Hard (H1 to H8) is the
+  orchestration paradigm from `preset:medium` and ends with building your own
+  tool and remedy. Every lesson shows a before and an after `--remedy` line,
+  has a new illustration, and says its lesson check is not built yet until
+  its own challenge has shown FAIL then PASS. The remedies list now appears
+  on the Lessons index and The Challenge. Old lesson URLs changed.
+
 - The Learning Center is ready to read: every page was proofread and has no
   em dashes; page titles and menus are Title Case and section headings sentence case; Getting started is five numbered
   steps (not "lessons"); the glossary is grouped into sections; Home, the

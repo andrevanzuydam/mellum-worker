@@ -16,7 +16,7 @@ test("the ninth findings lesson follows the six steps and names its badge", () =
   sections.forEach((s, i) => assert.equal(BADGE(s), i < 5, `step ${i + 1}`));
   assert.match(l, /weakest badge is `conjecture`/);
   assert.match(l, /^track: lessons$/m);
-  assert.match(l, /^position: 9$/m);
+  assert.match(l, /^position: 1$/m);
   assert.match(l, /^backends: \[llamacpp\]$/m);
 });
 

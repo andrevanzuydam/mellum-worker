@@ -1,16 +1,16 @@
 ---
-title: A Prose Brief Stops at Its First Reply
+title: Steps, Not One Brief
 tier: medium
-number: M4
-time: 6 min read · 100 min to run
+number: M9
+time: 5 min read · 100 min to run
 track: lessons
 position: 8
-prerequisites: [getting-started/suite]
+prerequisites: [lessons/medium/one-spec-per-phase]
 authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# M4 · A Prose Brief Stops at Its First Reply
+# M9 · Steps, Not One Brief
 
 A four-phase build handed over as one joined brief finished faster and cheaper,
 and left a project the checks could not open in all three sessions. Sent as
@@ -20,7 +20,7 @@ steps, the same briefs produced a runnable project every time.
 
     **Questions**
 
-    - Should a multi-phase build be sent as one prose brief or as one brief per phase?
+    - Should a multi-phase build be sent as one brief or as one brief per phase?
 
     **Objectives**
 
@@ -34,162 +34,104 @@ steps, the same briefs produced a runnable project every time.
 
 **Badge:** `screen`
 
-A multi-phase build can be handed to a worker two ways: as **steps** (one brief
-per phase, each answered before the next arrives) or as **one prose brief** that
-describes every phase at once and expects the model to work through them in
-order.
-
-The worry is that the second shape invites a first reply: the model answers the
-first thing it read, calls that done, and never comes back for the rest. That is
-not quite what happens. What happens is worse and quieter: the run finishes,
-sometimes with a confident "implemented, the test command exits 0", over a
-project that is missing a file the checks import.
+Handed every phase at once, the worry is that the model answers the first
+thing it read and calls that done. What happens is quieter: the session
+finishes, sometimes with a confident "implemented, the test command exits 0",
+over a project missing a file the checks import.
 
 ## Eval case
 
 **Badge:** `screen`
 
-Silver, the second level of [The Challenge](../../challenge/index.md), as set up
-in [Getting started](../../getting-started/suite.md): four phases
-of a FastAPI complaints app, graded by hidden pytest plus `ruff`, `pyrefly`
-and `complexipy`. The same four brief files, the same base, the same
-grader, and one change between the arms:
-
-- **steps**: the suite's four `prompts/*.md`, one request each.
-- **one brief**: `--single-prompt`, which joins those same four files with
-  blank lines and sends them once.
-
-**Three sessions per arm**, because this page states a comparison and a screen
-that states one needs n = 3. Three of the six sessions never ran their checks,
-which is itself the finding.
-
-| | |
-| --- | --- |
-| Machine | Apple M1 Pro, 8 cores, 32 GiB |
-| Backend | `llama-server` 0.7.0 (build 11669), Mellum 2.1 `Q4_K_M`, `-c 50000` (`n_ctx` 50,176) |
-| Sampling | `temperature 1`, `top_p 0.95`, `top_k 20`, `max_tokens 16384` |
-| Deadline | 2,700 s, twice this machine's slowest recorded Silver session |
-
-The machine matters: the records this center started from were taken on an M5
-Max, and **wall seconds do not transfer between machines**. Peak token counts
-do.
+**Before:** `--remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs,check/check-code-quality --specs split --single-prompt`,
+which joins the suite's four briefs with blank lines and sends them once.
+**After:** the same without `--single-prompt`, one brief per phase, the
+harness default. The evidence below is Silver, three sessions per arm on
+llama.cpp at `--deadline 2700`, recorded with `--arm worker --specs joined`,
+before this track put `--specs split` ahead of it.
 
 ## Evidence of the problem
 
 **Badge:** `screen`
 
-| Arm | Session | Missing of 18 | Checks ran | Requests | Peak input | Wall |
-| --- | --- | --- | --- | --- | --- | --- |
-| steps | `d534ce` | 11 | yes | 95 | 11,683 | 1867 s |
-| steps | `eda435` | 9 | yes | 81 | 9,084 | 1123 s |
-| steps | `df4046` | **1** | yes | 67 | 10,353 | 990 s |
-| one-brief | `5d9dfb` | 18 | **no** | 16 | 21,100 | 697 s |
-| one-brief | `705bdd` | 18 | **no** | 36 | 1,238 | 421 s |
-| one-brief | `a26728` | 18 | **no** | 49 | 3,213 | 1029 s |
-
-**The one-brief arm never produced a project its checks could open.** Each
-session failed for its own reason, and none of them said so:
-
-| Session | What was missing | The grader's error | What the model said |
-| --- | --- | --- | --- |
-| `5d9dfb` | `models.py`, `templates/` | `ModuleNotFoundError: No module named 'models'` | nothing, no final text |
-| `705bdd` | `models.py` | `ModuleNotFoundError: No module named 'models'` | "implemented. The test command … exits 0" |
-| `a26728` | `templates/`, a file that does not parse | `SyntaxError: unterminated string literal` | nothing, no final text |
-
-The steps arm had bad sessions of its own (11 and 9 missing checks in two of
-three, including 3 of 4 phase-1 checks lost in `d534ce`) but it always produced
-something the checks could run.
-
-An earlier version of this page reported one session per arm, in which the
-one-brief arm passed and the stepped one failed on lint. That reading is
-retired: at one session each it was an observation, and three sessions per arm
-disagree with it.
+**The one-brief arm never produced a project its checks could open**: 18 of
+18 missing and `checks_ran: false` in all three sessions. Each failed its own
+way, and none said so: two missed `models.py` (`ModuleNotFoundError`), one
+left a file that does not parse. The most confident final message of the six
+sat over one of the projects that would not import.
 
 ## Solution
 
 **Badge:** `screen`
 
-Send phases as steps when the task has phases. That is what the Getting started
-suite teaches and is the harness's default shape, and this run gives it two
-reasons rather than one:
+**Remedy unit:** none: task shaping. The remedy is sending phases as steps, the harness default, by leaving out `--single-prompt`; it is not an extension.
+
+**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned under LC.26; until then the evidence below is the suites'.
+
+Send phases as steps. Two reasons, both from this run:
 
 1. **A checkpoint per phase.** A stepped run can be checked before the next
-   phase arrives; a one-brief run hands over everything and gets one grade at
-   the end, or, as here, no grade at all.
-2. **A project that loads.** Three of three one-brief sessions ended with a
-   workspace missing a module the checks import. Whatever the joined brief does
-   to the model's reading, its practical effect is an incomplete project.
-
-The mechanism is still a conjecture. What is measured is the outcome: faster,
-cheaper, and not runnable in any of three sessions.
+   phase arrives; a one-brief run gets one grade at the end, or none.
+2. **A project that loads.** Checks ran in every stepped session and in no
+   one-brief session.
 
 ## Validation
 
 **Badge:** `screen`
 
-### Evidence of the solution
+The checks ran in **3 of 3** stepped sessions and **0 of 3** one-brief ones:
+a presence claim about the workspace, not a pass rate. The joined shape was
+cheaper in requests (16–49 against 67–95) and wall (421–1029 s against
+990–1867 s), but peak context did not follow: one joined session peaked at
+21,100 against the stepped arm's highest 11,683. Passes were 0 of 3 in both arms.
 
-| Arm | Sessions | Missing of 18 | Checks ran | Requests | Peak input | Wall |
-| --- | --- | --- | --- | --- | --- | --- |
-| steps | 3 | 11, 9, 1 | **3 of 3** | 67–95 | 9,084–11,683 | 990–1867 s |
-| one-brief | 3 | 18, 18, 18 | **0 of 3** | 16–49 | 1,238–21,100 | 421–1029 s |
+??? note "The full evidence"
 
-### Quality and budget
+    | Arm | Session | Missing of 18 | Checks ran | Requests | Peak input | Wall |
+    | --- | --- | --- | --- | --- | --- | --- |
+    | steps | `d534ce` | 11 | yes | 95 | 11,683 | 1867 s |
+    | steps | `eda435` | 9 | yes | 81 | 9,084 | 1123 s |
+    | steps | `df4046` | **1** | yes | 67 | 10,353 | 990 s |
+    | one-brief | `5d9dfb` | 18 | **no** | 16 | 21,100 | 697 s |
+    | one-brief | `705bdd` | 18 | **no** | 36 | 1,238 | 421 s |
+    | one-brief | `a26728` | 18 | **no** | 49 | 3,213 | 1029 s |
 
-- **Quality:** checks ran in 3 of 3 stepped sessions and 0 of 3 joined ones. That
-  is the claim, and it is a presence claim about the workspace, not a pass rate.
-- **Budget:** the joined shape was cheaper in every session: fewer requests
-  (16–49 against 67–95) and less wall (421–1029 s against 990–1867 s). **Peak
-  context did not follow:** one joined session peaked at 21,100 against the
-  stepped arm's highest 11,683, so the page does not claim a context saving.
-- **Passes:** 0 of 3 in both arms, so nothing here separates them on passes.
-  Silver is at a floor where both arms fail.
+    | Session | What was missing | The grader's error | What the model said |
+    | --- | --- | --- | --- |
+    | `5d9dfb` | `models.py`, `templates/` | `ModuleNotFoundError: No module named 'models'` | nothing, no final text |
+    | `705bdd` | `models.py` | `ModuleNotFoundError: No module named 'models'` | "implemented. The test command … exits 0" |
+    | `a26728` | `templates/`, a file that does not parse | `SyntaxError: unterminated string literal` | nothing, no final text |
 
-### Checks
-
-`uv run python learn/code/harness.py qualify --suite medium` → `known-good:
-PASS`, `known-broken: FAIL`, `medium: QUALIFIED`. `learn/code/tests` 64/64,
-`npm test` 387/387.
+    Machine: Apple M1 Pro, 8 cores, 32 GiB; `llama-server` 0.7.0 (build
+    11669), Mellum 2.1 `Q4_K_M`, `-c 50000` (`n_ctx` 50,176);
+    `temperature 1`, `top_p 0.95`, `top_k 20`, `max_tokens 16384`; deadline
+    2,700 s, twice this machine's slowest recorded Silver session. Wall seconds
+    do not transfer between machines; peak token counts do.
+    `qualify --suite medium` → `known-good: PASS`, `known-broken: FAIL`,
+    `medium: QUALIFIED`; `learn/code/tests` 64/64, `npm test` 387/387.
 
 ## Interpretation
 
-The weakest badge is `screen`, and it is the whole page: six sessions on one
-machine, one backend, one task family, n = 3 per arm.
-
-The claim this page used to carry (a one-prompt brief loses four passes, and
-stepping it costs 2.4× the time) is **retired**, twice over. The n = 1 screen
-that replaced it is retired too: it had the one-brief arm passing while the
-stepped arm failed lint, and three sessions per arm reverse that.
-
-What survives is the design advice, now with an outcome behind it. **Steps buy a
-checkpoint per phase, and the joined shape produced nothing a check could open
-in three of three sessions.** What does not survive is any claim about *why*:
-"stops at its first reply" is a mechanism the trace does not show: one session
-had no final text at all, and the most confident of the six sat over a project
-that would not import.
-
-Two things this page now shares with [Pathologies](../../pathologies.md): *builds
-it somewhere else* and *leaves it unimportable* are the failure modes it
-actually recorded, at three of three and twice respectively.
-
-What would upgrade this: a one-brief session whose checks run, which would break
-the shape claim; and a second task family, because six sessions of one suite on
-one machine can only say what happened here.
+The weakest badge is `screen`: six sessions, one machine, one task family. The
+older claim (a one-prompt brief loses four passes, and stepping costs 2.4× the
+time) is retired, and so is an n = 1 screen, one session per arm, that had the
+one-brief arm passing;
+three sessions per arm reverse it. Why the joined brief fails is still a
+conjecture; "stops at its first reply" is not what the traces show. What would
+upgrade this: a one-brief session whose checks run, and a second task family.
 
 ### Run it yourself
 
-Run the stepped arm and the one-brief arm on Silver, three sessions each, with the page's 2,700 s deadline:
+Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suite medium --specs joined --arm worker \
-  --repeat 3 --grade --deadline 2700
-uv run python learn/code/harness.py run --suite medium --specs joined --arm worker \
-  --single-prompt --repeat 3 --grade --deadline 2700
+uv run python learn/code/harness.py run --suite medium --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs,check/check-code-quality --specs split --single-prompt --repeat 3 --grade --deadline 2700
+uv run python learn/code/harness.py run --suite medium --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs,check/check-code-quality --specs split --repeat 3 --grade --deadline 2700
 ```
 
 !!! success "Key points"
 
-    - Checks ran in 3 of 3 stepped sessions and 0 of 3 one-brief sessions; it is a presence claim, not a pass rate.
-    - The joined shape was cheaper in requests and wall, but not in peak context.
+    - Checks ran in 3 of 3 stepped sessions and 0 of 3 one-brief sessions; a presence claim, not a pass rate.
+    - The joined brief was cheaper in requests and wall, but not in peak context.
     - Passes were 0 of 3 in both arms, so nothing separates them on passes.
     - Why the one-brief arm fails is still a conjecture; this is a screen at n = 3 per arm.

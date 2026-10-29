@@ -1,33 +1,33 @@
 ---
-title: Guards for Empty Turns and Loops
+title: Nudge an Empty Turn
 tier: medium
-number: M2
-time: 5 min read · 60 min to run
+number: M3
+time: 4 min read · 60 min to run
 track: lessons
-position: 4
-prerequisites: [getting-started/worker-extension]
+position: 2
+prerequisites: [lessons/medium/short-prompt]
 authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# M2 · Guards for Empty Turns and Loops
+# M3 · Nudge an Empty Turn
 
-A small model can end a turn having said nothing and called no tool, and the
-run stops there. The shipped guards answer that empty turn and repetition, and
-the arms here show the nudge never fired rather than that it worked.
+A small model can end a turn having said nothing and called no tool, part-way
+through the task, and the session stops there. One unit answers that empty
+turn with a short nudge, at most three times.
 
 !!! abstract "Overview"
 
     **Questions**
 
-    - What does the worker do when the model ends a turn having said nothing?
-    - Do the guards actually fire on Bronze?
+    - What happens when the model ends a turn having said nothing?
+    - Does the nudge actually fire on the suites?
 
     **Objectives**
 
-    - Describe how the empty-final nudge is bounded in code.
-    - Recognise which empty finals the nudge answers (`stop`) and which it does not (`error`, `length`).
-    - Read the `Nudges` fire count before the pass count when judging a guard arm.
+    - Add `nudge/nudge-empty-turn` and read how it is bounded.
+    - Tell the empty turn it answers (`stop`) from the ones it does not (`error`, `length`).
+    - Read the `Nudges` fire count before the pass count.
 
 ![A small robot with an empty speech bubble being tapped on the shoulder by a guard](../../assets/illustrations/guards-for-empty-turns.webp){ .illustration }
 
@@ -35,59 +35,42 @@ the arms here show the nudge never fired rather than that it worked.
 
 **Badge:** `screen`
 
-A small model sometimes ends a turn having said nothing and called no tool:
-an empty turn. Nothing is wrong with the request, the model is simply not
-finished, and without help the run stops there. The shipped worker answers it
-with a bounded nudge (one message, at most three times) and it answers
-repetition with a loop breaker.
+Sometimes the model ends a turn with no text and no tool call. Nothing is wrong
+with the request; the model is simply not finished, and without help the
+session ends there with the work half done.
 
 ## Eval case
 
 **Badge:** `screen`
 
-Bronze, the first level of [The Challenge](../../challenge/index.md), as set up
-in [Getting started](../../getting-started/suite.md): one prompt, graded by hidden pytest plus `ruff`, `pyrefly` and `complexipy`.
-Five sessions per arm on llama.cpp, and the arm is the guard:
-
-- `worker`: prompt v5, seven tools, nudge on, loop breaker on.
-- `no-nudge`: the same, with `MELLUM_GUARDS={"loopBreaker":true}`.
-
-An arm is only an arm if the guard it removes *fires*. The reading that
-decides whether these guards are load-bearing is the fire count, not the
-pass count, so the harness records `Nudges` beside the passes.
+**Before:** `--remedy preset:easy,context/add-project-facts,context/use-short-prompt`.
+**After:** the same plus `nudge/nudge-empty-turn`. The lesson's own challenge
+is not built yet; the evidence below is Bronze, five sessions per arm on
+llama.cpp, recorded with the older `worker` (nudge on) and `no-nudge` arms.
+An arm is only an arm if the thing it removes fires, so the reading is the
+`Nudges` count, not the passes.
 
 ## Evidence of the problem
 
 **Badge:** `screen`
 
 **The nudge never fired.** In ten Bronze sessions the count was zero in both
-arms. Every empty final in that sample had a reason the guard is not built to
-answer:
-
-| Sessions | Empty final ended by | Guard's condition |
-| --- | --- | --- |
-| most | `error`: a 51,697-token request against a 50,176-token window | `stop` only |
-| most | `length`: the output cap spent | `stop` only |
-| none | `stop` with nothing said | the case it answers |
-
-`isEmptyAssistantTurn` continues only a turn the model ended itself with
-`stop`. An aborted turn is deliberately not ours to continue, and a capped
-turn never matched. So on Bronze the guard was not idle because the
-arms behaved well; it was idle because **no empty turn had the shape it
-answers**.
-
-The follow-up arms agree. A later Bronze pairing recorded zero nudge fires
-across nine sessions in three arms, and one apparent fire on Silver
-turned out to be a counting bug: Silver runs four prompts as four Pi
-processes, and the harness counted the empty final that ended one prompt as
-continued by the next prompt's request. One test now pins each side.
+arms. Every empty final had a reason the unit is not built to answer: `error`,
+a 51,697-token request against a 50,176-token window, or `length`, the output
+cap spent. None ended by `stop` with nothing said, the one case it answers.
+A later Bronze pairing recorded zero fires across nine sessions in three arms.
 
 ## Solution
 
 **Badge:** `screen`
 
-Ship both guards and bound the nudge. The nudge's whole bound is one counter
-and one custom message, and it stops asking after the third:
+**Remedy unit:** `nudge/nudge-empty-turn`; apply it with `--remedy nudge/nudge-empty-turn`.
+
+**Lesson check:** not built yet. A small challenge of this lesson's own, failing without the remedy and passing with it, is planned under LC.26; until then the evidence below is the suites'.
+
+When a turn ends by `stop` with no text and no tool call, the unit restates
+the completion fact and asks for one more turn. The whole bound is one
+counter, and it stops asking after the third:
 
 ```ts
 export function createEmptyFinalNudge(max: number): (message: MessageLike) => Continuation | undefined {
@@ -103,10 +86,9 @@ export function createEmptyFinalNudge(max: number): (message: MessageLike) => Co
 }
 ```
 
-`used >= max` is the bound. The loop breaker is the other half and is not
-exercised by any arm here. Both live in
-[`extensions/mellum-guards.ts`](https://github.com/pauleveritt/mellum-worker/blob/176922f/extensions/mellum-guards.ts#L83-L93),
-and that file is the source this excerpt is copied from.
+An aborted turn (`error`) is deliberately not continued, and a capped turn
+(`length`) never matches. The code is in
+[`extensions/mellum-guards.ts`](https://github.com/pauleveritt/mellum-worker/blob/176922f/extensions/mellum-guards.ts#L83-L93).
 
 ## Validation
 
@@ -114,50 +96,46 @@ and that file is the source this excerpt is copied from.
 
 ### Evidence of the solution
 
-| Run | Arm | Passes | Turns, mean | Tool errors, mean | Nudge fires |
-| --- | --- | --- | --- | --- | --- |
-| guard screen, Bronze, n=5 | `worker` | 2/5 | 32.6 | 4.2 | **0** |
-| guard screen, Bronze, n=5 | `no-nudge` | 3/5 | 34.6 | 4.6 | **0** |
+The arms are **void for its question**. Two arms whose guard never fires do
+not differ in behaviour, so the 2/5 against 3/5 below is one policy scoring
+differently in two samples, not a null. One apparent fire on Silver turned out to be a
+counting bug (four prompts, four Pi processes, one empty final counted as
+continued by the next prompt), and one test now pins each side.
 
-Two arms that never differ in behaviour cannot be compared, so this table is
-**void for its question**, not a null: the 2/5 against 3/5 is one policy
-scoring differently in two samples of one task.
+??? note "The full evidence"
 
-### Quality and budget
+    | Run | Arm | Passes | Turns, mean | Tool errors, mean | Nudge fires |
+    | --- | --- | --- | --- | --- | --- |
+    | guard screen, Bronze, n=5 | `worker` | 2/5 | 32.6 | 4.2 | **0** |
+    | guard screen, Bronze, n=5 | `no-nudge` | 3/5 | 34.6 | 4.6 | **0** |
 
-Nothing here supports a pass-rate claim for either guard, and the page makes
-none. What the arms did establish is where the guard does *not* reach: an
-`error` final is a context overflow and a `length` final is an output cap, and
-both are budgets, not lapses. That is the useful output of a void arm.
+    | Sessions | Empty final ended by | Guard's condition |
+    | --- | --- | --- |
+    | most | `error`: a 51,697-token request against a 50,176-token window | `stop` only |
+    | most | `length`: the output cap spent | `stop` only |
+    | none | `stop` with nothing said | the case it answers |
 
 ## Interpretation
 
-The weakest badge is `screen`, and this page is weaker than its predecessors
-in a specific way: it has no evidence that either guard lifts a pass on this
-backend. The number it used to quote (13/15 to 15/15) came from oMLX rungs
-and is retired here.
-
-What survives is the mechanism and its bound, both visible in the code above,
-and a sharpened problem statement: an empty turn has several causes and the
-nudge answers exactly one. What the guards are worth is still open.
-
-What would upgrade this: a task on which an empty final carries `stop` (the
-Gold level's longer builds are the candidate) with the `Nudges` column as the
-reading, and a deadline long enough for that suite to finish. Until then the
-loop breaker's share is unmeasured and the nudge's is zero-fired.
+The weakest badge is `screen`, and this page has no evidence that the nudge
+lifts a pass on this backend. An older number, 13/15 to 15/15, came from oMLX
+rungs and is retired. What holds is the mechanism and its bound, and a sharper
+problem: an empty turn has several causes and the nudge answers one. What would
+upgrade this is a task whose empty finals carry `stop`, read on the `Nudges`
+column.
 
 ### Run it yourself
 
-The guard screen ran both arms on Bronze with the harness's default deadline, five sessions each:
+Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suite easy --arm worker --repeat 5 --grade
-uv run python learn/code/harness.py run --suite easy --arm no-nudge --repeat 5 --grade
+uv run python learn/code/harness.py run --suite easy --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn --repeat 3 --grade
 ```
 
 !!! success "Key points"
 
-    - The nudge never fired on Bronze: zero fires in both arms.
-    - The empty finals there ended by `error` (context overflow) or `length` (output cap), which the nudge is not built to answer.
-    - The 2/5 against 3/5 table is void for its question, not a null; the old 13/15 to 15/15 number is retired.
-    - What the guards are worth on this backend is still open; Gold is the candidate to test it.
+    - `nudge/nudge-empty-turn` asks for one more turn when the model stops with nothing said, at most three times.
+    - It answers only a `stop` final; an `error` (context overflow) or `length` (output cap) is a budget, not a lapse.
+    - On Bronze it never fired, so its arm is void, not a null.
+    - Read the fire count before the pass count when judging any guard.

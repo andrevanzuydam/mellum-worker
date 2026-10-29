@@ -17,7 +17,7 @@ test("the fourth findings lesson follows the six steps and names its badge", () 
   assert.match(l, /^### Evidence of the solution$/m);
   assert.match(l, /weakest badge is `screen`/);
   assert.match(l, /^track: lessons$/m);
-  assert.match(l, /^position: 4$/m);
+  assert.match(l, /^position: 2$/m);
   assert.match(l, /^backends: \[llamacpp\]$/m);
 });
 
