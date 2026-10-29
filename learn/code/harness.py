@@ -251,6 +251,14 @@ def layout_report(root: Path, pristine: dict[str, str],
     return {"created": created, "modified": modified, "out_of_layout": outside}
 
 
+def resolve_pi_binary(pi_binary: str) -> str:
+    """Pi runs with the workspace as its cwd, so a --pi-binary given as a relative path is made
+    absolute here; a bare command name such as `pi` is left for PATH lookup."""
+    if os.sep in pi_binary or (os.altsep and os.altsep in pi_binary):
+        return str(Path(pi_binary).resolve())
+    return pi_binary
+
+
 def resolve_extras(remedy: str | None, extensions: list[Path]) -> tuple[list[str], list[Path]]:
     """The remedy units (`--remedy`, names or `preset:<name>`) and a learner's own extensions
     (`--extension`), as (unit names, files to load in order). Unknown names are refused."""
@@ -907,6 +915,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.repeat < 1:
         parser.error("--repeat must be at least 1")
     remedies, extras = resolve_extras(args.remedy, args.extension)
+    args.pi_binary = resolve_pi_binary(args.pi_binary)
     if args.suite == "all":
         run_suites(["all"], suites_dir=args.suites_dir, runs_dir=args.runs_dir,
                    pi_binary=args.pi_binary, grade_run=args.grade,

@@ -1014,3 +1014,16 @@ def test_every_preset_resolves_and_each_tier_builds_on_the_last():
         names, paths = harness.resolve_extras(f"preset:{name}", [])
         assert all(p.is_file() for p in paths), name
     assert presets["medium"][:len(presets["easy"])] == presets["easy"]
+
+
+def test_a_relative_pi_binary_path_is_resolved_from_where_the_harness_runs(tmp_path, monkeypatch):
+    # Pi runs with the workspace as its cwd, so a relative --pi-binary path must be made
+    # absolute first; a bare command name (pi) is left for PATH lookup.
+    monkeypatch.chdir(HERE.parent)
+    rel = "tests/fixtures/fake-pi.sh"
+    assert harness.resolve_pi_binary(rel) == str((HERE.parent / rel).resolve())
+    assert harness.resolve_pi_binary("pi") == "pi"
+    results = harness._run_sessions(
+        harness.load_suite(SUITES, "add"), runs_dir=tmp_path / "runs",
+        pi_binary=harness.resolve_pi_binary(rel), repeat=1, grade_run=False, deadline=None)
+    assert json.loads((results[0][0] / "run.json").read_text())["passed"] is True

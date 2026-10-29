@@ -178,6 +178,9 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- `harness.py run --pi-binary path/to/pi` works with a relative path. Pi runs
+  inside the workspace, so the path used to be looked up from there and the
+  run failed with "pi not found".
 - `baseline.py lessons` checks the model answers before every command and
   reopens the tunnel if it does not, stopping if it still does not. A dropped
   tunnel used to record whole arms of empty, zero-token sessions as fails.
