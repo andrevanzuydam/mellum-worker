@@ -352,9 +352,17 @@ def git_checkpoint(workspace: Path, msg: str) -> None:
 
 def git_revert_to_checkpoint(workspace: Path) -> None:
     """Roll the workspace back to the last checkpoint (the last passing phase), discarding a broken
-    attempt — the harness's 'revert the breaking change' so the next round redoes from known-good."""
+    attempt — the harness's 'revert the breaking change' so the next round redoes from known-good.
+    The frozen gates survive it: a phase's gate is frozen after the last checkpoint, and losing it
+    lets the next round freeze a different, possibly weaker, gate for the same phase."""
+    gate = workspace / "plan" / "gate"
+    frozen = {f.name: f.read_bytes() for f in gate.glob("phase_*.py")} if gate.is_dir() else {}
     _git(workspace, "reset", "--hard", "-q", "HEAD")
     _git(workspace, "clean", "-fdq", "-e", ".venv")
+    if frozen:
+        gate.mkdir(parents=True, exist_ok=True)
+        for name, body in frozen.items():
+            (gate / name).write_bytes(body)
 
 
 def app_compiles(workspace: Path) -> bool:

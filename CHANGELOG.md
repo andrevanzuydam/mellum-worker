@@ -139,6 +139,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- The flow harness keeps a phase's frozen gate when it reverts a broken
+  round. The revert used to delete it, and the next round froze a weaker gate
+  for the same phase: Silver's phase 4 then "passed" with no resolve or
+  reopen code.
 - `scripts/baseline/baseline.py serve` starts and tracks vLLM by the PID
   `serve.sh` keeps. Its process-name check matched its own command line (so
   vLLM was never started), and vLLM 0.32 renames its process, so a live

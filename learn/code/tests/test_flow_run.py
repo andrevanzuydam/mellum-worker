@@ -398,3 +398,22 @@ def test_main_hands_loop_an_absolute_runs_dir(tmp_path, monkeypatch):
     flow_run.main(["--suite", "easy", "--runs-dir", "runs/flow-x"])
     assert seen["runs_dir"].is_absolute()
     assert seen["runs_dir"] == tmp_path.resolve() / "runs" / "flow-x"
+
+
+def test_revert_keeps_a_gate_frozen_after_the_last_checkpoint(tmp_path):
+    # A phase's gate is frozen mid-phase, after the previous phase's checkpoint. A revert of a broken
+    # round must not delete it, or the next round re-freezes a different (possibly weaker) gate.
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    (ws / "app.py").write_text("good = 1\n")
+    (ws / "plan" / "gate").mkdir(parents=True)
+    (ws / "plan" / "gate" / "phase_1.py").write_text("def test_one():\n    assert True\n")
+    flow_run.git_init_workspace(ws)
+    flow_run.git_checkpoint(ws, "phase 1: PASS")
+    frozen = "def test_two():\n    assert False\n"
+    (ws / "plan" / "gate" / "phase_2.py").write_text(frozen)   # frozen after the checkpoint
+    (ws / "app.py").write_text("BROKEN (((\n")
+    flow_run.git_revert_to_checkpoint(ws)
+    assert (ws / "app.py").read_text() == "good = 1\n"
+    assert (ws / "plan" / "gate" / "phase_2.py").read_text() == frozen
+    assert (ws / "plan" / "gate" / "phase_1.py").is_file()
