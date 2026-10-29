@@ -93,6 +93,18 @@ does not drop reasoning) say so in their header and their test.
 
 ## Phase 2: the worker as a preset
 
+**Dated correction 2026-10-29.** The worker is not rewired to call the units.
+The units import the worker's own functions (`createLoopBreaker`,
+`filterForMellum`'s `withFacts` and `narrowTools`, `factsBlock`), so no logic
+is duplicated; rebuilding the mode's span, marker and handoff machinery on
+units would risk the shipped product for no learner-visible gain. What phase 2
+proves instead is that `preset:baseline-worker` **is** the worker: on a fresh
+headless request it sends the same request as the worker's mode, and it makes
+the same guard decision on every call (`tests/remedy-units.test.mjs`; both
+tests shown red on a preset missing a unit). The text below is the original
+plan.
+
+
 `extensions/mellum-worker.ts` composes its remedies from the units instead of
 calling the functions inline. The proof that nothing drifted, all required:
 
