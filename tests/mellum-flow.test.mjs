@@ -426,3 +426,10 @@ test("missingGateCoverage returns only spec tokens the gate never references", (
 	const full = gate + "\n# 303 add_tickets_note\n";
 	assert.deepEqual(missingGateCoverage(slice, full), []);
 });
+
+test("asCode makes a gate's TestClient never follow redirects, so a 3xx assertion can pass", () => {
+	const gate = "from starlette.testclient import TestClient\nfrom app import app\n\nclient = TestClient(app)\n\ndef test_x():\n    assert client.post('/a').status_code == 303\n";
+	assert.match(asCode(gate), /client = TestClient\(app, follow_redirects=False\)/);
+	const already = "from starlette.testclient import TestClient\nfrom app import app\nclient = TestClient(app, follow_redirects=False)\n\ndef test_x():\n    assert True\n";
+	assert.equal((asCode(already).match(/follow_redirects/g) ?? []).length, 1);
+});

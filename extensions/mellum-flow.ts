@@ -404,7 +404,16 @@ export function asCode(reply: string): string {
 	// frozen Python gate and `phase_gate_ok`'s compile() rejects a correct gate — the phase then
 	// loops forever. Strip any line that is a lone fence marker; real Python never has one.
 	const cleaned = picked.replace(/^[ \t]*```[a-z]*[ \t]*$\n?/gim, "");
-	return cleaned.trim() + "\n";
+	return noFollowRedirects(cleaned).trim() + "\n";
+}
+
+/** A gate's TestClient never follows redirects. The examiner is told to build it that way, but a
+ * client that follows them turns every 3xx into the target's 200, so a gate asserting the spec's
+ * redirect fails a correct app on every round (seen on a phase 4 gate). Plain GETs are unaffected,
+ * and a call that passes follow_redirects itself keeps its own choice. */
+export function noFollowRedirects(code: string): string {
+	return code.replace(/TestClient\(([^()\n]+)\)/g, (call: string, args: string) =>
+		/follow_redirects/.test(args) ? call : `TestClient(${args.trim()}, follow_redirects=False)`);
 }
 
 /** Is this reply actually a pytest file? It must define a test, and must not be HTML/template

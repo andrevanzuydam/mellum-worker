@@ -139,6 +139,9 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- The flow examiner's gate always builds its `TestClient` with
+  `follow_redirects=False`. A client that followed redirects turned the
+  spec's 303 into a 200, so the gate failed a correct app on every round.
 - The flow harness keeps a phase's frozen gate when it reverts a broken
   round. The revert used to delete it, and the next round froze a weaker gate
   for the same phase: Silver's phase 4 then "passed" with no resolve or
