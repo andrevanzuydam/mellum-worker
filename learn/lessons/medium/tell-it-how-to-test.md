@@ -58,7 +58,7 @@ All three `no-facts` sessions failed, and all three ended the same way: a
 foreground server command with no result after it, then silence until the
 harness killed the child at 600 s. The bullet they did not receive is
 `- Do not: start servers`. That is a lead, not a finding: n = 3 on one machine,
-and the same pathology is what [E4](../easy/running-commands.md) answers with a
+and the same pathology is what `guard/block-foreground-server` answers with a
 guard.
 
 ## Solution

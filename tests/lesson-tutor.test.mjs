@@ -37,10 +37,11 @@ test("every lesson page parses into what the walk-through shows", async () => {
 
 test("a lesson with a before and an after line exposes both", async () => {
 	const { parseLesson } = await tutor();
-	const l = parseLesson(readFileSync(join(ROOT, "learn/lessons/easy/running-commands.md"), "utf8"));
-	assert.match(l.before, /--remedy guard\/break-repeat-loops,guard\/stay-in-workspace,guard\/refuse-whole-file-rewrite --repeat 1/);
-	assert.match(l.after, /,guard\/block-foreground-server --repeat 1/);
-	assert.match(l.unit, /guard\/block-foreground-server/);
+	const l = parseLesson(readFileSync(join(ROOT, "learn/lessons/easy/looking-around.md"), "utf8"));
+	assert.match(l.before, /--suite looking-around --repeat 1/);
+	assert.doesNotMatch(l.before, /--remedy/);
+	assert.match(l.after, /--remedy guard\/break-repeat-loops --repeat 1/);
+	assert.match(l.unit, /guard\/break-repeat-loops/);
 });
 
 test("a run is summarised from its run.json files: passes, and why each failure failed", async () => {
@@ -213,10 +214,10 @@ test("sessionIn writes an empty Pi session whose working directory is the folder
 
 test("in project/<number>, the tutor's guide says what to do, step by step, and how to get back", async () => {
 	const { projectGuide, projectNumber } = await tutor();
-	const lines = projectGuide(ROOT, join(ROOT, "project", "E4"));
+	const lines = projectGuide(ROOT, join(ROOT, "project", "E1"));
 	const text = lines.join("\n");
-	assert.match(lines[0], /E4 · Running Commands/);
-	for (const t of ["Do the task in TASK.md", "foreground", "/lesson clear", "/remedy on guard/block-foreground-server", "/lesson back"])
+	assert.match(lines[0], /E1 · Looking Around/);
+	for (const t of ["Do the task in TASK.md", "Repeats the same call", "/lesson clear", "/remedy on guard/break-repeat-loops", "/lesson back"])
 		assert.ok(text.includes(t), `guide lacks ${t}`);
 	assert.equal(projectNumber(ROOT, join(ROOT, "project", "E4", "app")), "E4");
 	assert.equal(projectNumber(ROOT, ROOT), undefined);
@@ -227,15 +228,15 @@ test("in project/<number>, the tutor's guide says what to do, step by step, and 
 test("outside a project folder the widget is a legend of the lesson commands", async () => {
 	const { lessonLegend } = await tutor();
 	const text = lessonLegend().join("\n");
-	for (const t of ["/lesson", "/lesson E4", "/remedy", "/lesson clear", "/lesson back", "/lesson clean"])
+	for (const t of ["/lesson", "/lesson E1", "/remedy", "/lesson clear", "/lesson back", "/lesson clean"])
 		assert.ok(text.includes(t), `legend lacks ${t}`);
 });
 
 test("the widget is styled: a title, numbered steps, commands as code, a dimmed footer under a rule", async () => {
 	const { projectGuide, styleGuide } = await tutor();
 	const paint = { title: (s) => `<T>${s}</T>`, step: (s) => `<S>${s}</S>`, code: (s) => `<C>${s}</C>`, dim: (s) => `<D>${s}</D>`, rule: (s) => `<R>${s.length}</R>` };
-	const out = styleGuide(projectGuide(ROOT, join(ROOT, "project", "E4")), paint, 40);
-	assert.match(out[0], /^<T>▍ E4 · Running Commands/);
+	const out = styleGuide(projectGuide(ROOT, join(ROOT, "project", "E1")), paint, 40);
+	assert.match(out[0], /^<T>▍ E1 · Looking Around/);
 	assert.ok(out.some((l) => l.includes("<S>1.</S>") && l.includes("<C>Do the task in TASK.md</C>")), out.join("\n"));
 	assert.ok(out.some((l) => l.includes("<C>/lesson clear</C>")));
 	assert.equal(out.at(-2), "<R>40</R>");

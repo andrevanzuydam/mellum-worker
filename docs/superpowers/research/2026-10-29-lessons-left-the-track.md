@@ -89,6 +89,24 @@ them.
   `git log --oneline --grep="one worker"`.
 - **Kept as** the `BACKLOG.md` entry "The handoff block as a unit".
 
+## E4 Running Commands
+
+[Page at `484c829`](https://github.com/andrevanzuydam/mellum-worker/blob/484c829/learn/lessons/easy/running-commands.md).
+
+- **Why it left.** Its lesson check did not hold twice on the 6-bit
+  reference model (the revision 2 screen, then revision 3 with clean serving):
+  without the guard, the model backgrounded its own server starts and passed.
+  Under the plan, a second miss takes a lesson out of the track; Andre chose
+  that over reopening the reference model.
+- **Evidence.** The foreground stall is real: four of nine bare sessions on
+  the BF16 host stalled on a server start, and the guard refused foreground
+  starts whenever they came. Its challenge, `learn/challenges/running-commands/`,
+  stays and still qualifies; its record is
+  `docs/ladder/2026-10-29-running-commands-check/`.
+- **Kept as** the pathologies entry "A server nobody can stop", and the unit
+  `guard/block-foreground-server`, which stays in the remedies list for The
+  Challenge.
+
 ## What would falsify this
 
 This note claims only that the linked pages said what is summarised here; the

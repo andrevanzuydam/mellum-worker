@@ -57,7 +57,7 @@ the second step, and the hidden checks fail.
 A recorded ladder run made 245 identical `ls -R` calls, every one of them
 successful, and never moved on. The loop was not seen in the nine bare
 sessions of 2026-10-29 on the vLLM host; on this host it is rarer than the
-stalls [E4](running-commands.md) fixes.
+foreground-server stalls (the pathologies page's "A server nobody can stop").
 
 ## Solution
 

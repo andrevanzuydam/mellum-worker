@@ -238,7 +238,7 @@ export default function (pi: any): void {
 		}) : undefined);
 	});
 	pi.registerCommand("lesson", {
-		description: "Take a lesson: /lesson to pick one, /lesson E4 to open it; in a project folder, /lesson back returns to the lesson and /lesson clear starts over",
+		description: "Take a lesson: /lesson to pick one, /lesson E1 to open it; in a project folder, /lesson back returns to the lesson and /lesson clear starts over",
 		getArgumentCompletions: (prefix: string) => {
 			const root = findRoot(process.cwd());
 			if (!root) return null;

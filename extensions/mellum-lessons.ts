@@ -300,7 +300,7 @@ export function projectGuide(root: string, cwd: string): string[] | undefined {
 export function lessonLegend(): string[] {
 	return [
 		"Lessons",
-		"`/lesson` picks one · `/lesson E4` opens one · in a lesson, `r` runs a line and `p` tries it by hand",
+		"`/lesson` picks one · `/lesson E1` opens one · in a lesson, `r` runs a line and `p` tries it by hand",
 		"`/remedy` switches remedy units on and off · `/lesson clear` starts a project folder over",
 		"`/lesson back` leaves a project folder for the lesson · `/lesson clean` removes every project folder",
 	];

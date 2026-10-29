@@ -22,7 +22,6 @@ nav = [
       "lessons/easy/looking-around.md",
       "lessons/easy/searching.md",
       "lessons/easy/creating-files.md",
-      "lessons/easy/running-commands.md",
       "lessons/easy/too-many-tools.md",
       "lessons/easy/know-when-to-stop.md"] },
     { "Medium" = [

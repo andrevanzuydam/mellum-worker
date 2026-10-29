@@ -9,7 +9,7 @@ const ROOT = new URL("..", import.meta.url).pathname;
 
 test("lesson-check --dry-run prints the page's before then after line, at its n, on the profile", () => {
 	const profile = mkdtempSync(join(tmpdir(), "profile-"));
-	const out = execFileSync("bash", [join(ROOT, "scripts/lesson-check.sh"), "E4", "--dry-run", "--profile", profile],
+	const out = execFileSync("bash", [join(ROOT, "scripts/lesson-check.sh"), "E1", "--dry-run", "--profile", profile],
 		{ cwd: ROOT, encoding: "utf8", env: { ...process.env, LESSON_CHECK_OUT: "/tmp/check" } });
 	const [before, after, extra] = out.trim().split("\n");
 	assert.equal(extra, undefined);
@@ -19,7 +19,7 @@ test("lesson-check --dry-run prints the page's before then after line, at its n,
 		assert.ok(line.includes(`--profile ${profile}`), line);
 		assert.ok(line.includes(`--runs-dir /tmp/check/${arm}`), line);
 	}
-	assert.ok(!before.includes("guard/block-foreground-server") && after.includes("guard/block-foreground-server"));
+	assert.ok(!before.includes("guard/break-repeat-loops") && after.includes("guard/break-repeat-loops"));
 });
 
 test("lesson-check refuses a lesson with no before and after line", () => {

@@ -628,6 +628,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Removed
 
+- Lesson E4 Running Commands left the lesson track: its lesson check did not
+  hold twice on the 6-bit reference model, which backgrounded its own server
+  starts without the guard. Too Many Tools is now E4 and Know When to Stop E5.
+  `guard/block-foreground-server` stays in the remedies list, and its
+  challenge, `learn/challenges/running-commands/`, stays and still qualifies.
+
 - Lessons H1 Who Drives and H2 The Handoff left the lesson track: who drives
   is a role, not a unit, and the handoff block ships inside the worker with
   no arm. Who drives now opens the Hard index; the handoff block is a backlog

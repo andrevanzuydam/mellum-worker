@@ -3,7 +3,7 @@
 Pi's own tools, one per lesson: what each gives the model, the
 failure it invites, and the one remedy for that failure. You start from bare
 Pi; each lesson's *before* is everything the earlier lessons added, and its
-*after* adds one unit. After E6 you have every Easy unit, and Medium starts from them.
+*after* adds one unit. After E5 you have every Easy unit, and Medium starts from them.
 
 ![A small robot turning one large dial while a light bulb switches on](../../assets/illustrations/tier-easy.webp){ .illustration }
 
@@ -30,21 +30,14 @@ Pi; each lesson's *before* is everything the earlier lessons added, and its
     `write` against `edit`, and the whole-file rewrite.
     Adds `guard/refuse-whole-file-rewrite`.
 
--   **[E4 · Running Commands](running-commands.md)**
-
-    ---
-
-    `bash`, and the foreground server that hangs the session.
-    Adds `guard/block-foreground-server`.
-
--   **[E5 · Too Many Tools](too-many-tools.md)**
+-   **[E4 · Too Many Tools](too-many-tools.md)**
 
     ---
 
     The tool list itself, and tools the model uses badly.
     Adds `context/narrow-tools` and completes `preset:easy`.
 
--   **[E6 · Know When to Stop](know-when-to-stop.md)**
+-   **[E5 · Know When to Stop](know-when-to-stop.md)**
 
     ---
 
