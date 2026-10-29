@@ -6,6 +6,9 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `/lesson`'s FAIL screen now says why: it names each hidden check a session
+  missed, and adds the lesson remedy's pathology line under the verdict, so
+  a learner sees what failed and what the remedy is for before applying it.
 - `scripts/lesson-check.sh <lesson number>` runs a lesson's before line then
   its after line at the page's n and prints both verdicts, so a lesson check
   is one command. The lines come from the lesson page; arms run one at a time

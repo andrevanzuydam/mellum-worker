@@ -17,7 +17,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getMarkdownTheme } from "@earendil-works/pi-coding-agent";
 import { Image, Key, Markdown, matchesKey, truncateToWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
-import { cleanProjects, lessonIndex, type Lesson, type LessonEntry, parseLesson, prepareProject, runArgv, sessionProfile, STEPS, summariseRuns, terminalPicture, unwrap } from "./mellum-lessons.ts";
+import { cleanProjects, lessonIndex, type Lesson, type LessonEntry, parseLesson, prepareProject, runArgv, sessionProfile, STEPS, summariseRuns, terminalPicture, unitPathology, unwrap } from "./mellum-lessons.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -149,6 +149,8 @@ function walk(ctx: any, root: string, lesson: Lesson, entry: LessonEntry, total:
 				const good = r.verdict?.startsWith("PASS");
 				out.push((good ? theme.fg("success", ` ${r.verdict}`) : theme.fg("error", ` ${r.verdict}`)));
 				for (const l of r.lines) out.push(...wrapTextWithAnsi(`   ${l}`, width));
+				const why = good ? undefined : unitPathology(root, lesson.unit);
+				if (why) out.push(...wrapTextWithAnsi(theme.fg("warning", `   Why: ${why}`), width));
 				if (r.label === "one session") out.push(theme.fg("dim", "   one session is a demonstration, not the lesson check"));
 			}
 			return out;

@@ -149,13 +149,22 @@ export function summariseRuns(dir: string): RunSummary {
 			: !r.checks_ran
 				? "the checks never ran (a module they import is missing)"
 				: missed
-					? `${missed} hidden check${missed === 1 ? "" : "s"} missed`
+					? `${missed} hidden check${missed === 1 ? "" : "s"} missed: ${(r.missing_checks as string[]).map((c) => c.split("::").pop()).join(", ")}`
 					: r.tests_passed === false
 						? "the hidden tests failed"
 						: "the tests passed but lint or type checks failed";
 		lines.push(`FAIL  ${wall}  ${why}`);
 	}
 	return { verdict: total === 0 ? "NONE" : passed === total ? "PASS" : "FAIL", passed, total, lines };
+}
+
+/** The pathology line of the remedy unit a lesson's Remedy unit line names, for the FAIL screen's
+ * "why". Undefined when the line names no unit or the unit has no file. */
+export function unitPathology(root: string, unitLine: string): string | undefined {
+	const unit = unitLine.match(/`([a-z]+\/[a-z-]+)`/)?.[1];
+	const file = unit && join(root, "remedies", `${unit}.ts`);
+	if (!file || !existsSync(file)) return undefined;
+	return readFileSync(file, "utf8").match(/pathology:\s*"((?:[^"\\]|\\.)*)"/)?.[1];
 }
 
 /** The argv for a page command: one session unless `full`, into `runsDir`, on `profile` (the

@@ -46,7 +46,7 @@ test("a run is summarised from its run.json files: passes, and why each failure 
 	const write = (name, record) => { mkdirSync(join(dir, name)); writeFileSync(join(dir, name, "run.json"), JSON.stringify(record)); };
 	write("a", { passed: true, checks_ran: true, stalled: null, missing_checks: [], wall: 120 });
 	write("b", { passed: false, checks_ran: false, stalled: { command: "uv run python app.py" }, missing_checks: ["x", "y"], wall: 130 });
-	write("c", { passed: false, checks_ran: true, stalled: null, missing_checks: ["x"], wall: 300 });
+	write("c", { passed: false, checks_ran: true, stalled: null, missing_checks: ["grader_tests/test_challenge.py::test_items_lists_both"], wall: 300 });
 	const s = summariseRuns(dir);
 	assert.equal(s.verdict, "FAIL");
 	assert.equal(s.passed, 1);
@@ -54,7 +54,7 @@ test("a run is summarised from its run.json files: passes, and why each failure 
 	assert.deepEqual(s.lines, [
 		"PASS  120 s",
 		"FAIL  130 s  stalled on `uv run python app.py`; the checks never ran",
-		"FAIL  300 s  1 hidden check missed",
+		"FAIL  300 s  1 hidden check missed: test_items_lists_both",
 	]);
 	const all = mkdtempSync(join(tmpdir(), "runs-"));
 	mkdirSync(join(all, "a")); writeFileSync(join(all, "a", "run.json"), JSON.stringify({ passed: true, checks_ran: true, missing_checks: [], wall: 90 }));
@@ -179,4 +179,12 @@ test("sessionProfile writes a profile pinned to Pi's current provider and model"
 	assert.equal(sessionProfile(agent, { provider: "anthropic", id: "x" }, mkdtempSync(join(tmpdir(), "p-"))), undefined);
 	assert.equal(sessionProfile(join(agent, "missing"), { provider: "lan", id: "mellum" }, out), undefined);
 	assert.equal(sessionProfile(agent, undefined, out), undefined);
+});
+
+test("the FAIL screen's why: a lesson's remedy unit gives its pathology line", async () => {
+	const { unitPathology } = await tutor();
+	assert.match(unitPathology(ROOT, "**Remedy unit:** `guard/block-foreground-server`; apply it with --remedy"),
+		/foreground and the session hangs/);
+	assert.equal(unitPathology(ROOT, "**Remedy unit:** none: you write it"), undefined);
+	assert.equal(unitPathology(ROOT, "`guard/no-such-unit`"), undefined);
 });
