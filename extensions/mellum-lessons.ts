@@ -153,7 +153,9 @@ export function summariseRuns(dir: string): RunSummary {
 					? `${missed} hidden check${missed === 1 ? "" : "s"} missed: ${(r.missing_checks as string[]).map((c) => c.split("::").pop()).join(", ")}`
 					: r.tests_passed === false
 						? "the hidden tests failed"
-						: "the tests passed but lint or type checks failed";
+						: r.record_failures?.length
+							? `the record shows: ${r.record_failures.join("; ")}`
+							: "the tests passed but lint or type checks failed";
 		lines.push(`FAIL  ${wall}  ${why}`);
 	}
 	return { verdict: total === 0 ? "NONE" : passed === total ? "PASS" : "FAIL", passed, total, lines };

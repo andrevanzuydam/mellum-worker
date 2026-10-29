@@ -60,6 +60,8 @@ class Suite:
     canary: str | None = None
     root: Path | None = None
     layout: dict | None = None
+    # Caps on run.json fields (record.json): a failure that lives in the record.
+    record: dict | None = None
 
     @property
     def prompt(self) -> str:
@@ -94,6 +96,9 @@ def load_suite(suites_dir: Path, name: str) -> Suite:
     layout = None
     if (base / "layout.json").is_file():
         layout = json.loads((base / "layout.json").read_text())
+    record = None
+    if (base / "record.json").is_file():
+        record = json.loads((base / "record.json").read_text())
     return Suite(
         name=name,
         prompts=prompts,
@@ -103,7 +108,14 @@ def load_suite(suites_dir: Path, name: str) -> Suite:
         canary=canary,
         root=base,
         layout=layout,
+        record=record,
     )
+
+
+def record_failures(metrics: dict, caps: dict | None) -> list[str]:
+    """The run.json fields over a challenge's caps, as reasons a learner can read."""
+    return [f"{key} is {metrics.get(key, 0)} (at most {cap})"
+            for key, cap in (caps or {}).items() if (metrics.get(key) or 0) > cap]
 
 
 def profile_pin(profile_dir: Path) -> tuple[str, str]:
@@ -793,8 +805,9 @@ def _run_sessions(
             ok for name, ok, _ in grades if name in {"ruff", "complexipy"}
         ) if grades else True
         contaminated = (run_dir / "contaminated").exists()
-        passed = tests_passed and quality_ok and not contaminated
         metrics = report(run_dir)
+        over = record_failures(metrics, suite.record)
+        passed = tests_passed and quality_ok and not contaminated and not over
         leaked_file = run_dir / "leaked.json"
         if leaked_file.is_file():
             metrics["leaked"] = json.loads(leaked_file.read_text())
@@ -822,6 +835,7 @@ def _run_sessions(
             "checks_ran": checks_ran,
             "missing_checks": missing,
             "check_groups": check_groups(suite.expected, missing),
+            "record_failures": over,
             **{key: value for key, value in metrics.items()
                if key != "final_reply"},
         }

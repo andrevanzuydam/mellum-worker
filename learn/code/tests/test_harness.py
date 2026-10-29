@@ -255,6 +255,21 @@ def test_report_counts_turns_whose_reasoning_reached_the_model_as_text(tmp_path)
     assert harness.report(run_dir)["reasoning_as_text"] == 2
 
 
+def test_a_challenge_can_require_the_record_to_be_clean(tmp_path):
+    # Some failures live in the record, not the workspace: a challenge's
+    # record.json caps run.json fields, and a run over a cap fails.
+    suite_dir = tmp_path / "suites" / "plumbing"
+    (suite_dir / "grader").mkdir(parents=True)
+    (suite_dir / "task.md").write_text("Do it.")
+    (suite_dir / "record.json").write_text('{"reasoning_as_text": 0}')
+    suite = harness.load_suite(tmp_path / "suites", "plumbing")
+    assert suite.record == {"reasoning_as_text": 0}
+    assert harness.record_failures({"reasoning_as_text": 10}, suite.record) == [
+        "reasoning_as_text is 10 (at most 0)"]
+    assert harness.record_failures({"reasoning_as_text": 0}, suite.record) == []
+    assert harness.record_failures({}, None) == []
+
+
 def test_report_without_text(tmp_path):
     run_dir = tmp_path / "r"
     run_dir.mkdir()

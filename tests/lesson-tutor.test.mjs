@@ -243,3 +243,12 @@ test("the widget is styled: a title, numbered steps, commands as code, a dimmed 
 	assert.match(out.at(-1), /^\s*<D>/);
 	assert.ok(!out.join("").includes("`"), "backticks are styling marks, never shown");
 });
+
+test("a failure in the record is named on the FAIL screen", async () => {
+	const { summariseRuns } = await tutor();
+	const dir = mkdtempSync(join(tmpdir(), "runs-"));
+	mkdirSync(join(dir, "a"));
+	writeFileSync(join(dir, "a", "run.json"), JSON.stringify({ passed: false, tests_passed: true, checks_ran: true, missing_checks: [],
+		record_failures: ["reasoning_as_text is 10 (at most 0)"], wall: 60, output_tokens: 900 }));
+	assert.match(summariseRuns(dir).lines[0], /the record shows: reasoning_as_text is 10 \(at most 0\)/);
+});

@@ -6,6 +6,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A challenge can fail on its record, not only its hidden tests: an optional
+  `record.json` caps `run.json` fields (for example `{"reasoning_as_text": 0}`),
+  a run over a cap does not pass, `run.json` lists `record_failures`, and the
+  `/lesson` FAIL screen names them.
 - `run.json` records `reasoning_as_text`: how many assistant turns the model
   was sent back with its reasoning as `<think>` text, a serving fault. It is
   counted from the history the model actually received, so a repaired turn
