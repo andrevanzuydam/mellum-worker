@@ -31,7 +31,9 @@ export function splitThinkTags<M extends Message>(message: M): M {
 		changed = true;
 		const body = text.trimStart().slice(OPEN.length);
 		const end = body.indexOf(CLOSE);
-		content.push({ type: "thinking", thinking: end < 0 ? body : body.slice(0, end) });
+		// Labelled with the reasoning field, as Pi labels reasoning it streamed: Pi sends a thinking
+		// block back to the server under that field, and drops an unlabelled one.
+		content.push({ type: "thinking", thinkingSignature: "reasoning", thinking: end < 0 ? body : body.slice(0, end) });
 		const rest = end < 0 ? "" : body.slice(end + CLOSE.length).replace(/^\s+/, "");
 		if (rest) content.push({ type: "text", text: rest });
 	}

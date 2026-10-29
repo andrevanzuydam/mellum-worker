@@ -39,6 +39,14 @@ else is as fixed above (one session per arm, same lines, same rule). The
 confounded run is recorded as such, not counted. A miss on the clean run
 uses up E4's one revision.
 
+**Further correction, same day.** The clean re-run started at `1ff6480`
+was stopped part-way and is not counted: the adapter removed the `<think>`
+text but left its thinking blocks unlabelled, and Pi drops an unlabelled
+block from the next request, so the model got no earlier reasoning at all
+(the strip-thinking condition, a different confound). The adapter now labels
+the block with the reasoning field, as Pi labels reasoning it streamed; the
+check runs once more on that.
+
 ## Why a revision 3
 
 - Revisions 1 and 2 on BF16 (vast.ai A6000): 3/3 before, 3/3 after. The model
