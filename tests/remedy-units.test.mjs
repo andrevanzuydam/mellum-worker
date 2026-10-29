@@ -201,3 +201,24 @@ for (const [unit, ext] of Object.entries(OPT_IN)) {
 		assert.ok(viaUnit.events().length + viaUnit.tools.length > 0);
 	});
 }
+
+test("context/narrow-tools keeps a tool that a later unit registered, so the build-up never hides it", async () => {
+	const pi = fakePi();
+	(await import("../remedies/context/narrow-tools.ts")).default(pi);
+	(await import("../remedies/tool/lookup-library-docs.ts")).default(pi);
+	const payload = PAYLOAD();
+	payload.tools.push({ type: "function", function: { name: "lookup" } });
+	const out = pi.fire("before_provider_request", { payload });
+	assert.ok(out.tools.some((t) => t.function.name === "lookup"), "lookup was dropped");
+	assert.ok(!out.tools.some((t) => t.function.name === "subagent"), "subagent was kept");
+});
+
+test("a learner's own tool is kept when it calls keepTool", async () => {
+	const { keepTool } = await import("../remedies/install.ts");
+	const pi = fakePi();
+	(await import("../remedies/context/narrow-tools.ts")).default(pi);
+	keepTool("my_tool");
+	const payload = PAYLOAD();
+	payload.tools.push({ type: "function", function: { name: "my_tool" } });
+	assert.ok(pi.fire("before_provider_request", { payload }).tools.some((t) => t.function.name === "my_tool"));
+});
