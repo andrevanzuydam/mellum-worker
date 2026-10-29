@@ -55,3 +55,8 @@ test("E1's lesson check held, and says so with its record", () => {
 	const text = readFileSync(new URL("../learn/lessons/easy/reasoning-as-text.md", import.meta.url), "utf8");
 	assert.match(text, /^\*\*Lesson check:\*\* held on 2026-10-30: FAIL → PASS/m);
 });
+
+test("E2's lesson check held, and says so with its record", () => {
+	const text = readFileSync(new URL("../learn/lessons/easy/context-overflow.md", import.meta.url), "utf8");
+	assert.match(text, /^\*\*Lesson check:\*\* held on 2026-10-30: FAIL → PASS/m);
+});

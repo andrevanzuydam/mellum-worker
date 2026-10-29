@@ -6,6 +6,9 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- E2 Reading More Than Fits holds: without `context/trim-tool-output` the
+  session compacted 13 times and wrote a wrong list; with it, none, in 13
+  requests. Recorded under `docs/ladder/2026-10-30-context-overflow-check/`.
 - New lesson E2 · Reading More Than Fits: eight long notes read whole fill a
   64k context and Pi compacts it (6 compactions and a wrong answer on the
   screen); `context/trim-tool-output` keeps it at none. The `easy`, `medium`

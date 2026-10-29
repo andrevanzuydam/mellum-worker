@@ -49,3 +49,15 @@ model searched by itself and the condition does not force the failure.
 - One session per arm.
 - Pi's compaction defaults could change with a Pi upgrade; the record names
   Pi 1.3.0.
+
+## Result, 2026-10-30
+
+Run at `687e7b3` (`runs/E2-check-20261029T223047Z-687e7b3`, recorded under
+`docs/ladder/2026-10-30-context-overflow-check/`).
+
+- **Before:** FAIL: 13 compactions, peak 50,720 tokens, 99 requests, and the
+  hidden test failed (a wrong owners list).
+- **After:** PASS: no compaction, peak 5,326 tokens, 13 requests.
+- **The lesson holds.** With the two screens, the session without the unit
+  compacted in 3 of 3 sessions (2, 6, 13 times); a lead on reliability, not a
+  rate.
