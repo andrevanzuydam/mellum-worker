@@ -9,13 +9,6 @@ After M10 you have `preset:medium`, where Hard starts.
 
 <div class="grid cards" markdown>
 
--   **[M1 · Build a Harness](build-a-harness.md)**
-
-    ---
-
-    Write a mini harness that runs Pi in a fresh folder and scores it.
-    You build the instrument that measures every remedy.
-
 -   **[M2 · Tell It How to Test](tell-it-how-to-test.md)**
 
     ---

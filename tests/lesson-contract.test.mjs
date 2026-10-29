@@ -14,7 +14,7 @@ const tutor = () => import("../extensions/mellum-lessons.ts");
 const PENDING = new Set([
 	"looking-around", "searching", "creating-files",
 	"running-commands", "too-many-tools",
-	"build-a-harness", "tell-it-how-to-test", "a-short-prompt", "nudge-an-empty-turn",
+	"tell-it-how-to-test", "a-short-prompt", "nudge-an-empty-turn",
 	"thinking-is-working-memory", "run-long-commands-safely", "look-it-up",
 	"check-before-finishing", "one-spec-per-phase", "steps-not-one-brief",
 	"who-drives", "the-handoff", "plan-examine-code", "frozen-gates-and-checkpoints",

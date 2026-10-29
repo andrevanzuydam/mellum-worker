@@ -5,7 +5,7 @@ number: M2
 time: 4 min read · 45 min to run
 track: lessons
 position: 1
-prerequisites: [lessons/medium/build-a-harness]
+prerequisites: [lessons/easy/too-many-tools]
 authors: [Paul Everitt]
 backends: [llamacpp]
 ---

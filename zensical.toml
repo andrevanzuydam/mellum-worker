@@ -12,7 +12,7 @@ nav = [
   { "Home" = "index.md" },
   { "Introduction" = "introduction/index.md" },
   { "Getting Started" = ["getting-started/index.md", "getting-started/base-pi-on-llamacpp.md",
-    "getting-started/working-with-pi.md", "getting-started/eval-suites.md",
+    "getting-started/working-with-pi.md", "getting-started/eval-suites.md", "getting-started/the-harness.md",
     "getting-started/extensions.md", "getting-started/troubleshoot.md"] },
   { "Lessons" = [
     "lessons/index.md",
@@ -26,7 +26,6 @@ nav = [
       "lessons/easy/too-many-tools.md"] },
     { "Medium" = [
       "lessons/medium/index.md",
-      "lessons/medium/build-a-harness.md",
       "lessons/medium/tell-it-how-to-test.md",
       "lessons/medium/a-short-prompt.md",
       "lessons/medium/nudge-an-empty-turn.md",

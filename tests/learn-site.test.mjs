@@ -166,8 +166,8 @@ test("the project pages orient a maintainer and name the checks", () => {
 });
 
 test("Build a Harness explains isolation and the one command", () => {
-  const l = page("lessons/medium/build-a-harness.md");
-  assert.match(l, /^track: lessons$/m);
+  const l = page("getting-started/the-harness.md");
+  assert.match(l, /^track: getting-started$/m);
   const order = ["fresh directory", "harness.py run --suite easy",
     "n=1", "--repeat 3"];
   let at = -1;
@@ -180,7 +180,7 @@ test("Build a Harness explains isolation and the one command", () => {
     "sessions passed", "not a rate", "temperature 1.0", "top_p 0.95",
     "top_k 20", "max_tokens 16384", "context 50000"])
     assert.ok(l.toLowerCase().includes(text), `lesson 2 lacks ${text}`);
-  assert.match(page("lessons/medium/index.md"), /build-a-harness\.md/);
+  assert.match(page("getting-started/index.md"), /the-harness\.md/);
 });
 
 test("lesson 3 runs the suite, grading and the trace", () => {
@@ -285,13 +285,13 @@ test("reference-run is earned on the suites, not the ladder", () => {
 });
 
 test("the harness is the measured instrument", () => {
-  const harness = page("lessons/medium/build-a-harness.md");
+  const harness = page("getting-started/the-harness.md");
   assert.doesNotMatch(harness, /`ladder\/` is the measured instrument/);
   assert.doesNotMatch(harness, /do not replace `docs\/ladder\/`/);
   assert.match(harness, /`learn\/code\/harness\.py` is the measured instrument/);
   assert.doesNotMatch(page("project/index.md"), /\*\*The ladder\*\*/);
   assert.match(page("project/toolchain.md"), /Measured work lands in `docs\/superpowers\/research\/`/);
-  assert.doesNotMatch(page("lessons/medium/build-a-harness.md"), /ladder is the measuring/);
+  assert.doesNotMatch(page("getting-started/the-harness.md"), /ladder is the measuring/);
   assert.doesNotMatch(page("getting-started/eval-suites.md"), /Rates come from the ladder/);
   assert.doesNotMatch(page("getting-started/eval-suites.md"), /The ladder is the measuring instrument/);
 });
@@ -300,7 +300,7 @@ test("the run record groups the failed checks by module", () => {
   const suite = page("getting-started/eval-suites.md");
   assert.match(suite, /grader module/);
   assert.match(suite, /missing_checks|expected tests that did not pass/);
-  const harness = page("lessons/medium/build-a-harness.md");
+  const harness = page("getting-started/the-harness.md");
   assert.match(harness, /--specs joined\|split/);
   assert.match(harness, /spec-variants|spec variant/);
   const entry = page("glossary.md").split("### Failed checks")[1].split("###")[0];
@@ -362,4 +362,12 @@ test("Start Here teaches reading a failed session (folded in from Read the Failu
     "Nine bare sessions", "foreground"])
     assert.ok(l.includes(text), `Start Here lacks ${text}`);
   assert.doesNotMatch(l, /Lesson E2/);
+});
+
+test("the harness is a Getting Started page, not a lesson (it applies no remedy)", () => {
+  const l = page("getting-started/the-harness.md");
+  assert.match(l, /^track: getting-started$/m);
+  assert.doesNotMatch(l, /^number:/m);
+  assert.doesNotMatch(l, /\*\*Remedy unit:\*\*|\*\*Lesson check:\*\*/);
+  assert.match(page("getting-started/index.md"), /the-harness\.md/);
 });

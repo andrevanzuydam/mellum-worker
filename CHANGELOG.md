@@ -579,6 +579,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Removed
 
+- Lesson M1 Build a Harness moved to Getting Started as "The Harness", step
+  4: it builds the instrument every lesson measures with, rather than
+  applying a remedy, so it is setup, not a lesson.
+
 - Lesson E2 Read the Failure folded into S0 Start Here, as its "Reading a
   real failure" section with the same reading order and the nine-session
   evidence: it taught a habit, not a remedy, so it could not show a FAIL

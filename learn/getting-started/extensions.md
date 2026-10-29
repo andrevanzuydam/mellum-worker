@@ -1,7 +1,7 @@
 ---
 title: Extensions and Remedy Units
 track: getting-started
-position: 4
+position: 5
 prerequisites: [getting-started/suite]
 authors: [Paul Everitt, Andre van Zuydam]
 backends: [llamacpp]

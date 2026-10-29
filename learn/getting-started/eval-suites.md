@@ -14,7 +14,7 @@ mission, a tech stack, a roadmap, a sequence of prompts, and a hidden grader.
 You run them through the provided harness, `learn/code/harness.py`, read the
 score, and read the trace to see why. Each session runs Pi in a fresh
 directory, isolated from your own settings. Lesson M1,
-[Build a Harness](../lessons/medium/build-a-harness.md), shows how one is
+[The Harness](the-harness.md), shows how one is
 written.
 
 ![A small robot facing three crates of increasing size beside a wall gauge](../assets/illustrations/eval-suites.webp){ .illustration }

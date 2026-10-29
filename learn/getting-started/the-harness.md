@@ -1,16 +1,14 @@
 ---
-title: Build a Harness
-tier: medium
-number: M1
+title: The Harness
 time: 5 min read · 30 min to run
-track: lessons
-position: 0
-prerequisites: [lessons/easy/too-many-tools]
+track: getting-started
+position: 4
+prerequisites: [getting-started/eval-suites]
 authors: [Paul Everitt, Andre van Zuydam]
 backends: [llamacpp]
 ---
 
-# M1 · Build a Harness
+# The Harness
 
 Every Easy lesson ran one command and trusted the score it printed. Here you
 build a small harness of your own, a fresh directory, one Pi run and a score,
@@ -29,7 +27,7 @@ to see what the provided one does for you.
     - Name what the provided harness adds: isolation, a hidden grader, `run.json`, a stall cutoff.
     - Run the provided harness once, then several times, and read what it kept.
 
-![A small robot working inside a glass test box while an arm outside holds a clipboard and stopwatch](../../assets/illustrations/build-a-harness.webp){ .illustration }
+![A small robot working inside a glass test box while an arm outside holds a clipboard and stopwatch](../assets/illustrations/build-a-harness.webp){ .illustration }
 
 ## Problem
 
@@ -67,11 +65,9 @@ that session could be repeated or compared.
 
 **Badge:** `conjecture`
 
-**Remedy unit:** none: you build the instrument that measures every remedy.
-
-**Lesson check:** not built yet. This lesson builds the instrument rather
-than adding a remedy; its check is that your harness scores a right answer
-PASS and a wrong one FAIL.
+This page builds the instrument that measures every remedy, so it adds
+none. Its check is that your harness scores a right answer PASS and a wrong
+one FAIL.
 
 Three things make a score mean something:
 
@@ -118,7 +114,7 @@ things a mini one leaves out:
   lesson's own `--suite easy` ran bare in the 2026-10-29 local 6-bit MLX smoke
   ([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/ladder/2026-10-29-local-lessons-smoke/README.md)),
   the cutoff did exactly that: two of three sessions ended on a `uvicorn` call
-  that never returned (see [M6](run-long-commands-safely.md)).
+  that never returned (see [M6](../lessons/medium/run-long-commands-safely.md)).
 - **Clean-up and tamper checks.** It ends every process the session left
   behind, and marks a run whose grader files the model touched.
 - **Several prompts, one session.** A task holds one prompt (`task.md`) or
@@ -167,7 +163,7 @@ easy: PASS (n=1; run /var/folders/...; 1 request, 3 tool calls, 0 tool errors)
 default, and it is an observation, not a rate. With `--repeat 3`, each repeat
 starts from a fresh workspace; the lines are tagged `[1/3]` and the summary is
 `easy: 3/3 sessions passed`. Two or three sessions are still a lead, not a
-rate; [Eval suites and the telemetry](../../getting-started/eval-suites.md) explains
+rate; [Eval suites and the telemetry](eval-suites.md) explains
 why, and a rate needs a preregistered run with its arms and n fixed first.
 
 The run directory keeps everything the score rested on:
@@ -206,7 +202,7 @@ a separate phase.
 
 ### Run it yourself
 
-The server from [Base Pi on llama.cpp](../../getting-started/base-pi-on-llamacpp.md)
+The server from [Base Pi on llama.cpp](base-pi-on-llamacpp.md)
 is needed once; then the provided harness, its argv only, once, several times,
 and with a spec variant:
 
