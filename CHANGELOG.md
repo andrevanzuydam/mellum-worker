@@ -6,6 +6,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- In a lesson's `project/<number>` folder, `/lesson` shows a guide above
+  Pi's editor: what to ask, which failure to watch for, how to try again with
+  the remedy, and how to get back. It is shown to you only, never sent to the
+  model, and it comes back when Pi restarts in that folder.
 - A lesson check is now one session per arm: the before line must FAIL and
   the after line PASS, the same thing a learner sees pressing `r` in
   `/lesson`. Lesson run lines use `--repeat 1`; rates stay with the suites.

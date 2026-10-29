@@ -268,6 +268,26 @@ export function prepareProject(root: string, lesson: Pick<Lesson, "number" | "be
 	return dir;
 }
 
+/** What to do in project/<number>, for the widget the tutor shows above Pi's editor (seen by you,
+ * never sent to the model). Undefined outside a lesson's project folder. */
+export function projectGuide(root: string, cwd: string): string[] | undefined {
+	const number = cwd.startsWith(join(root, "project") + "/") ? cwd.slice(join(root, "project").length + 1).split("/")[0] : undefined;
+	const entry = number && lessonIndex(root).find((e) => e.number === number);
+	if (!entry) return undefined;
+	const lesson = parseLesson(readFileSync(entry.file, "utf8"));
+	const unit = lesson.unit.match(/`([a-z]+\/[a-z-]+)`/)?.[1];
+	const why = unitPathology(root, lesson.unit);
+	return [
+		`${lesson.number} · ${lesson.title}: trying it by hand in project/${lesson.number}`,
+		"1. Ask the model: Do the task in TASK.md",
+		why ? `2. Watch its tool calls for this failure: ${why}` : "2. Watch its tool calls, then read what it built.",
+		unit
+			? `3. Then try it with the remedy: /lesson ${lesson.number}, press p for a fresh folder, type /remedy on ${unit}, and ask again.`
+			: `3. Then start over: /lesson ${lesson.number} and press p for a fresh folder.`,
+		"/lesson home goes back to the repository · /lesson clean removes every project folder",
+	];
+}
+
 /** Remove every lesson's project folder. */
 export function cleanProjects(root: string): void {
 	rmSync(join(root, "project"), { recursive: true, force: true });

@@ -208,3 +208,14 @@ test("sessionIn writes an empty Pi session whose working directory is the folder
 	assert.match(header.id, /^[0-9a-f-]{36}$/);
 	assert.notEqual(sessionIn(dir, 3, store), file, "each call is a fresh session");
 });
+
+test("in project/<number>, the tutor's guide says what to do, step by step, and how to get back", async () => {
+	const { projectGuide } = await tutor();
+	const lines = projectGuide(ROOT, join(ROOT, "project", "E4"));
+	const text = lines.join("\n");
+	assert.match(lines[0], /E4 · Running Commands/);
+	for (const t of ["Do the task in TASK.md", "foreground", "/remedy on guard/block-foreground-server", "/lesson E4", "/lesson home"])
+		assert.ok(text.includes(t), `guide lacks ${t}`);
+	assert.equal(projectGuide(ROOT, ROOT), undefined);
+	assert.equal(projectGuide(ROOT, join(ROOT, "project", "Z9")), undefined);
+});

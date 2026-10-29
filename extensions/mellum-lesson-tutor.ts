@@ -17,7 +17,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CURRENT_SESSION_VERSION, getMarkdownTheme } from "@earendil-works/pi-coding-agent";
 import { Image, Key, Markdown, matchesKey, truncateToWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
-import { cleanProjects, lessonIndex, type Lesson, type LessonEntry, parseLesson, prepareProject, runArgv, sessionIn, sessionProfile, STEPS, summariseRuns, terminalPicture, unitPathology, unwrap } from "./mellum-lessons.ts";
+import { cleanProjects, lessonIndex, type Lesson, type LessonEntry, parseLesson, prepareProject, projectGuide, runArgv, sessionIn, sessionProfile, STEPS, summariseRuns, terminalPicture, unitPathology, unwrap } from "./mellum-lessons.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -213,6 +213,12 @@ export default function (pi: any): void {
 	pi.on("session_shutdown", () => {
 		for (const child of running) child.kill();
 		running.clear();
+	});
+	// In a lesson's project folder, say what to do there, above the editor: for you, not the model.
+	pi.on("session_start", (_event: unknown, ctx: any) => {
+		const root = findRoot(ctx.cwd ?? process.cwd());
+		const guide = root ? projectGuide(root, ctx.cwd ?? process.cwd()) : undefined;
+		ctx.ui?.setWidget?.("lesson", guide ? guide.map((line, i) => (i === 0 ? ` ${line}` : `   ${line}`)) : undefined);
 	});
 	pi.registerCommand("lesson", {
 		description: "Take a lesson: /lesson to pick one, /lesson E3 to open it, /lesson home to leave a project folder",
