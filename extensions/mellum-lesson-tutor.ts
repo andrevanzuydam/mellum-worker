@@ -17,7 +17,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CURRENT_SESSION_VERSION, getMarkdownTheme } from "@earendil-works/pi-coding-agent";
 import { Image, Key, Markdown, matchesKey, truncateToWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
-import { cleanProjects, lessonIndex, type Lesson, type LessonEntry, parseLesson, lessonLegend, prepareProject, projectGuide, projectNumber, runArgv, sessionIn, sessionProfile, STEPS, summariseRuns, terminalPicture, unitPathology, unwrap } from "./mellum-lessons.ts";
+import { cleanProjects, lessonIndex, type Lesson, type LessonEntry, parseLesson, lessonLegend, prepareProject, projectGuide, projectNumber, runArgv, styleGuide, sessionIn, sessionProfile, STEPS, summariseRuns, terminalPicture, unitPathology, unwrap } from "./mellum-lessons.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -225,8 +225,17 @@ export default function (pi: any): void {
 	pi.on("session_start", (_event: unknown, ctx: any) => {
 		const root = findRoot(ctx.cwd ?? process.cwd());
 		const guide = root ? projectGuide(root, ctx.cwd ?? process.cwd()) : undefined;
-		const lines = guide ? guide.map((line, i) => (i === 0 ? ` ${line}` : `   ${line}`)) : root ? lessonLegend().map((l) => ` ${l}`) : undefined;
-		ctx.ui?.setWidget?.("lesson", lines);
+		const lines = guide ?? (root ? lessonLegend() : undefined);
+		ctx.ui?.setWidget?.("lesson", lines ? (_tui: any, theme: any) => ({
+			render: (width: number) => styleGuide(lines, {
+				title: (t) => theme.bold(theme.fg("accent", t)),
+				step: (t) => theme.fg("accent", t),
+				code: (t) => theme.fg("mdCode", t),
+				dim: (t) => theme.fg("dim", t),
+				rule: (t) => theme.fg("borderMuted", t),
+			}, width).flatMap((line) => wrapTextWithAnsi(line, width)),
+			invalidate: () => {},
+		}) : undefined);
 	});
 	pi.registerCommand("lesson", {
 		description: "Take a lesson: /lesson to pick one, /lesson E4 to open it; in a project folder, /lesson back returns to the lesson and /lesson clear starts over",

@@ -287,22 +287,47 @@ export function projectGuide(root: string, cwd: string): string[] | undefined {
 	const why = unitPathology(root, lesson.unit);
 	return [
 		`${lesson.number} · ${lesson.title}: trying it by hand in project/${lesson.number}`,
-		"1. Ask the model: Do the task in TASK.md",
+		"1. Ask the model: `Do the task in TASK.md`",
 		why ? `2. Watch its tool calls for this failure: ${why}` : "2. Watch its tool calls, then read what it built.",
 		unit
-			? `3. Then from scratch with the remedy: /lesson clear, then /remedy on ${unit}, and ask again.`
-			: "3. Then from scratch: /lesson clear, and ask again.",
-		"/lesson back returns to the lesson where you left it · /lesson clear starts this folder over",
+			? `3. Then from scratch with the remedy: \`/lesson clear\`, then \`/remedy on ${unit}\`, and ask again.`
+			: "3. Then from scratch: `/lesson clear`, and ask again.",
+		"`/lesson back` returns to the lesson where you left it · `/lesson clear` starts this folder over",
 	];
 }
 
 /** The widget outside a project folder: the lesson commands, one line each. */
 export function lessonLegend(): string[] {
 	return [
-		"Lessons: /lesson picks one · /lesson E4 opens one · in a lesson, r runs a line and p tries it by hand",
-		"/remedy switches remedy units on and off · /lesson clear starts a project folder over",
-		"/lesson back leaves a project folder for the lesson · /lesson clean removes every project folder",
+		"Lessons",
+		"`/lesson` picks one · `/lesson E4` opens one · in a lesson, `r` runs a line and `p` tries it by hand",
+		"`/remedy` switches remedy units on and off · `/lesson clear` starts a project folder over",
+		"`/lesson back` leaves a project folder for the lesson · `/lesson clean` removes every project folder",
 	];
+}
+
+/** Paint for the widget: the theme's colours in Pi, plain marks in a test. */
+export interface GuidePaint {
+	title(text: string): string;
+	step(text: string): string;
+	code(text: string): string;
+	dim(text: string): string;
+	rule(text: string): string;
+}
+
+/** The widget's lines, styled: the first line a title, numbered steps with their number set off,
+ * `backticked` commands as code, and the last line a dimmed footer under a rule. */
+export function styleGuide(lines: string[], paint: GuidePaint, width: number): string[] {
+	const code = (text: string) => text.replace(/`([^`]+)`/g, (_m, c) => paint.code(c));
+	const [title, ...rest] = lines;
+	const footer = rest.length > 1 ? rest.pop()! : undefined;
+	const out = [paint.title(`▍ ${title}`)];
+	for (const line of rest) {
+		const step = line.match(/^(\d+\.)\s+(.*)$/);
+		out.push(step ? `  ${paint.step(step[1])} ${code(step[2])}` : `  ${code(line)}`);
+	}
+	if (footer) out.push(paint.rule("─".repeat(Math.max(1, width))), `  ${paint.dim(footer.replace(/`/g, ""))}`);
+	return out;
 }
 
 /** Remove every lesson's project folder. */

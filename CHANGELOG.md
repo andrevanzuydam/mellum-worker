@@ -6,6 +6,9 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- The `/lesson` widget is styled with Pi's theme: the lesson as a title,
+  numbered steps, commands in the code colour, and the footer dimmed under a
+  rule, wrapped to the terminal's width.
 - `/lesson` always shows a widget above Pi's editor: the command legend in
   the checkout, the lesson's steps in a project folder. In a project folder,
   `/lesson` (or `/lesson back`) returns to the repository and reopens the

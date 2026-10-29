@@ -230,3 +230,15 @@ test("outside a project folder the widget is a legend of the lesson commands", a
 	for (const t of ["/lesson", "/lesson E4", "/remedy", "/lesson clear", "/lesson back", "/lesson clean"])
 		assert.ok(text.includes(t), `legend lacks ${t}`);
 });
+
+test("the widget is styled: a title, numbered steps, commands as code, a dimmed footer under a rule", async () => {
+	const { projectGuide, styleGuide } = await tutor();
+	const paint = { title: (s) => `<T>${s}</T>`, step: (s) => `<S>${s}</S>`, code: (s) => `<C>${s}</C>`, dim: (s) => `<D>${s}</D>`, rule: (s) => `<R>${s.length}</R>` };
+	const out = styleGuide(projectGuide(ROOT, join(ROOT, "project", "E4")), paint, 40);
+	assert.match(out[0], /^<T>▍ E4 · Running Commands/);
+	assert.ok(out.some((l) => l.includes("<S>1.</S>") && l.includes("<C>Do the task in TASK.md</C>")), out.join("\n"));
+	assert.ok(out.some((l) => l.includes("<C>/lesson clear</C>")));
+	assert.equal(out.at(-2), "<R>40</R>");
+	assert.match(out.at(-1), /^\s*<D>/);
+	assert.ok(!out.join("").includes("`"), "backticks are styling marks, never shown");
+});
