@@ -1,4 +1,5 @@
 [
+  "context/repair-think-tags",
   "guard/break-repeat-loops",
   "guard/stay-in-workspace",
   "guard/refuse-whole-file-rewrite",

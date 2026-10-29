@@ -977,16 +977,13 @@ def test_a_stopped_run_still_sweeps_its_workspace(tmp_path):
             harness.sweep_workspace(w)
 
 
-def test_every_session_loads_the_think_tag_adapter_first():
-    # A host that returns reasoning as <think> text must not change what the
-    # model sees between hosts (research note 2026-10-29-lan-reasoning-leak);
-    # the adapter does nothing on a correctly served reply.
+def test_the_think_tag_repair_is_a_unit_not_a_default():
+    # The repair is context/repair-think-tags: a lesson shows the failure
+    # without it, and every later line lists it (spec correction 2026-10-29).
     argv = harness.pi_argv("pi", PROFILE, harness.RECORDER, "p", "m", "go",
                            extension=harness.EXTENSION, extras=[Path("/x/unit.ts")])
     loaded = [argv[i + 1] for i, a in enumerate(argv) if a == "-e"]
-    assert loaded[0] == str(harness.THINK_TAGS)
-    assert loaded[1:] == [str(harness.EXTENSION), "/x/unit.ts", str(harness.RECORDER)]
-    assert harness.THINK_TAGS.is_file()
+    assert loaded == [str(harness.EXTENSION), "/x/unit.ts", str(harness.RECORDER)]
 
 
 def test_a_group_with_nothing_left_reports_nothing(tmp_path):
@@ -1091,7 +1088,7 @@ def test_pi_argv_loads_extras_after_the_arm_and_before_the_recorder():
     argv = harness.pi_argv("pi", PROFILE, Path("rec.mjs"), "p", "m", "task",
                            extension=Path("worker.ts"), extras=[Path("a.ts"), Path("b.ts")])
     loads = [argv[i + 1] for i, a in enumerate(argv) if a == "-e"]
-    assert loads == [str(harness.THINK_TAGS), "worker.ts", "a.ts", "b.ts", "rec.mjs"]
+    assert loads == ["worker.ts", "a.ts", "b.ts", "rec.mjs"]
 
 
 def test_the_parser_takes_remedy_and_repeatable_extension():

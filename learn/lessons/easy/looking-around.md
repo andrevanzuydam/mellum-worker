@@ -43,8 +43,8 @@ session runs out of time. Nothing is wrong with the tool; the model is stuck.
 
 **Badge:** `conjecture`
 
-**Before:** bare Pi (nothing added yet). **After:** bare Pi plus
-`guard/break-repeat-loops`. Both run the lesson's own challenge,
+**Before:** bare Pi with the serving repair, `context/repair-think-tags`.
+**After:** the same plus `guard/break-repeat-loops`. Both run the lesson's own challenge,
 `learn/challenges/looking-around/`: readings spread over 200 site files in
 8 region folders. Find one sensor's reading, find a region's highest sensor,
 then write a lookup module with tests. A session stuck repeating the same
@@ -100,8 +100,8 @@ earn that.
 Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suites-dir learn/challenges --suite looking-around --repeat 1 --deadline 600 --stall 120
-uv run python learn/code/harness.py run --suites-dir learn/challenges --suite looking-around --remedy guard/break-repeat-loops --repeat 1 --deadline 600 --stall 120
+uv run python learn/code/harness.py run --suites-dir learn/challenges --suite looking-around --remedy context/repair-think-tags --repeat 1 --deadline 600 --stall 120
+uv run python learn/code/harness.py run --suites-dir learn/challenges --suite looking-around --remedy context/repair-think-tags,guard/break-repeat-loops --repeat 1 --deadline 600 --stall 120
 ```
 
 !!! success "Key points"

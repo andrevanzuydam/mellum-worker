@@ -38,9 +38,8 @@ test("every lesson page parses into what the walk-through shows", async () => {
 test("a lesson with a before and an after line exposes both", async () => {
 	const { parseLesson } = await tutor();
 	const l = parseLesson(readFileSync(join(ROOT, "learn/lessons/easy/looking-around.md"), "utf8"));
-	assert.match(l.before, /--suite looking-around --repeat 1/);
-	assert.doesNotMatch(l.before, /--remedy/);
-	assert.match(l.after, /--remedy guard\/break-repeat-loops --repeat 1/);
+	assert.match(l.before, /--suite looking-around --remedy context\/repair-think-tags --repeat 1/);
+	assert.match(l.after, /--remedy context\/repair-think-tags,guard\/break-repeat-loops --repeat 1/);
 	assert.match(l.unit, /guard\/break-repeat-loops/);
 });
 
@@ -135,7 +134,7 @@ test("prepareProject sets up project/<number> with the lesson's starting files, 
 	assert.equal(readFileSync(join(dir, "TASK.md"), "utf8"), "Build it.\n\nThen test it.\n");
 	assert.match(readFileSync(join(dir, ".pi", "extensions", "remedies.ts"), "utf8"), /extensions\/mellum-remedies\.ts/);
 	assert.match(readFileSync(join(dir, ".pi", "extensions", "lessons.ts"), "utf8"), /extensions\/mellum-lesson-tutor\.ts/);
-	assert.match(readFileSync(join(dir, ".pi", "extensions", "think-tags.ts"), "utf8"), /extensions\/mellum-think-tags\.ts/);
+	assert.equal(existsSync(join(dir, ".pi", "extensions", "think-tags.ts")), false, "the repair is a unit there: /remedy on context/repair-think-tags");
 	assert.match(readFileSync(join(ROOT, ".pi", "extensions", "think-tags.ts"), "utf8"), /extensions\/mellum-think-tags\.ts/);
 	writeFileSync(join(dir, "stray.py"), "x = 1\n");
 	prepareProject(root, lesson);

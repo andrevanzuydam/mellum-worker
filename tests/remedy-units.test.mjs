@@ -261,3 +261,12 @@ test("preset:baseline-worker makes the same guard decisions as the worker's guar
 		assert.deepEqual(fromPreset, worker.toolCall(call), JSON.stringify(call));
 	}
 });
+
+test("context/repair-think-tags turns reasoning returned as <think> text back into reasoning, and nothing else", async () => {
+	const pi = fakePi();
+	(await import("../remedies/context/repair-think-tags.ts")).default(pi);
+	assert.deepEqual(pi.events(), ["message_end"]);
+	const fixed = pi.fire("message_end", { type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "<think>r</think>ok" }] } });
+	assert.deepEqual(fixed.message.content, [{ type: "thinking", thinkingSignature: "reasoning", thinking: "r" }, { type: "text", text: "ok" }]);
+	assert.equal(pi.fire("message_end", { type: "message_end", message: { role: "assistant", content: [{ type: "text", text: "ok" }] } }), undefined);
+});

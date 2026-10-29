@@ -6,6 +6,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- The think-tag repair is now a remedy unit, `context/repair-think-tags`,
+  instead of something every harness session loaded. A lesson can then show
+  the serving failure without it, and the `easy`, `medium` and `hard` presets
+  and E1's lines list it so later runs stay repaired. The flow still loads it
+  in every session, and Pi in this checkout still loads it from
+  `.pi/extensions/`; in a lesson's project folder, `/remedy on
+  context/repair-think-tags` switches it on.
 - A challenge can fail on its record, not only its hidden tests: an optional
   `record.json` caps `run.json` fields (for example `{"reasoning_as_text": 0}`),
   a run over a cap does not pass, `run.json` lists `record_failures`, and the
