@@ -6,6 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `scripts/lesson-check.sh <lesson number>` runs a lesson's before line then
+  its after line at the page's n and prints both verdicts, so a lesson check
+  is one command. The lines come from the lesson page; arms run one at a time
+  with port 8000 checked free; it detaches, so a closed terminal tab cannot
+  kill it. The default profile, `scripts/baseline/lan-profile/`, is the 6-bit
+  Mellum on the LAN vLLM host the uniform-lessons cycle checks against.
 - `/lesson` runs a lesson's before and after lines on the model Pi is using
   (its provider and model from the profile's `models.json`), and shows which
   model on the run line. Before, `r` always used the pinned llama.cpp profile,
