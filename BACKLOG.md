@@ -393,5 +393,7 @@ redirect-following client, the one instance seen twice, is fixed by
 `noFollowRedirects`. The general guarantee needs a design: before the build, a
 broken test and a missing app both error, so a dry run must tell an error
 raised in the test's own frames from one raised in app code or an import of a
-module not yet built. *Reopens when* a second flow run shows a gate test
-failing on an exception raised in the test file itself.
+module not yet built. The 2026-10-29 rerun added a second shape: an
+assertion that contradicts the test's own setup (four audit-worthy calls, three
+entries expected), which raises nothing. *Reopens when* a design can flag
+either shape without the reference app, or a third flow run hits one.
