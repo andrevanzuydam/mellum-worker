@@ -22,9 +22,9 @@ For steps 1, 2, and 4 the badge is the strongest evidence the statement rests on
 
 ## Why the backend matters
 
-All measured evidence in this repo was originally run on oMLX (Apple Silicon). Once a lesson gets a llama.cpp `reference-run`, its badge will say so. Until then, a `cited` badge means the number came from oMLX or mlx-lm; your llama.cpp numbers may differ, and llama.cpp itself is smoke-tested only so far ([backend](https://github.com/pauleveritt/mellum-worker/blob/main/docs/backends/llamacpp.md)).
+All measured evidence in this repo was originally run on oMLX (Apple Silicon). Once a lesson gets a llama.cpp `reference-run`, its badge will say so. Until then, a `cited` badge means the number came from oMLX or mlx-lm; your llama.cpp numbers may differ, and llama.cpp itself is smoke-tested only so far ([backend](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/backends/llamacpp.md)).
 
-Changed 2026-10-20: the track teaches llama.cpp, not Ollama; the plan chose Ollama so a learner without Apple Silicon was covered, and that port stays a backlog option ([why](https://github.com/pauleveritt/mellum-worker/blob/main/docs/superpowers/specs/2026-10-20-learning-center-design.md)).
+Changed 2026-10-20: the track teaches llama.cpp, not Ollama; the plan chose Ollama so a learner without Apple Silicon was covered, and that port stays a backlog option ([why](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/specs/2026-10-20-learning-center-design.md)).
 
 ## Upgrading and downgrading a badge
 
@@ -32,4 +32,4 @@ Each lesson whose steps 3 or 5 are below `reference-run` gets a roadmap item for
 
 ## Why a screen is a lead, not a rate
 
-The project follows the rule: [evals are screens first, preregistered runs to decide](https://github.com/pauleveritt/mellum-worker/blob/main/docs/sdd.md). A `screen` badge means someone ran a few targeted tests and saw something worth pursuing. It is not a rate you can trust; it is a lead. Fix the arms, sample size, scoring, and the rule before runs that decide a change or claim.
+The project follows the rule: [evals are screens first, preregistered runs to decide](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/sdd.md). A `screen` badge means someone ran a few targeted tests and saw something worth pursuing. It is not a rate you can trust; it is a lead. Fix the arms, sample size, scoring, and the rule before runs that decide a change or claim.

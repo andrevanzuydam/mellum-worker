@@ -2,7 +2,7 @@
 site_name = "Small AI Learning Center"
 site_url = "https://pauleveritt.github.io/mellum-worker/"
 site_description = "Small coding models, measured: problems, fixes, evidence."
-repo_url = "https://github.com/pauleveritt/mellum-worker"
+repo_url = "https://github.com/andrevanzuydam/mellum-worker"
 docs_dir = "learn"
 site_dir = "site"
 exclude_docs = "code/"

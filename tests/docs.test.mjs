@@ -19,7 +19,7 @@ test("the README links all three Getting started lessons", () => {
 test("README carries the pinned install line and the status table", () => {
 	const readme = read("README.md");
 	const version = JSON.parse(read("package.json")).version;
-	assert.ok(readme.includes(`pi install git:github.com/pauleveritt/mellum-worker@v${version}`));
+	assert.ok(readme.includes(`pi install git:github.com/andrevanzuydam/mellum-worker@v${version}`));
 	assert.match(readme, /15\/15/);
 	assert.match(readme, /unmeasured/i);
 	assert.match(readme, /uv run --offline pytest -q/);

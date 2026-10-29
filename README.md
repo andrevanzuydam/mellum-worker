@@ -48,7 +48,7 @@ run it again afterwards. The reasoning is in the
 Pi:
 
 ```bash
-pi install git:github.com/pauleveritt/mellum-worker@v0.1.8
+pi install git:github.com/andrevanzuydam/mellum-worker@v0.1.8
 ```
 
 Then `/skill:mellum-setup`: weights, oMLX server, provider entry, optional
@@ -153,7 +153,7 @@ model can change them.
 node <package dir>/scripts/mellum.mjs check --host pi
 ```
 
-`<package dir>` is `~/.pi/agent/git/github.com/pauleveritt/mellum-worker`.
+`<package dir>` is `~/.pi/agent/git/github.com/andrevanzuydam/mellum-worker`.
 It checks that the server answers and lists the model, that the
 settings no request can undo match (the server-only rows above, thinking
 not forced off, and forced sampling at 1 / 0.95 / 20), and that your

@@ -112,7 +112,7 @@ scored anyway.
     | Silver | `worker` | 0/3 | 2, 12, 2 | 60, 26, 38 | 7, 1, 1 | 37,110 | 1,351, 587, 956 s | 0 | 0 |
 
     The record is
-    [the 2026-10-25 lesson run](https://github.com/pauleveritt/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson1-run.md);
+    [the 2026-10-25 lesson run](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson1-run.md);
     its twelve run directories are in the
     [`research-2026-10-25`](https://github.com/pauleveritt/mellum-worker/releases/tag/research-2026-10-25)
     release. The guard fired zero times in this run, so what carried these

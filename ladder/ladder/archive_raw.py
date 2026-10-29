@@ -15,7 +15,7 @@ import tarfile
 from pathlib import Path
 
 RAW_NAMES = ("trace.jsonl", "stdout.txt", "diff.patch")
-RELEASE_URL = "https://github.com/pauleveritt/mellum-worker/releases/download"
+RELEASE_URL = "https://github.com/andrevanzuydam/mellum-worker/releases/download"
 
 
 def _normalize(info: tarfile.TarInfo) -> tarfile.TarInfo:

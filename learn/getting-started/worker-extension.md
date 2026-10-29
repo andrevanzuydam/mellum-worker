@@ -92,7 +92,7 @@ workspace: `grep -rl pattern /Users /var /tmp …` crawls everything and keeps
 the tool call open. Keep searches relative (`grep -rl pattern .`). PR #1
 proposes a **runaway search** guard that blocks recursive searches whose
 absolute paths leave the workspace
-([code](https://github.com/pauleveritt/mellum-worker/blob/176922f05702d6f8e87a9b2570ed6fe9807db733/extensions/mellum-guards.ts#L145-L185));
+([code](https://github.com/andrevanzuydam/mellum-worker/blob/176922f05702d6f8e87a9b2570ed6fe9807db733/extensions/mellum-guards.ts#L145-L185));
 it is not shipped yet.
 
 ## See it run

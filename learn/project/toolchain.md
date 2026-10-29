@@ -73,5 +73,5 @@ a development prerequisite even though most of the suite is Node.
 Measured work lands in `docs/superpowers/research/` with its preregistration;
 raw evidence goes to a `research-*` release, never into Git. A release is a tag that
 matches `package.json` and both README install lines, with a
-[`CHANGELOG.md`](https://github.com/pauleveritt/mellum-worker/blob/main/CHANGELOG.md)
+[`CHANGELOG.md`](https://github.com/andrevanzuydam/mellum-worker/blob/main/CHANGELOG.md)
 section; `[Unreleased]` is kept current as work lands.

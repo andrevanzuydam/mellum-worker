@@ -517,6 +517,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The project now lives at `andrevanzuydam/mellum-worker`. Install with
+  `pi install git:github.com/andrevanzuydam/mellum-worker@v0.1.8`; the
+  package's `repository`, the setup skill's install path, the site's GitHub
+  link and its links to the README, AGENTS and research notes point there, and
+  new raw-evidence releases are published there. Earlier `research-*`
+  releases stay on `pauleveritt/mellum-worker`, where their files are.
+
 - The lessons are a tiered track, one remedy per lesson. Easy (E1 to E6)
   introduces Pi's tools from bare Pi, one failure and one remedy unit each;
   Medium (M1 to M9) starts from `preset:easy`; Hard (H1 to H8) is the

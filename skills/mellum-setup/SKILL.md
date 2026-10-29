@@ -13,11 +13,11 @@ exists, show the user what will change and wait for a yes.
 Set `PKG` to the package root: the directory two levels above this SKILL.md.
 Pi shows the skill's path when it lists skills; OpenCode's skill tool prints
 the skill's base directory. Pi clones to
-`~/.pi/agent/git/github.com/pauleveritt/mellum-worker`; OpenCode installs under
+`~/.pi/agent/git/github.com/andrevanzuydam/mellum-worker`; OpenCode installs under
 `~/.cache/opencode/packages/*/node_modules/mellum-worker`.
 
 ```bash
-PKG=~/.pi/agent/git/github.com/pauleveritt/mellum-worker
+PKG=~/.pi/agent/git/github.com/andrevanzuydam/mellum-worker
 ```
 
 Every command below is relative to `$PKG`.

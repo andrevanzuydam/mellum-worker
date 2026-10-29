@@ -44,10 +44,10 @@ start at [Getting started](../getting-started/index.md).
 
 ## Read next
 
-- [`README.md`](https://github.com/pauleveritt/mellum-worker/blob/main/README.md)
+- [`README.md`](https://github.com/andrevanzuydam/mellum-worker/blob/main/README.md)
   for what ships and how to install it.
-- [`AGENTS.md`](https://github.com/pauleveritt/mellum-worker/blob/main/AGENTS.md)
+- [`AGENTS.md`](https://github.com/andrevanzuydam/mellum-worker/blob/main/AGENTS.md)
   for the working rules, including the ladder's and the changelog's.
-- [`docs/sdd.md`](https://github.com/pauleveritt/mellum-worker/blob/main/docs/sdd.md)
+- [`docs/sdd.md`](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/sdd.md)
   for the cycle and its document caps.
 - [Toolchain and checks](toolchain.md) for the commands.

@@ -88,7 +88,7 @@ export function createEmptyFinalNudge(max: number): (message: MessageLike) => Co
 
 An aborted turn (`error`) is deliberately not continued, and a capped turn
 (`length`) never matches. The code is in
-[`extensions/mellum-guards.ts`](https://github.com/pauleveritt/mellum-worker/blob/176922f/extensions/mellum-guards.ts#L83-L93).
+[`extensions/mellum-guards.ts`](https://github.com/andrevanzuydam/mellum-worker/blob/176922f/extensions/mellum-guards.ts#L83-L93).
 
 ## Validation
 

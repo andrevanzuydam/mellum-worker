@@ -41,4 +41,4 @@ Steps 1–5 each carry an [evidence badge](./evidence.md#badges). The Interpreta
 
 ## Worked example
 
-The [PR digest](https://github.com/pauleveritt/mellum-worker/blob/main/docs/superpowers/research/2026-10-20-pr-digest.md) walks through idea 1 (the worker decides when it is done) in the six-step form. It is not yet a lesson, but it shows the structure.
+The [PR digest](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-20-pr-digest.md) walks through idea 1 (the worker decides when it is done) in the six-step form. It is not yet a lesson, but it shows the structure.

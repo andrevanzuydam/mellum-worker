@@ -118,7 +118,7 @@ against {4, 10} of 18. Passes stayed at 0/3 in both arms, and no nudge fired.
     `qualify --suite medium` → `known-good: PASS`, `known-broken: FAIL`,
     `medium: QUALIFIED`; `learn/code/tests` 62/62, `npm test` 368/368,
     `docs-caps` 4/4. The preregistration and rule are in
-    [the run record](https://github.com/pauleveritt/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson10-run.md);
+    [the run record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson10-run.md);
     the `run.json` files and traces are in the
     [`research-2026-10-25`](https://github.com/pauleveritt/mellum-worker/releases/tag/research-2026-10-25)
     release.
