@@ -14,8 +14,7 @@ Five steps, done in order, from a clone of this repo:
 4. [Extensions and Remedy Units](../getting-started/extensions.md): what a Pi extension and a remedy unit are, presets, and `/mellum` as one bundle.
 5. [Troubleshoot](../getting-started/troubleshoot.md): the usual causes when a step does not print what it should.
 
-The Ditch is now lesson [E1](../lessons/easy/the-ditch.md) and the mini harness
-lesson [M1](../lessons/medium/build-a-harness.md).
+The mini harness is lesson [M1](../lessons/medium/build-a-harness.md).
 
 Every command is `uv run` from the repository root. Each page ends with
 **What you have**, which is what the next step starts from, so you know a

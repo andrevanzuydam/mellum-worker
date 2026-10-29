@@ -1,7 +1,6 @@
 # Easy Lessons
 
-The Ditch (E1) shows the problem every lesson answers, and E2 how to read
-it. Then Pi's own tools, one per lesson: what each gives the model, the
+E2 shows how to read a failure. Then Pi's own tools, one per lesson: what each gives the model, the
 failure it invites, and the one remedy for that failure. You start from bare
 Pi; each lesson's *before* is everything the earlier lessons added, and its
 *after* adds one unit. After E7 you have `preset:easy`, where Medium starts.
@@ -9,13 +8,6 @@ Pi; each lesson's *before* is everything the earlier lessons added, and its
 ![A small robot turning one large dial while a light bulb switches on](../../assets/illustrations/tier-easy.webp){ .illustration }
 
 <div class="grid cards" markdown>
-
--   **[E1 · The Ditch](the-ditch.md)**
-
-    ---
-
-    One open-ended session and a report that does not survive a check.
-    Adds nothing; teaches evidence before a fix.
 
 -   **[E2 · Read the Failure](read-the-failure.md)**
 

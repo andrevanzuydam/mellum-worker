@@ -10,10 +10,13 @@ const ROOT = new URL("..", import.meta.url).pathname;
 test("the track lists Start Here, then every lesson in order: Easy, Medium, Hard, by number", async () => {
 	const { lessonIndex } = await tutor();
 	const ids = lessonIndex(ROOT).map((l) => l.number);
-	assert.equal(ids.length, 26);
-	assert.deepEqual(ids.slice(0, 4), ["S0", "E1", "E2", "E3"]);
-	assert.equal(ids[8], "M1");
-	assert.equal(ids.at(-1), "H8");
+	const pages = ["easy", "medium", "hard"].flatMap((t) =>
+		readdirSync(join(ROOT, "learn/lessons", t)).filter((f) => f.endsWith(".md") && f !== "index.md"));
+	assert.equal(ids.length, pages.length + 1);
+	assert.equal(ids[0], "S0");
+	const key = (n) => "EMH".indexOf(n[0]) * 100 + Number(n.slice(1));
+	assert.deepEqual(ids.slice(1), [...ids.slice(1)].sort((a, b) => key(a) - key(b)));
+	assert.ok(ids.slice(1).every((n) => /^[EMH]\d+$/.test(n)), ids.join(" "));
 });
 
 test("every lesson page parses into what the walk-through shows", async () => {

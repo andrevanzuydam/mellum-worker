@@ -579,6 +579,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Removed
 
+- Lesson E1 The Ditch left the lesson track: it shows a failure but applies
+  no remedy, so it has no FAIL turning into a PASS, which every lesson now
+  must. Its session evidence is kept in a dated research note that the
+  pathologies page cites for false success and fabricated evidence.
+
 - The ladder's dead **delegated** reporting: `parse_parent_json` analysed a
   `subagent` tool call that no shipped worker can make, the run record carried
   a `parent` that was always `None`, and the results table had two columns

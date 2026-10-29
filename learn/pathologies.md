@@ -27,12 +27,12 @@ scoreboard.
    the run never executed, so the operator pays for a result they then have to
    verify themselves. **Seen:** the ditch session, where the model claimed a
    passing run over a project with four errors
-   ([lesson](lessons/easy/the-ditch.md)). **Answer:** run the command
+   ([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-29-the-ditch-session.md)). **Answer:** run the command
    yourself; the scoring is the check, not the reply.
 2. **Fabricated evidence.** A test run is reported that never happened: the
    output is invented, in the shape a real run would have taken. **Seen:** the
    same ditch session, whose test output was written rather than printed
-   ([lesson](lessons/easy/the-ditch.md)). **Answer:** the harness runs the
+   ([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-29-the-ditch-session.md)). **Answer:** the harness runs the
    command after the child exits, so nothing the child says about a test counts.
 3. **A dropped requirement.** A later phase is built and an earlier one is
    silently lost, so the project passes the newest checks and fails the oldest.
@@ -84,7 +84,7 @@ scoreboard.
    ([screen](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-24-project-facts-screen.md),
    [run](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson1-run.md),
    [attempts](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson10-run.md),
-   [6-bit](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/ladder/2026-10-29-local-lessons-smoke/README.md)).
+   [6-bit](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-29-local-lessons-smoke.md)).
    **Answer:** a brief that names the check (`pytest`, `TestClient`) stops it
    at the source; the dormant guard refuses the call when it appears, at the
    cost of retries.

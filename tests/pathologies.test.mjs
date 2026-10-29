@@ -39,8 +39,6 @@ test("the page states what it is not", () => {
   assert.ok(opening.split(/\s+/).length <= 45, "opening is over 45 words");
 });
 
-test("the ditch links the page, not the backlog placeholder", () => {
-  const ditch = page("lessons/easy/the-ditch.md");
-  assert.match(ditch, /\]\((\.\.\/)+pathologies\.md\)/);
-  assert.doesNotMatch(ditch, /BACKLOG\.md#pathologies-page/);
+test("false success cites the ditch session's record", () => {
+  assert.match(page("pathologies.md"), /False success\.[\s\S]*?2026-10-29-the-ditch-session\.md/);
 });

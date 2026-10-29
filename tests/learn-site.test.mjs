@@ -128,13 +128,6 @@ test("the home page links the Introduction and counts five lessons", () => {
   assert.doesNotMatch(index, /three (lessons|steps)/);
 });
 
-test("the ditch drops author notes and states why it checked Python", () => {
-  const l = page("lessons/easy/the-ditch.md");
-  assert.doesNotMatch(l, /^music:/m);
-  assert.doesNotMatch(l, /^notes:/m);
-  assert.match(l, /model chose Python|chose Python in this run/);
-});
-
 test("lesson 1 walks from uv to a base-Pi answer", () => {
   const l = page("getting-started/base-pi-on-llamacpp.md");
   assert.match(l, /^track: getting-started$/m);
@@ -235,14 +228,6 @@ test("the lesson template asks for evidence and records the conventions", () => 
     "tests/lesson-<slug>.test.mjs", "Do not copy a production source file",
     "line range"])
     assert.ok(t.includes(text), `template lacks ${text}`);
-});
-
-test("the ditch shows a claim that did not survive a check", () => {
-  const l = page("lessons/easy/the-ditch.md");
-  for (const text of ["Build AgentClinic", "26 requests", "errors=4",
-    "unrecognized arguments", "n = 1", "Before fixing, get evidence"])
-    assert.ok(l.includes(text), `the ditch lacks ${text}`);
-  assert.match(page("lessons/easy/index.md"), /the-ditch\.md/);
 });
 
 test("the extensions page teaches the extension mechanism and remedy units", () => {

@@ -306,8 +306,7 @@ harness, with every claim labelled by the evidence behind it:
 5. [Troubleshoot](learn/getting-started/troubleshoot.md).
 
 From there, take the lessons, starting with
-[S0 Start Here](learn/lessons/start-here.md) and
-[E1 The Ditch](learn/lessons/easy/the-ditch.md), or go straight to
+[S0 Start Here](learn/lessons/start-here.md), or go straight to
 [The Challenge](learn/challenge/index.md).
 
 All findings lessons are in [Lessons](learn/lessons/index.md). The site builds on

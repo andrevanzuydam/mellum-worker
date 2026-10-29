@@ -5,7 +5,7 @@ number: E2
 time: 4 min read · 20 min to run
 track: lessons
 position: 1
-prerequisites: [lessons/easy/the-ditch]
+prerequisites: [lessons/start-here]
 authors: [Paul Everitt, Andre van Zuydam]
 backends: [vllm]
 ---
