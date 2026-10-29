@@ -210,12 +210,21 @@ test("sessionIn writes an empty Pi session whose working directory is the folder
 });
 
 test("in project/<number>, the tutor's guide says what to do, step by step, and how to get back", async () => {
-	const { projectGuide } = await tutor();
+	const { projectGuide, projectNumber } = await tutor();
 	const lines = projectGuide(ROOT, join(ROOT, "project", "E4"));
 	const text = lines.join("\n");
 	assert.match(lines[0], /E4 · Running Commands/);
-	for (const t of ["Do the task in TASK.md", "foreground", "/remedy on guard/block-foreground-server", "/lesson E4", "/lesson home"])
+	for (const t of ["Do the task in TASK.md", "foreground", "/lesson clear", "/remedy on guard/block-foreground-server", "/lesson back"])
 		assert.ok(text.includes(t), `guide lacks ${t}`);
+	assert.equal(projectNumber(ROOT, join(ROOT, "project", "E4", "app")), "E4");
+	assert.equal(projectNumber(ROOT, ROOT), undefined);
 	assert.equal(projectGuide(ROOT, ROOT), undefined);
 	assert.equal(projectGuide(ROOT, join(ROOT, "project", "Z9")), undefined);
+});
+
+test("outside a project folder the widget is a legend of the lesson commands", async () => {
+	const { lessonLegend } = await tutor();
+	const text = lessonLegend().join("\n");
+	for (const t of ["/lesson", "/lesson E4", "/remedy", "/lesson clear", "/lesson back", "/lesson clean"])
+		assert.ok(text.includes(t), `legend lacks ${t}`);
 });

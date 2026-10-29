@@ -6,6 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `/lesson` always shows a widget above Pi's editor: the command legend in
+  the checkout, the lesson's steps in a project folder. In a project folder,
+  `/lesson` (or `/lesson back`) returns to the repository and reopens the
+  lesson at the step you left it, and `/lesson clear` resets the folder to
+  its starting files in a fresh session, so a lesson can be run again from
+  scratch.
 - In a lesson's `project/<number>` folder, `/lesson` shows a guide above
   Pi's editor: what to ask, which failure to watch for, how to try again with
   the remedy, and how to get back. It is shown to you only, never sent to the

@@ -264,14 +264,20 @@ export function prepareProject(root: string, lesson: Pick<Lesson, "number" | "be
 	writeFileSync(join(dir, ".pi", "extensions", "remedies.ts"),
 		`// /remedy for this lesson's project folder (written by /lesson).\nexport { default } from ${JSON.stringify(join(root, "extensions", "mellum-remedies.ts"))};\n`);
 	writeFileSync(join(dir, ".pi", "extensions", "lessons.ts"),
-		`// /lesson in this lesson's project folder (written by /lesson): /lesson home goes back.\nexport { default } from ${JSON.stringify(join(root, "extensions", "mellum-lesson-tutor.ts"))};\n`);
+		`// /lesson in this lesson's project folder (written by /lesson): /lesson back returns to the lesson.\nexport { default } from ${JSON.stringify(join(root, "extensions", "mellum-lesson-tutor.ts"))};\n`);
 	return dir;
+}
+
+/** The lesson number of the project folder `cwd` is in, or undefined outside project/<number>. */
+export function projectNumber(root: string, cwd: string): string | undefined {
+	const base = join(root, "project") + "/";
+	return cwd.startsWith(base) ? cwd.slice(base.length).split("/")[0] || undefined : undefined;
 }
 
 /** What to do in project/<number>, for the widget the tutor shows above Pi's editor (seen by you,
  * never sent to the model). Undefined outside a lesson's project folder. */
 export function projectGuide(root: string, cwd: string): string[] | undefined {
-	const number = cwd.startsWith(join(root, "project") + "/") ? cwd.slice(join(root, "project").length + 1).split("/")[0] : undefined;
+	const number = projectNumber(root, cwd);
 	const entry = number && lessonIndex(root).find((e) => e.number === number);
 	if (!entry) return undefined;
 	const lesson = parseLesson(readFileSync(entry.file, "utf8"));
@@ -282,9 +288,18 @@ export function projectGuide(root: string, cwd: string): string[] | undefined {
 		"1. Ask the model: Do the task in TASK.md",
 		why ? `2. Watch its tool calls for this failure: ${why}` : "2. Watch its tool calls, then read what it built.",
 		unit
-			? `3. Then try it with the remedy: /lesson ${lesson.number}, press p for a fresh folder, type /remedy on ${unit}, and ask again.`
-			: `3. Then start over: /lesson ${lesson.number} and press p for a fresh folder.`,
-		"/lesson home goes back to the repository · /lesson clean removes every project folder",
+			? `3. Then from scratch with the remedy: /lesson clear, then /remedy on ${unit}, and ask again.`
+			: "3. Then from scratch: /lesson clear, and ask again.",
+		"/lesson back returns to the lesson where you left it · /lesson clear starts this folder over",
+	];
+}
+
+/** The widget outside a project folder: the lesson commands, one line each. */
+export function lessonLegend(): string[] {
+	return [
+		"Lessons: /lesson picks one · /lesson E4 opens one · in a lesson, r runs a line and p tries it by hand",
+		"/remedy switches remedy units on and off · /lesson clear starts a project folder over",
+		"/lesson back leaves a project folder for the lesson · /lesson clean removes every project folder",
 	];
 }
 

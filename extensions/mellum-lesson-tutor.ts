@@ -17,7 +17,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CURRENT_SESSION_VERSION, getMarkdownTheme } from "@earendil-works/pi-coding-agent";
 import { Image, Key, Markdown, matchesKey, truncateToWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
-import { cleanProjects, lessonIndex, type Lesson, type LessonEntry, parseLesson, prepareProject, projectGuide, runArgv, sessionIn, sessionProfile, STEPS, summariseRuns, terminalPicture, unitPathology, unwrap } from "./mellum-lessons.ts";
+import { cleanProjects, lessonIndex, type Lesson, type LessonEntry, parseLesson, lessonLegend, prepareProject, projectGuide, projectNumber, runArgv, sessionIn, sessionProfile, STEPS, summariseRuns, terminalPicture, unitPathology, unwrap } from "./mellum-lessons.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -38,24 +38,29 @@ function findRoot(cwd: string): string | undefined {
 const agentDir = () => process.env.PI_CODING_AGENT_DIR || join(homedir(), ".pi", "agent");
 const progressFile = () => join(agentDir(), "mellum-lessons.json");
 
-function loadDone(): Set<string> {
+/** Progress: the lessons finished, and the step each lesson was left on. */
+function loadProgress(): { done: string[]; at: Record<string, number> } {
 	try {
-		return new Set(JSON.parse(readFileSync(progressFile(), "utf8")).done ?? []);
+		const p = JSON.parse(readFileSync(progressFile(), "utf8"));
+		return { done: p.done ?? [], at: p.at ?? {} };
 	} catch {
-		return new Set();
+		return { done: [], at: {} };
 	}
 }
 
-function markDone(number: string): void {
-	const done = loadDone();
-	done.add(number);
+function saveProgress(update: (p: { done: string[]; at: Record<string, number> }) => void): void {
+	const p = loadProgress();
+	update(p);
 	try {
 		mkdirSync(dirname(progressFile()), { recursive: true });
-		writeFileSync(progressFile(), JSON.stringify({ done: [...done] }, null, 2) + "\n");
+		writeFileSync(progressFile(), JSON.stringify(p, null, 2) + "\n");
 	} catch {
 		// Progress is a convenience; never fail a lesson over it.
 	}
 }
+
+const loadDone = (): Set<string> => new Set(loadProgress().done);
+const markDone = (number: string) => saveProgress((p) => { if (!p.done.includes(number)) p.done.push(number); });
 
 interface RunState {
 	label: string;
@@ -69,10 +74,10 @@ interface RunState {
 const tidy = (md: string) => unwrap(md.replace(/^\*\*Badge:\*\*.*$/gm, "").replace(/\n{3,}/g, "\n\n").trim());
 
 /** Walk one lesson. Resolves "next" to go on to the next lesson, or "leave". */
-function walk(ctx: any, root: string, lesson: Lesson, entry: LessonEntry, total: { index: number; count: number }): Promise<"next" | "leave" | "project"> {
+function walk(ctx: any, root: string, lesson: Lesson, entry: LessonEntry, total: { index: number; count: number }, startPage = 0): Promise<"next" | "leave" | "project"> {
 	return ctx.ui.custom((tui: any, theme: any, _kb: unknown, done: (r: "next" | "leave" | "project") => void) => {
 		const pages = ["Cover", ...STEPS, "Key points"];
-		let page = 0;
+		let page = Math.min(Math.max(startPage, 0), pages.length - 1);
 		let cached: string[] | undefined;
 		const runs: Record<string, RunState> = {};
 		const md = (text: string) => new Markdown(text, 1, 0, getMarkdownTheme());
@@ -198,6 +203,7 @@ function walk(ctx: any, root: string, lesson: Lesson, entry: LessonEntry, total:
 			if (data === "n" && name === "Key points" && total.index + 1 < total.count) return leave("next");
 			if (data === "p" && (name === "Eval case" || name === "Solution")) {
 				prepareProject(root, lesson);
+				saveProgress((p) => { p.at[lesson.number] = page; });
 				return leave("project");
 			}
 		}
@@ -214,14 +220,16 @@ export default function (pi: any): void {
 		for (const child of running) child.kill();
 		running.clear();
 	});
-	// In a lesson's project folder, say what to do there, above the editor: for you, not the model.
+	// Always a widget above the editor, for you and never the model: the project guide in a lesson's
+	// project folder, the command legend anywhere else in the checkout.
 	pi.on("session_start", (_event: unknown, ctx: any) => {
 		const root = findRoot(ctx.cwd ?? process.cwd());
 		const guide = root ? projectGuide(root, ctx.cwd ?? process.cwd()) : undefined;
-		ctx.ui?.setWidget?.("lesson", guide ? guide.map((line, i) => (i === 0 ? ` ${line}` : `   ${line}`)) : undefined);
+		const lines = guide ? guide.map((line, i) => (i === 0 ? ` ${line}` : `   ${line}`)) : root ? lessonLegend().map((l) => ` ${l}`) : undefined;
+		ctx.ui?.setWidget?.("lesson", lines);
 	});
 	pi.registerCommand("lesson", {
-		description: "Take a lesson: /lesson to pick one, /lesson E3 to open it, /lesson home to leave a project folder",
+		description: "Take a lesson: /lesson to pick one, /lesson E4 to open it; in a project folder, /lesson back returns to the lesson and /lesson clear starts over",
 		getArgumentCompletions: (prefix: string) => {
 			const root = findRoot(process.cwd());
 			if (!root) return null;
@@ -240,20 +248,32 @@ export default function (pi: any): void {
 }
 
 /** Move this Pi into `dir`: a new session whose working directory is that folder. */
-async function moveTo(ctx: any, dir: string, note: string): Promise<void> {
+async function moveTo(ctx: any, dir: string, note: string, then?: (next: any) => Promise<void>): Promise<void> {
 	const store = join(findRoot(dir) ?? dir, "project", ".sessions");
 	await ctx.switchSession(sessionIn(dir, CURRENT_SESSION_VERSION, store), {
-		withSession: async (next: any) => next.ui.notify(note, "info"),
+		withSession: async (next: any) => {
+			next.ui.notify(note, "info");
+			if (then) await then(next);
+		},
 	});
 }
 
-async function openLesson(args: string, ctx: any): Promise<void> {
+async function openLesson(args: string, ctx: any, startPage = 0): Promise<void> {
 			const root = findRoot(ctx.cwd ?? process.cwd());
 			if (!root) return ctx.ui.notify("/lesson runs in a checkout of mellum-worker (no learn/lessons here)", "error");
 			if (ctx.mode && ctx.mode !== "tui") return ctx.ui.notify("/lesson needs Pi's interactive terminal", "error");
-			if (args.trim() === "home") {
-				if (ctx.cwd === root) return ctx.ui.notify("already in the repository", "info");
-				return moveTo(ctx, root, "Back in the repository. /lesson picks up where you left off.");
+			const here = projectNumber(root, ctx.cwd ?? process.cwd());
+			if (here && ["", "back", "home"].includes(args.trim())) {
+				// Back to the repository, and straight into the lesson at the step it was left on.
+				return moveTo(ctx, root, `Back from project/${here}.`, (next) => openLesson(here, next, loadProgress().at[here] ?? 0));
+			}
+			if (args.trim() === "back" || args.trim() === "home") return ctx.ui.notify("already in the repository: /lesson opens the next lesson", "info");
+			if (args.trim() === "clear") {
+				const number = projectNumber(root, ctx.cwd ?? process.cwd());
+				const entry = number && lessonIndex(root).find((e) => e.number === number);
+				if (!entry) return ctx.ui.notify("/lesson clear works in a project folder: open a lesson and press p", "info");
+				const lesson = parseLesson(readFileSync(entry.file, "utf8"));
+				return moveTo(ctx, prepareProject(root, lesson), `project/${entry.number} is back to its starting files, in a fresh session.`);
 			}
 			if (args.trim() === "clean") {
 				if (await ctx.ui.confirm("Remove project/ and every lesson's work in it?", "This deletes the folder; the repository is untouched.")) {
@@ -277,9 +297,10 @@ async function openLesson(args: string, ctx: any): Promise<void> {
 			while (index < track.length) {
 				const entry = track[index];
 				const lesson = parseLesson(readFileSync(entry.file, "utf8"));
-				const result = await walk(ctx, root, lesson, entry, { index, count: track.length });
+				const result = await walk(ctx, root, lesson, entry, { index, count: track.length }, startPage);
+				startPage = 0;
 				if (result === "project") return moveTo(ctx, join(root, "project", entry.number),
-					`Now in project/${entry.number}. Ask: "Do the task in TASK.md". ${lesson.unit.match(/`([a-z]+\/[a-z-]+)`/) ? `/remedy on ${lesson.unit.match(/`([a-z]+\/[a-z-]+)`/)![1]} applies the remedy; ` : ""}/lesson home goes back; /lesson ${entry.number} reopens the lesson.`);
+					`Now in project/${entry.number}: the steps are above the editor. /lesson back returns to the lesson.`);
 				if (result !== "next") break;
 				index += 1;
 			}
