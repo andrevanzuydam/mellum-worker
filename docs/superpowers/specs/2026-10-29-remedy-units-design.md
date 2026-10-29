@@ -150,6 +150,8 @@ lesson's test, and it also confirms the pathology on the current host.
 | | H4 Frozen gates and checkpoints | gates | a later phase breaks an earlier one | per-phase gates, revert |
 | | H5 Don't trust the self-exit | the exit | exits on its own weak test | an external acceptance test |
 | | H6 Best of N | retries | one unlucky sample sinks a phase | parallel attempts |
+| | H7 Build a Tool | writing an extension | the challenge needs a capability no tool gives | **the learner's own tool** (`--extension`) |
+| | H8 Build a Remedy | writing a unit | the challenge needs a correction no unit makes | **the learner's own remedy** (`--extension`) |
 
 `edit` is introduced in E4 as the tool E4's remedy points to. `read_document`,
 `describe_image` and `context_search` join Medium when a challenge needs one.
@@ -159,9 +161,11 @@ E3 → M1, E4 → M2, M2 → M3, M1 → M4, M3 → M8, M4 → M9, H1 → H1, H2 
 and E2 are rewritten. `preset:easy` and `preset:medium` list each tier's
 units in order; `preset:baseline-worker` stays for The Challenge.
 
-**The end of the track is The Challenge's start.** The last Hard lesson's
-*after* state is `preset:hard`: every tool and remedy the course teaches, in
-one line. The Challenge page opens from it ("Finished Hard? Start from
+**The end of the track is The Challenge's start.** H6's *after* state is
+`preset:hard`; H7 and H8 then teach building, and in each the learner's own
+file is what gets the pass. `preset:hard` is every tool and remedy the course
+ships, in one line, and the learner leaves H8 able to add their own. The
+Challenge page opens from it ("Finished Hard? Start from
 `--remedy preset:hard`") and asks the learner to beat it by adding, swapping
 or writing a remedy. It says honestly that the course gives every tool there
 is, not a guaranteed pass: whether they pass Gold is what the Challenge
