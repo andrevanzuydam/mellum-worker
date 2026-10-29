@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A record of the full spec-driven flow on the vLLM baseline host
+  (`docs/ladder/2026-10-29-vllm-flow/`), with its research note: one run per
+  level, Bronze 4/4 hidden checks (a pass), Silver 13/18, Gold 30/34. It also
+  documents three gate faults in the flow harness that the next fixes address.
+
 - The replicable vLLM baseline's record, `docs/ladder/2026-10-28-vllm-baseline/`:
   vanilla Pi with Mellum 2.1 BF16 on vLLM passed 26/36 ladder rungs (12/12 on
   rungs 1–4, 4/12 on the web-app rungs 6–9, 8/9 on 10–12) and 1/3 Bronze, 1/3
