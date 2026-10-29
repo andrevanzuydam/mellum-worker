@@ -38,8 +38,8 @@ test("every lesson page parses into what the walk-through shows", async () => {
 test("a lesson with a before and an after line exposes both", async () => {
 	const { parseLesson } = await tutor();
 	const l = parseLesson(readFileSync(join(ROOT, "learn/lessons/easy/running-commands.md"), "utf8"));
-	assert.match(l.before, /--remedy guard\/break-repeat-loops,guard\/stay-in-workspace,guard\/refuse-whole-file-rewrite --repeat 3/);
-	assert.match(l.after, /,guard\/block-foreground-server --repeat 3/);
+	assert.match(l.before, /--remedy guard\/break-repeat-loops,guard\/stay-in-workspace,guard\/refuse-whole-file-rewrite --repeat 1/);
+	assert.match(l.after, /,guard\/block-foreground-server --repeat 1/);
 	assert.match(l.unit, /guard\/block-foreground-server/);
 });
 
