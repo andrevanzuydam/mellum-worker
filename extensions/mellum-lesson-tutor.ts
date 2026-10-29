@@ -17,7 +17,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getMarkdownTheme } from "@earendil-works/pi-coding-agent";
 import { Image, Key, Markdown, matchesKey, truncateToWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
-import { cleanProjects, lessonIndex, type Lesson, type LessonEntry, parseLesson, prepareProject, runArgv, STEPS, summariseRuns, terminalPicture, unwrap } from "./mellum-lessons.ts";
+import { cleanProjects, lessonIndex, type Lesson, type LessonEntry, parseLesson, prepareProject, runArgv, sessionProfile, STEPS, summariseRuns, terminalPicture, unwrap } from "./mellum-lessons.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -35,7 +35,8 @@ function findRoot(cwd: string): string | undefined {
 	return undefined;
 }
 
-const progressFile = () => join(process.env.PI_CODING_AGENT_DIR || join(homedir(), ".pi", "agent"), "mellum-lessons.json");
+const agentDir = () => process.env.PI_CODING_AGENT_DIR || join(homedir(), ".pi", "agent");
+const progressFile = () => join(agentDir(), "mellum-lessons.json");
 
 function loadDone(): Set<string> {
 	try {
@@ -103,7 +104,8 @@ function walk(ctx: any, root: string, lesson: Lesson, entry: LessonEntry, total:
 			if (!command || runs[key]?.child) return;
 			const runsDir = mkdtempSync(join(tmpdir(), `lesson-${lesson.number}-${key}-`));
 			const isHarness = command.includes("harness.py");
-			const argv = isHarness ? runArgv(command, runsDir, full) : command.split(/\s+/);
+			const profile = isHarness ? sessionProfile(agentDir(), ctx.model, mkdtempSync(join(tmpdir(), `lesson-${lesson.number}-profile-`))) : undefined;
+			const argv = isHarness ? runArgv(command, runsDir, full, profile) : command.split(/\s+/);
 			const state: RunState = { label: full ? "full run" : "one session", started: Date.now(), lines: [] };
 			runs[key] = state;
 			const child = spawn(argv[0], argv.slice(1), { cwd: root, stdio: ["ignore", "pipe", "pipe"] });
@@ -141,7 +143,7 @@ function walk(ctx: any, root: string, lesson: Lesson, entry: LessonEntry, total:
 			if (!command) return [];
 			const out = ["", theme.fg("accent", key === "before" ? " Before" : " After"), ...wrapTextWithAnsi(theme.fg("dim", ` ${command}`), width)];
 			const r = runs[key];
-			if (!r) out.push(theme.fg("muted", " r  run one session   R  run the page's n"));
+			if (!r) out.push(theme.fg("muted", ` r  run one session   R  run the page's n${ctx.model ? `   on ${ctx.model.provider}/${ctx.model.id}` : ""}`));
 			else if (r.child) out.push(theme.fg("warning", ` running (${r.label}) … ${Math.round((Date.now() - r.started) / 1000)} s`));
 			else {
 				const good = r.verdict?.startsWith("PASS");

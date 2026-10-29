@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `/lesson` runs a lesson's before and after lines on the model Pi is using
+  (its provider and model from the profile's `models.json`), and shows which
+  model on the run line. Before, `r` always used the pinned llama.cpp profile,
+  so a learner on any other server got "no model answered". A line that names
+  its own `--profile` keeps it.
 - Four lessons and the server pathology now cite the 2026-10-29 local 6-bit
   MLX runs: the foreground-server stall reproduced on a second host and
   quantization (two of three bare `build-a-harness` sessions stalled on

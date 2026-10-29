@@ -151,3 +151,32 @@ test("cleanProjects removes project/ and nothing else", async () => {
 	assert.equal(existsSync(join(root, "project")), false);
 	assert.equal(existsSync(join(root, "keep.md")), true);
 });
+
+test("a lesson run uses the model Pi is on: runArgv adds --profile, unless the line names one", async () => {
+	const { runArgv } = await tutor();
+	const cmd = "uv run python learn/code/harness.py run --suite easy --repeat 3";
+	const argv = runArgv(cmd, "/tmp/r", false, "/tmp/p");
+	assert.equal(argv[argv.indexOf("--profile") + 1], "/tmp/p");
+	const own = runArgv(`${cmd} --profile mine`, "/tmp/r", false, "/tmp/p");
+	assert.equal(own.filter((a) => a === "--profile").length, 1);
+	assert.equal(own[own.indexOf("--profile") + 1], "mine");
+	assert.ok(!runArgv(cmd, "/tmp/r", false).includes("--profile"));
+});
+
+test("sessionProfile writes a profile pinned to Pi's current provider and model", async () => {
+	const { sessionProfile } = await tutor();
+	const agent = mkdtempSync(join(tmpdir(), "agent-"));
+	writeFileSync(join(agent, "models.json"), JSON.stringify({ providers: {
+		other: { baseUrl: "http://x/v1", models: [{ id: "a" }] },
+		lan: { baseUrl: "http://192.0.2.1/v1", apiKey: "not-needed", models: [{ id: "skip" }, { id: "mellum" }] },
+	} }));
+	const out = mkdtempSync(join(tmpdir(), "profile-"));
+	assert.equal(sessionProfile(agent, { provider: "lan", id: "mellum" }, out), out);
+	const written = JSON.parse(readFileSync(join(out, "models.json"), "utf8"));
+	assert.deepEqual(Object.keys(written.providers), ["lan"]);
+	assert.deepEqual(written.providers.lan.models.map((m) => m.id), ["mellum"]);
+	assert.equal(written.providers.lan.baseUrl, "http://192.0.2.1/v1");
+	assert.equal(sessionProfile(agent, { provider: "anthropic", id: "x" }, mkdtempSync(join(tmpdir(), "p-"))), undefined);
+	assert.equal(sessionProfile(join(agent, "missing"), { provider: "lan", id: "mellum" }, out), undefined);
+	assert.equal(sessionProfile(agent, undefined, out), undefined);
+});

@@ -158,15 +158,31 @@ export function summariseRuns(dir: string): RunSummary {
 	return { verdict: total === 0 ? "NONE" : passed === total ? "PASS" : "FAIL", passed, total, lines };
 }
 
-/** The argv for a page command: one session unless `full`, into `runsDir`. */
-export function runArgv(command: string, runsDir: string, full: boolean): string[] {
+/** The argv for a page command: one session unless `full`, into `runsDir`, on `profile` (the
+ * model Pi is on) unless the line names its own. */
+export function runArgv(command: string, runsDir: string, full: boolean, profile?: string): string[] {
 	const argv = command.trim().split(/\s+/);
 	const i = argv.indexOf("--repeat");
 	if (!full) {
 		if (i >= 0) argv[i + 1] = "1";
 		else argv.push("--repeat", "1");
 	}
+	if (profile && !argv.includes("--profile")) argv.push("--profile", profile);
 	return [...argv, "--runs-dir", runsDir];
+}
+
+/** A harness profile pinned to the model Pi is on: its provider from the agent dir's models.json,
+ * with only that model, written to `outDir`. Undefined when the model is not in models.json (a
+ * built-in provider), so the line keeps the harness's default profile. Credentials are not copied. */
+export function sessionProfile(agentDir: string, model: { provider: string; id: string } | undefined, outDir: string): string | undefined {
+	const file = join(agentDir, "models.json");
+	if (!model || !existsSync(file)) return undefined;
+	const provider = JSON.parse(readFileSync(file, "utf8")).providers?.[model.provider];
+	const pinned = provider?.models?.find((m: { id: string }) => m.id === model.id);
+	if (!pinned) return undefined;
+	mkdirSync(outDir, { recursive: true });
+	writeFileSync(join(outDir, "models.json"), JSON.stringify({ providers: { [model.provider]: { ...provider, models: [pinned] } } }, null, 2));
+	return outDir;
 }
 
 /** The PNG copy of a lesson picture that the terminal draws (scripts/terminal-pictures.py). */
