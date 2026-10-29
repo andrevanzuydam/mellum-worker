@@ -163,6 +163,6 @@ uv run scripts/backend.py stop
 ## What you have
 
 A local Mellum on llama.cpp, a one-command chat, and base Pi answering
-through a profile that lives in the repo. Next, [The ditch](ditch.md) gives
-base Pi an open-ended AgentClinic session and checks its final report; the
-harness that makes that repeatable comes after it.
+through a profile that lives in the repo. Next, [Working With Pi](working-with-pi.md)
+opens Pi's interactive terminal: prompts, tools, sessions, and the two
+commands this course adds.

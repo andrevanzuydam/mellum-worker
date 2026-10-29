@@ -56,7 +56,7 @@ for now both runs are on Bronze and Silver.
 Nothing here is measured. `lookup` exists because the model guessed an API it
 never saw, such as a redirect status default; as a remedy it is unit-tested
 but not measured on the suites. Your tool starts from the same place: a
-failure you named in a trace ([E1](../easy/read-the-failure.md)).
+failure you named in a trace ([E2](../easy/read-the-failure.md)).
 
 ## Solution
 
@@ -153,8 +153,8 @@ one thing, and show the before and after on the same command.
 Before, then after with your file:
 
 ```bash
-uv run python learn/code/harness.py run --suite medium --arm bare --remedy preset:hard --repeat 3 --grade
-uv run python learn/code/harness.py run --suite medium --arm bare --remedy preset:hard --extension path/to/your-tool.ts --repeat 3 --grade
+uv run python learn/code/harness.py run --suite medium --remedy preset:hard --repeat 3 --grade
+uv run python learn/code/harness.py run --suite medium --remedy preset:hard --extension path/to/your-tool.ts --repeat 3 --grade
 ```
 
 !!! success "Key points"

@@ -1,16 +1,16 @@
 ---
 title: Looking Around
 tier: easy
-number: E2
+number: E3
 time: 3 min read · 20 min to run
 track: lessons
-position: 1
+position: 2
 prerequisites: [lessons/easy/read-the-failure]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---
 
-# E2 · Looking Around
+# E3 · Looking Around
 
 The read and ls tools are how the model looks at a project, and a small model can
 get stuck looking: the same call, again and again, with nothing changing. One
@@ -54,7 +54,7 @@ the model look around a lot, is not built yet, so for now both run on Bronze.
 A recorded ladder run made 245 identical `ls -R` calls, every one of them
 successful, and never moved on. The loop was not seen in the nine bare
 sessions of 2026-10-29 on the vLLM host; on this host it is rarer than the
-stalls [E5](running-commands.md) fixes.
+stalls [E6](running-commands.md) fixes.
 
 ## Solution
 
@@ -97,8 +97,8 @@ earn that.
 Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suite easy --arm bare --repeat 3 --grade
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy guard/break-repeat-loops --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy guard/break-repeat-loops --repeat 3 --grade
 ```
 
 !!! success "Key points"

@@ -13,7 +13,7 @@ backends: [vllm]
 # H8 · Build a Remedy
 
 Every remedy in this course is one unit that corrects one named failure. This
-last lesson shows how one is built, tested and submitted, with the E2 loop
+last lesson shows how one is built, tested and submitted, with the E3 loop
 breaker as the template, and your file is the after.
 
 !!! abstract "Overview"
@@ -55,7 +55,7 @@ runs are on Bronze and Silver.
 
 Nothing here is measured. The template unit's own pathology is recorded (245
 identical `ls -R` calls in one run); yours starts as a failure you can point
-to in a `trace.jsonl` ([E1](../easy/read-the-failure.md)).
+to in a `trace.jsonl` ([E2](../easy/read-the-failure.md)).
 
 ## Solution
 
@@ -154,8 +154,8 @@ Test the unit, then run before and after with your file:
 
 ```bash
 node --test tests/remedy-units.test.mjs
-uv run python learn/code/harness.py run --suite medium --arm bare --remedy preset:hard --repeat 3 --grade
-uv run python learn/code/harness.py run --suite medium --arm bare --remedy preset:hard --extension path/to/your-remedy.ts --repeat 3 --grade
+uv run python learn/code/harness.py run --suite medium --remedy preset:hard --repeat 3 --grade
+uv run python learn/code/harness.py run --suite medium --remedy preset:hard --extension path/to/your-remedy.ts --repeat 3 --grade
 ```
 
 !!! success "Key points"

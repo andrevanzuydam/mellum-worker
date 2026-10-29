@@ -1,16 +1,16 @@
 ---
 title: Run Long Commands Safely
 tier: medium
-number: M5
+number: M6
 time: 3 min read · 20 min to run
 track: lessons
-position: 4
+position: 5
 prerequisites: [lessons/medium/thinking-working-memory]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---
 
-# M5 · Run Long Commands Safely
+# M6 · Run Long Commands Safely
 
 Some commands never return on their own (a server, a watcher, a dev reload),
 and run in the foreground one holds the session until its deadline. One unit
@@ -54,8 +54,8 @@ so for now both run on Bronze.
 
 The hang is recorded. In the nine bare sessions of 2026-10-29 on the vLLM
 host, four named a foreground server in `stalled` (see
-[E1](../easy/read-the-failure.md)), and all three facts-off sessions in
-[M1](project-facts.md) ended in one. The Easy tier's guard,
+[E2](../easy/read-the-failure.md)), and all three facts-off sessions in
+[M2](project-facts.md) ended in one. The Easy tier's guard,
 `guard/block-foreground-server`, refuses the start; this unit lets the command
 run instead.
 
@@ -103,8 +103,8 @@ question this lesson's challenge has to answer.
 Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn --repeat 3 --grade
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands --repeat 3 --grade
 ```
 
 !!! success "Key points"

@@ -1,16 +1,16 @@
 ---
 title: A Short Prompt
 tier: medium
-number: M2
+number: M3
 time: 4 min read · 35 min to run
 track: lessons
-position: 1
+position: 2
 prerequisites: [lessons/medium/project-facts]
 authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# M2 · A Short Prompt
+# M3 · A Short Prompt
 
 Pi's own system prompt is long and general, and a small model can follow the
 procedure it describes instead of the files in front of it. One unit swaps it
@@ -118,8 +118,8 @@ and that comparison has not been run on this backend.
 Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy preset:easy,context/add-project-facts --repeat 3 --grade
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy preset:easy,context/add-project-facts --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy preset:easy,context/add-project-facts,context/use-short-prompt --repeat 3 --grade
 ```
 
 !!! success "Key points"

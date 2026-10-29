@@ -9,10 +9,13 @@ The center has two [tracks](../glossary.md). The **Getting started** track is a 
 Five steps, done in order, from a clone of this repo:
 
 1. [Base Pi on llama.cpp](../getting-started/base-pi-on-llamacpp.md): a server, a `chat` command, and Pi answering through a private profile.
-2. [The ditch](../getting-started/ditch.md): one AgentClinic session, and a report that does not survive a check.
-3. [Make a mini harness](../getting-started/harness.md): one task in a fresh directory, scored.
-4. [Eval suites and the telemetry](../getting-started/suite.md): three AgentClinic suites, hidden graders, and the trace that explains a failure.
-5. [The worker extension](../getting-started/worker-extension.md): the vehicle, `/mellum`, before any remedy.
+2. [Working with Pi](../getting-started/working-with-pi.md): starting Pi, its tools and sessions, project trust, and the course's `/lesson` and `/remedy`.
+3. [Eval suites and the telemetry](../getting-started/suite.md): three AgentClinic suites, hidden graders, and the trace that explains a failure.
+4. [Extensions and Remedy Units](../getting-started/extensions.md): what a Pi extension and a remedy unit are, presets, and `/mellum` as one bundle.
+5. [Troubleshoot](../getting-started/troubleshoot.md): the usual causes when a step does not print what it should.
+
+The Ditch is now lesson [E1](../lessons/easy/the-ditch.md) and the mini harness
+lesson [M1](../lessons/medium/build-a-harness.md).
 
 Every command is `uv run` from the repository root. Each page ends with
 **What you have**, which is what the next step starts from, so you know a

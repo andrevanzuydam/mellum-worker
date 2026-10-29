@@ -557,6 +557,15 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- Getting Started is setup only: Base Pi on llama.cpp, a new Working With Pi
+  step (tools, sessions, slash commands, project trust, `/lesson` and
+  `/remedy`), the suites, Extensions and Remedy Units, and Troubleshoot. It
+  ends with two paths: take the lessons from S0, or go straight to The
+  Challenge, which now shows how to start from bare Pi or from a preset. The
+  Ditch is now lesson E1 and runs in an empty folder outside the repository;
+  the mini harness is lesson M1. Easy lessons are E1 to E7 and Medium M1 to
+  M10. Lesson commands no longer carry `--arm bare`, the harness default.
+
 - The project now lives at `andrevanzuydam/mellum-worker`. Install with
   `pi install git:github.com/andrevanzuydam/mellum-worker@v0.1.8`; the
   package's `repository`, the setup skill's install path, the site's GitHub

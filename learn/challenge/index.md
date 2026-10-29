@@ -62,7 +62,10 @@ record tells you which checks were missing and why.
 ## Attempt it
 
 You need the [Getting Started](../getting-started/index.md) setup: a local
-model, Pi and the harness. Then run a level, three times:
+model, Pi, and the suites. You do not need the lessons; they are a reference
+for when a run fails in a way you do not understand.
+
+**Straight from Getting Started**, run a level three times with bare Pi:
 
 ```bash
 uv run python learn/code/harness.py run --suite easy --repeat 3 --grade
@@ -71,11 +74,27 @@ uv run python learn/code/harness.py run --suite easy --repeat 3 --grade
 Bronze is `--suite easy`, Silver `--suite medium` and Gold `--suite hard`.
 Each session gets a fresh copy of the project; the summary line says how many
 of the three passed, and each session's `run.json` lists the checks it
-missed.
+missed. Then add remedies, one line at a time, from the list below, or a
+whole tier at once:
 
-To try your own improvement, change one thing (a prompt, a guard, a tool, a
-setting), run the same level again, and compare. That is exactly how every
-[lesson](../lessons/index.md) is built.
+```bash
+uv run python learn/code/harness.py run --suite medium --remedy preset:easy --repeat 3 --grade
+```
+
+**After the lessons**, start from everything the course ships, and add your
+own extension on top:
+
+```bash
+uv run python learn/code/harness.py run --suite hard --remedy preset:hard --repeat 3 --grade
+uv run python learn/code/harness.py run --suite hard --remedy preset:hard --extension path/to/yours.ts --repeat 3 --grade
+```
+
+Hard's orchestration (plan, examine, code, frozen gates) runs through
+`learn/code/flow_run.py --suite hard` instead; the
+[Hard lessons](../lessons/hard/index.md) show how.
+
+Change one thing at a time, run the same level again, and compare. That is
+exactly how every [lesson](../lessons/index.md) is built.
 
 ## Remedies you can try
 
@@ -89,19 +108,19 @@ lesson that teaches a remedy if you want to know why it works.
 
 | Pathology | Remedy unit | Lesson | Evidence | Apply it |
 | --- | --- | --- | --- | --- |
-| Starts `python app.py` in the foreground and the session hangs until its deadline | `guard/block-foreground-server`: Blocks a foreground server start and shows the background form | [E5](../lessons/easy/running-commands.md) | screen: the hang recurs in the vLLM baseline's web-app rungs; unmeasured as a remedy | `--remedy guard/block-foreground-server` |
-| Repeats the same call over and over (245 identical `ls -R` calls in one run) | `guard/break-repeat-loops`: Blocks a call made 5 times in a row with nothing changed in between | [E2](../lessons/easy/looking-around.md) | ladder: part of the guard set behind phase 2b's 15/15 | `--remedy guard/break-repeat-loops` |
+| Starts `python app.py` in the foreground and the session hangs until its deadline | `guard/block-foreground-server`: Blocks a foreground server start and shows the background form | [E6](../lessons/easy/running-commands.md) | screen: the hang recurs in the vLLM baseline's web-app rungs; unmeasured as a remedy | `--remedy guard/block-foreground-server` |
+| Repeats the same call over and over (245 identical `ls -R` calls in one run) | `guard/break-repeat-loops`: Blocks a call made 5 times in a row with nothing changed in between | [E3](../lessons/easy/looking-around.md) | ladder: part of the guard set behind phase 2b's 15/15 | `--remedy guard/break-repeat-loops` |
 | Keeps calling tools with no end, because Pi has no turn cap | `guard/cap-turns`: Blocks every call after a budget (default 200) and asks for a summary | n/a | dormant in the worker; unmeasured | `--remedy guard/cap-turns` |
-| Rewrites a whole file to change a few lines (942 lines became 2) | `guard/refuse-whole-file-rewrite`: Blocks `write` to an existing file and asks for `edit` | [E4](../lessons/easy/creating-files.md) | recorded once; dormant in the worker (its column never went non-zero) | `--remedy guard/refuse-whole-file-rewrite` |
-| Searches the whole machine (`grep -rl x /Users /var`) and hangs the run | `guard/stay-in-workspace`: Blocks a recursive search that names a path outside the workspace | [E3](../lessons/easy/searching.md) | screen: recorded hangs; searches only, writes are not covered | `--remedy guard/stay-in-workspace` |
-| Ends a turn with no reply and no tool call, part-way through the task | `nudge/nudge-empty-turn`: Restates the completion fact and asks for one more turn, at most 3 times | [M3](../lessons/medium/guards-for-empty-turns.md) | ladder: 5 of 45 v3 runs, every failure; a null on the suites (M2) | `--remedy nudge/nudge-empty-turn` |
-| Guesses how to run the tests instead of using the project's own command | `context/add-project-facts`: Appends the project facts (AGENTS.md `## Mellum`, test command) to user messages | [M1](../lessons/medium/project-facts.md) | screen: 3/3 against 2/3 on Bronze (2026-10-29); a null in the page's record | `--remedy context/add-project-facts` |
-| Reaches for tools it uses badly (subagents, todo lists) instead of reading and editing | `context/narrow-tools`: Keeps read, grep, find, ls, bash, edit and write, plus tools your units register; drops the rest | [E6](../lessons/easy/too-many-tools.md) | part of the Baseline Worker; not measured on its own | `--remedy context/narrow-tools` |
-| A long, procedural system prompt the small model follows instead of the files | `context/use-short-prompt`: Replaces the system prompt with the 643-character prompt in prompts/mellum-worker.md | [M2](../lessons/medium/short-prompt.md) | screen: 3/3 against 1/3 on Bronze (2026-10-29), 3/9 against 3/9 earlier; not decided | `--remedy context/use-short-prompt` |
-| Runs a server or watcher in the foreground and the session waits forever | `tool/background-long-commands`: Rewrites a long-running bash command to run in the background and returns its startup output | [M5](../lessons/medium/run-long-commands.md) | unit-tested; not measured on the suites | `--remedy tool/background-long-commands` |
+| Rewrites a whole file to change a few lines (942 lines became 2) | `guard/refuse-whole-file-rewrite`: Blocks `write` to an existing file and asks for `edit` | [E5](../lessons/easy/creating-files.md) | recorded once; dormant in the worker (its column never went non-zero) | `--remedy guard/refuse-whole-file-rewrite` |
+| Searches the whole machine (`grep -rl x /Users /var`) and hangs the run | `guard/stay-in-workspace`: Blocks a recursive search that names a path outside the workspace | [E4](../lessons/easy/searching.md) | screen: recorded hangs; searches only, writes are not covered | `--remedy guard/stay-in-workspace` |
+| Ends a turn with no reply and no tool call, part-way through the task | `nudge/nudge-empty-turn`: Restates the completion fact and asks for one more turn, at most 3 times | [M4](../lessons/medium/guards-for-empty-turns.md) | ladder: 5 of 45 v3 runs, every failure; a null on the suites (M3) | `--remedy nudge/nudge-empty-turn` |
+| Guesses how to run the tests instead of using the project's own command | `context/add-project-facts`: Appends the project facts (AGENTS.md `## Mellum`, test command) to user messages | [M2](../lessons/medium/project-facts.md) | screen: 3/3 against 2/3 on Bronze (2026-10-29); a null in the page's record | `--remedy context/add-project-facts` |
+| Reaches for tools it uses badly (subagents, todo lists) instead of reading and editing | `context/narrow-tools`: Keeps read, grep, find, ls, bash, edit and write, plus tools your units register; drops the rest | [E7](../lessons/easy/too-many-tools.md) | part of the Baseline Worker; not measured on its own | `--remedy context/narrow-tools` |
+| A long, procedural system prompt the small model follows instead of the files | `context/use-short-prompt`: Replaces the system prompt with the 643-character prompt in prompts/mellum-worker.md | [M3](../lessons/medium/short-prompt.md) | screen: 3/3 against 1/3 on Bronze (2026-10-29), 3/9 against 3/9 earlier; not decided | `--remedy context/use-short-prompt` |
+| Runs a server or watcher in the foreground and the session waits forever | `tool/background-long-commands`: Rewrites a long-running bash command to run in the background and returns its startup output | [M6](../lessons/medium/run-long-commands.md) | unit-tested; not measured on the suites | `--remedy tool/background-long-commands` |
 | Loses track of a long task part-way through | `tool/keep-a-plan`: Keeps a TODO.md the model writes, follows and amends on failures | n/a | unit-tested; not measured on the suites | `--remedy tool/keep-a-plan` |
-| Guesses an API it never saw (a post-cutoff library, a redirect status) | `tool/lookup-library-docs`: Adds a lookup tool over the installed packages' signatures and docs | [M6](../lessons/medium/look-it-up.md) | unit-tested; not measured on the suites | `--remedy tool/lookup-library-docs` |
-| Finishes with lint or type errors the grader counts as a fail | `check/check-code-quality`: Runs the quality checks before the model may finish | [M7](../lessons/medium/check-before-finishing.md) | unit-tested; not measured on the suites | `--remedy check/check-code-quality` |
+| Guesses an API it never saw (a post-cutoff library, a redirect status) | `tool/lookup-library-docs`: Adds a lookup tool over the installed packages' signatures and docs | [M7](../lessons/medium/look-it-up.md) | unit-tested; not measured on the suites | `--remedy tool/lookup-library-docs` |
+| Finishes with lint or type errors the grader counts as a fail | `check/check-code-quality`: Runs the quality checks before the model may finish | [M8](../lessons/medium/check-before-finishing.md) | unit-tested; not measured on the suites | `--remedy check/check-code-quality` |
 | Builds a multi-phase app in one go and breaks earlier phases | `workflow/spec-driven-flow`: Plan, frozen per-phase gates and checkpoints, as tools the agent calls (run with learn/code/flow_run.py) | [H3](../lessons/hard/plan-examine-code.md) | flow runs 2026-10-29: Bronze 4/4, Silver 18/18, Gold 30/34 (n = 1) | `learn/code/flow_run.py` |
 
 <!-- remedies:end -->

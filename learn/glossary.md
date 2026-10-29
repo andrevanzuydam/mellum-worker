@@ -294,6 +294,13 @@ The sum of the model’s output tokens in a session, from the trace usage.
 A TypeScript module exporting a default factory that registers commands,
 tools or event handlers inside the Pi process.
 
+### Project trust
+
+Pi's decision on whether to load a folder's own resources: `.pi/extensions`,
+project settings, skills and prompts. Pi asks at startup, and `/trust` saves
+the decision for later Pi processes. It decides what loads, not what a tool
+call can reach; `AGENTS.md` loads either way.
+
 ### Hook
 
 A point where an extension can observe or change a run. `pi.on` registers

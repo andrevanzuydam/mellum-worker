@@ -109,7 +109,7 @@ vanish. The hidden grade stays the oracle.
 Before, then after, on Silver:
 
 ```bash
-uv run python learn/code/harness.py run --suite medium --arm bare --remedy preset:medium --repeat 3 --grade
+uv run python learn/code/harness.py run --suite medium --remedy preset:medium --repeat 3 --grade
 uv run python learn/code/flow_run.py --suite medium --flow-mode free
 ```
 

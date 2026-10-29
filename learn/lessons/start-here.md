@@ -78,7 +78,7 @@ Run the before line (in `/lesson`, press `r` on this step's Eval case). The
 result reads `FAIL`, one line per session, with the reason: here, "the
 hidden tests failed". Each session also leaves a `run.json`: `passed`,
 `checks_ran`, `stalled` and `missing_checks` say what happened, in that
-order of importance. Lesson E1 teaches reading them in full. No arm has run,
+order of importance. Lesson E2 teaches reading them in full. No arm has run,
 so there is no n to report.
 
 ## Solution

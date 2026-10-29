@@ -1,18 +1,21 @@
 ---
 title: Eval Suites and the Telemetry
 track: getting-started
-position: 4
-prerequisites: [getting-started/harness]
+position: 3
+prerequisites: [getting-started/working-with-pi]
 authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
 # Eval Suites and the Telemetry
 
-Step 3 made one isolated run. This one runs **eval suites**: whole projects
-the model has to build, with a mission, a tech stack, a roadmap, a sequence of
-prompts, and a hidden grader. You run them, read the score, and read the trace
-to see why.
+This step runs **eval suites**: whole projects the model has to build, with a
+mission, a tech stack, a roadmap, a sequence of prompts, and a hidden grader.
+You run them through the provided harness, `learn/code/harness.py`, read the
+score, and read the trace to see why. Each session runs Pi in a fresh
+directory, isolated from your own settings. Lesson M1,
+[Build a Harness](../lessons/medium/build-a-harness.md), shows how one is
+written.
 
 ![A small robot facing three crates of increasing size beside a wall gauge](../assets/illustrations/suite.webp){ .illustration }
 

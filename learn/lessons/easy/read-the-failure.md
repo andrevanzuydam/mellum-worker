@@ -1,16 +1,16 @@
 ---
 title: Read the Failure
 tier: easy
-number: E1
+number: E2
 time: 4 min read · 20 min to run
 track: lessons
-position: 0
-prerequisites: [getting-started/suite]
+position: 1
+prerequisites: [lessons/easy/the-ditch]
 authors: [Paul Everitt, Andre van Zuydam]
 backends: [vllm]
 ---
 
-# E1 · Read the Failure
+# E2 · Read the Failure
 
 Before you fix anything, find out what actually went wrong. A failed session
 almost always shows one recognisable pathology in its trace, and each one has
@@ -87,8 +87,8 @@ Read a failed session in this order:
 **Badge:** `screen`
 
 Each failure in the table above has a row in the remedies list: the
-foreground server is E5, the empty turn is M3, a loop is E2. The missing
-module has no unit; it is what the task-shaping lessons (M8, M9) address.
+foreground server is E6, the empty turn is M4, a loop is E3. The missing
+module has no unit; it is what the task-shaping lessons (M9, M10) address.
 
 ## Interpretation
 
@@ -100,7 +100,7 @@ check missing for a reason that has nothing to do with the checks.
 ### Run it yourself
 
 ```bash
-uv run python learn/code/harness.py run --suite easy --arm bare --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --repeat 3 --grade
 ```
 
 !!! success "Key points"

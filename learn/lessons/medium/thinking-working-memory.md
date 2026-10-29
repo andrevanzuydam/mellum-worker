@@ -1,16 +1,16 @@
 ---
 title: Thinking Is Working Memory
 tier: medium
-number: M4
+number: M5
 time: 4 min read · about 1 h to run
 track: lessons
-position: 3
+position: 4
 prerequisites: [lessons/medium/guards-for-empty-turns]
 authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# M4 · Thinking Is Working Memory
+# M5 · Thinking Is Working Memory
 
 A reasoning model writes before it answers, and stripping that reasoning from
 later requests looks like a cheaper prefill. The worker keeps it: the output
@@ -48,7 +48,7 @@ Keeping reasoning is a worker default, not a remedy unit, so this lesson's
 before and after are the harness's two arms rather than a `--remedy` line.
 **Before:** `--arm strip-thinking`, the worker with `MELLUM_STRIP_THINKING=1`.
 **After:** `--arm worker`, which keeps every earlier block. Both arms carry
-the facts, the short prompt and the nudge that M1 to M3 add. The run this page wants is Bronze and
+the facts, the short prompt and the nudge that M2 to M4 add. The run this page wants is Bronze and
 Silver, three sessions each; it has not been run.
 
 ## Evidence of the problem

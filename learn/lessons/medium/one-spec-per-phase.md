@@ -1,16 +1,16 @@
 ---
 title: One Spec per Phase
 tier: medium
-number: M8
+number: M9
 time: 5 min read · 120 min to run
 track: lessons
-position: 7
+position: 8
 prerequisites: [lessons/medium/check-before-finishing]
 authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# M8 · One Spec per Phase
+# M9 · One Spec per Phase
 
 A phased build can carry its requirements in one joined spec or one file per
 phase; the worry is that joined loses the last phase. This lesson changes only
@@ -138,8 +138,8 @@ three sessions per arm on a task above the pass floor.
 Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suite medium --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs,check/check-code-quality --specs joined --repeat 3 --grade --deadline 2700
-uv run python learn/code/harness.py run --suite medium --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs,check/check-code-quality --specs split --repeat 3 --grade --deadline 2700
+uv run python learn/code/harness.py run --suite medium --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs,check/check-code-quality --specs joined --repeat 3 --grade --deadline 2700
+uv run python learn/code/harness.py run --suite medium --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs,check/check-code-quality --specs split --repeat 3 --grade --deadline 2700
 ```
 
 !!! success "Key points"

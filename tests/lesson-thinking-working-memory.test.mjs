@@ -17,7 +17,7 @@ test("the third findings lesson follows the six steps and names its badge", () =
   assert.match(l, /^### Evidence of the solution$/m);
   assert.match(l, /weakest badge is `conjecture`/);
   assert.match(l, /^track: lessons$/m);
-  assert.match(l, /^position: 3$/m);
+  assert.match(l, /^position: 4$/m);
   assert.match(l, /^backends: \[llamacpp\]$/m);
 });
 

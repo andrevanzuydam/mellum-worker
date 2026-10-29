@@ -1,16 +1,16 @@
 ---
 title: Running Commands
 tier: easy
-number: E5
+number: E6
 time: 3 min read · 20 min to run
 track: lessons
-position: 4
+position: 5
 prerequisites: [lessons/easy/creating-files]
 authors: [Andre van Zuydam]
 backends: [vllm]
 ---
 
-# E5 · Running Commands
+# E6 · Running Commands
 
 The bash tool lets the model run anything, including the app it just built, and a server started in the foreground never returns, so the session hangs until its deadline. One guard refuses a foreground server and shows the background form.
 
@@ -90,8 +90,8 @@ The weakest badge is `screen`: the stall is measured (four of nine bare sessions
 Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite --repeat 3 --grade
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite,guard/block-foreground-server --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite,guard/block-foreground-server --repeat 3 --grade
 ```
 
 !!! success "Key points"

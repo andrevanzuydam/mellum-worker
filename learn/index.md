@@ -42,10 +42,11 @@ eval harness. After that, any [lesson](lessons/index.md) stands alone and lists 
 
     ---
 
-    Set up a local model and build an eval harness, in a fixed order: from
+    Set up a local model and Pi, in a fixed order: from
     [base Pi on llama.cpp](getting-started/base-pi-on-llamacpp.md) through
-    [the ditch](getting-started/ditch.md) to
-    [eval suites](getting-started/suite.md).
+    [working with Pi](getting-started/working-with-pi.md) to
+    [eval suites](getting-started/suite.md). Then take the lessons, or go
+    straight to The Challenge.
 
 -   **[Lessons](lessons/index.md)**
 

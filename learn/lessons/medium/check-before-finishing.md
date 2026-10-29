@@ -1,16 +1,16 @@
 ---
 title: Check Before Finishing
 tier: medium
-number: M7
+number: M8
 time: 3 min read · 20 min to run
 track: lessons
-position: 6
+position: 7
 prerequisites: [lessons/medium/look-it-up]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---
 
-# M7 · Check Before Finishing
+# M8 · Check Before Finishing
 
 A small model can declare itself done over code with real errors in it: a
 function defined twice, a name left undefined after a rename. One unit runs
@@ -98,8 +98,8 @@ to show.
 Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs --repeat 3 --grade
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs,check/check-code-quality --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs,check/check-code-quality --repeat 3 --grade
 ```
 
 !!! success "Key points"

@@ -10,9 +10,9 @@ const ROOT = new URL("..", import.meta.url).pathname;
 test("the track lists Start Here, then every lesson in order: Easy, Medium, Hard, by number", async () => {
 	const { lessonIndex } = await tutor();
 	const ids = lessonIndex(ROOT).map((l) => l.number);
-	assert.equal(ids.length, 24);
+	assert.equal(ids.length, 26);
 	assert.deepEqual(ids.slice(0, 4), ["S0", "E1", "E2", "E3"]);
-	assert.equal(ids[7], "M1");
+	assert.equal(ids[8], "M1");
 	assert.equal(ids.at(-1), "H8");
 });
 

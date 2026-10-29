@@ -40,7 +40,7 @@ test("the page states what it is not", () => {
 });
 
 test("the ditch links the page, not the backlog placeholder", () => {
-  const ditch = page("getting-started/ditch.md");
-  assert.match(ditch, /\]\(\.\.\/pathologies\.md\)/);
+  const ditch = page("lessons/easy/the-ditch.md");
+  assert.match(ditch, /\]\((\.\.\/)+pathologies\.md\)/);
   assert.doesNotMatch(ditch, /BACKLOG\.md#pathologies-page/);
 });

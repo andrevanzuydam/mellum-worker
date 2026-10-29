@@ -1,16 +1,16 @@
 ---
 title: Creating Files
 tier: easy
-number: E4
+number: E5
 time: 3 min read · 20 min to run
 track: lessons
-position: 3
+position: 4
 prerequisites: [lessons/easy/searching]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---
 
-# E4 · Creating Files
+# E5 · Creating Files
 
 A small model asked to change a few lines sometimes calls the write tool, which replaces the whole file, and everything else in it is gone. One guard refuses write on a file that exists and points the model to edit instead.
 
@@ -82,8 +82,8 @@ The weakest badge is `conjecture`: the failure is recorded once and rare on curr
 Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy guard/break-repeat-loops,guard/stay-in-workspace --repeat 3 --grade
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy guard/break-repeat-loops,guard/stay-in-workspace --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite --repeat 3 --grade
 ```
 
 !!! success "Key points"

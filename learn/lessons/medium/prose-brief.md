@@ -1,16 +1,16 @@
 ---
 title: Steps, Not One Brief
 tier: medium
-number: M9
+number: M10
 time: 5 min read · 100 min to run
 track: lessons
-position: 8
+position: 9
 prerequisites: [lessons/medium/one-spec-per-phase]
 authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# M9 · Steps, Not One Brief
+# M10 · Steps, Not One Brief
 
 A four-phase build handed over as one joined brief finished faster and cheaper,
 and left a project the checks could not open in all three sessions. Sent as
@@ -127,8 +127,8 @@ upgrade this: a one-brief session whose checks run, and a second task family.
 Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suite medium --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs,check/check-code-quality --specs split --single-prompt --repeat 3 --grade --deadline 2700
-uv run python learn/code/harness.py run --suite medium --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs,check/check-code-quality --specs split --repeat 3 --grade --deadline 2700
+uv run python learn/code/harness.py run --suite medium --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs,check/check-code-quality --specs split --single-prompt --repeat 3 --grade --deadline 2700
+uv run python learn/code/harness.py run --suite medium --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs,check/check-code-quality --specs split --repeat 3 --grade --deadline 2700
 ```
 
 !!! success "Key points"

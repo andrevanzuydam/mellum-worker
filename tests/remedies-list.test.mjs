@@ -16,8 +16,8 @@ test("a unit with a lesson links that lesson's page, relative to the page the li
 	const units = await listUnits();
 	const fromChallenge = renderTable(units, "learn/challenge/index.md");
 	const fromLessons = renderTable(units, "learn/lessons/index.md");
-	assert.match(fromChallenge, /\[M1\]\(\.\.\/lessons\/medium\/project-facts\.md\)/);
-	assert.match(fromLessons, /\[M1\]\(medium\/project-facts\.md\)/);
+	assert.match(fromChallenge, /\[M2\]\(\.\.\/lessons\/medium\/project-facts\.md\)/);
+	assert.match(fromLessons, /\[M2\]\(medium\/project-facts\.md\)/);
 	assert.match(fromChallenge, /`--remedy context\/add-project-facts`/);
 });
 

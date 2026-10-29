@@ -18,10 +18,10 @@ const PAGES = [
   "getting-started/index.md",
   "getting-started/base-pi-on-llamacpp.md",
   "getting-started/troubleshoot.md",
-  "getting-started/ditch.md",
-  "getting-started/harness.md",
+  "getting-started/working-with-pi.md",
   "getting-started/suite.md",
-  "getting-started/worker-extension.md",
+  "getting-started/extensions.md",
+  "lessons/start-here.md",
   "lessons/index.md",
   ...["easy", "medium", "hard"].flatMap((tier) =>
     readdirSync(resolve(ROOT, "learn/lessons", tier))
@@ -129,7 +129,7 @@ test("the home page links the Introduction and counts five lessons", () => {
 });
 
 test("the ditch drops author notes and states why it checked Python", () => {
-  const l = page("getting-started/ditch.md");
+  const l = page("lessons/easy/the-ditch.md");
   assert.doesNotMatch(l, /^music:/m);
   assert.doesNotMatch(l, /^notes:/m);
   assert.match(l, /model chose Python|chose Python in this run/);
@@ -172,9 +172,9 @@ test("the project pages orient a maintainer and name the checks", () => {
     assert.ok(toolchain.includes(text), `toolchain lacks ${text}`);
 });
 
-test("lesson 2 explains isolation and the one command", () => {
-  const l = page("getting-started/harness.md");
-  assert.match(l, /^track: getting-started$/m);
+test("Build a Harness explains isolation and the one command", () => {
+  const l = page("lessons/medium/build-a-harness.md");
+  assert.match(l, /^track: lessons$/m);
   const order = ["fresh directory", "harness.py run --suite easy",
     "n=1", "--repeat 3"];
   let at = -1;
@@ -187,7 +187,7 @@ test("lesson 2 explains isolation and the one command", () => {
     "sessions passed", "not a rate", "temperature 1.0", "top_p 0.95",
     "top_k 20", "max_tokens 16384", "context 50000"])
     assert.ok(l.toLowerCase().includes(text), `lesson 2 lacks ${text}`);
-  assert.match(page("getting-started/index.md"), /harness\.md/);
+  assert.match(page("lessons/medium/index.md"), /build-a-harness\.md/);
 });
 
 test("lesson 3 runs the suite, grading and the trace", () => {
@@ -238,21 +238,35 @@ test("the lesson template asks for evidence and records the conventions", () => 
 });
 
 test("the ditch shows a claim that did not survive a check", () => {
-  const l = page("getting-started/ditch.md");
+  const l = page("lessons/easy/the-ditch.md");
   for (const text of ["Build AgentClinic", "26 requests", "errors=4",
     "unrecognized arguments", "n = 1", "Before fixing, get evidence"])
     assert.ok(l.includes(text), `the ditch lacks ${text}`);
-  assert.match(page("getting-started/index.md"), /ditch\.md/);
+  assert.match(page("lessons/easy/index.md"), /the-ditch\.md/);
 });
 
-test("the worker-extension lesson teaches the extension mechanism", () => {
-  const l = page("getting-started/worker-extension.md");
+test("the extensions page teaches the extension mechanism and remedy units", () => {
+  const l = page("getting-started/extensions.md");
   for (const text of ["A Pi extension", "registerCommand", "pi.on",
-    "before_provider_request", "tool_call", "agent_before_settle", "context",
-    "callback", "/mellum", "runaway search"])
-    assert.ok(l.toLowerCase().includes(text.toLowerCase()), `worker lesson lacks ${text}`);
+    "before_provider_request", "tool_call", "agent_before_settle", "registerTool",
+    "context", "callback", "/mellum", "runaway search", "remedies/<kind>/",
+    "meta", "remedies/presets/", "preset:easy", "--remedy", "--extension",
+    "/remedy", "baseline-worker"])
+    assert.ok(l.toLowerCase().includes(text.toLowerCase()), `extensions page lacks ${text}`);
   assert.doesNotMatch(l, /assert True|Run it on the ditch|n = 1/);
-  assert.match(page("getting-started/index.md"), /worker-extension\.md/);
+  assert.match(page("getting-started/index.md"), /extensions\.md/);
+});
+
+test("Working With Pi covers the basics and the course's two commands", () => {
+  const l = page("getting-started/working-with-pi.md");
+  for (const text of ["/quit", "Ctrl+D", "Shift+Enter", "Escape", "read", "bash",
+    "edit", "write", "grep", "find", "ls", "Ctrl+O", "pi --continue", "/resume",
+    "/tree", "/fork", "/model", "/trust", ".pi/extensions", "/lesson", "/lesson S0",
+    "/remedy on guard/break-repeat-loops", "/remedy off", "/remedy preset:easy",
+    "remedies: N on"])
+    assert.ok(l.includes(text), `Working With Pi lacks ${text}`);
+  assert.match(page("getting-started/index.md"), /working-with-pi\.md/);
+  assert.match(page("getting-started/base-pi-on-llamacpp.md"), /\(working-with-pi\.md\)/);
 });
 
 test("the second findings lesson follows the six steps and names its badge", () => {
@@ -286,13 +300,13 @@ test("reference-run is earned on the suites, not the ladder", () => {
 });
 
 test("the harness is the measured instrument", () => {
-  const harness = page("getting-started/harness.md");
+  const harness = page("lessons/medium/build-a-harness.md");
   assert.doesNotMatch(harness, /`ladder\/` is the measured instrument/);
   assert.doesNotMatch(harness, /do not replace `docs\/ladder\/`/);
   assert.match(harness, /`learn\/code\/harness\.py` is the measured instrument/);
   assert.doesNotMatch(page("project/index.md"), /\*\*The ladder\*\*/);
   assert.match(page("project/toolchain.md"), /Measured work lands in `docs\/superpowers\/research\/`/);
-  assert.doesNotMatch(page("getting-started/harness.md"), /ladder is the measuring/);
+  assert.doesNotMatch(page("lessons/medium/build-a-harness.md"), /ladder is the measuring/);
   assert.doesNotMatch(page("getting-started/suite.md"), /Rates come from the ladder/);
   assert.doesNotMatch(page("getting-started/suite.md"), /The ladder is the measuring instrument/);
 });
@@ -301,7 +315,7 @@ test("the run record groups the failed checks by module", () => {
   const suite = page("getting-started/suite.md");
   assert.match(suite, /grader module/);
   assert.match(suite, /missing_checks|expected tests that did not pass/);
-  const harness = page("getting-started/harness.md");
+  const harness = page("lessons/medium/build-a-harness.md");
   assert.match(harness, /--specs joined\|split/);
   assert.match(harness, /spec-variants|spec variant/);
   const entry = page("glossary.md").split("### Failed checks")[1].split("###")[0];

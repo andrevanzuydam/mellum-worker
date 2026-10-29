@@ -108,7 +108,7 @@ Before, then after, on Silver. Point `flow_run.py` at your server with
 `--base-url` and `--model` if it differs from the defaults.
 
 ```bash
-uv run python learn/code/harness.py run --suite medium --arm bare --remedy preset:medium --repeat 3 --grade
+uv run python learn/code/harness.py run --suite medium --remedy preset:medium --repeat 3 --grade
 uv run python learn/code/flow_run.py --suite medium
 ```
 

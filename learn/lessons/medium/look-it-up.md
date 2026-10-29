@@ -1,16 +1,16 @@
 ---
 title: Look It Up
 tier: medium
-number: M6
+number: M7
 time: 3 min read · 20 min to run
 track: lessons
-position: 5
+position: 6
 prerequisites: [lessons/medium/run-long-commands]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---
 
-# M6 · Look It Up
+# M7 · Look It Up
 
 A small model writes the API it remembers, and some APIs it never saw: a
 library newer than its training, a default it has wrong. One unit adds a
@@ -97,8 +97,8 @@ grade.
 Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands --repeat 3 --grade
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs --repeat 3 --grade
 ```
 
 !!! success "Key points"

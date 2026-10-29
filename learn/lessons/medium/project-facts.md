@@ -1,16 +1,16 @@
 ---
 title: Tell It How to Test
 tier: medium
-number: M1
+number: M2
 time: 4 min read · 45 min to run
 track: lessons
-position: 0
-prerequisites: [lessons/easy/too-many-tools]
+position: 1
+prerequisites: [lessons/medium/build-a-harness]
 authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# M1 · Tell It How to Test
+# M2 · Tell It How to Test
 
 A small model dropped into a workspace has to guess how the project is tested,
 and a plausible guess survives several turns. One unit appends the project's
@@ -58,7 +58,7 @@ All three `no-facts` sessions failed, and all three ended the same way: a
 foreground server command with no result after it, then silence until the
 harness killed the child at 600 s. The bullet they did not receive is
 `- Do not: start servers`. That is a lead, not a finding: n = 3 on one machine,
-and the same pathology is what [E5](../easy/running-commands.md) answers with a
+and the same pathology is what [E6](../easy/running-commands.md) answers with a
 guard.
 
 ## Solution
@@ -139,8 +139,8 @@ the lesson's own challenge, where the test command cannot be guessed.
 Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy preset:easy --repeat 3 --grade
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy preset:easy,context/add-project-facts --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy preset:easy --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy preset:easy,context/add-project-facts --repeat 3 --grade
 ```
 
 !!! success "Key points"

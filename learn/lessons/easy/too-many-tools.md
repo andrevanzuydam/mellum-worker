@@ -1,16 +1,16 @@
 ---
 title: Too Many Tools
 tier: easy
-number: E6
+number: E7
 time: 3 min read · 20 min to run
 track: lessons
-position: 5
+position: 6
 prerequisites: [lessons/easy/running-commands]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---
 
-# E6 · Too Many Tools
+# E7 · Too Many Tools
 
 Every installed extension can add tools, and a small model offered many reaches for ones it uses badly. One context unit offers it only the seven it needs, and with it the Easy tier is complete.
 
@@ -82,8 +82,8 @@ The weakest badge is `conjecture`: no record separates it on its own. On a bare 
 Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite,guard/block-foreground-server --repeat 3 --grade
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite,guard/block-foreground-server,context/narrow-tools --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite,guard/block-foreground-server --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite,guard/block-foreground-server,context/narrow-tools --repeat 3 --grade
 ```
 
 !!! success "Key points"

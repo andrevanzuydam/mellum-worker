@@ -75,15 +75,19 @@ subject = "the small robot with a little backpack at the start of a winding path
 seed = 602
 subject = "the small robot setting up a laptop on a desk, a small llama figurine standing next to the laptop, a cable running to a tiny server box"
 
-[ditch]
+[the-ditch]
 seed = 6031
 subject = "the small robot sitting in a little car that has tipped nose-first into a grassy ditch beside a road, the robot grinning and raising one arm, a white speech bubble above the robot containing only the word \"Success!\" in clear bold letters"
 style = "flat vector illustration, muted teal and coral palette with soft grey, clean white background, simple rounded shapes, a small friendly teal robot as the main character, plenty of white space, the only text in the image is the word Success! in the speech bubble"
 negative = "any other text, extra letters, misspelled words, numbers, watermark, logo, photo, realistic, gradient, clutter"
 
-[harness]
+[build-a-harness]
 seed = 604
 subject = "the small robot working inside a clean glass test box on a table, a mechanical arm outside the box holding a clipboard and a stopwatch"
+
+[working-with-pi]
+seed = 351
+subject = "the small robot sitting at a desk typing on a keyboard in front of a large terminal window with a blinking cursor, a few small folder shapes and a little wrench resting beside the keyboard"
 
 [suite]
 seed = 605

@@ -295,15 +295,20 @@ harness, with every claim labelled by the evidence behind it:
 1. [Base Pi on llama.cpp](learn/getting-started/base-pi-on-llamacpp.md) —
    install `uv`, llama.cpp and the Mellum weights, chat, and get an answer
    from base Pi.
-2. [The ditch](learn/getting-started/ditch.md) — one open-ended AgentClinic
-   session, and a final report that does not survive being checked.
-3. [Make a mini harness](learn/getting-started/harness.md) — one task, one
-   fresh directory, one score line.
-4. [Eval suites and the telemetry](learn/getting-started/suite.md) — three
+2. [Working with Pi](learn/getting-started/working-with-pi.md) — starting
+   Pi, its tools and sessions, project trust, and the course's `/lesson` and
+   `/remedy` commands.
+3. [Eval suites and the telemetry](learn/getting-started/suite.md) — three
    AgentClinic suites with hidden graders and known-good/broken qualification,
    graded with `ruff`, `pyrefly` and `complexipy`, and read from the trace.
-5. [The worker extension](learn/getting-started/worker-extension.md) — what a
-   Pi extension is, and `/mellum` as the vehicle the remedies improve.
+4. [Extensions and Remedy Units](learn/getting-started/extensions.md) — what a
+   Pi extension and a remedy unit are, presets, and `/mellum` as one bundle.
+5. [Troubleshoot](learn/getting-started/troubleshoot.md).
+
+From there, take the lessons, starting with
+[S0 Start Here](learn/lessons/start-here.md) and
+[E1 The Ditch](learn/lessons/easy/the-ditch.md), or go straight to
+[The Challenge](learn/challenge/index.md).
 
 All findings lessons are in [Lessons](learn/lessons/index.md). The site builds on
 pull requests and deploys to GitHub Pages from `main`

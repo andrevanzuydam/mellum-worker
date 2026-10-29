@@ -1,16 +1,16 @@
 ---
 title: Nudge an Empty Turn
 tier: medium
-number: M3
+number: M4
 time: 4 min read · 60 min to run
 track: lessons
-position: 2
+position: 3
 prerequisites: [lessons/medium/short-prompt]
 authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# M3 · Nudge an Empty Turn
+# M4 · Nudge an Empty Turn
 
 A small model can end a turn having said nothing and called no tool, part-way
 through the task, and the session stops there. One unit answers that empty
@@ -131,8 +131,8 @@ column.
 Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt --repeat 3 --grade
-uv run python learn/code/harness.py run --suite easy --arm bare --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy preset:easy,context/add-project-facts,context/use-short-prompt --repeat 3 --grade
+uv run python learn/code/harness.py run --suite easy --remedy preset:easy,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn --repeat 3 --grade
 ```
 
 !!! success "Key points"
