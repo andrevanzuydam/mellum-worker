@@ -114,7 +114,11 @@ things a mini one leaves out:
   import?), the failed checks, `stalled`, the arm and remedies.
 - **Bounds.** A deadline (600 seconds by default) ends a session, and
   `--stall SECONDS` ends one whose single tool call has run that long with no
-  result, a foreground server. Your mini harness waits forever.
+  result, a foreground server. Your mini harness waits forever. When this
+  lesson's own `--suite easy` ran bare in the 2026-10-29 local 6-bit MLX smoke
+  ([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/ladder/2026-10-29-local-lessons-smoke/README.md)),
+  the cutoff did exactly that: two of three sessions ended on a `uvicorn` call
+  that never returned (see [M6](run-long-commands-safely.md)).
 - **Clean-up and tamper checks.** It ends every process the session left
   behind, and marks a run whose grader files the model touched.
 - **Several prompts, one session.** A task holds one prompt (`task.md`) or

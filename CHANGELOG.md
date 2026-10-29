@@ -6,6 +6,15 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- Four lessons and the server pathology now cite the 2026-10-29 local 6-bit
+  MLX runs: the foreground-server stall reproduced on a second host and
+  quantization (two of three bare `build-a-harness` sessions stalled on
+  `uvicorn`), from the lessons smoke
+  (`docs/ladder/2026-10-29-local-lessons-smoke/`, 32/36 graded) and the 6-bit
+  ladder baseline (`docs/ladder/2026-10-29-local-mellum-baseline/`, 21/36 vs the
+  pinned BF16 26/36). M6, E6, E2, M1 and `pathologies.md` updated; badges held
+  at `screen`/`conjecture` (the runs are n = 1/n = 3 screens).
+
 - The Running Commands lesson check, revision 2, recorded with revision 1
   (`docs/ladder/2026-10-29-running-commands-check/`): a challenge that makes
   every session start a server. Without the guard the model backgrounded it

@@ -47,7 +47,7 @@ yet, so for now both run on Bronze.
 
 **Badge:** `screen`
 
-The most common failure on the vLLM host: in nine bare sessions on 2026-10-29, four stalled on `python app.py` or `uvicorn … --reload`, and three of those failed. The harness's 120-second stall cutoff is what ended them; without it each would have burned its whole deadline.
+The most common failure on the vLLM host: in nine bare sessions on 2026-10-29, four stalled on `python app.py` or `uvicorn … --reload`, and three of those failed. The harness's 120-second stall cutoff is what ended them; without it each would have burned its whole deadline. The same stall reappeared on a second host: in the 2026-10-29 local 6-bit MLX lessons smoke ([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/ladder/2026-10-29-local-lessons-smoke/README.md)), two of the three bare `build-a-harness` sessions hit the cutoff on `uvicorn`, one cycling ports 8000, 8001 and 8002.
 
 ## Solution
 
@@ -100,4 +100,5 @@ uv run python learn/code/harness.py run --suite easy --remedy guard/break-repeat
 
     - `bash` waits for a command to finish, and a server never does.
     - On the vLLM host, a foreground server stalled four of nine bare sessions.
+    - It recurred on the local 6-bit MLX host, stalling two of three bare `build-a-harness` sessions.
     - `guard/block-foreground-server` refuses the start and shows the background form.

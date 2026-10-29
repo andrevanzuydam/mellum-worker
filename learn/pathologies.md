@@ -78,10 +78,13 @@ scoreboard.
 8. **A server nobody can stop.** The model starts `uvicorn` in the foreground to
    check its work, the call never returns, and the session burns its whole
    deadline waiting. **Seen:** three `no-facts` sessions that went silent for
-   143–460 s, two of three `bare` Bronze sessions, and LC.19's first two attempts
+   143–460 s, two of three `bare` Bronze sessions, LC.19's first two attempts,
+   and, on the local 6-bit MLX host, two of three bare `build-a-harness` sessions
+   (2026-10-29 smoke)
    ([screen](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-24-project-facts-screen.md),
    [run](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson1-run.md),
-   [attempts](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson10-run.md)).
+   [attempts](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson10-run.md),
+   [6-bit](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/ladder/2026-10-29-local-lessons-smoke/README.md)).
    **Answer:** a brief that names the check (`pytest`, `TestClient`) stops it
    at the source; the dormant guard refuses the call when it appears, at the
    cost of retries.

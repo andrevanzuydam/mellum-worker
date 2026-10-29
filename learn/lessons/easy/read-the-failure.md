@@ -92,8 +92,11 @@ module has no unit; it is what the task-shaping lessons (M9, M10) address.
 
 ## Interpretation
 
-The weakest badge is `screen`: nine sessions on one host. What transfers is
-the habit, not the counts: read `checks_ran` and `stalled` before
+The weakest badge is `screen`: nine sessions on one host — though the
+foreground-server stall also showed on a second, the 2026-10-29 local 6-bit MLX
+lessons smoke
+([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/ladder/2026-10-29-local-lessons-smoke/README.md)).
+What transfers is the habit, not the counts: read `checks_ran` and `stalled` before
 `failed_checks`, because a session whose checks never ran reports every
 check missing for a reason that has nothing to do with the checks.
 

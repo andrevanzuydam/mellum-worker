@@ -55,9 +55,13 @@ so for now both run on Bronze.
 The hang is recorded. In the nine bare sessions of 2026-10-29 on the vLLM
 host, four named a foreground server in `stalled` (see
 [E2](../easy/read-the-failure.md)), and all three facts-off sessions in
-[M2](tell-it-how-to-test.md) ended in one. The Easy tier's guard,
-`guard/block-foreground-server`, refuses the start; this unit lets the command
-run instead.
+[M2](tell-it-how-to-test.md) ended in one. It reproduced on a second host and
+quantization: in the 2026-10-29 local 6-bit MLX lessons smoke
+([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/ladder/2026-10-29-local-lessons-smoke/README.md)),
+two of the three bare `build-a-harness` sessions hit the 120-second cutoff on
+`uvicorn main:app …`, one cycling ports 8000, 8001 and 8002. The Easy tier's
+guard, `guard/block-foreground-server`, refuses the start; this unit lets the
+command run instead.
 
 ## Solution
 
