@@ -5,7 +5,7 @@ number: M7
 time: 3 min read · 20 min to run
 track: lessons
 position: 6
-prerequisites: [lessons/medium/run-long-commands]
+prerequisites: [lessons/medium/run-long-commands-safely]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---

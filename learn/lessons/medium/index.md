@@ -16,35 +16,35 @@ After M10 you have `preset:medium`, where Hard starts.
     Write a mini harness that runs Pi in a fresh folder and scores it.
     You build the instrument that measures every remedy.
 
--   **[M2 · Tell It How to Test](project-facts.md)**
+-   **[M2 · Tell It How to Test](tell-it-how-to-test.md)**
 
     ---
 
     The project's own test command, in every request.
     Adds `context/add-project-facts`.
 
--   **[M3 · A Short Prompt](short-prompt.md)**
+-   **[M3 · A Short Prompt](a-short-prompt.md)**
 
     ---
 
     A 643-character prompt in place of a procedure.
     Adds `context/use-short-prompt`.
 
--   **[M4 · Nudge an Empty Turn](guards-for-empty-turns.md)**
+-   **[M4 · Nudge an Empty Turn](nudge-an-empty-turn.md)**
 
     ---
 
     A turn that ends with nothing, part-way through.
     Adds `nudge/nudge-empty-turn`.
 
--   **[M5 · Thinking Is Working Memory](thinking-working-memory.md)**
+-   **[M5 · Thinking Is Working Memory](thinking-is-working-memory.md)**
 
     ---
 
     What happens when earlier reasoning is dropped.
     Keeps reasoning, the default.
 
--   **[M6 · Run Long Commands Safely](run-long-commands.md)**
+-   **[M6 · Run Long Commands Safely](run-long-commands-safely.md)**
 
     ---
 
@@ -72,7 +72,7 @@ After M10 you have `preset:medium`, where Hard starts.
     How the brief is laid out: one spec file per phase.
     Task shaping, `--specs split`.
 
--   **[M10 · Steps, Not One Brief](prose-brief.md)**
+-   **[M10 · Steps, Not One Brief](steps-not-one-brief.md)**
 
     ---
 

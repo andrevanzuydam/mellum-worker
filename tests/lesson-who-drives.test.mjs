@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
-const l = readFileSync(resolve(import.meta.dirname, "..", "learn/lessons/hard/primary-agent.md"), "utf8");
+const l = readFileSync(resolve(import.meta.dirname, "..", "learn/lessons/hard/who-drives.md"), "utf8");
 const section = (h) => l.split(`## ${h}`)[1].split(/\n## /)[0];
 
 test("lesson 1 opens with the two-sentence paragraph", () => {

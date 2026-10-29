@@ -10,7 +10,7 @@ Five steps, done in order, from a clone of this repo:
 
 1. [Base Pi on llama.cpp](../getting-started/base-pi-on-llamacpp.md): a server, a `chat` command, and Pi answering through a private profile.
 2. [Working with Pi](../getting-started/working-with-pi.md): starting Pi, its tools and sessions, project trust, and the course's `/lesson` and `/remedy`.
-3. [Eval suites and the telemetry](../getting-started/suite.md): three AgentClinic suites, hidden graders, and the trace that explains a failure.
+3. [Eval suites and the telemetry](../getting-started/eval-suites.md): three AgentClinic suites, hidden graders, and the trace that explains a failure.
 4. [Extensions and Remedy Units](../getting-started/extensions.md): what a Pi extension and a remedy unit are, presets, and `/mellum` as one bundle.
 5. [Troubleshoot](../getting-started/troubleshoot.md): the usual causes when a step does not print what it should.
 

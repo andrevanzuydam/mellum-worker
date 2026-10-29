@@ -5,7 +5,7 @@ number: M4
 time: 4 min read · 60 min to run
 track: lessons
 position: 3
-prerequisites: [lessons/medium/short-prompt]
+prerequisites: [lessons/medium/a-short-prompt]
 authors: [Paul Everitt]
 backends: [llamacpp]
 ---
@@ -29,7 +29,7 @@ turn with a short nudge, at most three times.
     - Tell the empty turn it answers (`stop`) from the ones it does not (`error`, `length`).
     - Read the `Nudges` fire count before the pass count.
 
-![A small robot with an empty speech bubble being tapped on the shoulder by a guard](../../assets/illustrations/guards-for-empty-turns.webp){ .illustration }
+![A small robot with an empty speech bubble being tapped on the shoulder by a guard](../../assets/illustrations/nudge-an-empty-turn.webp){ .illustration }
 
 ## Problem
 

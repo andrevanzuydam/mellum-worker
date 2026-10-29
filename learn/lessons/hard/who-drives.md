@@ -5,7 +5,7 @@ number: H1
 time: 4 min read · about 2 h to run
 track: lessons
 position: 0
-prerequisites: [lessons/medium/prose-brief]
+prerequisites: [lessons/medium/steps-not-one-brief]
 authors: [Paul Everitt, Andre van Zuydam]
 backends: [llamacpp]
 ---
@@ -29,7 +29,7 @@ plan and the verdict stay outside it.
     - Read a null pass count and a floor for what they do and do not show.
     - Compare the cost of failing, not only the pass count.
 
-![A large robot juggling many tools beside a small robot focused on one task](../../assets/illustrations/primary-agent.webp){ .illustration }
+![A large robot juggling many tools beside a small robot focused on one task](../../assets/illustrations/who-drives.webp){ .illustration }
 
 ## Problem
 

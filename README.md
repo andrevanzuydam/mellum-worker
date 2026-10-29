@@ -298,7 +298,7 @@ harness, with every claim labelled by the evidence behind it:
 2. [Working with Pi](learn/getting-started/working-with-pi.md) — starting
    Pi, its tools and sessions, project trust, and the course's `/lesson` and
    `/remedy` commands.
-3. [Eval suites and the telemetry](learn/getting-started/suite.md) — three
+3. [Eval suites and the telemetry](learn/getting-started/eval-suites.md) — three
    AgentClinic suites with hidden graders and known-good/broken qualification,
    graded with `ruff`, `pyrefly` and `complexipy`, and read from the trace.
 4. [Extensions and Remedy Units](learn/getting-started/extensions.md) — what a

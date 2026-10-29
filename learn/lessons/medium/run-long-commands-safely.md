@@ -5,7 +5,7 @@ number: M6
 time: 3 min read · 20 min to run
 track: lessons
 position: 5
-prerequisites: [lessons/medium/thinking-working-memory]
+prerequisites: [lessons/medium/thinking-is-working-memory]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---
@@ -28,7 +28,7 @@ lets the command run in the background and hands back what it printed.
     - Recognise a hung command in a trace: a call with no result, then silence.
     - Add `tool/background-long-commands` and read the output it returns instead.
 
-![A small robot with a clipboard walking away from a machine that keeps running on its own](../../assets/illustrations/run-long-commands.webp){ .illustration }
+![A small robot with a clipboard walking away from a machine that keeps running on its own](../../assets/illustrations/run-long-commands-safely.webp){ .illustration }
 
 ## Problem
 
@@ -55,7 +55,7 @@ so for now both run on Bronze.
 The hang is recorded. In the nine bare sessions of 2026-10-29 on the vLLM
 host, four named a foreground server in `stalled` (see
 [E2](../easy/read-the-failure.md)), and all three facts-off sessions in
-[M2](project-facts.md) ended in one. The Easy tier's guard,
+[M2](tell-it-how-to-test.md) ended in one. The Easy tier's guard,
 `guard/block-foreground-server`, refuses the start; this unit lets the command
 run instead.
 

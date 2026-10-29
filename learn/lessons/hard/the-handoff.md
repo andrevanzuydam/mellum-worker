@@ -5,7 +5,7 @@ number: H2
 time: 3 min read
 track: lessons
 position: 1
-prerequisites: [lessons/hard/primary-agent]
+prerequisites: [lessons/hard/who-drives]
 authors: [Paul Everitt, Andre van Zuydam]
 backends: [llamacpp]
 ---
@@ -29,7 +29,7 @@ written when the span closes, is paid for once.
     - Read how `collapseHandoffs` replaces a closed span with one block.
     - Tell a rationale with no arm apart from a measured finding.
 
-![Two robots buried in a growing paper tape, beside a single card passed by hand](../../assets/illustrations/intercom-block.webp){ .illustration }
+![Two robots buried in a growing paper tape, beside a single card passed by hand](../../assets/illustrations/the-handoff.webp){ .illustration }
 
 ## Problem
 

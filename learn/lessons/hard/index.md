@@ -10,13 +10,13 @@ have everything [The Challenge](../../challenge/index.md) needs.
 
 <div class="grid cards" markdown>
 
--   **[H1 · Who Drives](primary-agent.md)**
+-   **[H1 · Who Drives](who-drives.md)**
 
     ---
 
     The orchestrator role: a parent hands the task to the worker.
 
--   **[H2 · The Handoff](intercom-block.md)**
+-   **[H2 · The Handoff](the-handoff.md)**
 
     ---
 
@@ -29,13 +29,13 @@ have everything [The Challenge](../../challenge/index.md) needs.
     The flow's roles as tools the agent calls.
     Adds `workflow/spec-driven-flow`.
 
--   **[H4 · Frozen Gates and Checkpoints](frozen-gates.md)**
+-   **[H4 · Frozen Gates and Checkpoints](frozen-gates-and-checkpoints.md)**
 
     ---
 
     Per-phase gates the coder cannot weaken, and a revert to the last good phase.
 
--   **[H5 · Don't Trust the Self-Exit](self-exit.md)**
+-   **[H5 · Don't Trust the Self-Exit](dont-trust-the-self-exit.md)**
 
     ---
 

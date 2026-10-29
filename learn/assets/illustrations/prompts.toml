@@ -31,19 +31,19 @@ subject = "the small robot standing at a starting line on three parallel running
 seed = 202
 subject = "the small robot carefully placing paper sheets into a row of labelled folders on a shelf, one folder outside the row left closed and untouched"
 
-[project-facts]
+[tell-it-how-to-test]
 seed = 203
 subject = "the small robot at a workbench reading a small index card pinned above the bench, a wrench and a test tube on the bench"
 
-[short-prompt]
+[a-short-prompt]
 seed = 204
 subject = "the small robot holding a short folded note, while a very long paper scroll lies coiled unused on the floor beside it"
 
-[thinking-working-memory]
+[thinking-is-working-memory]
 seed = 301
 subject = "the small robot with a large thought bubble full of small gears, next to a tall glass jar being filled with coins"
 
-[guards-for-empty-turns]
+[nudge-an-empty-turn]
 seed = 302
 subject = "the small robot with an empty speech bubble while a gentle mechanical hand taps its shoulder, a looping arrow on the floor cut in the middle"
 
@@ -51,15 +51,15 @@ subject = "the small robot with an empty speech bubble while a gentle mechanical
 seed = 3031
 subject = "four plain blank paper cards laid face up in a neat row on a long wooden table, the small robot standing at the table holding up only the first card"
 
-[prose-brief]
+[steps-not-one-brief]
 seed = 304
 subject = "the small robot holding a very long letter that spills onto the floor, it has stopped reading after the first page and looks satisfied"
 
-[primary-agent]
+[who-drives]
 seed = 401
 subject = "a large busy robot juggling many tools at once beside the small robot calmly working on one task at a tidy workbench"
 
-[intercom-block]
+[the-handoff]
 seed = 402
 subject = "two robots connected by a paper tape that keeps growing into a big pile between them, versus a single small card passed hand to hand"
 
@@ -89,7 +89,7 @@ subject = "the small robot working inside a clean glass test box on a table, a m
 seed = 351
 subject = "the small robot sitting at a desk typing on a keyboard in front of a large terminal window with a blinking cursor, a few small folder shapes and a little wrench resting beside the keyboard"
 
-[suite]
+[eval-suites]
 seed = 605
 subject = "the small robot standing before three crates of increasing size stacked like steps, a round gauge with a needle mounted on the wall beside them"
 
@@ -173,7 +173,7 @@ subject = "the small robot standing still in front of a closed door with a serve
 seed = 306
 subject = "the small robot at a workbench with exactly seven neat tools laid in a row, an overflowing toolbox pushed to the far side of the bench"
 
-[run-long-commands]
+[run-long-commands-safely]
 seed = 311
 subject = "the small robot pressing a button on a small machine that keeps humming on its own in the background, the robot already walking on to the next task with a clipboard"
 
@@ -189,11 +189,11 @@ subject = "the small robot at a desk holding a magnifying glass over a finished 
 seed = 341
 subject = "three small robots in a row at three desks passing one page along: the first drawing a plan, the second holding up a blank sheet with only coloured lines and no writing, the third typing code"
 
-[frozen-gates]
+[frozen-gates-and-checkpoints]
 seed = 322
 subject = "the small robot walking along a path through a series of gates, each gate behind it closed with a small padlock, a flag planted at the last gate it passed"
 
-[self-exit]
+[dont-trust-the-self-exit]
 seed = 323
 subject = "the small robot proudly holding a small paper checkmark at a finish line, while a larger second robot at the line holds up a clipboard with a test to check it"
 

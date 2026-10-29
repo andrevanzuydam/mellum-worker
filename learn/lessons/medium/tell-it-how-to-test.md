@@ -29,7 +29,7 @@ own facts, the test command first, to every request so it does not have to.
     - Count injected requests before counting passes.
     - Recognise a null result, and a lead that is not yet a finding.
 
-![A small robot at a workbench reading an index card pinned above it](../../assets/illustrations/project-facts.webp){ .illustration }
+![A small robot at a workbench reading an index card pinned above it](../../assets/illustrations/tell-it-how-to-test.webp){ .illustration }
 
 ## Problem
 

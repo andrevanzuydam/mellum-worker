@@ -5,7 +5,7 @@ number: H5
 time: 4 min read · about 1.5 h to run
 track: lessons
 position: 4
-prerequisites: [lessons/hard/frozen-gates]
+prerequisites: [lessons/hard/frozen-gates-and-checkpoints]
 authors: [Andre van Zuydam]
 backends: [vllm]
 ---
@@ -29,7 +29,7 @@ cannot change, re-run after every stop, and hand back each failure.
     - Run the flow's free mode, where the harness, not the agent, decides done.
     - Explain why an external test alone did not reach green, and what did.
 
-![A small robot holding up its own small checkmark while a larger robot at the line checks a clipboard](../../assets/illustrations/self-exit.webp){ .illustration }
+![A small robot holding up its own small checkmark while a larger robot at the line checks a clipboard](../../assets/illustrations/dont-trust-the-self-exit.webp){ .illustration }
 
 ## Problem
 

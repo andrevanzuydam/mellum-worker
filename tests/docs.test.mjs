@@ -9,7 +9,7 @@ const read = (p) => readFileSync(resolve(ROOT, p), "utf8");
 
 test("the README links the Getting Started steps", () => {
   const readme = read("README.md");
-  for (const page of ["base-pi-on-llamacpp", "working-with-pi", "suite", "extensions"])
+  for (const page of ["base-pi-on-llamacpp", "working-with-pi", "eval-suites", "extensions"])
     assert.ok(readme.includes(`learn/getting-started/${page}.md`),
       `README lacks the ${page} lesson`);
   assert.ok(readme.includes("learn/code/harness.py run --suite all --grade"),

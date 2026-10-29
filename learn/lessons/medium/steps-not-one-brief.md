@@ -28,7 +28,7 @@ steps, the same briefs produced a runnable project every time.
     - Recognise a confident final message over a project the checks cannot import.
     - Separate an outcome the run measured from a mechanism it did not show.
 
-![A small robot that stopped after the first page of a very long letter](../../assets/illustrations/prose-brief.webp){ .illustration }
+![A small robot that stopped after the first page of a very long letter](../../assets/illustrations/steps-not-one-brief.webp){ .illustration }
 
 ## Problem
 

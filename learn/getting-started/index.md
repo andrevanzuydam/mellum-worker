@@ -9,7 +9,7 @@ each ends with a check you can run. Five steps, then two paths.
 
 1. **[Base Pi on llama.cpp](base-pi-on-llamacpp.md)**: Install `uv`, llama.cpp and the Mellum weights, and get an answer from base Pi through a private profile. Start here.
 2. **[Working With Pi](working-with-pi.md)**: Use Pi's interactive terminal: prompts, tools, sessions, project trust, and the course's `/lesson` and `/remedy` commands.
-3. **[Eval suites and the telemetry](suite.md)**: Run the Bronze, Silver and Gold suites through the provided harness, grade the model's files, and read why a run failed from its trace.
+3. **[Eval suites and the telemetry](eval-suites.md)**: Run the Bronze, Silver and Gold suites through the provided harness, grade the model's files, and read why a run failed from its trace.
 4. **[Extensions and Remedy Units](extensions.md)**: Learn what a Pi extension and a remedy unit are, how presets group units, and the two ways to switch them on.
 5. **[Troubleshooting](troubleshoot.md)**: Fix `uv` and `llama-server` when a setup step fails.
 

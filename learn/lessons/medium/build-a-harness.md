@@ -163,7 +163,7 @@ easy: PASS (n=1; run /var/folders/...; 1 request, 3 tool calls, 0 tool errors)
 default, and it is an observation, not a rate. With `--repeat 3`, each repeat
 starts from a fresh workspace; the lines are tagged `[1/3]` and the summary is
 `easy: 3/3 sessions passed`. Two or three sessions are still a lead, not a
-rate; [Eval suites and the telemetry](../../getting-started/suite.md) explains
+rate; [Eval suites and the telemetry](../../getting-started/eval-suites.md) explains
 why, and a rate needs a preregistered run with its arms and n fixed first.
 
 The run directory keeps everything the score rested on:

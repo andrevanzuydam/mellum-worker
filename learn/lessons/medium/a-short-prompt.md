@@ -5,7 +5,7 @@ number: M3
 time: 4 min read · 35 min to run
 track: lessons
 position: 2
-prerequisites: [lessons/medium/project-facts]
+prerequisites: [lessons/medium/tell-it-how-to-test]
 authors: [Paul Everitt]
 backends: [llamacpp]
 ---
@@ -29,7 +29,7 @@ for the worker's 643-character task prompt, with no procedure in it.
     - Keep two samples apart rather than pooling them.
     - Recognise a null and say what it does and does not rule out.
 
-![A small robot holding a short note beside a long unused scroll on the floor](../../assets/illustrations/short-prompt.webp){ .illustration }
+![A small robot holding a short note beside a long unused scroll on the floor](../../assets/illustrations/a-short-prompt.webp){ .illustration }
 
 ## Problem
 

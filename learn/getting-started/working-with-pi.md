@@ -173,5 +173,5 @@ offered after `off` until you restart Pi (its hooks do stop).
 Pi running interactively on the local Mellum, the keys to steer and stop it,
 the tools it can call, the commands to resume or branch a session, and the
 course's `/lesson` and `/remedy` loaded from a trusted checkout. Next,
-[Eval suites and the telemetry](suite.md) runs whole projects through the
+[Eval suites and the telemetry](eval-suites.md) runs whole projects through the
 provided harness and grades them.

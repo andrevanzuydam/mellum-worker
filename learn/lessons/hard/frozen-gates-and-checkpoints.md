@@ -29,7 +29,7 @@ each phase's gate and commits each passing phase, so a broken round is reverted.
     - Name the three gate faults the 2026-10-29 run found and how each was fixed.
     - Tell the suite's hidden grade (the oracle) from a phase's gate (a proxy).
 
-![A small robot walking past a row of padlocked gates towards a coral flag at the last one](../../assets/illustrations/frozen-gates.webp){ .illustration }
+![A small robot walking past a row of padlocked gates towards a coral flag at the last one](../../assets/illustrations/frozen-gates-and-checkpoints.webp){ .illustration }
 
 ## Problem
 

@@ -101,7 +101,7 @@ export default (pi: PiLike) => install(pi);
 ??? example "A reference solution"
 
     Try your own first. This guard keeps the acceptance test unweakenable
-    ([H5](self-exit.md)): it refuses edits and writes to test files.
+    ([H5](dont-trust-the-self-exit.md)): it refuses edits and writes to test files.
 
     ```ts
     import { installGuard, type PiLike, type UnitMeta } from "../install.ts";

@@ -17,7 +17,7 @@ directory, isolated from your own settings. Lesson M1,
 [Build a Harness](../lessons/medium/build-a-harness.md), shows how one is
 written.
 
-![A small robot facing three crates of increasing size beside a wall gauge](../assets/illustrations/suite.webp){ .illustration }
+![A small robot facing three crates of increasing size beside a wall gauge](../assets/illustrations/eval-suites.webp){ .illustration }
 
 ## What an eval suite is
 

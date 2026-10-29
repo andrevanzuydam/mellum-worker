@@ -5,7 +5,7 @@ number: H6
 time: 4 min read · about 3 h to run
 track: lessons
 position: 5
-prerequisites: [lessons/hard/self-exit]
+prerequisites: [lessons/hard/dont-trust-the-self-exit]
 authors: [Andre van Zuydam]
 backends: [vllm]
 ---

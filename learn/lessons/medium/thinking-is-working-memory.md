@@ -5,7 +5,7 @@ number: M5
 time: 4 min read · about 1 h to run
 track: lessons
 position: 4
-prerequisites: [lessons/medium/guards-for-empty-turns]
+prerequisites: [lessons/medium/nudge-an-empty-turn]
 authors: [Paul Everitt]
 backends: [llamacpp]
 ---
@@ -29,7 +29,7 @@ cap is the budget that binds, and the guards read what the model said.
     - Recognise a final ended by `length` as an output cap spent on reasoning.
     - Name the run that would settle the question on this backend.
 
-![A small robot with a thought bubble full of gears beside a jar filling with coins](../../assets/illustrations/thinking-working-memory.webp){ .illustration }
+![A small robot with a thought bubble full of gears beside a jar filling with coins](../../assets/illustrations/thinking-is-working-memory.webp){ .illustration }
 
 ## Problem
 

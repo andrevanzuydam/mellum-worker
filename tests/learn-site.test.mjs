@@ -19,7 +19,7 @@ const PAGES = [
   "getting-started/base-pi-on-llamacpp.md",
   "getting-started/troubleshoot.md",
   "getting-started/working-with-pi.md",
-  "getting-started/suite.md",
+  "getting-started/eval-suites.md",
   "getting-started/extensions.md",
   "lessons/start-here.md",
   "lessons/index.md",
@@ -191,16 +191,16 @@ test("Build a Harness explains isolation and the one command", () => {
 });
 
 test("lesson 3 runs the suite, grading and the trace", () => {
-  const l = page("getting-started/suite.md");
+  const l = page("getting-started/eval-suites.md");
   assert.match(l, /^track: getting-started$/m);
   for (const text of ["run --suite all --grade", "ruff", "pyrefly", "complexipy",
     "trace.jsonl", "three", "graders", "one observation"])
     assert.ok(l.toLowerCase().includes(text), `lesson 3 lacks ${text}`);
-  assert.match(page("getting-started/index.md"), /suite\.md/);
+  assert.match(page("getting-started/index.md"), /eval-suites\.md/);
 });
 
 test("the first findings lesson follows the six steps and names its badge", () => {
-  const l = page("lessons/hard/primary-agent.md");
+  const l = page("lessons/hard/who-drives.md");
   const heads = [...l.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
   assert.deepEqual(heads, ["Problem", "Eval case", "Evidence of the problem",
     "Solution", "Validation", "Interpretation"]);
@@ -209,7 +209,7 @@ test("the first findings lesson follows the six steps and names its badge", () =
   sections.forEach((s, i) => assert.equal(badge(s), i < 5, `step ${i + 1}`));
   assert.match(l, /weakest badge (?:here )?is `(?:reference-run|cited|screen|conjecture)`/);
   assert.ok(!/docs\/ladder\//.test(l), "lesson links a ladder record");
-  assert.match(page("lessons/hard/index.md"), /primary-agent\.md/);
+  assert.match(page("lessons/hard/index.md"), /who-drives\.md/);
 });
 
 test("the Lessons index introduces the three tiers", () => {
@@ -270,7 +270,7 @@ test("Working With Pi covers the basics and the course's two commands", () => {
 });
 
 test("the second findings lesson follows the six steps and names its badge", () => {
-  const l = page("lessons/medium/short-prompt.md");
+  const l = page("lessons/medium/a-short-prompt.md");
   const heads = [...l.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
   assert.deepEqual(heads, ["Problem", "Eval case", "Evidence of the problem",
     "Solution", "Validation", "Interpretation"]);
@@ -279,7 +279,7 @@ test("the second findings lesson follows the six steps and names its badge", () 
   sections.forEach((s, i) => assert.equal(badge(s), i < 5, `step ${i + 1}`));
   assert.match(l, /weakest badge is `(?:reference-run|cited|screen|conjecture)`/);
   assert.ok(!/docs\/ladder\//.test(l), "lesson links a ladder record");
-  assert.match(page("lessons/medium/index.md"), /short-prompt\.md/);
+  assert.match(page("lessons/medium/index.md"), /a-short-prompt\.md/);
 });
 
 test("learn/ never says tutorial or case study", () => {
@@ -307,12 +307,12 @@ test("the harness is the measured instrument", () => {
   assert.doesNotMatch(page("project/index.md"), /\*\*The ladder\*\*/);
   assert.match(page("project/toolchain.md"), /Measured work lands in `docs\/superpowers\/research\/`/);
   assert.doesNotMatch(page("lessons/medium/build-a-harness.md"), /ladder is the measuring/);
-  assert.doesNotMatch(page("getting-started/suite.md"), /Rates come from the ladder/);
-  assert.doesNotMatch(page("getting-started/suite.md"), /The ladder is the measuring instrument/);
+  assert.doesNotMatch(page("getting-started/eval-suites.md"), /Rates come from the ladder/);
+  assert.doesNotMatch(page("getting-started/eval-suites.md"), /The ladder is the measuring instrument/);
 });
 
 test("the run record groups the failed checks by module", () => {
-  const suite = page("getting-started/suite.md");
+  const suite = page("getting-started/eval-suites.md");
   assert.match(suite, /grader module/);
   assert.match(suite, /missing_checks|expected tests that did not pass/);
   const harness = page("lessons/medium/build-a-harness.md");
