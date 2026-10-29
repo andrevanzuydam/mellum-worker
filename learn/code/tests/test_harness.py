@@ -1006,3 +1006,11 @@ def test_a_session_loads_the_extras_and_records_them(tmp_path):
     assert record["remedies"] == ["guard/break-repeat-loops"]
     assert [e["path"] for e in record["extensions"]] == [str(p) for p in paths]
     assert all(len(e["sha256"]) == 64 for e in record["extensions"])
+
+
+def test_every_preset_resolves_and_each_tier_builds_on_the_last():
+    presets = {p.stem: json.loads(p.read_text()) for p in (harness.REMEDIES / "presets").glob("*.json")}
+    for name in presets:
+        names, paths = harness.resolve_extras(f"preset:{name}", [])
+        assert all(p.is_file() for p in paths), name
+    assert presets["medium"][:len(presets["easy"])] == presets["easy"]
