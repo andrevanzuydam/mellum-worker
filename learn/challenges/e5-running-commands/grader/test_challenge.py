@@ -1,6 +1,9 @@
-"""E5's lesson challenge, hidden grader. Step 1 (/health) is what a session finishes before it
-checks that the app starts; step 2 (/items) is the work a session hung on a foreground server
-never reaches."""
+"""E5's lesson challenge, hidden grader. Step 2 needs a live server (health.txt is what curl
+got back from it), so every session starts one; step 3 (/items) is the work a session hung on a
+server it started in the foreground never reaches."""
+
+import json
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
@@ -13,6 +16,12 @@ def test_health_answers_ok():
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+def test_the_live_check_was_saved():
+    saved = Path("health.txt")
+    assert saved.is_file(), "health.txt was not written"
+    assert json.loads(saved.read_text()) == {"status": "ok"}
 
 
 def test_items_lists_both():
