@@ -130,6 +130,7 @@ test("prepareProject sets up project/<number> with the lesson's starting files, 
 	assert.equal(readFileSync(join(dir, "pyproject.toml"), "utf8"), "[project]\nname='d'\n");
 	assert.equal(readFileSync(join(dir, "TASK.md"), "utf8"), "Build it.\n\nThen test it.\n");
 	assert.match(readFileSync(join(dir, ".pi", "extensions", "remedies.ts"), "utf8"), /extensions\/mellum-remedies\.ts/);
+	assert.match(readFileSync(join(dir, ".pi", "extensions", "lessons.ts"), "utf8"), /extensions\/mellum-lesson-tutor\.ts/);
 	writeFileSync(join(dir, "stray.py"), "x = 1\n");
 	prepareProject(root, lesson);
 	assert.equal(existsSync(join(dir, "stray.py")), false, "a second prepare starts fresh");
@@ -187,4 +188,20 @@ test("the FAIL screen's why: a lesson's remedy unit gives its pathology line", a
 		/foreground and the session hangs/);
 	assert.equal(unitPathology(ROOT, "**Remedy unit:** none: you write it"), undefined);
 	assert.equal(unitPathology(ROOT, "`guard/no-such-unit`"), undefined);
+});
+
+test("sessionIn writes an empty Pi session whose working directory is the folder, so /lesson can move Pi there", async () => {
+	const { sessionIn } = await tutor();
+	const dir = mkdtempSync(join(tmpdir(), "project-"));
+	const store = join(dir, ".pi", "sessions");
+	const file = sessionIn(dir, 3, store);
+	assert.ok(file.startsWith(store) && file.endsWith(".jsonl"), file);
+	const lines = readFileSync(file, "utf8").trim().split("\n");
+	assert.equal(lines.length, 1);
+	const header = JSON.parse(lines[0]);
+	assert.equal(header.type, "session");
+	assert.equal(header.version, 3);
+	assert.equal(header.cwd, dir);
+	assert.match(header.id, /^[0-9a-f-]{36}$/);
+	assert.notEqual(sessionIn(dir, 3, store), file, "each call is a fresh session");
 });

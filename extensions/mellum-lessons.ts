@@ -7,6 +7,7 @@
  * imports, so node can test it.
  */
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 
 export const STEPS = ["Problem", "Eval case", "Evidence of the problem", "Solution", "Validation", "Interpretation"] as const;
@@ -231,9 +232,20 @@ export function lessonSuite(root: string, command: string | undefined): string |
 	return join(root, at("--suites-dir") ?? join("learn", "code", "suites"), suite);
 }
 
+/** A new, empty Pi session whose working directory is `cwd`, written into `store`. Switching to it
+ * moves the running Pi into that folder: no second terminal. `version` is Pi's session version. */
+export function sessionIn(cwd: string, version: number, store: string): string {
+	mkdirSync(store, { recursive: true });
+	const id = randomUUID();
+	const timestamp = new Date().toISOString();
+	const file = join(store, `${timestamp.replace(/[:.]/g, "-")}_${id}.jsonl`);
+	writeFileSync(file, JSON.stringify({ type: "session", version, id, timestamp, cwd }) + "\n");
+	return file;
+}
+
 /** Manual work happens in project/<lesson number>, never in the repository root. Resets that folder
  * to the lesson's starting files, writes the task to TASK.md, and adds a .pi/extensions shim so
- * /remedy works when Pi starts there. Returns the folder. */
+ * /remedy and /lesson work when Pi moves there. Returns the folder. */
 export function prepareProject(root: string, lesson: Pick<Lesson, "number" | "before">): string {
 	const dir = join(root, "project", lesson.number);
 	rmSync(dir, { recursive: true, force: true });
@@ -251,6 +263,8 @@ export function prepareProject(root: string, lesson: Pick<Lesson, "number" | "be
 	mkdirSync(join(dir, ".pi", "extensions"), { recursive: true });
 	writeFileSync(join(dir, ".pi", "extensions", "remedies.ts"),
 		`// /remedy for this lesson's project folder (written by /lesson).\nexport { default } from ${JSON.stringify(join(root, "extensions", "mellum-remedies.ts"))};\n`);
+	writeFileSync(join(dir, ".pi", "extensions", "lessons.ts"),
+		`// /lesson in this lesson's project folder (written by /lesson): /lesson home goes back.\nexport { default } from ${JSON.stringify(join(root, "extensions", "mellum-lesson-tutor.ts"))};\n`);
 	return dir;
 }
 

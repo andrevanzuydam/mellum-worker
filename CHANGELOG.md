@@ -6,6 +6,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- In `/lesson`, `p` now moves the Pi you are in into `project/<number>`, with
+  the lesson's starting files and task, and `/lesson home` moves it back. Trying
+  a lesson by hand no longer means opening a second terminal and starting
+  another Pi; `/remedy` and `/lesson` work in the project folder too.
 - `/lesson`'s FAIL screen now says why: it names each hidden check a session
   missed, and adds the lesson remedy's pathology line under the verdict, so
   a learner sees what failed and what the remedy is for before applying it.
