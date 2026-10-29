@@ -13,7 +13,7 @@ const tutor = () => import("../extensions/mellum-lessons.ts");
 // conforms, and the cycle (LC.28) closes when it is empty.
 const PENDING = new Set([
 	"looking-around", "searching", "creating-files",
-	"running-commands", "too-many-tools",
+	"too-many-tools",
 	"tell-it-how-to-test", "a-short-prompt", "nudge-an-empty-turn",
 	"run-long-commands-safely", "look-it-up",
 	"check-before-finishing",

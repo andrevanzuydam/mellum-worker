@@ -39,9 +39,11 @@ The tool: `bash` runs a shell command and waits for it to finish. A web app's `p
 **Badge:** `conjecture`
 
 **Before:** bare Pi with what the earlier Easy lessons added
-(`guard/break-repeat-loops, guard/stay-in-workspace, guard/refuse-whole-file-rewrite`). **After:** the same plus `guard/block-foreground-server`. The
-lesson's own challenge, a task built to provoke this failure, is not built
-yet, so for now both run on Bronze.
+(`guard/break-repeat-loops, guard/stay-in-workspace, guard/refuse-whole-file-rewrite`). **After:** the same plus `guard/block-foreground-server`. Both
+run the lesson's own challenge, `learn/challenges/running-commands/`: build a
+small app, run it with `python app.py` and save a live `curl` of `/health`,
+then add two more routes. A session that hangs on the server it started never
+reaches the routes, and the hidden checks fail.
 
 ## Evidence of the problem
 
@@ -92,8 +94,8 @@ The weakest badge is `screen`: the stall is measured (four of nine bare sessions
 Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suite easy --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite --repeat 3 --grade
-uv run python learn/code/harness.py run --suite easy --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite,guard/block-foreground-server --repeat 3 --grade
+uv run python learn/code/harness.py run --suites-dir learn/challenges --suite running-commands --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite --repeat 3 --deadline 600 --stall 120
+uv run python learn/code/harness.py run --suites-dir learn/challenges --suite running-commands --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite,guard/block-foreground-server --repeat 3 --deadline 600 --stall 120
 ```
 
 !!! success "Key points"

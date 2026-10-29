@@ -27,3 +27,5 @@ vLLM on a LAN host, through the pinned Pi 1.3.0. Its before arm had one
 foreground stall (`uvicorn app:app --port 8000`, session `9044f2`); its after
 arm ran after a by-hand kill of that session's leftover server, the leak fixed
 in `57011a9`. Guard blocks are counted in each session's final context.
+Revision 3 is preregistered in
+`docs/superpowers/research/2026-10-29-running-commands-check-v3-prereg.md`.

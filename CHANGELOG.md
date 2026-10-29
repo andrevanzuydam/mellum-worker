@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- E4 Running Commands now runs its own challenge,
+  `learn/challenges/running-commands/`, instead of the shared `easy` suite,
+  and the challenge's step 2 gives the project's own run command
+  (`python app.py`), the way a README would. Revision 3 of its lesson check
+  is preregistered on the 6-bit reference model.
 - The lesson track is renumbered to the lessons that remain: Easy E1–E6,
   Medium M1–M8, Hard H1–H6. Three stub lessons name their remedy and wait for
   their challenge: E6 Know When to Stop (`guard/cap-turns`), M7 Keep a Plan
