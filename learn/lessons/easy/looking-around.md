@@ -44,8 +44,11 @@ session runs out of time. Nothing is wrong with the tool; the model is stuck.
 **Badge:** `conjecture`
 
 **Before:** bare Pi (nothing added yet). **After:** bare Pi plus
-`guard/break-repeat-loops`. The lesson's own challenge, a task built to make
-the model look around a lot, is not built yet, so for now both run on Bronze.
+`guard/break-repeat-loops`. Both run the lesson's own challenge,
+`learn/challenges/looking-around/`: find one sensor's reading in a
+12,000-line file, past what one `read` or `cat` shows, then write a lookup
+function with tests. A session stuck re-reading the same view never reaches
+the second step, and the hidden checks fail.
 
 ## Evidence of the problem
 
@@ -97,8 +100,8 @@ earn that.
 Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suite easy --repeat 3 --grade
-uv run python learn/code/harness.py run --suite easy --remedy guard/break-repeat-loops --repeat 3 --grade
+uv run python learn/code/harness.py run --suites-dir learn/challenges --suite looking-around --repeat 1 --deadline 600 --stall 120
+uv run python learn/code/harness.py run --suites-dir learn/challenges --suite looking-around --remedy guard/break-repeat-loops --repeat 1 --deadline 600 --stall 120
 ```
 
 !!! success "Key points"
