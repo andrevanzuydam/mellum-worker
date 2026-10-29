@@ -13,6 +13,14 @@ Spec: [`2026-10-29-uniform-lessons-design.md`](../specs/2026-10-29-uniform-lesso
 (spec correction of the same date): before FAIL, after PASS. Lines use
 `--repeat 1`; `lesson-check.sh`'s dry-run test checks `--repeat 1`.
 
+**Dated correction 2026-10-29, after E4.** E4 missed twice on the 6-bit and
+left the track (`8b99e8c`). Its before arm passing was this plan's stop
+condition; Andre chose to continue on the same reference model rather than
+reopen it. Too Many Tools is now E4 and Know When to Stop E5. A first screen
+of E1's new challenge (`runs/E1-screen-20261029T212553Z-00cae9e`, one bare
+session, a lead) also passed: the model read the 12,000-line file once, then
+used `grep`, in 10 requests, without looping.
+
 ## Why
 
 The lessons are not one kind of thing: some run, some do not, some run a
