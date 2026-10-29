@@ -1,16 +1,16 @@
 ---
 title: Running Commands
 tier: easy
-number: E6
+number: E4
 time: 3 min read · 20 min to run
 track: lessons
-position: 5
+position: 4
 prerequisites: [lessons/easy/creating-files]
 authors: [Andre van Zuydam]
 backends: [vllm]
 ---
 
-# E6 · Running Commands
+# E4 · Running Commands
 
 The bash tool lets the model run anything, including the app it just built, and a server started in the foreground never returns, so the session hangs until its deadline. One guard refuses a foreground server and shows the background form.
 

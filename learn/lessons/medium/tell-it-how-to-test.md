@@ -1,7 +1,7 @@
 ---
 title: Tell It How to Test
 tier: medium
-number: M2
+number: M1
 time: 4 min read · 45 min to run
 track: lessons
 position: 1
@@ -10,7 +10,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# M2 · Tell It How to Test
+# M1 · Tell It How to Test
 
 A small model dropped into a workspace has to guess how the project is tested,
 and a plausible guess survives several turns. One unit appends the project's
@@ -58,7 +58,7 @@ All three `no-facts` sessions failed, and all three ended the same way: a
 foreground server command with no result after it, then silence until the
 harness killed the child at 600 s. The bullet they did not receive is
 `- Do not: start servers`. That is a lead, not a finding: n = 3 on one machine,
-and the same pathology is what [E6](../easy/running-commands.md) answers with a
+and the same pathology is what [E4](../easy/running-commands.md) answers with a
 guard.
 
 ## Solution

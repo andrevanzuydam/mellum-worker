@@ -1,19 +1,19 @@
 ---
 title: Build a Remedy
 tier: hard
-number: H8
+number: H6
 time: 5 min read · 30 min to build · 1 h to run
 track: lessons
-position: 7
+position: 6
 prerequisites: [lessons/hard/build-a-tool]
 authors: [Andre van Zuydam]
 backends: [vllm]
 ---
 
-# H8 · Build a Remedy
+# H6 · Build a Remedy
 
 Every remedy in this course is one unit that corrects one named failure. This
-last lesson shows how one is built, tested and submitted, with the E3 loop
+last lesson shows how one is built, tested and submitted, with the E1 loop
 breaker as the template, and your file is the after.
 
 !!! abstract "Overview"
@@ -101,7 +101,7 @@ export default (pi: PiLike) => install(pi);
 ??? example "A reference solution"
 
     Try your own first. This guard keeps the acceptance test unweakenable
-    ([H5](dont-trust-the-self-exit.md)): it refuses edits and writes to test files.
+    ([H3](dont-trust-the-self-exit.md)): it refuses edits and writes to test files.
 
     ```ts
     import { installGuard, type PiLike, type UnitMeta } from "../install.ts";
@@ -109,7 +109,7 @@ export default (pi: PiLike) => install(pi);
     export const meta: UnitMeta = {
     	pathology: "Edits the acceptance test until it passes instead of fixing the code",
     	does: "Refuses edit and write calls on files under tests/",
-    	lesson: "H8",
+    	lesson: "H6",
     	evidence: "none yet",
     };
 

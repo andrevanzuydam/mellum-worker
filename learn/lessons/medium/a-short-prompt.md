@@ -1,7 +1,7 @@
 ---
 title: A Short Prompt
 tier: medium
-number: M3
+number: M2
 time: 4 min read · 35 min to run
 track: lessons
 position: 2
@@ -10,7 +10,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# M3 · A Short Prompt
+# M2 · A Short Prompt
 
 Pi's own system prompt is long and general, and a small model can follow the
 procedure it describes instead of the files in front of it. One unit swaps it

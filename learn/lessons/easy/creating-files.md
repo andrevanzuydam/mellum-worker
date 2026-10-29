@@ -1,16 +1,16 @@
 ---
 title: Creating Files
 tier: easy
-number: E5
+number: E3
 time: 3 min read · 20 min to run
 track: lessons
-position: 4
+position: 3
 prerequisites: [lessons/easy/searching]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---
 
-# E5 · Creating Files
+# E3 · Creating Files
 
 A small model asked to change a few lines sometimes calls the write tool, which replaces the whole file, and everything else in it is gone. One guard refuses write on a file that exists and points the model to edit instead.
 

@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- The lesson track is renumbered to the lessons that remain: Easy E1–E6,
+  Medium M1–M8, Hard H1–H6. Three stub lessons name their remedy and wait for
+  their challenge: E6 Know When to Stop (`guard/cap-turns`), M7 Keep a Plan
+  (`tool/keep-a-plan`) and M8 Build a Suite (your own grader). Each remedy
+  unit's `meta.lesson` and the remedies table follow the new numbers.
 - In `/lesson`, `p` now moves the Pi you are in into `project/<number>`, with
   the lesson's starting files and task, and `/lesson home` moves it back. Trying
   a lesson by hand no longer means opening a second terminal and starting

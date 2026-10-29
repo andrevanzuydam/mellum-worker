@@ -1,16 +1,16 @@
 ---
 title: Too Many Tools
 tier: easy
-number: E7
+number: E5
 time: 3 min read · 20 min to run
 track: lessons
-position: 6
+position: 5
 prerequisites: [lessons/easy/running-commands]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---
 
-# E7 · Too Many Tools
+# E5 · Too Many Tools
 
 Every installed extension can add tools, and a small model offered many reaches for ones it uses badly. One context unit offers it only the seven it needs, and with it the Easy tier is complete.
 

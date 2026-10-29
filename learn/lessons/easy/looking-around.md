@@ -1,16 +1,16 @@
 ---
 title: Looking Around
 tier: easy
-number: E3
+number: E1
 time: 3 min read · 20 min to run
 track: lessons
-position: 2
+position: 1
 prerequisites: [lessons/start-here]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---
 
-# E3 · Looking Around
+# E1 · Looking Around
 
 The read and ls tools are how the model looks at a project, and a small model can
 get stuck looking: the same call, again and again, with nothing changing. One
@@ -54,7 +54,7 @@ the model look around a lot, is not built yet, so for now both run on Bronze.
 A recorded ladder run made 245 identical `ls -R` calls, every one of them
 successful, and never moved on. The loop was not seen in the nine bare
 sessions of 2026-10-29 on the vLLM host; on this host it is rarer than the
-stalls [E6](running-commands.md) fixes.
+stalls [E4](running-commands.md) fixes.
 
 ## Solution
 

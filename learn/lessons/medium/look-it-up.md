@@ -1,16 +1,16 @@
 ---
 title: Look It Up
 tier: medium
-number: M7
+number: M5
 time: 3 min read · 20 min to run
 track: lessons
-position: 6
+position: 5
 prerequisites: [lessons/medium/run-long-commands-safely]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---
 
-# M7 · Look It Up
+# M5 · Look It Up
 
 A small model writes the API it remembers, and some APIs it never saw: a
 library newer than its training, a default it has wrong. One unit adds a

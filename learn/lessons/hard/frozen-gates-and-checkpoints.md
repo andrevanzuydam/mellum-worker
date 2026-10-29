@@ -1,16 +1,16 @@
 ---
 title: Frozen Gates and Checkpoints
 tier: hard
-number: H4
+number: H2
 time: 4 min read · about 1.5 h to run
 track: lessons
-position: 3
+position: 2
 prerequisites: [lessons/hard/plan-examine-code]
 authors: [Andre van Zuydam]
 backends: [vllm]
 ---
 
-# H4 · Frozen Gates and Checkpoints
+# H2 · Frozen Gates and Checkpoints
 
 A phase's acceptance test is worth something only if nobody can quietly change
 it, and a passing phase only if a later one cannot break it. The flow freezes

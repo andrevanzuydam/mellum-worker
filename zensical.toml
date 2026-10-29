@@ -23,7 +23,8 @@ nav = [
       "lessons/easy/searching.md",
       "lessons/easy/creating-files.md",
       "lessons/easy/running-commands.md",
-      "lessons/easy/too-many-tools.md"] },
+      "lessons/easy/too-many-tools.md",
+      "lessons/easy/know-when-to-stop.md"] },
     { "Medium" = [
       "lessons/medium/index.md",
       "lessons/medium/tell-it-how-to-test.md",
@@ -31,7 +32,9 @@ nav = [
       "lessons/medium/nudge-an-empty-turn.md",
       "lessons/medium/run-long-commands-safely.md",
       "lessons/medium/look-it-up.md",
-      "lessons/medium/check-before-finishing.md"] },
+      "lessons/medium/check-before-finishing.md",
+      "lessons/medium/keep-a-plan.md",
+      "lessons/medium/build-a-suite.md"] },
     { "Hard" = [
       "lessons/hard/index.md",
       "lessons/hard/plan-examine-code.md",

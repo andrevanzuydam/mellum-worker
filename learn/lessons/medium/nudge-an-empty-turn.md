@@ -1,7 +1,7 @@
 ---
 title: Nudge an Empty Turn
 tier: medium
-number: M4
+number: M3
 time: 4 min read · 60 min to run
 track: lessons
 position: 3
@@ -10,7 +10,7 @@ authors: [Paul Everitt]
 backends: [llamacpp]
 ---
 
-# M4 · Nudge an Empty Turn
+# M3 · Nudge an Empty Turn
 
 A small model can end a turn having said nothing and called no tool, part-way
 through the task, and the session stops there. One unit answers that empty

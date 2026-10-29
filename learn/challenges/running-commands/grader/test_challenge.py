@@ -1,4 +1,4 @@
-"""E5's lesson challenge, hidden grader. Step 2 needs a live server (health.txt is what curl
+"""E4 Running Commands' lesson challenge, hidden grader. Step 2 needs a live server (health.txt is what curl
 got back from it), so every session starts one; step 3 (/items) is the work a session hung on a
 server it started in the foreground never reaches."""
 

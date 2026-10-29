@@ -2,7 +2,7 @@
  * mellum-lesson-tutor: /lesson, the course inside Pi.
  *
  *   /lesson          pick a lesson (finished ones are ticked; the next one is first)
- *   /lesson E5       open lesson E5
+ *   /lesson E3       open lesson E3
  *
  * One screen per step: the cover (picture, opening, questions, objectives), Paul's six steps, and
  * the key points. On the Eval case step `r` runs the page's before line and on the Solution step
@@ -215,7 +215,7 @@ export default function (pi: any): void {
 		running.clear();
 	});
 	pi.registerCommand("lesson", {
-		description: "Take a lesson: /lesson to pick one, /lesson E5 to open it, /lesson home to leave a project folder",
+		description: "Take a lesson: /lesson to pick one, /lesson E3 to open it, /lesson home to leave a project folder",
 		getArgumentCompletions: (prefix: string) => {
 			const root = findRoot(process.cwd());
 			if (!root) return null;

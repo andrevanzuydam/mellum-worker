@@ -1,16 +1,16 @@
 ---
 title: Searching
 tier: easy
-number: E4
+number: E2
 time: 3 min read · 20 min to run
 track: lessons
-position: 3
+position: 2
 prerequisites: [lessons/easy/looking-around]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---
 
-# E4 · Searching
+# E2 · Searching
 
 The grep and find tools let the model search a project, and a small model can aim them at the whole machine: a recursive search from the root crawls for minutes and hangs the run. One guard keeps its searches inside the workspace.
 

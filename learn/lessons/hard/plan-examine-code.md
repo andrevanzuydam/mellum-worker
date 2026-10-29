@@ -1,16 +1,16 @@
 ---
 title: Plan, Examine, Code
 tier: hard
-number: H3
+number: H1
 time: 4 min read · about 1.5 h to run
 track: lessons
-position: 2
+position: 1
 prerequisites: [lessons/medium/check-before-finishing]
 authors: [Andre van Zuydam]
 backends: [vllm]
 ---
 
-# H3 · Plan, Examine, Code
+# H1 · Plan, Examine, Code
 
 One agent that plans, writes the test and builds the code in the same breath
 does all three badly. The flow splits them into roles the model calls as
@@ -38,7 +38,7 @@ tools, one phase at a time, so each call has one small job.
 Silver has four phases and Gold seven. Handed the whole task, one session has
 to hold every phase in its context, decide its own test and judge its own
 work. A small model can narrow the task to what it can hold and write a test
-that matches what it built ([H5](dont-trust-the-self-exit.md) shows one), and nothing stops
+that matches what it built ([H3](dont-trust-the-self-exit.md) shows one), and nothing stops
 a later phase breaking an earlier one.
 
 ## Eval case
@@ -77,7 +77,7 @@ tool argument.
 1. `plan()` writes `TODO.md`, a north star and a checklist; `review_plan()`
    answers PASS or REDO.
 2. `examine()` writes this phase's acceptance test from the spec, before any
-   code. It is frozen as the gate ([H4](frozen-gates-and-checkpoints.md)).
+   code. It is frozen as the gate ([H2](frozen-gates-and-checkpoints.md)).
 3. `code()` builds to pass that test; `review_code()` answers PASS or REDO.
 4. `test()` runs the gate. It is the only exit.
 
@@ -88,7 +88,7 @@ tool argument.
 One forced flow run per level on the same host, 2026-10-28/29, n = 1: Bronze
 4/4 hidden checks (a full pass), Silver 13/18, Gold 30/34. Gold reached phase
 7 of 7, further than any setup recorded so far. A rerun with three gate fixes
-([H4](frozen-gates-and-checkpoints.md)) gave Bronze 4/4, Silver 18/18 and Gold 30/34.
+([H2](frozen-gates-and-checkpoints.md)) gave Bronze 4/4, Silver 18/18 and Gold 30/34.
 
 The units differ (checks passed here, sessions passed in the baseline), and
 each level ran once, so this is not a rate. Gold's four misses in the first

@@ -13,7 +13,7 @@ This step runs **eval suites**: whole projects the model has to build, with a
 mission, a tech stack, a roadmap, a sequence of prompts, and a hidden grader.
 You run them through the provided harness, `learn/code/harness.py`, read the
 score, and read the trace to see why. Each session runs Pi in a fresh
-directory, isolated from your own settings. Lesson M1,
+directory, isolated from your own settings. The next step,
 [The Harness](the-harness.md), shows how one is
 written.
 

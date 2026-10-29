@@ -1,16 +1,16 @@
 ---
 title: Build a Tool
 tier: hard
-number: H7
+number: H5
 time: 5 min read · 30 min to build · 1 h to run
 track: lessons
-position: 6
+position: 5
 prerequisites: [lessons/hard/best-of-n]
 authors: [Andre van Zuydam]
 backends: [vllm]
 ---
 
-# H7 · Build a Tool
+# H5 · Build a Tool
 
 Every tool in this course is a small TypeScript file that hands the model one
 new capability. This lesson takes the smallest real one, lookup, apart and has
@@ -108,7 +108,7 @@ carries it, the model never sees your tool.
     export const meta = {
     	pathology: "Reads a long test log and loses the failure in it",
     	does: "Adds run_tests: runs pytest and returns the last 40 lines",
-    	lesson: "H7",
+    	lesson: "H5",
     	evidence: "none yet",
     };
 

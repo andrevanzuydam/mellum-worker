@@ -8,7 +8,7 @@ import type { PiLike, UnitMeta } from "../install.ts";
 export const meta: UnitMeta = {
 	pathology: "Guesses how to run the tests instead of using the project's own command",
 	does: "Appends the project facts (AGENTS.md `## Mellum`, test command) to user messages",
-	lesson: "M2",
+	lesson: "M1",
 	evidence: "screen: 3/3 against 2/3 on Bronze (2026-10-29); a null in the page's record",
 };
 

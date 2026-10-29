@@ -1,10 +1,10 @@
 # Hard Lessons
 
-The orchestration paradigm: who drives the model, how work is handed off,
-split into roles, checked and re-dispatched. You start from `preset:medium`.
-H6 completes `preset:hard`; H7 and H8 then teach you to build your own tool
-and remedy, and in each your own file is what gets the pass. After H8 you
-have everything [The Challenge](../../challenge/index.md) needs.
+The orchestration paradigm: who drives the model, how work is split into
+roles, checked and re-dispatched. You start with every Medium unit on. H1 to
+H4 each add one flow switch; H5 and H6 teach you to build your own tool and
+remedy, and in each your own file is what gets the pass. After H6 you have
+everything [The Challenge](../../challenge/index.md) needs.
 
 ![A small robot conducting three smaller robots working at separate desks](../../assets/illustrations/tier-hard.webp){ .illustration }
 
@@ -27,38 +27,38 @@ outside the layout, and the worker's did neither
 
 <div class="grid cards" markdown>
 
--   **[H3 · Plan, Examine, Code](plan-examine-code.md)**
+-   **[H1 · Plan, Examine, Code](plan-examine-code.md)**
 
     ---
 
     The flow's roles as tools the agent calls.
     Adds `workflow/spec-driven-flow`.
 
--   **[H4 · Frozen Gates and Checkpoints](frozen-gates-and-checkpoints.md)**
+-   **[H2 · Frozen Gates and Checkpoints](frozen-gates-and-checkpoints.md)**
 
     ---
 
     Per-phase gates the coder cannot weaken, and a revert to the last good phase.
 
--   **[H5 · Don't Trust the Self-Exit](dont-trust-the-self-exit.md)**
+-   **[H3 · Don't Trust the Self-Exit](dont-trust-the-self-exit.md)**
 
     ---
 
     An external acceptance test decides when the work is done.
 
--   **[H6 · Best of N](best-of-n.md)**
+-   **[H4 · Best of N](best-of-n.md)**
 
     ---
 
     Parallel attempts on retry, keeping the one that passes. Completes `preset:hard`.
 
--   **[H7 · Build a Tool](build-a-tool.md)**
+-   **[H5 · Build a Tool](build-a-tool.md)**
 
     ---
 
     Write an extension that gives the model a new capability. Your tool gets the pass.
 
--   **[H8 · Build a Remedy](build-a-remedy.md)**
+-   **[H6 · Build a Remedy](build-a-remedy.md)**
 
     ---
 

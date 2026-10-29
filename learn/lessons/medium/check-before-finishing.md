@@ -1,16 +1,16 @@
 ---
 title: Check Before Finishing
 tier: medium
-number: M8
+number: M6
 time: 3 min read · 20 min to run
 track: lessons
-position: 7
+position: 6
 prerequisites: [lessons/medium/look-it-up]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---
 
-# M8 · Check Before Finishing
+# M6 · Check Before Finishing
 
 A small model can declare itself done over code with real errors in it: a
 function defined twice, a name left undefined after a rename. One unit runs

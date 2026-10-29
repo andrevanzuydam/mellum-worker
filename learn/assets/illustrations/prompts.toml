@@ -212,3 +212,16 @@ subject = "the small robot fitting a small new guard rail onto a path where a ga
 [start-here]
 seed = 331
 subject = "the small robot at a starting line holding an open map, a short path of exactly six round stepping stones leading away from it across the white space"
+
+# Placeholders until generated: the .webp files are copies of their tier picture.
+[know-when-to-stop]
+seed = 8022
+subject = "the small robot raising a hand to stop beside a counter showing a turn budget run down to zero, holding a short written summary"
+
+[keep-a-plan]
+seed = 8023
+subject = "the small robot ticking items off a long checklist pinned to a board, a pencil behind its ear"
+
+[build-a-suite]
+seed = 8024
+subject = "the small robot holding two boxes labelled good and broken up to a testing machine, one light green and one red"

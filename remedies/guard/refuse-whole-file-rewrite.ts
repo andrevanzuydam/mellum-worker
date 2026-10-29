@@ -7,7 +7,7 @@ import { installGuard, type PiLike, type UnitMeta } from "../install.ts";
 export const meta: UnitMeta = {
 	pathology: "Rewrites a whole file to change a few lines (942 lines became 2)",
 	does: "Blocks `write` to an existing file and asks for `edit`",
-	lesson: "E5",
+	lesson: "E3",
 	evidence: "recorded once; dormant in the worker (its column never went non-zero)",
 };
 

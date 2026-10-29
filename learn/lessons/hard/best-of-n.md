@@ -1,16 +1,16 @@
 ---
 title: Best of N
 tier: hard
-number: H6
+number: H4
 time: 4 min read · about 3 h to run
 track: lessons
-position: 5
+position: 4
 prerequisites: [lessons/hard/dont-trust-the-self-exit]
 authors: [Andre van Zuydam]
 backends: [vllm]
 ---
 
-# H6 · Best of N
+# H4 · Best of N
 
 A phase that fails is retried one sample at a time, and one unlucky sample
 per round can use up the whole budget. On a retry, the flow can run several

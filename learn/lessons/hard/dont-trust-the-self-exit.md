@@ -1,16 +1,16 @@
 ---
 title: Don't Trust the Self-Exit
 tier: hard
-number: H5
+number: H3
 time: 4 min read · about 1.5 h to run
 track: lessons
-position: 4
+position: 3
 prerequisites: [lessons/hard/frozen-gates-and-checkpoints]
 authors: [Andre van Zuydam]
 backends: [vllm]
 ---
 
-# H5 · Don't Trust the Self-Exit
+# H3 · Don't Trust the Self-Exit
 
 The worker decides when it is done, and can stop confident on a self-written
 test that covers less than the spec. Define done by a test it did not write and

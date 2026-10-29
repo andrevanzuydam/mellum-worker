@@ -17,6 +17,7 @@ const PENDING = new Set([
 	"tell-it-how-to-test", "a-short-prompt", "nudge-an-empty-turn",
 	"run-long-commands-safely", "look-it-up",
 	"check-before-finishing",
+	"know-when-to-stop", "keep-a-plan", "build-a-suite",
 	"plan-examine-code", "frozen-gates-and-checkpoints",
 	"dont-trust-the-self-exit", "best-of-n", "build-a-tool", "build-a-remedy",
 ]);
