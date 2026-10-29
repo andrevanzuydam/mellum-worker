@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- E1 Reasoning Returned as Text is the first lesson whose check held: on the
+  LAN host, without the unit the session failed on its record
+  (`reasoning_as_text` 7, tests passing), and with `context/repair-think-tags`
+  it passed. Recorded under `docs/ladder/2026-10-30-reasoning-as-text-check/`.
+  The `reference-run` badge now also covers a preregistered lesson check.
 - New lesson E1 · Reasoning Returned as Text: on a host whose reasoning
   parser misses, the session fails on its record (`reasoning_as_text`), and
   `context/repair-think-tags` puts the reasoning back. It is the first lesson

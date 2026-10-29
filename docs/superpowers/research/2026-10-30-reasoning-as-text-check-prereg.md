@@ -53,3 +53,15 @@ not miss reliably, and the condition is not what this lesson says.
   certain.
 - The host is not ours to pin; a server upgrade would remove the condition,
   and the page would have to name a host that still has it.
+
+## Result, 2026-10-30
+
+Run at `b7e538e` (`runs/E1-check-20261029T220741Z-b7e538e`, recorded under
+`docs/ladder/2026-10-30-reasoning-as-text-check/`).
+
+- **Before:** FAIL on the record: hidden tests passed, `reasoning_as_text`
+  7 (9 requests).
+- **After:** PASS: hidden tests passed, `reasoning_as_text` 0 (5 requests).
+- **The lesson holds**, the first under the condition-produced rule. With the
+  two screens, the bare session was fed its reasoning as text in 3 of 3
+  sessions on this host (6, 8, 7 turns); a lead on reliability, not a rate.

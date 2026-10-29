@@ -70,7 +70,7 @@ both times ([note](https://github.com/andrevanzuydam/mellum-worker/blob/main/doc
 
 **Remedy unit:** `context/repair-think-tags`; apply it with `--remedy context/repair-think-tags`.
 
-**Lesson check:** not built yet.
+**Lesson check:** held on 2026-10-30: FAIL → PASS on the LAN host, one session per arm ([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/ladder/2026-10-30-reasoning-as-text-check/README.md)).
 
 At the end of each reply, the unit moves a leading `<think>…</think>` out of
 the reply text and into a thinking block labelled as reasoning, which is
@@ -85,11 +85,16 @@ kept fixed.
 
 ## Validation
 
-**Badge:** `screen`
+**Badge:** `reference-run`
 
-On the second screen, with the unit, `reasoning_as_text` was 0 and the
-session passed. This is one session per arm: it shows the repair works on
-this host, not how often the parser misses elsewhere.
+The preregistered lesson check, 2026-10-30, one session per arm on the LAN
+host: without the unit the session failed on its record
+(`reasoning_as_text` 7, its tests passing); with
+`context/repair-think-tags` it was 0 and the session passed
+([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/ladder/2026-10-30-reasoning-as-text-check/README.md)).
+With the two screens, the bare session was fed its reasoning as text in
+3 of 3 sessions on this host. This shows the repair works on this host,
+not how often parsers miss elsewhere.
 
 ## Interpretation
 

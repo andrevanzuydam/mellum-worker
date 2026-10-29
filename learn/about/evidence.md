@@ -13,6 +13,12 @@ Each step of a lesson (except the Interpretation) opens with an evidence badge. 
 | `screen` | A few targeted runs or one observation | A research note, or a PR note or commit message cited by name |
 | `conjecture` | No run behind it | Reasoning, design, unit tests only |
 
+2026-10-30: under the lesson contract, `reference-run` also covers a
+preregistered **lesson check**: before and after on the lesson's own
+challenge, on the course's reference host, with the record under
+`docs/ladder/<date>-<lesson>-check/` and its preregistration in
+`docs/superpowers/research/`.
+
 On the site each badge shows as a coloured pill with an icon, so you can read a
 step's strength at a glance: a green check for `reference-run`, a blue book for
 `cited`, an amber flask for `screen` and a grey question mark for `conjecture`.
