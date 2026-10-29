@@ -6,7 +6,7 @@
  * learn/lessons/<tier>/<slug>.md, so the site and the tutor cannot disagree. Pure: no Pi
  * imports, so node can test it.
  */
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 export const STEPS = ["Problem", "Eval case", "Evidence of the problem", "Solution", "Validation", "Interpretation"] as const;
@@ -52,7 +52,12 @@ export function lessonIndex(root: string): LessonEntry[] {
 			entries.push({ number: fm.number, title: fm.title, tier, slug: name.replace(/\.md$/, ""), file });
 		}
 	}
-	const rank = (n: string) => TIERS.indexOf(TIERS.find((t) => t[0].toUpperCase() === n[0])!) * 100 + Number(n.slice(1));
+	const start = join(root, "learn", "lessons", "start-here.md");
+	if (existsSync(start)) {
+		const fm = frontMatter(readFileSync(start, "utf8"));
+		entries.push({ number: fm.number, title: fm.title, tier: "start", slug: "start-here", file: start });
+	}
+	const rank = (n: string) => n === "S0" ? -1 : TIERS.indexOf(TIERS.find((t) => t[0].toUpperCase() === n[0])!) * 100 + Number(n.slice(1));
 	return entries.sort((a, b) => rank(a.number) - rank(b.number));
 }
 
@@ -145,7 +150,9 @@ export function summariseRuns(dir: string): RunSummary {
 				? "the checks never ran (a module they import is missing)"
 				: missed
 					? `${missed} hidden check${missed === 1 ? "" : "s"} missed`
-					: "the tests passed but lint or type checks failed";
+					: r.tests_passed === false
+						? "the hidden tests failed"
+						: "the tests passed but lint or type checks failed";
 		lines.push(`FAIL  ${wall}  ${why}`);
 	}
 	return { verdict: total === 0 ? "NONE" : passed === total ? "PASS" : "FAIL", passed, total, lines };

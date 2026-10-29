@@ -7,12 +7,12 @@ import { join } from "node:path";
 const tutor = () => import("../extensions/mellum-lessons.ts");
 const ROOT = new URL("..", import.meta.url).pathname;
 
-test("the track lists every lesson in order: Easy, Medium, Hard, by number", async () => {
+test("the track lists Start Here, then every lesson in order: Easy, Medium, Hard, by number", async () => {
 	const { lessonIndex } = await tutor();
 	const ids = lessonIndex(ROOT).map((l) => l.number);
-	assert.equal(ids.length, 23);
-	assert.deepEqual(ids.slice(0, 3), ["E1", "E2", "E3"]);
-	assert.equal(ids[6], "M1");
+	assert.equal(ids.length, 24);
+	assert.deepEqual(ids.slice(0, 4), ["S0", "E1", "E2", "E3"]);
+	assert.equal(ids[7], "M1");
 	assert.equal(ids.at(-1), "H8");
 });
 
@@ -22,7 +22,7 @@ test("every lesson page parses into what the walk-through shows", async () => {
 		const l = parseLesson(readFileSync(entry.file, "utf8"));
 		assert.equal(l.number, entry.number);
 		assert.ok(l.title && l.opening, `${l.number}: title/opening`);
-		assert.match(l.image, /^\.\.\/\.\.\/assets\/illustrations\/[a-z0-9-]+\.webp$/, `${l.number}: image`);
+		assert.match(l.image, /^(\.\.\/)+assets\/illustrations\/[a-z0-9-]+\.webp$/, `${l.number}: image`);
 		assert.ok(l.alt.length >= 20, `${l.number}: alt`);
 		assert.ok(l.questions.length && l.objectives.length, `${l.number}: overview`);
 		for (const step of ["Problem", "Eval case", "Evidence of the problem", "Solution", "Validation", "Interpretation"])
@@ -93,4 +93,22 @@ test("a session in which no model answered says so, instead of blaming the check
 	mkdirSync(join(dir, "a"));
 	writeFileSync(join(dir, "a", "run.json"), JSON.stringify({ passed: false, checks_ran: false, missing_checks: ["x"], wall: 14, requests: 0, output_tokens: 0 }));
 	assert.match(summariseRuns(dir).lines[0], /no model answered/);
+});
+
+test("failed hidden tests are named as such, even when no check IDs are listed", async () => {
+	const { summariseRuns } = await tutor();
+	const dir = mkdtempSync(join(tmpdir(), "runs-"));
+	mkdirSync(join(dir, "a"));
+	writeFileSync(join(dir, "a", "run.json"), JSON.stringify({ passed: false, tests_passed: false, quality_ok: true, checks_ran: true, missing_checks: [], wall: 1 }));
+	assert.match(summariseRuns(dir).lines[0], /the hidden tests failed/);
+	mkdirSync(join(dir, "b"));
+	writeFileSync(join(dir, "b", "run.json"), JSON.stringify({ passed: false, tests_passed: true, quality_ok: false, checks_ran: true, missing_checks: [], wall: 1 }));
+	assert.match(summariseRuns(dir).lines[1], /lint or type checks failed/);
+});
+
+test("Start Here runs in seconds with no model: its before fails and its after passes", async () => {
+	const { parseLesson } = await tutor();
+	const l = parseLesson(readFileSync(join(ROOT, "learn/lessons/start-here.md"), "utf8"));
+	assert.match(l.before, /--pi-binary learn\/code\/tests\/fixtures\/fake-pi-wrong\.sh/);
+	assert.match(l.after, /--pi-binary learn\/code\/tests\/fixtures\/fake-pi\.sh/);
 });
