@@ -1,0 +1,96 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+const tutor = () => import("../extensions/mellum-lessons.ts");
+const ROOT = new URL("..", import.meta.url).pathname;
+
+test("the track lists every lesson in order: Easy, Medium, Hard, by number", async () => {
+	const { lessonIndex } = await tutor();
+	const ids = lessonIndex(ROOT).map((l) => l.number);
+	assert.equal(ids.length, 23);
+	assert.deepEqual(ids.slice(0, 3), ["E1", "E2", "E3"]);
+	assert.equal(ids[6], "M1");
+	assert.equal(ids.at(-1), "H8");
+});
+
+test("every lesson page parses into what the walk-through shows", async () => {
+	const { lessonIndex, parseLesson } = await tutor();
+	for (const entry of lessonIndex(ROOT)) {
+		const l = parseLesson(readFileSync(entry.file, "utf8"));
+		assert.equal(l.number, entry.number);
+		assert.ok(l.title && l.opening, `${l.number}: title/opening`);
+		assert.match(l.image, /^\.\.\/\.\.\/assets\/illustrations\/[a-z0-9-]+\.webp$/, `${l.number}: image`);
+		assert.ok(l.alt.length >= 20, `${l.number}: alt`);
+		assert.ok(l.questions.length && l.objectives.length, `${l.number}: overview`);
+		for (const step of ["Problem", "Eval case", "Evidence of the problem", "Solution", "Validation", "Interpretation"])
+			assert.ok(l.steps[step]?.trim(), `${l.number}: ${step}`);
+		assert.ok(l.keyPoints.length >= 1, `${l.number}: key points`);
+		assert.ok(l.commands.length >= 1, `${l.number}: commands`);
+	}
+});
+
+test("a lesson with a before and an after line exposes both", async () => {
+	const { parseLesson } = await tutor();
+	const l = parseLesson(readFileSync(join(ROOT, "learn/lessons/easy/running-commands.md"), "utf8"));
+	assert.match(l.before, /--remedy guard\/break-repeat-loops,guard\/stay-in-workspace,guard\/refuse-whole-file-rewrite --repeat 3/);
+	assert.match(l.after, /,guard\/block-foreground-server --repeat 3/);
+	assert.match(l.unit, /guard\/block-foreground-server/);
+});
+
+test("a run is summarised from its run.json files: passes, and why each failure failed", async () => {
+	const { summariseRuns } = await tutor();
+	const dir = mkdtempSync(join(tmpdir(), "runs-"));
+	const write = (name, record) => { mkdirSync(join(dir, name)); writeFileSync(join(dir, name, "run.json"), JSON.stringify(record)); };
+	write("a", { passed: true, checks_ran: true, stalled: null, missing_checks: [], wall: 120 });
+	write("b", { passed: false, checks_ran: false, stalled: { command: "uv run python app.py" }, missing_checks: ["x", "y"], wall: 130 });
+	write("c", { passed: false, checks_ran: true, stalled: null, missing_checks: ["x"], wall: 300 });
+	const s = summariseRuns(dir);
+	assert.equal(s.verdict, "FAIL");
+	assert.equal(s.passed, 1);
+	assert.equal(s.total, 3);
+	assert.deepEqual(s.lines, [
+		"PASS  120 s",
+		"FAIL  130 s  stalled on `uv run python app.py`; the checks never ran",
+		"FAIL  300 s  1 hidden check missed",
+	]);
+	const all = mkdtempSync(join(tmpdir(), "runs-"));
+	mkdirSync(join(all, "a")); writeFileSync(join(all, "a", "run.json"), JSON.stringify({ passed: true, checks_ran: true, missing_checks: [], wall: 90 }));
+	assert.equal(summariseRuns(all).verdict, "PASS");
+});
+
+test("a quick run is one session; the full run keeps the page's n", async () => {
+	const { runArgv } = await tutor();
+	const cmd = "uv run python learn/code/harness.py run --suite easy --arm bare --remedy guard/break-repeat-loops --repeat 3 --grade";
+	const quick = runArgv(cmd, "/tmp/r", false);
+	assert.equal(quick[quick.indexOf("--repeat") + 1], "1");
+	assert.equal(quick[quick.indexOf("--runs-dir") + 1], "/tmp/r");
+	const full = runArgv(cmd, "/tmp/r", true);
+	assert.equal(full[full.indexOf("--repeat") + 1], "3");
+});
+
+test("every lesson picture has a PNG copy for the terminal (Kitty draws PNG only)", async () => {
+	const { lessonIndex, parseLesson, terminalPicture } = await tutor();
+	const { existsSync } = await import("node:fs");
+	for (const entry of lessonIndex(ROOT)) {
+		const png = terminalPicture(ROOT, parseLesson(readFileSync(entry.file, "utf8")).image);
+		assert.ok(png.endsWith(".png") && existsSync(png), `${entry.number}: ${png}`);
+	}
+});
+
+test("soft line breaks are joined for the terminal; code, lists and tables are kept", async () => {
+	const { unwrap } = await tutor();
+	const md = "One line\nwraps here.\n\n- a list\n- item\n\n```ts\nconst a = 1;\nconst b = 2;\n```\n\n| a | b |\n| --- | --- |\n| 1 | 2 |";
+	assert.equal(unwrap(md), "One line wraps here.\n\n- a list\n- item\n\n```ts\nconst a = 1;\nconst b = 2;\n```\n\n| a | b |\n| --- | --- |\n| 1 | 2 |");
+	assert.equal(unwrap("- a long item\n  that wraps\n- next"), "- a long item that wraps\n- next");
+});
+
+test("a session in which no model answered says so, instead of blaming the checks", async () => {
+	const { summariseRuns } = await tutor();
+	const dir = mkdtempSync(join(tmpdir(), "runs-"));
+	mkdirSync(join(dir, "a"));
+	writeFileSync(join(dir, "a", "run.json"), JSON.stringify({ passed: false, checks_ran: false, missing_checks: ["x"], wall: 14, requests: 0, output_tokens: 0 }));
+	assert.match(summariseRuns(dir).lines[0], /no model answered/);
+});

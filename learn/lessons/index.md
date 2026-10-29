@@ -37,6 +37,29 @@ The lessons' runs use the Bronze, Silver and Gold levels of
 [The Challenge](../challenge/index.md). A lesson's tier says how far into the
 material it goes, not which level it runs on.
 
+## Take the lessons in Pi
+
+Every lesson also runs inside Pi, the harness it teaches. From your checkout
+of this repository:
+
+```bash
+pi
+```
+
+The first time, type `/trust` and restart Pi, so it loads the project's
+extensions. Then:
+
+- `/lesson` picks a lesson (finished ones are ticked, the next one comes
+  first), and `/lesson E5` opens one. It shows the lesson's picture and walks
+  you through each step; on the Eval case and Solution steps, `r` runs the
+  before and after lines and tells you whether each session passed and why.
+- `/remedy` switches remedy units on and off in your live session, so you can
+  try one by hand: `/remedy on guard/break-repeat-loops`, `/remedy off …`,
+  or `/remedy preset:easy`.
+
+Pictures show in terminals that draw images (Kitty, Ghostty, WezTerm, iTerm2);
+elsewhere you see their description.
+
 ## Pathologies and their remedies
 
 Every remedy these lessons teach is a small unit you can switch on by itself.

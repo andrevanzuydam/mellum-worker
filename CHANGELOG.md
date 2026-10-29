@@ -6,6 +6,15 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `/lesson` in Pi: take the course inside the harness it teaches. It lists
+  the 23 lessons in track order (finished ones ticked), shows each lesson's
+  picture, and walks through the opening, Paul's six steps and the key
+  points one screen at a time. On the Eval case and Solution steps, `r` runs
+  the page's before and after lines (one session; `R` runs the page's n) and
+  summarises each session from its `run.json`: PASS or FAIL, and why (a
+  stall, checks that never ran, missed checks, or no model answering). The
+  lesson page is its only source.
+
 - `/remedy` in Pi: switch remedy units on and off in a live session
   (`/remedy` picks from a list, `/remedy on guard/break-repeat-loops`,
   `/remedy off …`, `/remedy preset:easy`), with a status line saying how many
