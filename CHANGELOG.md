@@ -20,6 +20,11 @@ Versions match git tags; pin one in both install lines.
   `tool/keep-a-plan`, `check/check-code-quality` and
   `workflow/spec-driven-flow`. Each loads its extension unchanged; none is
   installed by default or measured as a remedy yet.
+- `harness.py run --remedy LIST` loads remedy units on top of the arm (names
+  such as `guard/break-repeat-loops`, or `preset:baseline-worker`), and
+  `--extension PATH` (repeatable) loads your own Pi extension. Each session's
+  `run.json` records the remedies and every loaded file with its SHA-256, so a
+  Challenge attempt says exactly what it ran.
 
 - `scripts/baseline/baseline.py lessons --full` runs every lesson's commands at
   the page's own n and deadline (the default stays one session per arm, capped
