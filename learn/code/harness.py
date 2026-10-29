@@ -916,6 +916,10 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--repeat must be at least 1")
     remedies, extras = resolve_extras(args.remedy, args.extension)
     args.pi_binary = resolve_pi_binary(args.pi_binary)
+    # Pi runs with the workspace as its cwd, so every path handed to it must be absolute.
+    args.runs_dir = Path(args.runs_dir).resolve()
+    args.profile = Path(args.profile).resolve()
+    args.suites_dir = Path(args.suites_dir).resolve()
     if args.suite == "all":
         run_suites(["all"], suites_dir=args.suites_dir, runs_dir=args.runs_dir,
                    pi_binary=args.pi_binary, grade_run=args.grade,

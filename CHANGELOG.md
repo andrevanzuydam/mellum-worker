@@ -189,6 +189,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- `harness.py run` makes `--runs-dir`, `--profile` and `--suites-dir` absolute
+  before Pi starts. Pi runs inside the workspace, so relative paths sent the
+  recorder and profile lookups there and every session ended at once with
+  "Unknown provider".
 - `harness.py run --pi-binary path/to/pi` works with a relative path. Pi runs
   inside the workspace, so the path used to be looked up from there and the
   run failed with "pi not found".

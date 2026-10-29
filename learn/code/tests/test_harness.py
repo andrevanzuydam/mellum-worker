@@ -1027,3 +1027,16 @@ def test_a_relative_pi_binary_path_is_resolved_from_where_the_harness_runs(tmp_p
         harness.load_suite(SUITES, "add"), runs_dir=tmp_path / "runs",
         pi_binary=harness.resolve_pi_binary(rel), repeat=1, grade_run=False, deadline=None)
     assert json.loads((results[0][0] / "run.json").read_text())["passed"] is True
+
+
+def test_relative_runs_dir_and_profile_are_made_absolute_before_pi_runs(tmp_path, monkeypatch):
+    # Pi runs with the workspace as its cwd: relative --runs-dir and --profile paths would
+    # resolve the recorder and the profile inside the workspace, where they do not exist.
+    monkeypatch.chdir(tmp_path)
+    shutil.copytree(PROFILE, tmp_path / "prof")
+    seen = {}
+    monkeypatch.setattr(harness, "_run_sessions", lambda suite, **kw: seen.update(kw) or [])
+    monkeypatch.setattr(harness, "_print_task", lambda *a, **k: None)
+    harness.main(["run", "--suites-dir", str(SUITES), "--suite", "add", "--runs-dir", "runs/x", "--profile", "prof"])
+    assert seen["runs_dir"] == tmp_path / "runs" / "x"
+    assert seen["profile"] == tmp_path / "prof"
