@@ -114,42 +114,50 @@ command), **add the remedy** (one line), **see it pass** (the same command),
 and one key point. Longer evidence goes in a fold at the end.
 
 **Dated correction 2026-10-29: the track.** The first table here bundled the
-whole worker into lesson 1 and so taught nothing granular. The track is now
-built tier on tier, each tier starting from the previous tier's finished
-preset, so a lesson's failure is one the earlier remedies cannot fix:
+whole worker into lesson 1 and so taught nothing granular. Extensions fall in
+three categories: **tools** (a capability the model calls: Pi's `read`,
+`write`, `edit`, `bash`, `ls`, `find`, `grep`; ours `lookup`,
+`read_document`, `describe_image`, `context_search`), **remedies** (one unit
+that corrects one pathology) and **orchestration** (Hard only).
 
-| Tier | Starts from | Lesson | Adds |
-| --- | --- | --- | --- |
-| Easy | bare Pi | E1 Read the failure | nothing: name the failure from the trace and find its row in the remedies list |
-| | | E2 Stop repeat loops | `guard/break-repeat-loops` |
-| | | E3 Don't hang on a server | `guard/block-foreground-server` |
-| | | E4 Tell it how to test | `context/add-project-facts` |
-| | | E5 A short prompt | `context/use-short-prompt` |
-| | | E6 Fewer tools | `context/narrow-tools` |
-| | | E7 Nudge an empty turn | `nudge/nudge-empty-turn` |
-| | | E8 Stay in the workspace | `guard/stay-in-workspace` |
-| Medium | `preset:easy` | M1 Run long commands safely | `tool/background-long-commands` |
-| | | M2 Keep writes in the workspace | `guard/confine-writes` (new; a guard change, screened first) |
-| | | M3 Don't rewrite whole files | `guard/refuse-whole-file-rewrite` |
-| | | M4 Look it up, don't guess | `tool/lookup-library-docs` |
-| | | M5 Keep a plan | `tool/keep-a-plan` |
-| | | M6 Check quality before finishing | `check/check-code-quality` |
-| | | M7 Thinking is working memory | keeping reasoning (against `MELLUM_STRIP_THINKING=1`) |
-| | | M8 One spec per phase | task shaping (`--specs split`) |
-| | | M9 Steps, not one brief | task shaping (against `--single-prompt`) |
-| Hard | `preset:medium` | H1 Who drives | the orchestrator role: a parent hands the task to the worker |
-| | | H2 The handoff | the intercom block: what the parent sees of the worker's span |
-| | | H3 Plan, examine, code | the flow's roles as tools the agent calls |
-| | | H4 Frozen gates and checkpoints | per-phase gates the coder cannot weaken; revert to the last good phase |
-| | | H5 Don't trust the self-exit | an external acceptance test, re-dispatched on failure |
-| | | H6 Best of N | parallel attempts on retry, promoting a winner |
+**Before and after.** Every lesson is self-contained and shows two states of
+one command. *Before* is everything the tier has built up to this lesson,
+written out as one `--remedy` line so no earlier lesson is needed; *after* is
+that line plus this lesson's one unit. A lesson **works** when its challenge
+fails with *before* and passes with *after* at a preregistered n; that is the
+lesson's test, and it also confirms the pathology on the current host.
 
-Hard is the orchestration paradigm only; task shaping is Medium. Today's
-pages move with their evidence: E3 → E4, E4 → E5, M2 → E7, M1 → M7, M3 → M8,
-M4 → M9, H1 → H1, H2 → H2; E1 and E2 are rewritten. `preset:easy` and
-`preset:medium` are the units each tier adds, in order; `preset:baseline-worker`
-stays as the worker's list for The Challenge, not a lesson. Renamed pages keep
-a redirect from their old URL.
+| Tier | Lesson | Introduces | The failure | Adds |
+| --- | --- | --- | --- | --- |
+| Easy (from bare Pi) | E1 Read the failure | the trace | name it, find its row in the remedies list | nothing |
+| | E2 Looking around | `read`, `ls` | the same call over and over | `guard/break-repeat-loops` |
+| | E3 Searching | `grep`, `find` | searching the whole machine | `guard/stay-in-workspace` |
+| | E4 Creating files | `write` | rewriting a whole file for a few lines | `guard/refuse-whole-file-rewrite` |
+| | E5 Running commands | `bash` | a foreground server hangs the session | `guard/block-foreground-server` |
+| | E6 Too many tools | the tool list | reaching for tools it uses badly | `context/narrow-tools` |
+| Medium (from `preset:easy`) | M1 Tell it how to test | project facts | guesses the test command | `context/add-project-facts` |
+| | M2 A short prompt | the system prompt | follows a procedure, not the files | `context/use-short-prompt` |
+| | M3 Nudge an empty turn | the turn's end | stops mid-task with no reply | `nudge/nudge-empty-turn` |
+| | M4 Thinking is working memory | reasoning | loses its reasoning between turns | keeping reasoning |
+| | M5 Run long commands safely | background runs | waits on a watcher forever | `tool/background-long-commands` |
+| | M6 Look it up | `lookup` | guesses an API it never saw | `tool/lookup-library-docs` |
+| | M7 Check before finishing | the finish | ends with lint or type errors | `check/check-code-quality` |
+| | M8 One spec per phase | the brief's layout | task shaping | `--specs split` |
+| | M9 Steps, not one brief | the brief's delivery | task shaping | against `--single-prompt` |
+| Hard (from `preset:medium`) | H1 Who drives | the orchestrator role | a parent hands the task to the worker | the role |
+| | H2 The handoff | the intercom block | what the parent sees of the span | the handoff |
+| | H3 Plan, examine, code | the flow's tools | one agent does everything at once | the flow roles |
+| | H4 Frozen gates and checkpoints | gates | a later phase breaks an earlier one | per-phase gates, revert |
+| | H5 Don't trust the self-exit | the exit | exits on its own weak test | an external acceptance test |
+| | H6 Best of N | retries | one unlucky sample sinks a phase | parallel attempts |
+
+`edit` is introduced in E4 as the tool E4's remedy points to. `read_document`,
+`describe_image` and `context_search` join Medium when a challenge needs one.
+Writes escaping the workspace (recorded 2026-10-29) wait for a
+write-confining guard and its screen. Today's pages move with their evidence:
+E3 → M1, E4 → M2, M2 → M3, M1 → M4, M3 → M8, M4 → M9, H1 → H1, H2 → H2; E1
+and E2 are rewritten. `preset:easy` and `preset:medium` list each tier's
+units in order; `preset:baseline-worker` stays for The Challenge.
 
 The 2026-10-29 lesson run shows the Bronze/Silver/Gold suites cannot do this
 on a strong host: without the remedy, bare Pi still passes. So each lesson
