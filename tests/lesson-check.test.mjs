@@ -15,7 +15,7 @@ test("lesson-check --dry-run prints the page's before then after line, at its n,
 	assert.equal(extra, undefined);
 	for (const [line, arm] of [[before, "before"], [after, "after"]]) {
 		assert.match(line, /harness\.py run /);
-		assert.match(line, /--repeat 3/);
+		assert.match(line, /--repeat 1/);
 		assert.ok(line.includes(`--profile ${profile}`), line);
 		assert.ok(line.includes(`--runs-dir /tmp/check/${arm}`), line);
 	}

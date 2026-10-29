@@ -9,6 +9,10 @@ lifecycle: active
 
 Spec: [`2026-10-29-uniform-lessons-design.md`](../specs/2026-10-29-uniform-lessons-design.md).
 
+**Dated correction 2026-10-29.** Lesson checks are one session per arm
+(spec correction of the same date): before FAIL, after PASS. Lines use
+`--repeat 1`; `lesson-check.sh`'s dry-run test checks `--repeat 1`.
+
 ## Why
 
 The lessons are not one kind of thing: some run, some do not, some run a

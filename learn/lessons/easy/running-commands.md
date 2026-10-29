@@ -94,8 +94,8 @@ The weakest badge is `screen`: the stall is measured (four of nine bare sessions
 Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suites-dir learn/challenges --suite running-commands --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite --repeat 3 --deadline 600 --stall 120
-uv run python learn/code/harness.py run --suites-dir learn/challenges --suite running-commands --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite,guard/block-foreground-server --repeat 3 --deadline 600 --stall 120
+uv run python learn/code/harness.py run --suites-dir learn/challenges --suite running-commands --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite --repeat 1 --deadline 600 --stall 120
+uv run python learn/code/harness.py run --suites-dir learn/challenges --suite running-commands --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite,guard/block-foreground-server --repeat 1 --deadline 600 --stall 120
 ```
 
 !!! success "Key points"

@@ -11,6 +11,20 @@ under the uniform-lessons contract
 foreground, often enough to fail every session without the guard; and that
 `guard/block-foreground-server` turns those sessions into passes.
 
+## Dated correction 2026-10-29, before the deciding run
+
+The rule changes to **one session per arm** (spec correction of the same
+date, at Andre's direction): the lesson holds if the before session FAILS and
+the after session PASSES. Run as `--repeat 1`.
+
+In full view: the change was made after a first attempt at revision 3
+(`runs/E4-check-20261029T205258Z-00d8315`, not recorded) that was **void**
+from a harness fault: `lesson-check.sh` fed its run lines on stdin, so the
+first before session received the after arm's command as part of its prompt,
+ran it, and stalled; the after arm never ran (fixed in `4ef2f6d`). The two
+clean before sessions of that attempt both stalled on `python app.py` and
+failed. The deciding run is a fresh one under the corrected rule.
+
 ## Why a revision 3
 
 - Revisions 1 and 2 on BF16 (vast.ai A6000): 3/3 before, 3/3 after. The model

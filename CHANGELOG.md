@@ -6,6 +6,9 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A lesson check is now one session per arm: the before line must FAIL and
+  the after line PASS, the same thing a learner sees pressing `r` in
+  `/lesson`. Lesson run lines use `--repeat 1`; rates stay with the suites.
 - E4 Running Commands now runs its own challenge,
   `learn/challenges/running-commands/`, instead of the shared `easy` suite,
   and the challenge's step 2 gives the project's own run command

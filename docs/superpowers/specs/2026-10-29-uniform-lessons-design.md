@@ -2,6 +2,13 @@
 
 Date: 2026-10-29. Status: approved by Andre on 2026-10-29.
 
+**Dated correction 2026-10-29.** Andre: lessons do not need n = 3. A lesson
+check is **one session per arm**: before must FAIL and after must PASS, which
+is exactly what a learner sees when pressing `r`. Run lines use `--repeat 1`.
+A lesson check is therefore a demonstration on the reference model, not a
+rate, and pages say so; rates stay with the suites and the ladder. The rule,
+risk and line-form passages below read as written otherwise.
+
 ## Intent
 
 The remedy-units cycle (LC.27) gave every remedy one role in one file, and

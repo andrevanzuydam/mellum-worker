@@ -75,7 +75,7 @@ lesson.
 The before line, until the challenge and its after line exist:
 
 ```bash
-uv run python learn/code/harness.py run --suites-dir learn/challenges --suite keep-a-plan --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite,guard/block-foreground-server,context/narrow-tools,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs,check/check-code-quality --repeat 3
+uv run python learn/code/harness.py run --suites-dir learn/challenges --suite keep-a-plan --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite,guard/block-foreground-server,context/narrow-tools,context/add-project-facts,context/use-short-prompt,nudge/nudge-empty-turn,tool/background-long-commands,tool/lookup-library-docs,check/check-code-quality --repeat 1
 ```
 
 !!! success "Key points"
