@@ -1,16 +1,16 @@
 ---
 title: Looking Around
 tier: easy
-number: E2
+number: E3
 time: 3 min read · 20 min to run
 track: lessons
-position: 2
-prerequisites: [lessons/easy/reasoning-as-text]
+position: 3
+prerequisites: [lessons/easy/context-overflow]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---
 
-# E2 · Looking Around
+# E3 · Looking Around
 
 The read and ls tools are how the model looks at a project, and a small model can
 get stuck looking: the same call, again and again, with nothing changing. One
@@ -43,7 +43,8 @@ session runs out of time. Nothing is wrong with the tool; the model is stuck.
 
 **Badge:** `conjecture`
 
-**Before:** bare Pi with the serving repair, `context/repair-think-tags`.
+**Before:** Pi with what E1 and E2 added, `context/repair-think-tags` and
+`context/trim-tool-output`.
 **After:** the same plus `guard/break-repeat-loops`. Both run the lesson's own challenge,
 `learn/challenges/looking-around/`: readings spread over 200 site files in
 8 region folders. Find one sensor's reading, find a region's highest sensor,
@@ -100,8 +101,8 @@ earn that.
 Before, then after:
 
 ```bash
-uv run python learn/code/harness.py run --suites-dir learn/challenges --suite looking-around --remedy context/repair-think-tags --repeat 1 --deadline 600 --stall 120
-uv run python learn/code/harness.py run --suites-dir learn/challenges --suite looking-around --remedy context/repair-think-tags,guard/break-repeat-loops --repeat 1 --deadline 600 --stall 120
+uv run python learn/code/harness.py run --suites-dir learn/challenges --suite looking-around --remedy context/repair-think-tags,context/trim-tool-output --repeat 1 --deadline 600 --stall 120
+uv run python learn/code/harness.py run --suites-dir learn/challenges --suite looking-around --remedy context/repair-think-tags,context/trim-tool-output,guard/break-repeat-loops --repeat 1 --deadline 600 --stall 120
 ```
 
 !!! success "Key points"

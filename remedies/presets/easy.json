@@ -1,5 +1,6 @@
 [
   "context/repair-think-tags",
+  "context/trim-tool-output",
   "guard/break-repeat-loops",
   "guard/stay-in-workspace",
   "guard/refuse-whole-file-rewrite",

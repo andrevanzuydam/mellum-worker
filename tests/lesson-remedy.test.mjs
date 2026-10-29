@@ -6,11 +6,12 @@ import { readFileSync, readdirSync } from "node:fs";
 // a challenge of its own) exists yet. None may claim a FAIL -> PASS it has not shown.
 const EXPECTED = {
 	E1: "`context/repair-think-tags`",
-	E2: "`guard/break-repeat-loops`",
-	E3: "`guard/stay-in-workspace`",
-	E4: "`guard/refuse-whole-file-rewrite`",
-	E5: "`context/narrow-tools`",
-	E6: "`guard/cap-turns`",
+	E2: "`context/trim-tool-output`",
+	E3: "`guard/break-repeat-loops`",
+	E4: "`guard/stay-in-workspace`",
+	E5: "`guard/refuse-whole-file-rewrite`",
+	E6: "`context/narrow-tools`",
+	E7: "`guard/cap-turns`",
 	M1: "`context/add-project-facts`",
 	M2: "`context/use-short-prompt`",
 	M3: "`nudge/nudge-empty-turn`",

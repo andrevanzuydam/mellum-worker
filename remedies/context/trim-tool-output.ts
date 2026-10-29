@@ -4,7 +4,7 @@ import { type PiLike, type UnitMeta } from "../install.ts";
 export const meta: UnitMeta = {
 	pathology: "Reads more than the context holds, so Pi compacts it and the model loses what it read first",
 	does: "Trims a read, bash, grep, find or ls result over 8,000 characters and says how to search for the rest",
-	lesson: "",
+	lesson: "E2",
 	evidence: "context-overflow screen: 8 notes read whole, 2 compactions, 8 notes read again",
 };
 

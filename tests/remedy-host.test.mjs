@@ -51,7 +51,7 @@ test("/remedy preset:easy turns on every unit in the preset", async () => {
 	const pi = fakePi();
 	await (await host()).default(pi);
 	await pi.run("remedy", "preset:easy");
-	assert.equal(pi.ui.status.remedies, "remedies: 6 on");
+	assert.equal(pi.ui.status.remedies, "remedies: 7 on");
 	assert.equal(pi.fire("tool_call", { toolName: "bash", input: { command: "uv run python app.py" } })?.block, true);
 });
 

@@ -229,3 +229,7 @@ subject = "the small robot holding two boxes labelled good and broken up to a te
 [reasoning-as-text]
 seed = 8025
 subject = "the small robot sorting a tangled ribbon of thought bubbles and speech bubbles into two separate trays"
+
+[context-overflow]
+seed = 8026
+subject = "the small robot trying to stuff an armful of thick books into a small backpack while pages spill out"

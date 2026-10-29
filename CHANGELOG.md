@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- New lesson E2 · Reading More Than Fits: eight long notes read whole fill a
+  64k context and Pi compacts it (6 compactions and a wrong answer on the
+  screen); `context/trim-tool-output` keeps it at none. The `easy`, `medium`
+  and `hard` presets list the unit after the E1 repair; the later Easy
+  lessons move up one (Looking Around is E3 through Know When to Stop E7).
 - New remedy unit `context/trim-tool-output`: a read, bash, grep, find or ls
   result over 8,000 characters is trimmed, with a note saying how much was
   cut and how to search for the part needed, so a model that reads everything
