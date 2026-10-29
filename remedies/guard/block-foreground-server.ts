@@ -5,7 +5,7 @@ import { installGuard, type PiLike, type UnitMeta } from "../install.ts";
 export const meta: UnitMeta = {
 	pathology: "Starts `python app.py` in the foreground and the session hangs until its deadline",
 	does: "Blocks a foreground server start and shows the background form",
-	lesson: "E5",
+	lesson: "E6",
 	evidence: "screen: the hang recurs in the vLLM baseline's web-app rungs; unmeasured as a remedy",
 };
 

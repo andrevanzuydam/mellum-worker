@@ -5,7 +5,7 @@ import { keepingTools, type UnitMeta } from "../install.ts";
 export const meta: UnitMeta = {
 	pathology: "Guesses an API it never saw (a post-cutoff library, a redirect status)",
 	does: "Adds a lookup tool over the installed packages' signatures and docs",
-	lesson: "M6",
+	lesson: "M7",
 	evidence: "unit-tested; not measured on the suites",
 };
 
