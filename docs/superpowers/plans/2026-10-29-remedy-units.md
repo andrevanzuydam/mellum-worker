@@ -83,6 +83,24 @@ user-facing surface changes.
    whose lesson challenge is not built says so, and no page claims a
    FAIL → PASS it has not shown (a test enforces the wording).
 
+10. **The tiered track** *(added 2026-10-29; the spec's dated track
+    correction).* Reformat the lessons into Easy E1–E8, Medium M1–M9 and
+    Hard H1–H6, each tier starting from the previous tier's preset. Keep
+    Paul's six steps, each shortened: Problem; Eval case as **see it fail**;
+    Evidence of the problem as the FAIL; Solution as **add the remedy** (the
+    unit, its excerpt, the `--remedy` line); Validation as **see it pass**;
+    Interpretation in one paragraph. Existing evidence moves with its page
+    into a closing fold; a lesson with none says it is not measured yet. Old
+    URLs redirect. `preset:easy` and `preset:medium` list each tier's units.
+11. **Pictures.** One illustration per new page from the lab server
+    (`scripts/illustrate.py`, prompts in `prompts.toml`), same style.
+12. **Test each lesson.** Per lesson, in track order: a lesson challenge
+    under `learn/challenges/<lesson>/` built to show its one failure, a
+    preregistration, and a run at n = 3 without and with the unit on the
+    previous tier's preset. The page's lesson check flips to PASS only on
+    that record. Start with the units likeliest to show a clean FAIL → PASS
+    (`block-foreground-server`, `break-repeat-loops`).
+
 ## Checks before close
 
 - `npm test`, the learn suite, the ladder fast suite, the docs caps.
