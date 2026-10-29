@@ -6,6 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- New lesson E1 · Reasoning Returned as Text: on a host whose reasoning
+  parser misses, the session fails on its record (`reasoning_as_text`), and
+  `context/repair-think-tags` puts the reasoning back. It is the first lesson
+  built from a condition that produces its failure every time; screened twice
+  on the LAN host (6 and 8 turns without the unit, 0 with it). The other Easy
+  lessons move up one: Looking Around is E2 through Know When to Stop E6.
 - The think-tag repair is now a remedy unit, `context/repair-think-tags`,
   instead of something every harness session loaded. A lesson can then show
   the serving failure without it, and the `easy`, `medium` and `hard` presets

@@ -1,16 +1,16 @@
 ---
 title: Looking Around
 tier: easy
-number: E1
+number: E2
 time: 3 min read · 20 min to run
 track: lessons
-position: 1
-prerequisites: [lessons/start-here]
+position: 2
+prerequisites: [lessons/easy/reasoning-as-text]
 authors: [Andre van Zuydam]
 backends: [omlx]
 ---
 
-# E1 · Looking Around
+# E2 · Looking Around
 
 The read and ls tools are how the model looks at a project, and a small model can
 get stuck looking: the same call, again and again, with nothing changing. One

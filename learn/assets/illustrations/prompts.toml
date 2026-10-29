@@ -225,3 +225,7 @@ subject = "the small robot ticking items off a long checklist pinned to a board,
 [build-a-suite]
 seed = 8024
 subject = "the small robot holding two boxes labelled good and broken up to a testing machine, one light green and one red"
+
+[reasoning-as-text]
+seed = 8025
+subject = "the small robot sorting a tangled ribbon of thought bubbles and speech bubbles into two separate trays"

@@ -19,7 +19,7 @@ test("lesson-check --dry-run prints the page's before then after line, at its n,
 		assert.ok(line.includes(`--profile ${profile}`), line);
 		assert.ok(line.includes(`--runs-dir /tmp/check/${arm}`), line);
 	}
-	assert.ok(!before.includes("guard/break-repeat-loops") && after.includes("guard/break-repeat-loops"));
+	assert.ok(!before.includes("context/repair-think-tags") && after.includes("context/repair-think-tags"));
 });
 
 test("lesson-check refuses a lesson with no before and after line", () => {

@@ -19,6 +19,7 @@ nav = [
     "lessons/start-here.md",
     { "Easy" = [
       "lessons/easy/index.md",
+      "lessons/easy/reasoning-as-text.md",
       "lessons/easy/looking-around.md",
       "lessons/easy/searching.md",
       "lessons/easy/creating-files.md",

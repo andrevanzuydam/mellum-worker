@@ -5,7 +5,7 @@ import { installGuard, type PiLike, type UnitMeta } from "../install.ts";
 export const meta: UnitMeta = {
 	pathology: "Keeps calling tools with no end, because Pi has no turn cap",
 	does: "Blocks every call after a budget (default 200) and asks for a summary",
-	lesson: "E5",
+	lesson: "E6",
 	evidence: "dormant in the worker; unmeasured",
 };
 

@@ -5,11 +5,12 @@ import { readFileSync, readdirSync } from "node:fs";
 // Every lesson names the remedy it teaches and whether its lesson check (a visible FAIL -> PASS on
 // a challenge of its own) exists yet. None may claim a FAIL -> PASS it has not shown.
 const EXPECTED = {
-	E1: "`guard/break-repeat-loops`",
-	E2: "`guard/stay-in-workspace`",
-	E3: "`guard/refuse-whole-file-rewrite`",
-	E4: "`context/narrow-tools`",
-	E5: "`guard/cap-turns`",
+	E1: "`context/repair-think-tags`",
+	E2: "`guard/break-repeat-loops`",
+	E3: "`guard/stay-in-workspace`",
+	E4: "`guard/refuse-whole-file-rewrite`",
+	E5: "`context/narrow-tools`",
+	E6: "`guard/cap-turns`",
 	M1: "`context/add-project-facts`",
 	M2: "`context/use-short-prompt`",
 	M3: "`nudge/nudge-empty-turn`",

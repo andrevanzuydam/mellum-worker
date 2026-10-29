@@ -1,16 +1,16 @@
 ---
 title: Know When to Stop
 tier: easy
-number: E5
+number: E6
 time: 3 min read · not built yet
 track: lessons
-position: 5
+position: 6
 prerequisites: [lessons/easy/too-many-tools]
 authors: [Andre van Zuydam]
 backends: [vllm]
 ---
 
-# E5 · Know When to Stop
+# E6 · Know When to Stop
 
 Pi has no turn cap, so a small model that cannot finish keeps calling tools until the deadline. One guard sets a budget and asks for a summary when it runs out.
 
