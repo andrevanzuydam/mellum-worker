@@ -6,6 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `/remedy` in Pi: switch remedy units on and off in a live session
+  (`/remedy` picks from a list, `/remedy on guard/break-repeat-loops`,
+  `/remedy off …`, `/remedy preset:easy`), with a status line saying how many
+  are on. Everything starts off. It loads automatically when Pi runs in this
+  repository once you have run `/trust`.
+
 - Remedy units under `remedies/`: each remedy as one file with one role,
   loadable alone with `pi -e`. First the five guards
   (`guard/block-foreground-server`, `break-repeat-loops`, `stay-in-workspace`,
