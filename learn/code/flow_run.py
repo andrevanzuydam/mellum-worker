@@ -142,7 +142,8 @@ def run_top(task: str, *, workspace: Path, profile: Path, recorder: Path, provid
     feed.start()
     subf = threading.Thread(target=tail_feed, args=(subfeed, stop), daemon=True)
     subf.start()
-    child = subprocess.Popen(argv, cwd=workspace, env=env, start_new_session=True)
+    # No stdin: Pi with -p appends piped stdin to its prompt.
+    child = subprocess.Popen(argv, cwd=workspace, env=env, stdin=subprocess.DEVNULL, start_new_session=True)
     try:
         child.wait(timeout=timeout)
     except subprocess.TimeoutExpired:
@@ -259,7 +260,8 @@ def run_orient(titles: str, *, workspace: Path, profile: Path, recorder: Path, p
         f"Phase titles, in order:\n{titles}\n\nState the north star in one line.",
     ]
     env = {**os.environ, "PI_CODING_AGENT_DIR": str(profile), "MELLUM_TRACE_FILE": str(trace)}
-    child = subprocess.Popen(argv, cwd=workspace, env=env, start_new_session=True)
+    # No stdin: Pi with -p appends piped stdin to its prompt.
+    child = subprocess.Popen(argv, cwd=workspace, env=env, stdin=subprocess.DEVNULL, start_new_session=True)
     try:
         child.wait(timeout=timeout)
     except subprocess.TimeoutExpired:

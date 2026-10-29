@@ -899,6 +899,21 @@ def test_a_run_sweeps_a_server_started_in_its_own_session(tmp_path):
                 p.kill()
 
 
+def test_a_session_never_reads_the_callers_stdin(tmp_path):
+    # Pi with -p appends piped stdin to its prompt. On 2026-10-29 a script fed
+    # the harness its run lines on stdin, and the first session received the
+    # next arm's command as part of its task and ran it. Sessions get no stdin.
+    runs = tmp_path / "runs"
+    result = subprocess.run(
+        [sys.executable, str(HERE.parent / "harness.py"), "run", "--suites-dir", str(SUITES),
+         "--suite", "add", "--pi-binary", str(FIX / "fake-pi-stdin.sh"), "--repeat", "1",
+         "--runs-dir", str(runs)],
+        input="the next arm's command\n", capture_output=True, text=True, timeout=120)
+    assert result.returncode in (0, 1), result.stderr
+    seen = next(runs.iterdir()) / "workspace" / "stdin.txt"
+    assert seen.read_text() == ""
+
+
 def test_a_group_with_nothing_left_reports_nothing(tmp_path):
     child = subprocess.Popen(["sh", "-c", "true"], start_new_session=True)
     child.wait(timeout=5)

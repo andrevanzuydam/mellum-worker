@@ -1,3 +1,4 @@
+import re
 import signal
 import sys
 from pathlib import Path
@@ -417,3 +418,11 @@ def test_revert_keeps_a_gate_frozen_after_the_last_checkpoint(tmp_path):
     assert (ws / "app.py").read_text() == "good = 1\n"
     assert (ws / "plan" / "gate" / "phase_2.py").read_text() == frozen
     assert (ws / "plan" / "gate" / "phase_1.py").is_file()
+
+
+def test_no_pi_session_in_the_flow_reads_stdin():
+    # Pi with -p appends piped stdin to its prompt (the 2026-10-29 lesson-check
+    # fault), so every Pi the flow starts gets no stdin.
+    source = (Path(__file__).resolve().parents[1] / "flow_run.py").read_text()
+    launches = re.findall(r"subprocess\.Popen\(argv[^)]*\)", source)
+    assert launches and all("stdin=subprocess.DEVNULL" in call for call in launches), launches

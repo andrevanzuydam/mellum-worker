@@ -247,6 +247,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- No Pi session the harness or the flow starts reads stdin any more. Pi run
+  with `-p` appends piped stdin to its prompt, so a script that fed the
+  harness on stdin (`scripts/lesson-check.sh`, 2026-10-29) handed its next
+  command to the model as part of the task; the session ran it, and the
+  check was void. `lesson-check.sh` also closes stdin for each run line.
+
 - The harness now ends a server the model started, even after the session
   stalls. Pi starts each bash command in a process group of its own, so the
   old group sweep never reached it: on 2026-10-29 a stalled session's

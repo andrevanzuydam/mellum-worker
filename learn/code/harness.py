@@ -487,7 +487,8 @@ def run_suite(
             session_id=session_id, session_dir=sessions, extras=extras,
         )
         try:
-            child = subprocess.Popen(argv, cwd=workspace, env=env,
+            # No stdin: Pi with -p appends piped stdin to its prompt.
+            child = subprocess.Popen(argv, cwd=workspace, env=env, stdin=subprocess.DEVNULL,
                                      start_new_session=True)
             groups.append(child.pid)
         except FileNotFoundError:

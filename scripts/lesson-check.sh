@@ -56,7 +56,7 @@ while IFS= read -r LINE; do
     echo "port 8000 busy before $ARM:"; lsof -nP -iTCP:8000 -sTCP:LISTEN; exit 1
   fi
   echo "== $ARM at $(date -u +%H:%M) UTC: $LINE"
-  eval "$LINE" 2>&1 | tee "$OUT/$ARM.log"
+  eval "$LINE" < /dev/null 2>&1 | tee "$OUT/$ARM.log"
   ARM=after
 done <<< "$LINES"
 echo "== done at $(date -u +%H:%M) UTC"
