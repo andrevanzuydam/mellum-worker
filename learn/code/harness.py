@@ -194,6 +194,54 @@ def sweep_group(pgid: int, grace: float = 1.0) -> list[tuple[int, str]]:
     return found
 
 
+def workspace_members(workspace: Path) -> list[tuple[int, str]]:
+    """Every live process whose working directory is inside `workspace`."""
+    root = os.path.realpath(workspace)
+    out = subprocess.run(["lsof", "-w", "-d", "cwd", "-F", "pn"],
+                         capture_output=True, text=True, check=False).stdout
+    pids, pid = [], None
+    for line in out.splitlines():
+        if line.startswith("p"):
+            pid = int(line[1:])
+        elif line.startswith("n") and pid is not None and pid != os.getpid():
+            cwd = os.path.realpath(line[1:])
+            if cwd == root or cwd.startswith(root + os.sep):
+                pids.append(pid)
+    if not pids:
+        return []
+    listed = subprocess.run(["ps", "-o", "pid=,command=", "-p", ",".join(map(str, pids))],
+                            capture_output=True, text=True, check=False).stdout
+    members = []
+    for line in listed.splitlines():
+        parts = line.split(None, 1)
+        if len(parts) == 2 and parts[0].isdigit():
+            members.append((int(parts[0]), parts[1].strip()))
+    return members
+
+
+def sweep_workspace(workspace: Path, grace: float = 1.0) -> list[tuple[int, str]]:
+    """End every process still running inside a run's workspace, and report it.
+
+    Pi's bash tool starts each command detached, in a session and process
+    group of its own, so the group sweep never reaches a server the model
+    started. Its working directory is the workspace, so that finds it. The
+    sweep must never raise.
+    """
+    found = workspace_members(workspace)
+    for signal_number in (signal.SIGTERM, signal.SIGKILL):
+        for pid, _ in workspace_members(workspace):
+            try:
+                os.kill(pid, signal_number)
+            except OSError:
+                pass
+        deadline = time.monotonic() + grace
+        while time.monotonic() < deadline:
+            if not workspace_members(workspace):
+                return found
+            time.sleep(0.05)
+    return found
+
+
 def machine_label() -> str:
     """What this run ran on: enough to tell an M1 Pro from an M5 Max.
 
@@ -451,6 +499,9 @@ def run_suite(
     for pgid in groups:
         leaked.extend({"pid": pid, "pgid": pgid, "command": command}
                       for pid, command in sweep_group(pgid))
+    swept = {entry["pid"] for entry in leaked}
+    leaked.extend({"pid": pid, "pgid": None, "command": command}
+                  for pid, command in sweep_workspace(workspace) if pid not in swept)
     (run / "leaked.json").write_text(json.dumps(leaked, indent=2) + "\n")
     if pristine is not None and suite.layout is not None:
         (run / "layout.json").write_text(

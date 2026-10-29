@@ -877,6 +877,28 @@ def test_a_run_sweeps_the_processes_it_leaves_behind():
             child.kill()
 
 
+def test_a_run_sweeps_a_server_started_in_its_own_session(tmp_path):
+    # Pi's bash tool starts each command detached (a new session and process
+    # group), so a server the model starts is outside Pi's group and survives
+    # killpg. On 2026-10-29 a stalled session's `uvicorn` held port 8000 after
+    # the run. The workspace sweep finds it by its working directory.
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    child = subprocess.Popen(["sleep", "31"], cwd=workspace, start_new_session=True)
+    other = subprocess.Popen(["sleep", "32"], cwd=tmp_path, start_new_session=True)
+    try:
+        time.sleep(0.3)
+        found = harness.sweep_workspace(workspace)
+        assert any("sleep 31" in command for _, command in found), found
+        assert not any("sleep 32" in command for _, command in found), found
+        child.wait(timeout=5)  # killed by the sweep, not by us
+        assert other.poll() is None, "a process outside the workspace was ended"
+    finally:
+        for p in (child, other):
+            if p.poll() is None:
+                p.kill()
+
+
 def test_a_group_with_nothing_left_reports_nothing(tmp_path):
     child = subprocess.Popen(["sh", "-c", "true"], start_new_session=True)
     child.wait(timeout=5)

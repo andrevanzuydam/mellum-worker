@@ -224,6 +224,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- The harness now ends a server the model started, even after the session
+  stalls. Pi starts each bash command in a process group of its own, so the
+  old group sweep never reached it: on 2026-10-29 a stalled session's
+  `uvicorn` kept port 8000 and blocked the next arm. Every process still
+  running inside the run's workspace is ended and listed in `leaked.json`.
+
 - `harness.py run` makes `--runs-dir`, `--profile` and `--suites-dir` absolute
   before Pi starts. Pi runs inside the workspace, so relative paths sent the
   recorder and profile lookups there and every session ended at once with
