@@ -242,3 +242,17 @@ def test_serve_start_and_alive_track_the_server_by_pid(tmp_path):
     subprocess.run(["kill", str(pid)])
     time.sleep(0.5)
     assert sh(baseline.ALIVE).returncode != 0
+
+
+def test_a_full_lesson_run_keeps_the_pages_n_and_deadline(tmp_path):
+    cmd = baseline.lesson_commands(PAGE)[0]                          # --repeat 3 --deadline 2700
+    out = baseline.smoke_argv(cmd, profile=tmp_path, pi=tmp_path, runs=tmp_path, stall="120", cap="900",
+                              full=True)
+    assert out.count("--repeat") == 1 and out[out.index("--repeat") + 1] == "3"
+    assert out[out.index("--deadline") + 1] == "2700"
+    assert out[out.index("--stall") + 1] == "120"
+
+
+def test_lessons_takes_full():
+    assert baseline.parse_args(["lessons", "--full"]) == ("lessons", {"full": True})
+    assert baseline.parse_args(["lessons"]) == ("lessons", {"full": False})

@@ -17,6 +17,7 @@ Windows `run` happens inside WSL2.
              (--screen: screen 1's rungs and the easy suite, n = 1;
              --suites-only: rerun the suites into the latest run, keeping its ladder)
     lessons  run every lesson's "Run it yourself" commands once per arm, here
+             (--full: at each page's own n and deadline, the run its evidence used)
     fetch    copy the box's vLLM log into the newest baseline run
     ssh      open a shell on the box
     down     close the tunnel and destroy the instance
@@ -528,21 +529,25 @@ def lesson_commands(page: str) -> list[list[str]]:
 
 
 def smoke_argv(command: list[str], profile: Path, pi: Path, runs: Path,
-               stall: str | None = None, cap: str | None = None) -> list[str]:
-    """One session per arm, through the pinned profile and Pi, into `runs`."""
+               stall: str | None = None, cap: str | None = None, full: bool = False) -> list[str]:
+    """One session per arm, through the pinned profile and Pi, into `runs`. With `full`, the
+    page's own n and deadline instead: the run the lesson's evidence was measured with."""
     argv, skip = [], False
+    replaced = ("--profile", "--pi-binary", "--runs-dir", "--stall") + (() if full else ("--repeat",))
     for i, arg in enumerate(command):
         if skip:
             skip = False
             continue
-        if arg in ("--repeat", "--profile", "--pi-binary", "--runs-dir", "--stall"):
+        if arg in replaced:
             skip = True
             continue
         argv.append(arg)
-    if cap and "--deadline" in argv:
+    if cap and not full and "--deadline" in argv:
         i = argv.index("--deadline") + 1
         argv[i] = str(min(float(argv[i]), float(cap))).removesuffix(".0")
-    argv += ["--repeat", "1", "--profile", str(profile), "--pi-binary", str(pi), "--runs-dir", str(runs)]
+    if "--repeat" not in argv:
+        argv += ["--repeat", "1"]
+    argv += ["--profile", str(profile), "--pi-binary", str(pi), "--runs-dir", str(runs)]
     return argv + (["--stall", stall] if stall else [])
 
 
@@ -553,7 +558,7 @@ def run_all(commands: list[list[str]], runner, parallel: int = 1) -> list:
         return list(pool.map(runner, commands))
 
 
-def cmd_lessons() -> None:
+def cmd_lessons(full: bool = False) -> None:
     if os.name == "nt":
         raise BaselineError("the suites need POSIX process groups; run this step inside WSL2")
     p, c = pins(), config()
@@ -580,7 +585,8 @@ def cmd_lessons() -> None:
             results.append((label, page.stem, "no command", ""))
         for command in commands:
             jobs.append((label, page.stem, smoke_argv(command, profile, pi, out / page.stem,
-                                                      p["BASELINE_SUITE_STALL"], p["BASELINE_LESSON_DEADLINE_CAP"])))
+                                                      p["BASELINE_SUITE_STALL"], p["BASELINE_LESSON_DEADLINE_CAP"],
+                                                      full)))
 
     def runner(argv: list[str]) -> tuple[int, str]:
         say(f"start {' '.join(argv[argv.index('--suite'):argv.index('--profile')])}")
@@ -644,7 +650,7 @@ COMMANDS = {"client": cmd_client, "offers": cmd_offers, "up": cmd_up, "serve": c
             "down": cmd_down, "all": cmd_all}
 
 
-FLAGS = {"run": ("screen", "suites_only"), "all": ("screen", "keep")}
+FLAGS = {"run": ("screen", "suites_only"), "all": ("screen", "keep"), "lessons": ("full",)}
 
 
 def parse_args(argv: list[str]) -> tuple[str, dict] | None:

@@ -6,6 +6,10 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `scripts/baseline/baseline.py lessons --full` runs every lesson's commands at
+  the page's own n and deadline (the default stays one session per arm, capped
+  at 900 s), so a lesson's claim can be checked, not only smoke-tested.
+
 - A record of the full spec-driven flow on the vLLM baseline host
   (`docs/ladder/2026-10-29-vllm-flow/`), with its research note: one run per
   level, Bronze 4/4 hidden checks (a pass), Silver 13/18, Gold 30/34. It also
