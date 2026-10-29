@@ -127,12 +127,21 @@ without the unit and passes with it. Each lesson challenge is its own plan
 task with its own preregistration; this spec fixes the format and the rule,
 not the fixtures.
 
+## The remedies list, in both sections
+
+One list of pathologies and their remedies, generated from the units'
+headers so it cannot drift, appears in **two** places: the Lessons section
+(what each lesson teaches, as a quick reference) and The Challenge (what a
+learner can apply to get a pass). Each row: the pathology in plain words, the
+unit that remedies it, the lesson that teaches it, how strongly it is
+measured, and the one `--remedy` line that applies it. Applying a remedy to a
+Challenge attempt is meant to be that easy: copy the line, run the level.
+
 ## The Challenge: build and contribute
 
 The Challenge page gains two sections:
 
-- **Remedies you can try:** the unit table above, each row linking its lesson
-  and saying how strongly it is measured, with the `--remedy` line to use it.
+- **Remedies you can try:** the remedies list above.
 - **Build your own:** copy the smallest unit as a template, load it with
   `--extension`, attempt a level, and submit the extension, its scorecard and
   a note on the problem it fixes by pull request. A submitted remedy that
@@ -151,5 +160,6 @@ The Challenge page gains two sections:
 - Phase 2's three equivalence proofs pass before the inline code is removed.
 - Every lesson page names its unit and its lesson check; a lesson whose check
   is not yet built says so, and none claims a FAIL → PASS it has not shown.
-- The Challenge page carries both new sections.
+- The Challenge page carries both new sections, and the Lessons section
+  carries the same remedies list.
 - `npm test`, the learn suite, the ladder fast suite and the docs caps pass.
