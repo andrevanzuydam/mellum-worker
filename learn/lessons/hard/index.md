@@ -8,19 +8,24 @@ have everything [The Challenge](../../challenge/index.md) needs.
 
 ![A small robot conducting three smaller robots working at separate desks](../../assets/illustrations/tier-hard.webp){ .illustration }
 
+## Who drives
+
+When the model is the primary agent, it owns the plan, the tool list and the
+word "finished". Nothing outside it knows what done meant, so a missed phase,
+a narrowed test or a hung server comes back as a confident final over work it
+never checked. Every Hard lesson moves one of those decisions out of the
+model's text and into a driver above it: the flow that plans and checks each
+phase, the checkpoint that reverts a breaking change, the frozen test that
+defines done, the extra attempts that pick a passing one. The model stays the
+same; what changes is who decides. On 2026-10-25 the two arms (the model
+driving, a worker above it) passed the same on Bronze and Silver, but failed
+differently: the model-driven sessions hung on foreground servers and wrote
+outside the layout, and the worker's did neither
+([evidence](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-29-lessons-left-the-track.md)).
+
+## The lessons
+
 <div class="grid cards" markdown>
-
--   **[H1 · Who Drives](who-drives.md)**
-
-    ---
-
-    The orchestrator role: a parent hands the task to the worker.
-
--   **[H2 · The Handoff](the-handoff.md)**
-
-    ---
-
-    What the parent sees of the worker's span: one block, not every call.
 
 -   **[H3 · Plan, Examine, Code](plan-examine-code.md)**
 

@@ -61,6 +61,34 @@ them.
 - **Lesson check, 2026-10-29:** 0 of 3 in both arms.
 - **Kept as** the same backlog entry as M9.
 
+## H1 Who Drives
+
+[Page at `c5f125a`](https://github.com/andrevanzuydam/mellum-worker/blob/c5f125a/learn/lessons/hard/who-drives.md).
+
+- **Why it left.** Who drives is a role, the operator's or the harness's, not
+  a unit; its measured comparison used the `bare` and `worker` arms.
+- **Evidence.** Twelve sessions on an Apple M1 Pro (llama.cpp, `--deadline
+  2700`, 2026-10-25, preregistered): Bronze 1/3 for each arm, Silver 0/3 for
+  each, a null on both. How they failed differed: two of three `bare` Bronze
+  sessions ended on the deadline after a foreground `uvicorn … --reload`, and
+  `main.py` appeared outside the layout in two `bare` sessions; the worker did
+  neither. An earlier Silver sample (worker 2/3 against 0/3 on an M5 Max) did
+  not reproduce.
+- **Kept as** the opening of the Hard index, "Who drives".
+
+## H2 The Handoff
+
+[Page at `c5f125a`](https://github.com/andrevanzuydam/mellum-worker/blob/c5f125a/learn/lessons/hard/the-handoff.md).
+
+- **Why it left.** The handoff block (`collapseHandoffs`) ships inside
+  `extensions/mellum-worker.ts`, not as a unit, and there is no arm for it:
+  the delegated child it answered was retired on 2026-10-20 (LC.8).
+- **Evidence.** A rationale, not a finding: protocol text in a child's prompt
+  is paid on every request of that child, and again on every request of a
+  parent that keeps the transcript. The removal is checkable with
+  `git log --oneline --grep="one worker"`.
+- **Kept as** the `BACKLOG.md` entry "The handoff block as a unit".
+
 ## What would falsify this
 
 This note claims only that the linked pages said what is summarised here; the

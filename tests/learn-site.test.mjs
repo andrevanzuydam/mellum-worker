@@ -192,19 +192,6 @@ test("lesson 3 runs the suite, grading and the trace", () => {
   assert.match(page("getting-started/index.md"), /eval-suites\.md/);
 });
 
-test("the first findings lesson follows the six steps and names its badge", () => {
-  const l = page("lessons/hard/who-drives.md");
-  const heads = [...l.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
-  assert.deepEqual(heads, ["Problem", "Eval case", "Evidence of the problem",
-    "Solution", "Validation", "Interpretation"]);
-  const sections = l.split(/^## /m).slice(1);
-  const badge = (s) => /^\*\*Badge:\*\* `(reference-run|cited|screen|conjecture)`$/m.test(s);
-  sections.forEach((s, i) => assert.equal(badge(s), i < 5, `step ${i + 1}`));
-  assert.match(l, /weakest badge (?:here )?is `(?:reference-run|cited|screen|conjecture)`/);
-  assert.ok(!/docs\/ladder\//.test(l), "lesson links a ladder record");
-  assert.match(page("lessons/hard/index.md"), /who-drives\.md/);
-});
-
 test("the Lessons index introduces the three tiers", () => {
   const index = page("lessons/index.md");
   for (const tier of ["easy", "medium", "hard"]) assert.match(index, new RegExp(`\\(${tier}/index\\.md\\)`));
@@ -370,4 +357,14 @@ test("the harness is a Getting Started page, not a lesson (it applies no remedy)
   assert.doesNotMatch(l, /^number:/m);
   assert.doesNotMatch(l, /\*\*Remedy unit:\*\*|\*\*Lesson check:\*\*/);
   assert.match(page("getting-started/index.md"), /the-harness\.md/);
+});
+
+test("the Hard index opens with who drives, folded in from the lesson that left the track", () => {
+  const index = page("lessons/hard/index.md");
+  assert.match(index, /## Who drives/);
+  assert.match(index.replace(/\s+/g, " "), /confident final over work it never checked/);
+  assert.match(index, /2026-10-29-lessons-left-the-track\.md/);
+  assert.doesNotMatch(index, /who-drives\.md|the-handoff\.md/);
+  const backlog = readFileSync(new URL("../BACKLOG.md", import.meta.url), "utf8");
+  assert.match(backlog, /\*\*The handoff block as a unit\.\*\*[\s\S]*?\*Reopens when\*/);
 });

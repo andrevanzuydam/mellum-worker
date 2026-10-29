@@ -579,6 +579,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Removed
 
+- Lessons H1 Who Drives and H2 The Handoff left the lesson track: who drives
+  is a role, not a unit, and the handoff block ships inside the worker with
+  no arm. Who drives now opens the Hard index; the handoff block is a backlog
+  entry; both pages' evidence is in the same dated research note.
+
 - Lessons M5 Thinking Is Working Memory, M9 One Spec per Phase and M10 Steps,
   Not One Brief left the lesson track: their remedies were harness arms or
   flags, not units a learner can apply. Their evidence is in a dated research

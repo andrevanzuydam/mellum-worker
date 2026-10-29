@@ -34,8 +34,6 @@ nav = [
       "lessons/medium/check-before-finishing.md"] },
     { "Hard" = [
       "lessons/hard/index.md",
-      "lessons/hard/who-drives.md",
-      "lessons/hard/the-handoff.md",
       "lessons/hard/plan-examine-code.md",
       "lessons/hard/frozen-gates-and-checkpoints.md",
       "lessons/hard/dont-trust-the-self-exit.md",

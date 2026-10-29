@@ -5,7 +5,7 @@ number: H3
 time: 4 min read · about 1.5 h to run
 track: lessons
 position: 2
-prerequisites: [lessons/hard/the-handoff]
+prerequisites: [lessons/medium/check-before-finishing]
 authors: [Andre van Zuydam]
 backends: [vllm]
 ---

@@ -408,3 +408,12 @@ sessions did not, and per-phase Acceptance lists mattered more than the file
 layout. *Reopens when* a remedy unit can shape the task inside a Pi session
 (feeding phases one at a time, or pointing each at its own spec), so a lesson
 could show the FAIL turning into a PASS.
+
+**The handoff block as a unit.** `collapseHandoffs` in
+`extensions/mellum-worker.ts` replaces a closed span's messages with one
+handoff block, so a parent does not re-pay a child's transcript on every
+request. The lesson that taught it left the track on 2026-10-29: it is not a
+unit and has no arm, since the delegated child was retired
+([note](docs/superpowers/research/2026-10-29-lessons-left-the-track.md)).
+*Reopens when* the handoff block is a remedy unit and a challenge shows a
+session that fails on context without it and passes with it.
