@@ -82,6 +82,8 @@ Keep the thinking blocks, for three reasons in order:
 
 **Badge:** `conjecture`
 
+**Lesson check, 2026-10-29** (vLLM host, n = 3 per arm; [lesson check](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-29-lesson-check.md)): keeping reasoning passed 2 of 3 on Bronze and 1 of 3 on Silver; stripping it passed 3 of 3 on both. It does not hold on this host, and points the other way from the oMLX ladder result; the backend's prefix caching may be why, and that is not measured.
+
 ### Evidence of the solution
 
 Not measured as a lesson yet. Neither arm has a recorded Bronze or Silver

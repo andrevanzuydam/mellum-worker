@@ -87,6 +87,8 @@ Before those lists existed, no check could run at all: the prompts asked for
 
 **Badge:** `screen`
 
+**Lesson check, 2026-10-29** (vLLM host, n = 3 per arm; [lesson check](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-29-lesson-check.md)): split passed 1 of 3 on Silver, joined 1 of 3: a tie, so it does not hold.
+
 **The layout is a null.** Phase-4 missing was `joined` {5, 0} against `split`
 {0, 3}; the rule fixed before the run (every session of one arm strictly below
 every session of the other) sees 0 against 0 and stops. Totals were {13, 1}

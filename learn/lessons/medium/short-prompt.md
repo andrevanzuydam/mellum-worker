@@ -76,6 +76,8 @@ says so. Read the file as one page, not as steps.
 
 **Badge:** `screen`
 
+**Lesson check, 2026-10-29** (vLLM host, n = 3 per arm; [lesson check](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-29-lesson-check.md)): with the short prompt 3 of 3 passed on Bronze, with Pi's own prompt 1 of 3: direction only, the strongest separation in the check, but the arm without the remedy still passed once.
+
 Not separated. Two samples, kept apart: 2/3 against 1/3 on Bronze in this run,
 3/9 against 3/9 across Bronze, Silver and Gold in the 45-session record. The
 context saving held in the record (7,834 against 15,167 peak on Bronze) but

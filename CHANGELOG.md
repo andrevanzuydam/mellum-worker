@@ -6,6 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- The lesson check's record (`docs/ladder/2026-10-29-lesson-check/`) and its
+  result: every lesson run with and without its remedy at the page's n on
+  the vLLM host. No lesson fails every session without its remedy; the short
+  prompt and project facts show direction only, and the thinking and nudge
+  lessons point the other way. Each tested lesson now states its result.
+
 - S0 · Start Here, the first lesson: it teaches how every lesson works by
   being one, with a before run that fails and an after run that passes. A
   stand-in plays the model, so it needs no model or GPU and both runs finish

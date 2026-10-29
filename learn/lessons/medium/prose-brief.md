@@ -79,6 +79,8 @@ Send phases as steps. Two reasons, both from this run:
 
 **Badge:** `screen`
 
+**Lesson check, 2026-10-29** (vLLM host, n = 3 per arm; [lesson check](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-29-lesson-check.md)): stepped passed 0 of 3 on Silver, one brief 0 of 3: both at zero, so it does not hold; the suite is above what either arm passes at n = 3.
+
 The checks ran in **3 of 3** stepped sessions and **0 of 3** one-brief ones:
 a presence claim about the workspace, not a pass rate. The joined shape was
 cheaper in requests (16–49 against 67–95) and wall (421–1029 s against

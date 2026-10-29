@@ -94,6 +94,8 @@ An aborted turn (`error`) is deliberately not continued, and a capped turn
 
 **Badge:** `screen`
 
+**Lesson check, 2026-10-29** (vLLM host, n = 3 per arm, 5 for this page; [lesson check](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-29-lesson-check.md)): with the nudge 4 of 5 passed on Bronze, without it 5 of 5: it does not hold, and the arm without the remedy did slightly better.
+
 ### Evidence of the solution
 
 The arms are **void for its question**. Two arms whose guard never fires do

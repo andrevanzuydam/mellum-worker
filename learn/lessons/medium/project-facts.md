@@ -88,6 +88,8 @@ Project facts:
 
 **Badge:** `screen`
 
+**Lesson check, 2026-10-29** (vLLM host, n = 3 per arm; [lesson check](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-29-lesson-check.md)): with the facts 3 of 3 passed on Bronze, without them 2 of 3: direction only, not a FAIL → PASS, because the arm without the remedy still passes.
+
 The block reached the model on every facts-on request (26/26, 22/22, 11/11)
 and on no facts-off request (0/17, 0/48, 0/51), so the arm is real. Passes did
 not separate: **1 of 2 valid sessions against 0/3**, a null. One facts-on

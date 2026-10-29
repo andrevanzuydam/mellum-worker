@@ -96,6 +96,8 @@ rest of Hard makes that driver a harness, `learn/code/flow_run.py`.
 
 **Badge:** `reference-run`
 
+**Lesson check, 2026-10-29** (vLLM host, n = 3 per arm; [lesson check](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-29-lesson-check.md)): the worker passed 3 of 3 on Bronze and 2 of 3 on Silver; bare Pi 2 of 3 on both: direction only on Bronze, a tie on Silver.
+
 The bound did not buy a pass. It bought cheaper failures: no deadline burned,
 nothing written outside the layout, and on Silver 2, 12 and 2 failed checks
 against 18, 18 and 18. The one `bare` Bronze pass came from a session the
