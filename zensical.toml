@@ -17,6 +17,7 @@ nav = [
     "getting-started/troubleshoot.md"] },
   { "Lessons" = [
     "lessons/index.md",
+    "lessons/start-here.md",
     { "Easy" = [
       "lessons/easy/index.md",
       "lessons/easy/read-the-failure.md",

@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- S0 · Start Here, the first lesson: it teaches how every lesson works by
+  being one, with a before run that fails and an after run that passes. A
+  stand-in plays the model, so it needs no model or GPU and both runs finish
+  in seconds. `/lesson` opens it first.
+
 - `/lesson` in Pi: take the course inside the harness it teaches. It lists
   the 23 lessons in track order (finished ones ticked), shows each lesson's
   picture, and walks through the opening, Paul's six steps and the key

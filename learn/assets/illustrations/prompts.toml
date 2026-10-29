@@ -204,3 +204,7 @@ subject = "the small robot at a workbench assembling a brand new tool from parts
 [build-a-remedy]
 seed = 326
 subject = "the small robot fitting a small new guard rail onto a path where a gap was, a toolbox open beside it and a finish flag in the distance"
+
+[start-here]
+seed = 331
+subject = "the small robot at a starting line holding an open map, a short path of exactly six round stepping stones leading away from it across the white space"
