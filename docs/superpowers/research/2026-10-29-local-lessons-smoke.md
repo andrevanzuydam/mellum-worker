@@ -20,20 +20,26 @@ leaving **36 real graded runs — 32 PASS**.
 | Hard | 6 | 6 |
 | Medium | 19 | 15 |
 
-The four failures are two lessons: **M1 build-a-harness** (both easy variants
-fail on 2 and 4 tool errors; the medium hits the 604 s deadline with 39 tool
-errors) and **M9 one-spec-per-phase** (`--specs joined` fails, `--specs split`
-passes). The run took 156 min end to end.
+The four failures are two lessons. **M1 build-a-harness** runs the AgentClinic
+suite `--arm bare` (no remedies, no `--grade`) by design — the lesson's point is
+to show what the provided harness and remedies add. Unguarded, the 6-bit model
+tried to verify its work by starting a **foreground web server**: both easy runs
+hit the 120 s stall cutoff on `uvicorn main:app …` (the second cycled ports
+8000, 8001, 8002), and the medium run hit the 900 s-capped deadline (604 s, 129
+requests, 39 tool errors) in a bare flail with no server. **M9 one-spec-per-phase**
+`--specs joined` failed the complexipy code-quality grade while `--specs split`
+passed the same seed. The run took 156 min end to end.
 
 **Conjecture.** The local path is sound: the model drives the harness, loads
 remedies, and grades green across every easy and hard lesson and all the
-remedy-ladder mediums. The failures are not scattered noise — they fall exactly
-on the two shapes earlier notes predicted. M1 asks the model to build and drive
-its own test rig, so it drowns in tool-call friction (the same `write`-tool
-stumble as the phase-5 transcript). M9's joined-spec variant hands the model one
-dense spec instead of per-phase splits, and the split sibling passing on the
-same seed points at input density, not capability. Neither is a new failure
-mode; the known wall reappears where it was expected.
+remedy-ladder mediums. The two failing lessons are the ones that strip the
+guards or hand over the hardest input, not a capability gap. M1's stalls are the
+textbook case for `tool/background-long-commands` — a foreground server blocks
+the bash tool forever — and M6 run-long-commands-safely, which applies that
+remedy, passes; the lesson is demonstrating exactly why the harness and its
+guards exist. M9's joined-spec variant failing where the split sibling passes on
+the same seed points at input density, not capability. Neither is a new failure
+mode; the known shapes reappear where they were expected.
 
 ## What would falsify this / Risks
 
@@ -55,9 +61,9 @@ mode; the known wall reappears where it was expected.
 ## Decision
 
 Keep this as the local smoke: it confirms the 6-bit oMLX path runs the whole
-lesson set and grades, and it localises the two failure lessons to the already
-known write-friction and dense-input wall. It moves no measured default and
-opens no new lead — it is corroboration, cheap to re-run on the laptop. The open
-work is still the write-tool-friction lead from the phase-5 note, which M1
-build-a-harness makes sharp: a model-calling fix there would lift the lessons
-that ask the model to build its own harness.
+lesson set and grades, and it localises the two failing lessons to a stripped
+guard (M1, bare arm) and a dense input (M9, joined spec), not a capability gap.
+It moves no measured default and opens no new lead — it is corroboration, cheap
+to re-run on the laptop. If anything, M1's foreground-server stalls are a clean
+demonstration that `tool/background-long-commands` earns its place: the bare
+run stalls on `uvicorn`, the remedied M6 run does not.

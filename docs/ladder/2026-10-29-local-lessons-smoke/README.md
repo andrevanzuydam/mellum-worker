@@ -31,9 +31,22 @@ design), and 1 is a `--dry-run`. That leaves **36 real graded runs, 32 PASS**.
 | Hard | 6 | 6 | — |
 | Medium | 19 | 15 | M1 build-a-harness ×3; M9 one-spec-per-phase (joined) ×1 |
 
-The four failures cluster where the model must **build and drive its own test
-rig** (M1 build-a-harness: both easy variants fail on tool errors, the medium
-hits the 604 s deadline with 39 tool errors) or digest **one joined spec**
-instead of per-phase splits (M9: `--specs joined` fails, `--specs split`
-passes). Both are the write-tool-friction and dense-input wall already recorded
-in the phase-5 and cross-model notes — no new failure shape.
+The four failures are the two lessons that run the suite **bare** or on the
+hardest input, not a capability wall:
+
+- **M1 build-a-harness** runs the AgentClinic suite `--arm bare` — no remedies,
+  no `--grade`, by design (the lesson shows what the provided harness and
+  remedies add). Unguarded, the 6-bit model tried to verify its work by
+  starting a **foreground web server**, which never returns: both easy runs hit
+  the 120 s stall cutoff on `uvicorn main:app …` (the second tried ports 8000,
+  8001, 8002 in turn). That is exactly the failure `tool/background-long-commands`
+  prevents — and M6 run-long-commands-safely, which applies that remedy,
+  **passed**. The medium run hit the 900 s-capped deadline (604 s) in a bare
+  flail (129 requests, 39 tool errors), no server.
+- **M9 one-spec-per-phase** `--specs joined` failed the complexipy code-quality
+  grade while `--specs split` passed the same seed — the split-spec path
+  converges, the joined one does not.
+
+Neither is a new failure shape: the foreground-server stall is the
+`background-long-commands` target, and the joined/split split is the
+dense-input texture already in the phase-5 and cross-model notes.
