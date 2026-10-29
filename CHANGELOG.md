@@ -6,6 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- Remedy units under `remedies/`: each remedy as one file with one role,
+  loadable alone with `pi -e`. First the five guards
+  (`guard/block-foreground-server`, `break-repeat-loops`, `stay-in-workspace`,
+  `refuse-whole-file-rewrite`, `cap-turns`) and `nudge/nudge-empty-turn`, each
+  wrapping the worker's existing function. The worker itself is unchanged.
+
 - `scripts/baseline/baseline.py lessons --full` runs every lesson's commands at
   the page's own n and deadline (the default stays one session per arm, capped
   at 900 s), so a lesson's claim can be checked, not only smoke-tested.
