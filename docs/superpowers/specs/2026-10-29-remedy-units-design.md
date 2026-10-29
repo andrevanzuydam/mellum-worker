@@ -159,6 +159,14 @@ E3 → M1, E4 → M2, M2 → M3, M1 → M4, M3 → M8, M4 → M9, H1 → H1, H2 
 and E2 are rewritten. `preset:easy` and `preset:medium` list each tier's
 units in order; `preset:baseline-worker` stays for The Challenge.
 
+**The end of the track is The Challenge's start.** The last Hard lesson's
+*after* state is `preset:hard`: every tool and remedy the course teaches, in
+one line. The Challenge page opens from it ("Finished Hard? Start from
+`--remedy preset:hard`") and asks the learner to beat it by adding, swapping
+or writing a remedy. It says honestly that the course gives every tool there
+is, not a guaranteed pass: whether they pass Gold is what the Challenge
+measures.
+
 The 2026-10-29 lesson run shows the Bronze/Silver/Gold suites cannot do this
 on a strong host: without the remedy, bare Pi still passes. So each lesson
 gets its own **lesson challenge** under `learn/challenges/<lesson>/`: a small
