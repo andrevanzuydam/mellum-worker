@@ -19,3 +19,6 @@ runs/
 # vast.ai credentials and the pinned client for scripts/baseline/baseline.py
 scripts/baseline/vast.env
 .baseline/
+
+# Manual lesson work: project/<lesson number>, made and reset by /lesson (p); /lesson clean removes it.
+/project/

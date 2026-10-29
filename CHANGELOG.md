@@ -6,6 +6,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- Manual lesson work has its own folder: in `/lesson`, `p` on a run step
+  sets up `project/<lesson number>` with the lesson's starting files, its
+  task as `TASK.md`, and `/remedy` ready, so the model never builds in the
+  repository. `/lesson clean` removes `project/`, which git ignores.
+
 - E5's lesson check, run on its own challenge and recorded
   (`docs/ladder/2026-10-29-e5-check/`): before and after both passed 3 of 3,
   because the challenge rarely provoked a foreground server. When one session

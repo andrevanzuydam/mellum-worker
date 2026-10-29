@@ -6,7 +6,7 @@
  * learn/lessons/<tier>/<slug>.md, so the site and the tutor cannot disagree. Pure: no Pi
  * imports, so node can test it.
  */
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 export const STEPS = ["Problem", "Eval case", "Evidence of the problem", "Solution", "Validation", "Interpretation"] as const;
@@ -194,4 +194,42 @@ export function unwrap(md: string): string {
 		else out.push(line);
 	}
 	return out.join("\n");
+}
+
+/** The suite folder a lesson's before line runs: --suites-dir (default learn/code/suites) / --suite. */
+export function lessonSuite(root: string, command: string | undefined): string | undefined {
+	if (!command || !command.includes("harness.py")) return undefined;
+	const argv = command.trim().split(/\s+/);
+	const at = (flag: string) => (argv.indexOf(flag) >= 0 ? argv[argv.indexOf(flag) + 1] : undefined);
+	const suite = at("--suite");
+	if (!suite) return undefined;
+	return join(root, at("--suites-dir") ?? join("learn", "code", "suites"), suite);
+}
+
+/** Manual work happens in project/<lesson number>, never in the repository root. Resets that folder
+ * to the lesson's starting files, writes the task to TASK.md, and adds a .pi/extensions shim so
+ * /remedy works when Pi starts there. Returns the folder. */
+export function prepareProject(root: string, lesson: Pick<Lesson, "number" | "before">): string {
+	const dir = join(root, "project", lesson.number);
+	rmSync(dir, { recursive: true, force: true });
+	mkdirSync(dir, { recursive: true });
+	const suite = lessonSuite(root, lesson.before);
+	if (suite && existsSync(join(suite, "base"))) cpSync(join(suite, "base"), dir, { recursive: true });
+	let task = "";
+	if (suite && existsSync(join(suite, "prompts"))) {
+		task = readdirSync(join(suite, "prompts")).filter((f) => f.endsWith(".md")).sort()
+			.map((f) => readFileSync(join(suite, "prompts", f), "utf8").trim()).join("\n\n") + "\n";
+	} else if (suite && existsSync(join(suite, "task.md"))) {
+		task = readFileSync(join(suite, "task.md"), "utf8");
+	}
+	if (task) writeFileSync(join(dir, "TASK.md"), task);
+	mkdirSync(join(dir, ".pi", "extensions"), { recursive: true });
+	writeFileSync(join(dir, ".pi", "extensions", "remedies.ts"),
+		`// /remedy for this lesson's project folder (written by /lesson).\nexport { default } from ${JSON.stringify(join(root, "extensions", "mellum-remedies.ts"))};\n`);
+	return dir;
+}
+
+/** Remove every lesson's project folder. */
+export function cleanProjects(root: string): void {
+	rmSync(join(root, "project"), { recursive: true, force: true });
 }

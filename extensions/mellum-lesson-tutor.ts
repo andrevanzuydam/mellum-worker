@@ -17,7 +17,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getMarkdownTheme } from "@earendil-works/pi-coding-agent";
 import { Image, Key, Markdown, matchesKey, truncateToWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
-import { lessonIndex, type Lesson, type LessonEntry, parseLesson, runArgv, STEPS, summariseRuns, terminalPicture, unwrap } from "./mellum-lessons.ts";
+import { cleanProjects, lessonIndex, type Lesson, type LessonEntry, parseLesson, prepareProject, runArgv, STEPS, summariseRuns, terminalPicture, unwrap } from "./mellum-lessons.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -74,6 +74,7 @@ function walk(ctx: any, root: string, lesson: Lesson, entry: LessonEntry, total:
 		let page = 0;
 		let cached: string[] | undefined;
 		const runs: Record<string, RunState> = {};
+		let prepared: string | undefined;
 		const md = (text: string) => new Markdown(text, 1, 0, getMarkdownTheme());
 		const list = (items: string[]) => items.map((i) => `- ${i}`).join("\n");
 		const pngPath = terminalPicture(root, lesson.image);
@@ -128,6 +129,13 @@ function walk(ctx: any, root: string, lesson: Lesson, entry: LessonEntry, total:
 			refresh();
 		}
 
+		function projectBlock(width: number): string[] {
+			const rel = `project/${lesson.number}`;
+			if (!prepared) return ["", theme.fg("muted", ` p  set up ${rel} to try it by hand in Pi`)];
+			return ["", theme.fg("success", ` Ready: ${rel}`), ...wrapTextWithAnsi(theme.fg("muted",
+				` In a second terminal: cd ${rel} && pi  (the first time: /trust, then restart). Ask it to do the task in TASK.md; switch remedies with /remedy. /lesson clean removes every project folder.`), width)];
+		}
+
 		function runBlock(key: "before" | "after", width: number): string[] {
 			const command = key === "before" ? lesson.before : lesson.after;
 			if (!command) return [];
@@ -161,11 +169,12 @@ function walk(ctx: any, root: string, lesson: Lesson, entry: LessonEntry, total:
 				lines.push("", theme.fg("muted", total.index + 1 < total.count ? " n  next lesson   Esc  leave" : " That was the last lesson. The Challenge is next: see learn/challenge/index.md"));
 			} else {
 				lines.push(...md(tidy(lesson.steps[name] ?? "")).render(w));
-				if (name === "Eval case") lines.push(...runBlock("before", w));
+				if (name === "Eval case") lines.push(...runBlock("before", w), ...projectBlock(w));
 				if (name === "Solution") {
 					lines.push(...runBlock("after", w));
 					const unit = lesson.unit.match(/`([a-z]+\/[a-z-]+)`/)?.[1];
-					if (unit) lines.push("", theme.fg("muted", ` By hand in this session: /remedy on ${unit}`));
+					if (unit) lines.push("", theme.fg("muted", ` By hand: /remedy on ${unit}`));
+					lines.push(...projectBlock(w));
 				}
 			}
 			lines.push("", theme.fg("dim", " ← back   → / Enter next   Esc leave"));
@@ -187,6 +196,10 @@ function walk(ctx: any, root: string, lesson: Lesson, entry: LessonEntry, total:
 			if ((data === "r" || data === "R") && (name === "Eval case" || name === "Solution"))
 				return startRun(name === "Eval case" ? "before" : "after", data === "R");
 			if (data === "n" && name === "Key points" && total.index + 1 < total.count) return leave("next");
+			if (data === "p" && (name === "Eval case" || name === "Solution")) {
+				prepared = prepareProject(root, lesson);
+				return refresh();
+			}
 		}
 
 		return { render, invalidate: () => { cached = undefined; }, handleInput };
@@ -224,6 +237,13 @@ async function openLesson(args: string, ctx: any): Promise<void> {
 			const root = findRoot(ctx.cwd ?? process.cwd());
 			if (!root) return ctx.ui.notify("/lesson runs in a checkout of mellum-worker (no learn/lessons here)", "error");
 			if (ctx.mode && ctx.mode !== "tui") return ctx.ui.notify("/lesson needs Pi's interactive terminal", "error");
+			if (args.trim() === "clean") {
+				if (await ctx.ui.confirm("Remove project/ and every lesson's work in it?", "This deletes the folder; the repository is untouched.")) {
+					cleanProjects(root);
+					ctx.ui.notify("removed project/", "info");
+				}
+				return;
+			}
 			const track = lessonIndex(root);
 			const done = loadDone();
 			let index = track.findIndex((l) => l.number.toLowerCase() === args.trim().toLowerCase());

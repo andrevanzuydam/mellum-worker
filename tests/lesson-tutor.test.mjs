@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -111,4 +111,43 @@ test("Start Here runs in seconds with no model: its before fails and its after p
 	const l = parseLesson(readFileSync(join(ROOT, "learn/lessons/start-here.md"), "utf8"));
 	assert.match(l.before, /--pi-binary learn\/code\/tests\/fixtures\/fake-pi-wrong\.sh/);
 	assert.match(l.after, /--pi-binary learn\/code\/tests\/fixtures\/fake-pi\.sh/);
+});
+
+// Manual work happens in project/<lesson number>, never in the repository root: easy to find,
+// easy to clean up.
+test("prepareProject sets up project/<number> with the lesson's starting files, task and /remedy shim", async () => {
+	const { prepareProject, parseLesson } = await tutor();
+	const root = mkdtempSync(join(tmpdir(), "repo-"));
+	const suite = join(root, "learn/code/suites/demo");
+	mkdirSync(join(suite, "base"), { recursive: true });
+	mkdirSync(join(suite, "prompts"), { recursive: true });
+	writeFileSync(join(suite, "base", "pyproject.toml"), "[project]\nname='d'\n");
+	writeFileSync(join(suite, "prompts", "01.md"), "Build it.\n");
+	writeFileSync(join(suite, "prompts", "02.md"), "Then test it.\n");
+	const lesson = { number: "E6", before: "uv run python learn/code/harness.py run --suite demo --repeat 3" };
+	const dir = prepareProject(root, lesson);
+	assert.equal(dir, join(root, "project", "E6"));
+	assert.equal(readFileSync(join(dir, "pyproject.toml"), "utf8"), "[project]\nname='d'\n");
+	assert.equal(readFileSync(join(dir, "TASK.md"), "utf8"), "Build it.\n\nThen test it.\n");
+	assert.match(readFileSync(join(dir, ".pi", "extensions", "remedies.ts"), "utf8"), /extensions\/mellum-remedies\.ts/);
+	writeFileSync(join(dir, "stray.py"), "x = 1\n");
+	prepareProject(root, lesson);
+	assert.equal(existsSync(join(dir, "stray.py")), false, "a second prepare starts fresh");
+});
+
+test("a lesson's suites folder comes from --suites-dir when the page gives one", async () => {
+	const { lessonSuite } = await tutor();
+	assert.deepEqual(lessonSuite("/r", "harness.py run --suites-dir learn/challenges --suite e6 --repeat 3"), "/r/learn/challenges/e6");
+	assert.deepEqual(lessonSuite("/r", "harness.py run --suite easy --repeat 3"), "/r/learn/code/suites/easy");
+	assert.equal(lessonSuite("/r", "pi -p hello"), undefined);
+});
+
+test("cleanProjects removes project/ and nothing else", async () => {
+	const { cleanProjects } = await tutor();
+	const root = mkdtempSync(join(tmpdir(), "repo-"));
+	mkdirSync(join(root, "project", "E6"), { recursive: true });
+	writeFileSync(join(root, "keep.md"), "x");
+	cleanProjects(root);
+	assert.equal(existsSync(join(root, "project")), false);
+	assert.equal(existsSync(join(root, "keep.md")), true);
 });
