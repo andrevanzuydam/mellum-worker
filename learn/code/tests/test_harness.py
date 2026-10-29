@@ -914,6 +914,31 @@ def test_a_session_never_reads_the_callers_stdin(tmp_path):
     assert seen.read_text() == ""
 
 
+def test_a_stopped_run_still_sweeps_its_workspace(tmp_path):
+    # /lesson stops a run it no longer shows (the learner pressed p mid-run).
+    # On 2026-10-29 the stopped run's server kept port 8000: SIGTERM ended the
+    # harness before its sweep. A stopped run must still end what it started.
+    runs = tmp_path / "runs"
+    harness_run = subprocess.Popen(
+        [sys.executable, str(HERE.parent / "harness.py"), "run", "--suites-dir", str(SUITES),
+         "--suite", "add", "--pi-binary", str(FIX / "fake-pi-server.sh"), "--repeat", "1",
+         "--runs-dir", str(runs)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        deadline = time.monotonic() + 30
+        while not list(runs.glob("*/workspace/server.txt")) and time.monotonic() < deadline:
+            time.sleep(0.2)
+        workspace = next(runs.glob("*/workspace"))
+        assert harness.workspace_members(workspace), "the fake server never started"
+        harness_run.terminate()
+        harness_run.wait(timeout=30)
+        assert harness.workspace_members(workspace) == []
+    finally:
+        if harness_run.poll() is None:
+            harness_run.kill()
+        for w in runs.glob("*/workspace"):
+            harness.sweep_workspace(w)
+
+
 def test_a_group_with_nothing_left_reports_nothing(tmp_path):
     child = subprocess.Popen(["sh", "-c", "true"], start_new_session=True)
     child.wait(timeout=5)

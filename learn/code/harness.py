@@ -476,33 +476,37 @@ def run_suite(
     env.update(settings["env"])
     started = time.monotonic()
     groups: list[int] = []
-    for prompt in prompts:
-        remaining = None if deadline is None else deadline - (time.monotonic() - started)
-        if remaining is not None and remaining <= 0:
-            (run / "deadline").write_text("hit\n")
-            break
-        argv = pi_argv(
-            pi_binary, run / "profile", recorder, provider, model, prompt,
-            extension=settings["extension"],
-            session_id=session_id, session_dir=sessions, extras=extras,
-        )
-        try:
-            # No stdin: Pi with -p appends piped stdin to its prompt.
-            child = subprocess.Popen(argv, cwd=workspace, env=env, stdin=subprocess.DEVNULL,
-                                     start_new_session=True)
-            groups.append(child.pid)
-        except FileNotFoundError:
-            raise SystemExit(f"pi not found: {pi_binary}; install Pi before running a suite")
-        ended = wait_or_stall(child, run, trace, remaining, stall)
-        if ended:
-            break
     leaked: list[dict] = []
-    for pgid in groups:
-        leaked.extend({"pid": pid, "pgid": pgid, "command": command}
-                      for pid, command in sweep_group(pgid))
-    swept = {entry["pid"] for entry in leaked}
-    leaked.extend({"pid": pid, "pgid": None, "command": command}
-                  for pid, command in sweep_workspace(workspace) if pid not in swept)
+    # The sweep runs however the loop ends, including a SIGTERM (main turns it
+    # into SystemExit): a stopped run must still end the servers it started.
+    try:
+        for prompt in prompts:
+            remaining = None if deadline is None else deadline - (time.monotonic() - started)
+            if remaining is not None and remaining <= 0:
+                (run / "deadline").write_text("hit\n")
+                break
+            argv = pi_argv(
+                pi_binary, run / "profile", recorder, provider, model, prompt,
+                extension=settings["extension"],
+                session_id=session_id, session_dir=sessions, extras=extras,
+            )
+            try:
+                # No stdin: Pi with -p appends piped stdin to its prompt.
+                child = subprocess.Popen(argv, cwd=workspace, env=env, stdin=subprocess.DEVNULL,
+                                         start_new_session=True)
+                groups.append(child.pid)
+            except FileNotFoundError:
+                raise SystemExit(f"pi not found: {pi_binary}; install Pi before running a suite")
+            ended = wait_or_stall(child, run, trace, remaining, stall)
+            if ended:
+                break
+    finally:
+        for pgid in groups:
+            leaked.extend({"pid": pid, "pgid": pgid, "command": command}
+                          for pid, command in sweep_group(pgid))
+        swept = {entry["pid"] for entry in leaked}
+        leaked.extend({"pid": pid, "pgid": None, "command": command}
+                      for pid, command in sweep_workspace(workspace) if pid not in swept)
     (run / "leaked.json").write_text(json.dumps(leaked, indent=2) + "\n")
     if pristine is not None and suite.layout is not None:
         (run / "layout.json").write_text(
@@ -953,6 +957,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # A stopped run (SIGTERM, as /lesson sends) unwinds normally, so its sweep runs.
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
     parser = build_parser()
     args = parser.parse_args(argv)
 

@@ -260,6 +260,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- A harness run that is stopped part-way (as `/lesson` does when you leave
+  a lesson while `r` is running) now still ends the Pi session and any
+  server it started. Before, `SIGTERM` ended the harness before its sweep and
+  the server kept port 8000.
+
 - No Pi session the harness or the flow starts reads stdin any more. Pi run
   with `-p` appends piped stdin to its prompt, so a script that fed the
   harness on stdin (`scripts/lesson-check.sh`, 2026-10-29) handed its next
