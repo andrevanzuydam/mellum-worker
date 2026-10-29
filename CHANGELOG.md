@@ -6,6 +6,8 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- `run.json` records `compactions`: how many times Pi compacted a context that
+  neared its window, summarising away detail the model had read.
 - E1 Reasoning Returned as Text is the first lesson whose check held: on the
   LAN host, without the unit the session failed on its record
   (`reasoning_as_text` 7, tests passing), and with `context/repair-think-tags`

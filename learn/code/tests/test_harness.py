@@ -229,7 +229,7 @@ def test_report_counts_the_trace(tmp_path):
         "requests": 2, "turns": 2, "tool_calls": 1, "tool_errors": 1,
         "final_reply": "done", "context": 1500, "output_tokens": 30,
         "wall": 2.0, "nudges": 0, "empty_finals": 0, "guard_blocks": 0,
-        "reasoning_as_text": 0,
+        "reasoning_as_text": 0, "compactions": 0,
     }
 
 
@@ -270,6 +270,20 @@ def test_a_challenge_can_require_the_record_to_be_clean(tmp_path):
     assert harness.record_failures({}, None) == []
 
 
+def test_report_counts_the_compactions_a_full_context_forced(tmp_path):
+    # Pi compacts when the context nears its window: the model summarises its
+    # own history and loses detail. The record counts each one.
+    run_dir = tmp_path / "r"
+    run_dir.mkdir()
+    _write_trace(run_dir, [
+        {"type": "provider_request"},
+        {"type": "before_compact", "reason": "threshold"},
+        {"type": "provider_request"},
+        {"type": "before_compact", "reason": "overflow"},
+    ])
+    assert harness.report(run_dir)["compactions"] == 2
+
+
 def test_report_without_text(tmp_path):
     run_dir = tmp_path / "r"
     run_dir.mkdir()
@@ -278,6 +292,7 @@ def test_report_without_text(tmp_path):
         "requests": 0, "turns": 0, "tool_calls": 0, "tool_errors": 0,
         "final_reply": "", "context": None, "output_tokens": None, "wall": None,
         "nudges": 0, "empty_finals": 0, "guard_blocks": 0, "reasoning_as_text": 0,
+        "compactions": 0,
     }
 
 

@@ -716,6 +716,8 @@ def report(run: Path) -> dict:
                  if m.get("role") == "assistant")
              for row in rows if row.get("type") == "provider_request"),
             default=0),
+        # Times Pi compacted a context that neared its window, losing detail.
+        "compactions": sum(row.get("type") == "before_compact" for row in rows),
     }
 
 
