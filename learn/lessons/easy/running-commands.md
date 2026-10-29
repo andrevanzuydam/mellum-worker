@@ -57,9 +57,9 @@ The most common failure on the vLLM host: in nine bare sessions on 2026-10-29, f
 
 **Remedy unit:** `guard/block-foreground-server`; apply it with `--remedy guard/block-foreground-server`.
 
-**Lesson check:** run twice on 2026-10-29, and it did not show FAIL → PASS:
-on a short task this model rarely starts a server in the foreground, so
-the arm without the guard passed too (see Validation).
+**Lesson check:** run once on 2026-10-29, and it did not show FAIL → PASS:
+on the 6-bit reference model, with clean serving, the session without the
+guard backgrounded every server start itself and passed (see Validation).
 
 The guard reads every `bash` command. A server start (`python app.py`, `uvicorn`, `flask run`, `npm run dev`, …) that is not backgrounded is refused, with the background form to use instead and the advice to exercise endpoints in process, the way the tests do. Read-only commands that only mention a server (`grep uvicorn app.py`) pass.
 
@@ -82,6 +82,14 @@ and none hung. With the guard, six foreground starts were refused across two
 sessions and both went on to pass. The guard works when the failure happens;
 on a short task this model rarely makes it, and the recorded stalls came from
 long sessions.
+
+**Lesson check, revision 3, 2026-10-29** (the 6-bit reference model on a
+LAN vLLM host, one session per arm;
+[result](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-29-running-commands-check-v3-prereg.md)):
+the challenge now says to run the app with `python app.py`. Before passed:
+the model backgrounded every server start itself
+(`python app.py & sleep 2 && curl … && kill %1`). After passed too, with two
+starts refused. It does not hold.
 
 This page says FAIL → PASS only once a challenge has shown it.
 

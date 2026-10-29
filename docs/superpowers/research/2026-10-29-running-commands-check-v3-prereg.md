@@ -101,3 +101,25 @@ foreground, and the guard is not what a session needs here.
   and a learner must see FAIL.
 - The LAN host is shared; the record names the commit, profile and serving
   stack so a later run can be compared.
+
+## Result, 2026-10-29
+
+Run at `8a28b60` (`runs/E4-check-20261029T212000Z-8a28b60`, recorded under
+`docs/ladder/2026-10-29-running-commands-check/revision-3-lan-6bit/`), with
+clean serving confirmed in both traces.
+
+- **Before:** PASS (27 requests, no stall). Every server start was
+  backgrounded by the model and killed after its `curl`.
+- **After:** PASS (46 requests; the guard refused 2 starts).
+- **The lesson does not hold:** the before session passed. The pathology is
+  not confirmed on this run.
+
+**What it means under the plan.** This is E4's second miss on the 6-bit
+(revision 2's screen, then revision 3), so under the plan E4 leaves the
+track, and a before arm that passes on the 6-bit is the plan's stop
+condition: the reference-model question reopens before another challenge is
+built. Across all clean-enough before sessions on this host (the revision 2
+screen and this run), the foreground stall showed in 1 of 4; with the
+reasoning confound present (the void and confounded attempts) it showed in
+3 of 4, which suggests the leak itself pushed the model toward the trap.
+That last reading is a lead, not a result.
