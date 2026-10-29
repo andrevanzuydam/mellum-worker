@@ -6,6 +6,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- E5's lesson check, run on its own challenge and recorded
+  (`docs/ladder/2026-10-29-e5-check/`): before and after both passed 3 of 3,
+  because the challenge rarely provoked a foreground server. When one session
+  did start one, the guard refused it and the session went on to pass. E5
+  says so; a revised challenge comes next. S0 now says how to open Pi and
+  start the lesson.
+
 - The lesson check's record (`docs/ladder/2026-10-29-lesson-check/`) and its
   result: every lesson run with and without its remedy at the page's n on
   the vLLM host. No lesson fails every session without its remedy; the short

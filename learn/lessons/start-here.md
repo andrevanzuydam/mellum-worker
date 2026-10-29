@@ -30,6 +30,27 @@ GPU, because a stand-in plays the model, so both runs finish in seconds.
 
 ![A small robot reading an open map beside a row of stepping stones leading away](../assets/illustrations/start-here.webp){ .illustration }
 
+!!! tip "Take this lesson in Pi"
+
+    Open a terminal in your checkout of this repository and start Pi, the one
+    you installed in [Getting Started](../getting-started/base-pi-on-llamacpp.md):
+
+    ```bash
+    cd mellum-worker
+    pi
+    ```
+
+    The first time, type `/trust`, then quit Pi (`Ctrl+D`) and start it
+    again, so it loads this project's extensions. Then type:
+
+    ```text
+    /lesson S0
+    ```
+
+    Pi shows this lesson one step at a time. Press `→` or `Enter` for the
+    next step and `←` to go back; on the Eval case and Solution steps press
+    `r` to run. `Esc` leaves, and `/lesson` brings you back to the next one.
+
 ## Problem
 
 **Badge:** `conjecture`

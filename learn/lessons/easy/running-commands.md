@@ -55,9 +55,9 @@ The most common failure on the vLLM host: in nine bare sessions on 2026-10-29, f
 
 **Remedy unit:** `guard/block-foreground-server`; apply it with `--remedy guard/block-foreground-server`.
 
-**Lesson check:** not built yet. A small challenge of this lesson's own,
-failing without the remedy and passing with it, is planned under LC.26; until
-then the evidence below is the suites'.
+**Lesson check:** run once on 2026-10-29, and it did not show FAIL → PASS:
+the challenge did not provoke the failure often enough (see Validation).
+A revised challenge is next.
 
 The guard reads every `bash` command. A server start (`python app.py`, `uvicorn`, `flask run`, `npm run dev`, …) that is not backgrounded is refused, with the background form to use instead and the advice to exercise endpoints in process, the way the tests do. Read-only commands that only mention a server (`grep uvicorn app.py`) pass.
 
@@ -70,8 +70,16 @@ return { block: true, reason: "That starts a server in the foreground; it blocks
 
 **Badge:** `conjecture`
 
-Not measured as a lesson yet. No arm has run, so there is no n to report. This page says FAIL → PASS only once its
-challenge has shown it.
+**Lesson check, 2026-10-29** (its own challenge, vLLM host, n = 3 per arm;
+[record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-29-e5-check.md)):
+before 3 of 3 passed, after 3 of 3. No before session started a server in
+the foreground, so there was nothing for the guard to fix there. One after
+session did (`uvicorn app:app --port 8000`); the guard refused it, the model
+restarted it in the background, and the session passed. The guard works when
+the failure happens; this challenge does not make it happen often enough to
+show FAIL → PASS.
+
+This page says FAIL → PASS only once a challenge has shown it.
 
 ## Interpretation
 
