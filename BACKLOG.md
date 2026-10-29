@@ -383,3 +383,15 @@ the Learning Center's terms; this one covers the eval terms and links back.
 Session is the unit: one isolated Pi context and workspace, fed one or more
 prompts, with one trace. *Reopens when* a record or lesson uses an eval term the
 glossary lacks, or two documents use one word for different things.
+
+**Reject a gate test that cannot pass.** A frozen gate test can fail every
+correct app because the test itself is broken: Bronze's gate called
+`inspect.getfile` on a FastAPI instance (`TypeError` inside the test), and the
+model got through only by monkeypatching `inspect` in `app.py`
+([flow record](docs/superpowers/research/2026-10-29-vllm-flow.md)). The
+redirect-following client, the one instance seen twice, is fixed by
+`noFollowRedirects`. The general guarantee needs a design: before the build, a
+broken test and a missing app both error, so a dry run must tell an error
+raised in the test's own frames from one raised in app code or an import of a
+module not yet built. *Reopens when* a second flow run shows a gate test
+failing on an exception raised in the test file itself.
