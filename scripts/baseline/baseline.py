@@ -343,6 +343,24 @@ def serving(url: str) -> bool:
         return False
 
 
+def ensure_serving(url: str, reopen, serving=None) -> None:
+    """Never start a lesson command against a dead tunnel: if the model does not answer,
+    reopen the tunnel once, and stop if it still does not (a 2026-10-29 lesson run recorded
+    seven arms of 14-second, zero-token sessions after its tunnel dropped)."""
+    serving = serving or globals()["serving"]
+    if serving(url):
+        return
+    say("the model does not answer; reopening the tunnel")
+    reopen()
+    if not serving(url):
+        raise BaselineError(f"no model at {url} after reopening the tunnel")
+
+
+def reopen_tunnel() -> None:
+    close_tunnel()
+    cmd_tunnel()
+
+
 def cmd_tunnel() -> None:
     p, c = pins(), config()
     if serving(local_url(c)):
@@ -589,6 +607,7 @@ def cmd_lessons(full: bool = False) -> None:
                                                       full)))
 
     def runner(argv: list[str]) -> tuple[int, str]:
+        ensure_serving(url, reopen_tunnel)
         say(f"start {' '.join(argv[argv.index('--suite'):argv.index('--profile')])}")
         done = subprocess.run(argv, cwd=ROOT, env=client_env(p), capture_output=True, text=True)
         last = (done.stdout.strip().splitlines() or [done.stderr.strip()[-200:]])[-1]

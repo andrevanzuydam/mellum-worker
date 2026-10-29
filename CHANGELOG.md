@@ -163,6 +163,9 @@ Versions match git tags; pin one in both install lines.
 
 ### Fixed
 
+- `baseline.py lessons` checks the model answers before every command and
+  reopens the tunnel if it does not, stopping if it still does not. A dropped
+  tunnel used to record whole arms of empty, zero-token sessions as fails.
 - The flow examiner's gate always builds its `TestClient` with
   `follow_redirects=False`. A client that followed redirects turned the
   spec's 303 into a 200, so the gate failed a correct app on every round.

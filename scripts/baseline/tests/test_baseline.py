@@ -256,3 +256,17 @@ def test_a_full_lesson_run_keeps_the_pages_n_and_deadline(tmp_path):
 def test_lessons_takes_full():
     assert baseline.parse_args(["lessons", "--full"]) == ("lessons", {"full": True})
     assert baseline.parse_args(["lessons"]) == ("lessons", {"full": False})
+
+
+def test_a_lesson_command_never_runs_against_a_dead_tunnel():
+    reopened = []
+    up = iter([False, True])
+    baseline.ensure_serving("http://x/v1", reopen=lambda: reopened.append(1), serving=lambda url: next(up))
+    assert reopened == [1]
+    baseline.ensure_serving("http://x/v1", reopen=lambda: reopened.append(2), serving=lambda url: True)
+    assert reopened == [1]
+
+
+def test_ensure_serving_gives_up_when_the_reopened_tunnel_still_has_no_model():
+    with pytest.raises(baseline.BaselineError, match="no model"):
+        baseline.ensure_serving("http://x/v1", reopen=lambda: None, serving=lambda url: False)
