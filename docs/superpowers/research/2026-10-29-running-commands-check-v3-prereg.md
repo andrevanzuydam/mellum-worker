@@ -25,6 +25,20 @@ ran it, and stalled; the after arm never ran (fixed in `4ef2f6d`). The two
 clean before sessions of that attempt both stalled on `python app.py` and
 failed. The deciding run is a fresh one under the corrected rule.
 
+## Dated correction 2026-10-29, after the first deciding run
+
+The first deciding run under the one-session rule
+(`runs/E4-check-20261029T210343Z-19f8d82`) gave before PASS, after PASS: a
+miss. It was then found to be **confounded by serving**: the LAN host
+returned every turn after the first with its reasoning as `<think>` text,
+which Pi fed back to the model as content
+([note](2026-10-29-lan-reasoning-leak.md); 35 of 36 and 10 of 11 turns in
+its two sessions). At Andre's direction the check is re-run once, cleanly,
+with the think-tag adapter (`ae89931`) loaded in every session; everything
+else is as fixed above (one session per arm, same lines, same rule). The
+confounded run is recorded as such, not counted. A miss on the clean run
+uses up E4's one revision.
+
 ## Why a revision 3
 
 - Revisions 1 and 2 on BF16 (vast.ai A6000): 3/3 before, 3/3 after. The model
