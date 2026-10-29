@@ -7,8 +7,8 @@ Versions match git tags; pin one in both install lines.
 ### Added
 
 - E1 Looking Around runs its own challenge, `learn/challenges/looking-around/`:
-  a sensor lookup in a 12,000-line file, past what one `read` shows, then a
-  lookup function with tests. Before is bare Pi, after adds
+  readings spread over 200 site files in 8 region folders; find one reading
+  and a region's highest sensor, then write a lookup module with tests. Before is bare Pi, after adds
   `guard/break-repeat-loops`, one session each.
 - The `/lesson` widget is styled with Pi's theme: the lesson as a title,
   numbered steps, commands in the code colour, and the footer dimmed under a

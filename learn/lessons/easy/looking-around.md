@@ -45,10 +45,10 @@ session runs out of time. Nothing is wrong with the tool; the model is stuck.
 
 **Before:** bare Pi (nothing added yet). **After:** bare Pi plus
 `guard/break-repeat-loops`. Both run the lesson's own challenge,
-`learn/challenges/looking-around/`: find one sensor's reading in a
-12,000-line file, past what one `read` or `cat` shows, then write a lookup
-function with tests. A session stuck re-reading the same view never reaches
-the second step, and the hidden checks fail.
+`learn/challenges/looking-around/`: readings spread over 200 site files in
+8 region folders. Find one sensor's reading, find a region's highest sensor,
+then write a lookup module with tests. A session stuck repeating the same
+look never reaches the later steps, and the hidden checks fail.
 
 ## Evidence of the problem
 
