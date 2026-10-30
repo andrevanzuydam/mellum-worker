@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { parsePytest, gateMessage, verifyCommand } from "../extensions/mellum-ncm.ts";
+import { parsePytest, gateMessage, verifyCommand, verifyEnv, gateConfig } from "../extensions/mellum-ncm.ts";
 
 test("parsePytest: exit 0 is passed, no unmet concepts", () => {
 	const v = parsePytest(0, "2 passed in 0.12s");
@@ -39,4 +39,31 @@ test("verifyCommand: a named test runs just that file; empty runs the whole suit
 	assert.doesNotMatch(all, /test_phase4/);
 	// the whole-suite command carries no file-path token between pytest and its flags
 	assert.ok(!/pytest\s+\S*\.py/.test(all), "no file path in the whole-suite command");
+});
+
+test("gateConfig reads NCM_TEST at call time, so acceptance's late session_start set is seen (not inert)", () => {
+	// The inert-gate pathology: ncm read NCM_TEST once at load, before acceptance's
+	// session_start set it, so the gate never fired. gateConfig must read it per call.
+	const prev = process.env.NCM_TEST;
+	delete process.env.NCM_TEST;
+	assert.equal(gateConfig().test, "", "empty at load, before acceptance runs");
+	process.env.NCM_TEST = "/w/contract/test_contract.py"; // acceptance sets it at session_start
+	assert.equal(gateConfig().test, "/w/contract/test_contract.py", "seen at settle time");
+	if (prev === undefined) delete process.env.NCM_TEST;
+	else process.env.NCM_TEST = prev;
+});
+
+test("verifyEnv: worker cwd on PYTHONPATH, VIRTUAL_ENV stripped (so a held-out contract can import the app)", () => {
+	// Without this the gate hits ModuleNotFoundError: app, errors at collection,
+	// and never redispatches — the inert-gate pathology. Mirrors harness grade_env.
+	const prev = process.env.VIRTUAL_ENV;
+	process.env.VIRTUAL_ENV = "/some/venv";
+	try {
+		const env = verifyEnv("/work/space");
+		assert.equal(env.PYTHONPATH, "/work/space");
+		assert.ok(!("VIRTUAL_ENV" in env), "VIRTUAL_ENV must be stripped");
+	} finally {
+		if (prev === undefined) delete process.env.VIRTUAL_ENV;
+		else process.env.VIRTUAL_ENV = prev;
+	}
 });

@@ -54,11 +54,23 @@ export function verifyCommand(test: string, pytest: string): string {
 	return `${pytest}${path ? ` ${path}` : ""} -q -p no:warnings --tb=short`;
 }
 
+/** The verify subprocess environment: the worker cwd on PYTHONPATH, so a held-out
+ * acceptance test (which lives beside the workspace) can still `from app import app`,
+ * and VIRTUAL_ENV stripped so uv does not warn. Mirrors the harness grader's grade_env.
+ * Without the PYTHONPATH the contract errors at collection (ModuleNotFoundError: app),
+ * the gate cannot read unmet concepts, and it silently never redispatches. */
+export function verifyEnv(cwd: string): NodeJS.ProcessEnv {
+	const env: NodeJS.ProcessEnv = { ...process.env, PYTHONPATH: cwd };
+	delete env.VIRTUAL_ENV;
+	return env;
+}
+
 /** Run the verification (a named test, or the whole suite when `test` is empty) in `cwd`; never throws. */
 export function runTest(test: string, pytest: string, cwd: string): Verdict {
 	try {
 		const out = execSync(verifyCommand(test, pytest), {
 			cwd,
+			env: verifyEnv(cwd),
 			encoding: "utf8",
 			stdio: ["ignore", "pipe", "pipe"],
 		});
@@ -69,13 +81,23 @@ export function runTest(test: string, pytest: string, cwd: string): Verdict {
 	}
 }
 
+/** Read the gate config from the environment. Read AT SETTLE TIME, never at load:
+ * mellum-acceptance sets NCM_TEST in its session_start handler, which runs after
+ * every extension has loaded. Reading it at extension-init (the old bug) captured an
+ * empty NCM_TEST and left the gate silently inert for the whole session. */
+export function gateConfig() {
+	return {
+		test: (process.env.NCM_TEST ?? "").trim(),
+		all: /^(1|true|yes)$/i.test(process.env.NCM_ALL ?? ""),
+		max: Number.parseInt(process.env.NCM_MAX ?? "5", 10),
+		pytest: process.env.NCM_PYTEST ?? "uv run --offline python -m pytest",
+	};
+}
+
 export default function (pi: { on: (event: string, handler: (ev: any, ctx?: any) => unknown) => void }) {
-	const test = (process.env.NCM_TEST ?? "").trim();
-	const all = /^(1|true|yes)$/i.test(process.env.NCM_ALL ?? "");
-	const max = Number.parseInt(process.env.NCM_MAX ?? "5", 10);
-	const pytest = process.env.NCM_PYTEST ?? "uv run --offline python -m pytest";
 	let used = 0;
 	pi.on("agent_before_settle", (_event: any, ctx: any) => {
+		const { test, all, max, pytest } = gateConfig();
 		// Active when a named acceptance test is set (mediation) OR whole-suite verify is on (NCM_ALL).
 		if ((test === "" && !all) || !(used < max)) return undefined;
 		const cwd = ctx && typeof ctx.cwd === "string" ? ctx.cwd : process.cwd();

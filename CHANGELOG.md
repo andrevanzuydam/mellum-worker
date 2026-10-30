@@ -4,6 +4,15 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Fixed
+
+- `mellum-ncm` was silently inert whenever `mellum-acceptance` derived its test:
+  ncm read `NCM_TEST` once at extension-load, before acceptance set it at
+  `session_start`, so the verify/redispatch gate never fired and a worker could
+  self-exit with the work incomplete. ncm now reads its config at settle time,
+  and runs the held-out contract with the workspace on `PYTHONPATH` (so
+  `from app import app` resolves), mirroring the harness grader's `grade_env`.
+
 ### Changed
 
 - The course now pins **Pi 1.4.0** (was 1.3.0). Guided mode's code panel rides

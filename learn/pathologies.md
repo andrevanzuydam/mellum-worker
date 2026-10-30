@@ -95,6 +95,18 @@ scoreboard.
    and suite finals on Bronze and Silver ended by `length`
    ([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-29-lessons-left-the-track.md)). **Answer:** an output cap with room for the answer;
    stripping earlier reasoning does not give the turn its budget back.
+10. **An inert gate (not the model's fault).** The verify-and-redispatch gate
+   that should refuse a premature "done" was switched off the whole session, so
+   the worker self-exited with the work incomplete and nothing sent it back — a
+   harness fault that reads from the outside as the model stopping early.
+   **Seen:** the 2026-10-30 easy remedy screen, where `mellum-ncm` read `NCM_TEST`
+   at extension-load — before `mellum-acceptance` set it at `session_start` — so
+   `[mellum-ncm]` fired zero times and a 17-turn session settled with the app
+   built as `main.py` and the Phase-1 home checks unmet
+   ([record](../docs/superpowers/research/2026-10-30-acceptance-gate-inert.md)).
+   **Answer:** read the gate's config at settle time, not at load, and run the
+   contract with the workspace on `PYTHONPATH`; a smoke run that asserts the gate
+   actually redispatches would have caught it.
 
 ## It damages the project while finishing
 
