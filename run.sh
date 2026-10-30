@@ -88,7 +88,7 @@ uv run scripts/backend.py status || true
 # so the course runs on the repo's extensions alone (lessons, remedies,
 # think-tags) and nobody's global skills leak in. Extensions and AGENTS.md stay.
 export PI_CODING_AGENT_DIR="$REPO_DIR/learn/code/profile"
-export PI_SKIP_VERSION_CHECK=1   # stay on the pinned 1.3.0; hide the update nag
+export PI_SKIP_VERSION_CHECK=1   # stay on the pinned 1.4.0; hide the update nag
 echo
 echo "Starting Pi. Put the worker on a job with:  /mellum <task>"
 exec pi --no-skills

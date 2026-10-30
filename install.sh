@@ -100,7 +100,7 @@ retire_old() {
 MIN_NODE=24
 NODE_DIR="$HOME/.local/share/mellum-node"
 PI_PACKAGE="@earendil-works/pi-coding-agent"
-PI_VERSION="1.3.0"   # the Pi version this repo is built and measured against
+PI_VERSION="1.4.0"   # the Pi version the course ships and develops against
 
 node_major() {
     local version

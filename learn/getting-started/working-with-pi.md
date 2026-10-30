@@ -15,7 +15,7 @@ what it did, and how to pick up a session later. It ends with the two
 commands this course adds, `/lesson` and `/remedy`.
 
 Everything here is from Pi's own documentation for the version this repo
-pins (1.3.0). The `/` menu inside Pi is the exact list for your session.
+pins (1.4.0). The `/` menu inside Pi is the exact list for your session.
 
 ![A small robot in a chair typing at a keyboard in front of a large monitor, with two folders and a wrench on the floor beside it](../assets/illustrations/working-with-pi.webp){ .illustration }
 

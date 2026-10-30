@@ -4,6 +4,16 @@ Versions match git tags; pin one in both install lines.
 
 ## [Unreleased]
 
+### Changed
+
+- The course now pins **Pi 1.4.0** (was 1.3.0). Guided mode's code panel rides
+  on 1.4's fixes: concurrent `custom()` panels and dialogs, extension tools
+  staying active on resume, and recovery from a tool call truncated at the
+  output limit. Pi 1.4 needs Node ≥ 22.19.0, which the installer's Node 24
+  already satisfies. The ladder's measurement rig keeps its own 1.3.0 pin
+  (`scripts/baseline/pins.env`), where the recorded baselines were taken, so the
+  measured numbers are unchanged.
+
 ### Added
 
 - Optional full GPU offload. Set `MELLUM_NGL` (e.g. `999`) and
@@ -18,7 +28,7 @@ Versions match git tags; pin one in both install lines.
   ~8 GB model, waits long enough that the first download does not time out,
   clears stray llama-servers and anything squatting on port 8002 before starting
   (the cause of the old "server did not start"), and silences the Pi update nag
-  (pinned 1.3.0). Pi greets the learner with a welcome banner — "type `/start` to
+  (pinned 1.4.0). Pi greets the learner with a welcome banner — "type `/start` to
   begin" — and a new `/start` command opens the next lesson. `run.sh` launches
   Pi with `--no-skills` so the learner's run uses the repo's own extensions
   (lessons, remedies, think-tags) alone, and no global `~/.agents/skills` on the
@@ -27,7 +37,7 @@ Versions match git tags; pin one in both install lines.
   (`[Context]`, `[Extensions]`); `ctrl+o` still shows them.
 - A root installer and a one-command runner. `install.sh` / `install.bat` move
   to the repo root, so a learner clones and runs `./install.sh`: it installs the
-  tools, pins Pi 1.3.0, installs the mellum-worker harness from the clone (so Pi
+  tools, pins Pi 1.4.0, installs the mellum-worker harness from the clone (so Pi
   has `/mellum`, not bare), then hands off to the new `run.sh`, which starts the
   server (the first run downloads the model) and launches Pi. Next time, just
   `bash run.sh`. The Home page gains a "For the impatient" block with the
