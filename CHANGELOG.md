@@ -16,6 +16,11 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A lesson now shows the code the run produced. After a before or after run, the
+  Eval case and Solution steps print the `.py` the session wrote — S0's `add.py`
+  going from `return a - b` to `return a + b` — so you see the fix itself, not
+  just PASS/FAIL. First step of guided mode (GM.3): making the code visible in
+  the lesson.
 - Optional full GPU offload. Set `MELLUM_NGL` (e.g. `999`) and
   `scripts/backend.py` starts llama-server with `-ngl <value>`, offloading that
   many layers to the GPU. Unset — the default — keeps llama.cpp's `--fit`, which

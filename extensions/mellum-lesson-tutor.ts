@@ -17,7 +17,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CURRENT_SESSION_VERSION, getMarkdownTheme } from "@earendil-works/pi-coding-agent";
 import { Image, Key, Markdown, matchesKey, truncateToWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
-import { cleanProjects, lessonIndex, type Lesson, type LessonEntry, parseLesson, lessonLegend, prepareProject, projectGuide, projectNumber, runArgv, styleGuide, sessionIn, sessionProfile, STEPS, summariseRuns, terminalPicture, unitPathology, unwrap } from "./mellum-lessons.ts";
+import { cleanProjects, lessonIndex, type Lesson, type LessonEntry, parseLesson, lessonLegend, prepareProject, projectGuide, projectNumber, producedCode, runArgv, styleGuide, sessionIn, sessionProfile, STEPS, summariseRuns, terminalPicture, unitPathology, unwrap } from "./mellum-lessons.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -68,6 +68,7 @@ interface RunState {
 	child?: ChildProcess;
 	lines: string[];
 	verdict?: string;
+	runsDir?: string;
 }
 
 /** Strip the badge lines and the remedy/check lines the step screens show in their own way. */
@@ -110,7 +111,7 @@ function walk(ctx: any, root: string, lesson: Lesson, entry: LessonEntry, total:
 			const isHarness = command.includes("harness.py");
 			const profile = isHarness ? sessionProfile(agentDir(), ctx.model, mkdtempSync(join(tmpdir(), `lesson-${lesson.number}-profile-`))) : undefined;
 			const argv = isHarness ? runArgv(command, runsDir, full, profile) : command.split(/\s+/);
-			const state: RunState = { label: full ? "full run" : "one session", started: Date.now(), lines: [] };
+			const state: RunState = { label: full ? "full run" : "one session", started: Date.now(), lines: [], runsDir: isHarness ? runsDir : undefined };
 			runs[key] = state;
 			const child = spawn(argv[0], argv.slice(1), { cwd: root, stdio: ["ignore", "pipe", "pipe"] });
 			state.child = child;
@@ -150,6 +151,11 @@ function walk(ctx: any, root: string, lesson: Lesson, entry: LessonEntry, total:
 				const good = r.verdict?.startsWith("PASS");
 				out.push((good ? theme.fg("success", ` ${r.verdict}`) : theme.fg("error", ` ${r.verdict}`)));
 				for (const l of r.lines) out.push(...wrapTextWithAnsi(`   ${l}`, width));
+				const code = r.runsDir ? producedCode(r.runsDir) : undefined;
+				if (code) {
+					out.push("", theme.fg("accent", `   the code it wrote · ${code.name}`));
+					for (const l of code.text.replace(/\n+$/, "").split("\n")) out.push(theme.fg("mdCode", `   ${l}`));
+				}
 				const why = good ? undefined : unitPathology(root, lesson.unit);
 				if (why) out.push(...wrapTextWithAnsi(theme.fg("warning", `   Why: ${why}`), width));
 				if (r.label === "one session") out.push(theme.fg("dim", "   one session is a demonstration, not the lesson check"));

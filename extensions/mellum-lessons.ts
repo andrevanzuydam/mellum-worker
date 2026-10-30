@@ -163,6 +163,36 @@ export function summariseRuns(dir: string): RunSummary {
 
 /** The pathology line of the remedy unit a lesson's Remedy unit line names, for the FAIL screen's
  * "why". Undefined when the line names no unit or the unit has no file. */
+/**
+ * The solution file a run produced — the newest run's root-level `.py` in its
+ * workspace (the grader's `tests/` stay in a subdir, so they are never picked).
+ * Lets a lesson show the code the fix wrote, not just PASS/FAIL.
+ */
+export function producedCode(runsDir: string): { name: string; text: string } | undefined {
+	let runs: string[];
+	try {
+		runs = readdirSync(runsDir).sort();
+	} catch {
+		return undefined;
+	}
+	for (const run of runs.reverse()) {
+		const ws = join(runsDir, run, "workspace");
+		let names: string[];
+		try {
+			names = readdirSync(ws).filter((n) => n.endsWith(".py")).sort();
+		} catch {
+			continue;
+		}
+		if (names.length === 0) continue;
+		try {
+			return { name: names[0], text: readFileSync(join(ws, names[0]), "utf8") };
+		} catch {
+			continue;
+		}
+	}
+	return undefined;
+}
+
 export function unitPathology(root: string, unitLine: string): string | undefined {
 	const unit = unitLine.match(/`([a-z]+\/[a-z-]+)`/)?.[1];
 	const file = unit && join(root, "remedies", `${unit}.ts`);
