@@ -22,14 +22,28 @@ import { join } from "node:path";
 export interface Route {
 	method: string;
 	path: string;
+	/** A GET route the spec describes as a rendered HTML page (gets page-content checks). */
+	html?: boolean;
+	/** Required visible text the spec ties to this page (e.g. a quoted tagline). */
+	contains?: string[];
+}
+
+/** Page-layout requirements the spec states in the open — never read from the grader. */
+export interface PageReqs {
+	doctype: boolean;
+	lang: string | null;
+	nav: boolean;
 }
 
 export interface Contract {
 	app: string;
 	routes: Route[];
+	page: PageReqs;
 }
 
 const ROUTE_RE = /\b(GET|POST|PUT|PATCH|DELETE)\s+`?(\/[A-Za-z0-9_/{}\-]*)/g;
+// Words that mark a GET route as a rendered page rather than a data endpoint.
+const PAGE_WORDS = /\b(page|template|layout|home|board|hero|render|html|tagline)\b/i;
 
 /** Collapse path params to `{}` and drop a trailing slash, so routes compare structurally. */
 export function normalizePath(path: string): string {
@@ -37,21 +51,46 @@ export function normalizePath(path: string): string {
 	return p === "" ? "/" : p;
 }
 
+/** The quoted text the spec ties to a tagline, derived from its prose (not the grader). */
+function taglineLiteral(spec: string): string | null {
+	const m = /tagline[^"“]*["“]([^"”]+)["”]/i.exec(spec);
+	return m ? m[1].trim() : null;
+}
+
+/** Page-layout requirements stated in the spec's own words. */
+function pageReqs(spec: string): PageReqs {
+	const lang = /\blang\s*=\s*["']?([A-Za-z]{2}(?:-[A-Za-z]{2})?)/.exec(spec);
+	return {
+		doctype: /\bHTML5\b/i.test(spec) || /<!doctype/i.test(spec),
+		lang: lang ? lang[1].toLowerCase() : null,
+		nav: /\bnav(?:bar|igation)?\b/i.test(spec) || /\blinks?\s+to\b/i.test(spec),
+	};
+}
+
 /** Pull the app module and every route the spec names, deduped by method + normalized path. */
 export function parseContract(spec: string): Contract {
 	const routes: Route[] = [];
 	const seen = new Set<string>();
+	const tagline = taglineLiteral(spec);
 	for (const m of spec.matchAll(ROUTE_RE)) {
 		const method = m[1].toUpperCase();
 		const path = m[2].replace(/`+$/, "") || "/";
 		const key = `${method} ${normalizePath(path)}`;
-		if (!seen.has(key)) {
-			seen.add(key);
-			routes.push({ method, path });
-		}
+		if (seen.has(key)) continue;
+		seen.add(key);
+		// Classify from the route's own context — a GET page the spec describes as HTML.
+		const at = m.index ?? 0;
+		const ctx = spec.slice(Math.max(0, at - 180), at + 200);
+		const html = method === "GET" && PAGE_WORDS.test(ctx);
+		const contains: string[] = [];
+		if (html && tagline && /\btagline\b/i.test(ctx)) contains.push(tagline);
+		const route: Route = { method, path };
+		if (html) route.html = true;
+		if (contains.length) route.contains = contains;
+		routes.push(route);
 	}
 	const named = /`(\w+)\.py`[^`]*?as `(\w+)`/.exec(spec);
-	return { app: named ? named[2] : "app", routes };
+	return { app: named ? named[2] : "app", routes, page: pageReqs(spec) };
 }
 
 /** Emit a pytest that boots the app and asserts each named route is registered. */
@@ -81,6 +120,26 @@ export function generatePytest(contract: Contract): string {
 		const slug = norm.replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "root";
 		lines.push(`def test_route_${i}_${route.method.toLowerCase()}_${slug}():`);
 		lines.push(`    assert ${JSON.stringify(norm)} in _registered(), "missing route: ${route.method} ${route.path}"`);
+		lines.push("");
+	});
+	// Page-content checks for the routes the spec describes as rendered HTML pages.
+	// Structural hygiene (doctype/lang/nav) is generic; any `contains` text is spec-quoted.
+	const page = contract.page ?? { doctype: false, lang: null, nav: false };
+	contract.routes.forEach((route, i) => {
+		if (!route.html) return;
+		const norm = normalizePath(route.path);
+		if (norm.includes("{}")) return; // no value to request a path-param route with
+		const slug = norm.replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "root";
+		lines.push(`def test_page_${i}_${slug}():`);
+		lines.push(`    r = client.get(${JSON.stringify(route.path)})`);
+		lines.push(`    assert r.status_code == 200, "GET ${route.path} should return 200"`);
+		lines.push(`    assert "text/html" in r.headers.get("content-type", "").lower(), "GET ${route.path} should serve HTML"`);
+		if (page.doctype) lines.push(`    assert re.search(r"<!doctype\\s+html", r.text, re.I), "page missing HTML5 doctype"`);
+		if (page.lang) lines.push(`    assert re.search(r"<html[^>]*lang\\s*=\\s*.{0,1}${page.lang}\\b", r.text, re.I), "html missing lang=${page.lang}"`);
+		if (page.nav) lines.push(`    assert re.search(r"<nav\\b|<a\\s[^>]*href", r.text, re.I), "page missing navigation/links"`);
+		for (const text of route.contains ?? []) {
+			lines.push(`    assert ${JSON.stringify(text)} in r.text, ${JSON.stringify(`page missing required text: ${text.slice(0, 48)}`)}`);
+		}
 		lines.push("");
 	});
 	return lines.join("\n");

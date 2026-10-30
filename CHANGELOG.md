@@ -612,9 +612,13 @@ Versions match git tags; pin one in both install lines.
   task spec — the app module and every route the spec names — and writes a
   pytest the `mellum-ncm` gate can enforce (`NCM_TEST`), with no per-task
   authoring. It checks the app boots and that each named route is registered
-  (path params normalised). It catches the early failures (nothing built, a
-  missing route, the wrong module); deep contracts (exact aggregation keys, a
-  migration schema) are Tier-2 (an examiner model), not structurally inferable.
+  (path params normalised). For a GET route the spec describes as a rendered
+  page it also checks the response — 200, HTML, and the page-layout hygiene the
+  spec states in the open (HTML5 doctype, `lang`, a navbar/links) plus any
+  tagline the spec quotes — so it catches the home-page miss, not just a missing
+  route. It catches the early failures (nothing built, a missing route, the
+  wrong module); deep contracts (exact aggregation keys, a migration schema)
+  are Tier-2 (an examiner model), not structurally inferable.
 
 - A `mellum-surgical` extension (`extensions/mellum-surgical.ts`): block a
   `write` that would clobber an existing file. On a write onto a file that
