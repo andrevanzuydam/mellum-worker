@@ -6,6 +6,14 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- Optional full GPU offload. Set `MELLUM_NGL` (e.g. `999`) and
+  `scripts/backend.py` starts llama-server with `-ngl <value>`, offloading that
+  many layers to the GPU. Unset — the default — keeps llama.cpp's `--fit`, which
+  splits the model across GPU and CPU to fit free memory and stays portable to a
+  small machine. `999` forces *every* layer onto the GPU, so use it only where
+  the GPU holds the whole model (roomy unified memory, say); on a smaller GPU it
+  can run out of memory and fail, so set a partial layer count there or leave it
+  unset.
 - A friendlier, robust first run. `run.sh` shows a download progress bar for the
   ~8 GB model, waits long enough that the first download does not time out,
   clears stray llama-servers and anything squatting on port 8002 before starting
