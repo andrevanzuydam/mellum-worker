@@ -299,10 +299,10 @@ export function projectGuide(root: string, cwd: string): string[] | undefined {
 /** The widget outside a project folder: the lesson commands, one line each. */
 export function lessonLegend(): string[] {
 	return [
-		"Lessons",
-		"`/lesson` picks one · `/lesson E1` opens one · in a lesson, `r` runs a line and `p` tries it by hand",
-		"`/remedy` switches remedy units on and off · `/lesson clear` starts a project folder over",
-		"`/lesson back` leaves a project folder for the lesson · `/lesson clean` removes every project folder",
+		"Welcome to the Small AI Learning Center",
+		"Type `/start` to begin — it opens your next lesson.",
+		"`/lesson` picks any lesson · `/lesson E1` opens one · in a lesson, `r` runs a line and `p` tries it by hand",
+		"`/remedy` switches remedy units on and off · `/lesson back` returns · `/lesson clear` restarts · `/lesson clean` removes all",
 	];
 }
 

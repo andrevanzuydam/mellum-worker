@@ -237,6 +237,16 @@ export default function (pi: any): void {
 			invalidate: () => {},
 		}) : undefined);
 	});
+	pi.registerCommand("start", {
+		description: "Start the course: open your next lesson (the same as /lesson)",
+		handler: async (_args: string, ctx: any) => {
+			try {
+				await openLesson("", ctx);
+			} catch (error) {
+				ctx.ui.notify(`/start failed: ${(error as Error)?.stack ?? error}`, "error");
+			}
+		},
+	});
 	pi.registerCommand("lesson", {
 		description: "Take a lesson: /lesson to pick one, /lesson E1 to open it; in a project folder, /lesson back returns to the lesson and /lesson clear starts over",
 		getArgumentCompletions: (prefix: string) => {

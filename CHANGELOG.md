@@ -6,6 +6,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A friendlier, robust first run. `run.sh` shows a download progress bar for the
+  ~8 GB model, waits long enough that the first download does not time out,
+  clears stray llama-servers and anything squatting on port 8002 before starting
+  (the cause of the old "server did not start"), and silences the Pi update nag
+  (pinned 1.3.0). Pi greets the learner with a welcome banner — "type `/start` to
+  begin" — and a new `/start` command opens the next lesson.
 - A root installer and a one-command runner. `install.sh` / `install.bat` move
   to the repo root, so a learner clones and runs `./install.sh`: it installs the
   tools, pins Pi 1.3.0, installs the mellum-worker harness from the clone (so Pi
