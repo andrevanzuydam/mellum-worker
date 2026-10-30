@@ -29,7 +29,7 @@ from pathlib import Path
 CODE = Path(__file__).resolve().parent
 RUNS = Path(tempfile.gettempdir()) / "mellum-eval-runs"
 SUITES = CODE / "suites"
-RECORDER = CODE / "record-pi.mjs"
+RECORDER = CODE.parent.parent / "extensions" / "mellum-recorder.ts"
 PROFILE = CODE / "profile"
 EXTENSION = CODE.parents[1] / "extensions" / "mellum-worker.ts"
 # The think-tag repair (a no-op on a correctly served reply). The flow loads it in every session; in

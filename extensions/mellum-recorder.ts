@@ -1,3 +1,15 @@
+/**
+ * The recorder: the one instrument that records a Pi run's effort — turns,
+ * tokens, tool calls, timing, compaction — as a JSONL trace. Load it on a
+ * run with `-e extensions/mellum-recorder.ts` and `MELLUM_TRACE_FILE` set; the
+ * harness and the ladder both do. Without `MELLUM_TRACE_FILE` it records
+ * nothing. The summarisers (`learn/code/harness.py`, `ladder/ladder/score.py`)
+ * read the trace by event `type`.
+ *
+ * This is the single recorder: it unifies the lesson recorder (which added the
+ * compaction row) and the ladder recorder (the fuller instrument — timing,
+ * tool↔request association, streaming and version stamps). Nothing is lost.
+ */
 import { appendFileSync, readFileSync, realpathSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { dirname, join } from 'node:path';
@@ -58,6 +70,12 @@ export function installRecorder(pi, options = {}) {
     record({type:'message_end', message:event.message});
     activeRequest = null;
   });
+  // Compaction is a budget question: whether Pi asked, and whether the worker
+  // let it. The recorder loads after the worker, so a compaction the worker
+  // cancels never reaches this handler: a `before_compact` row only appears
+  // when a compaction was allowed to run.
+  pi.on('session_before_compact', event =>
+    record({type:'before_compact', reason: event?.reason ?? null}));
   pi.on('tool_call', event => { record({type:'tool_call', toolName:event.toolName, input:event.input, ...toolFields(event)}); });
   pi.on('tool_result', event => { record({type:'tool_result', toolName:event.toolName, isError:event.isError, content:event.content, ...toolFields(event)}); });
   pi.on('tool_execution_start', event => { record({type:'tool_execution_start', toolName:event.toolName, args:event.args, ...toolFields(event)}); });

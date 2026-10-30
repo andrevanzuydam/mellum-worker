@@ -40,7 +40,7 @@ from .score import score
 
 log = logging.getLogger(__name__)
 PROMPT_FILE = REPO_ROOT / "prompts" / "mellum-worker.md"
-RECORD_EXT = LADDER_ROOT / "ladder" / "record-pi.js"
+RECORD_EXT = REPO_ROOT / "extensions" / "mellum-recorder.ts"
 MODE_EXT = REPO_ROOT / "extensions" / "mellum-worker.ts"
 GUARDS_EXT = REPO_ROOT / "extensions" / "mellum-guards.ts"
 FLOW_EXT = REPO_ROOT / "extensions" / "mellum-flow.ts"

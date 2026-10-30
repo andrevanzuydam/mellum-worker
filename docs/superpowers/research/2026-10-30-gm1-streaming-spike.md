@@ -29,7 +29,8 @@ loop? This note records the spike that settled it.
 
 ## The spike
 
-`learn/code/spikes/gm-code-panel.ts` (loaded with `pi -e`, not shipped):
+A throwaway `pi -e` extension (not shipped; removed after it validated the
+approach — in git history):
 `/gmspike <file>` opens the panel, and the `tool_call` handler repaints it when
 the worker edits that file. Driven against a scratch `add.py` with the real
 local Mellum: "edit add.py so add returns a + b". The worker ran `ls`, read the
