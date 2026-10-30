@@ -6,6 +6,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A root installer and a one-command runner. `install.sh` / `install.bat` move
+  to the repo root, so a learner clones and runs `./install.sh`: it installs the
+  tools, pins Pi 1.3.0, installs the mellum-worker harness from the clone (so Pi
+  has `/mellum`, not bare), then hands off to the new `run.sh`, which starts the
+  server (the first run downloads the model) and launches Pi. Next time, just
+  `bash run.sh`. The Home page gains a "For the impatient" block with the
+  clone-and-install commands.
 - E2 Reading More Than Fits holds: without `context/trim-tool-output` the
   session compacted 13 times and wrote a wrong list; with it, none, in 13
   requests. Recorded under `docs/ladder/2026-10-30-context-overflow-check/`.

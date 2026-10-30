@@ -5,6 +5,25 @@
 Python developers are interested in how agentic coding can help on routine work on their laptop. This space has
 progressed rapidly, but the truth remains: small models need agents that help them stay on track.
 
+## For the impatient
+
+Clone the repo and run the installer from its root — then Pi's guided setup
+takes over (weights, server, your first answer):
+
+**macOS / Linux**
+```bash
+git clone https://github.com/andrevanzuydam/mellum-worker.git
+cd mellum-worker
+bash ./install.sh
+```
+
+**Windows**
+```bat
+git clone https://github.com/andrevanzuydam/mellum-worker.git
+cd mellum-worker
+.\install.bat
+```
+
 ## Who it's for
 
 Developers on macOS, Linux or Windows who know a terminal and Python or Node, and want to run a small coding

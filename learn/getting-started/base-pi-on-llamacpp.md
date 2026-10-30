@@ -32,18 +32,16 @@ Pi profile are files in this repo; in later steps we'll add our own harness and 
 
 We need a server that can serve LLMs in an efficient way that works with a smaller memory format, cross-platform.
 Additionally, we need package managers for Python and Node.js, which run the tools we are going to use. Pi is also installed.
-For your convenience we have an installation script for Windows and for Linux / macOS linked below:
+For your convenience there is an installation script at the root of your clone, for Windows and for Linux / macOS:
 
 **Linux / macOS**
-[install.sh](install.sh)
 ```bash
-bash ./learn/getting-started/install.sh
+bash ./install.sh
 ```
 
 **Windows**
-[install.bat](install.bat)
 ```cmd
-.\learn\getting-started\install.bat
+.\install.bat
 ```
 
 After running the script, check that you have a working system:

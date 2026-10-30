@@ -15,6 +15,9 @@ esac
 # Also find tools installed during a previous run.
 export PATH="$HOME/.local/bin:$PATH"
 
+# This script lives at the repo root; the start prompts below run from the repo.
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 has() {
     command -v "$1" >/dev/null 2>&1
 }
@@ -97,6 +100,7 @@ retire_old() {
 MIN_NODE=24
 NODE_DIR="$HOME/.local/share/mellum-node"
 PI_PACKAGE="@earendil-works/pi-coding-agent"
+PI_VERSION="1.3.0"   # the Pi version this repo is built and measured against
 
 node_major() {
     local version
@@ -132,15 +136,45 @@ ensure_node() {
 }
 
 # Pi is an npm package. --prefix puts it in ~/.local/bin, so it never needs sudo.
+pi_version() { pi --version 2>/dev/null | tr -d '[:space:]'; }
+
+# Pi must be the pinned version this repo is measured against, not just any pi.
 ensure_pi() {
-    if has pi; then
-        echo "[OK] pi already exists."
+    if has pi && [[ "$(pi_version)" == "$PI_VERSION" ]]; then
+        echo "[OK] pi $PI_VERSION already installed."
         return 0
     fi
-    echo "Installing $PI_PACKAGE..."
-    npm install -g --prefix "$HOME/.local" "$PI_PACKAGE"
+    if has pi; then
+        echo "[CHANGE] pi $(pi_version) is not the pinned $PI_VERSION; installing $PI_VERSION."
+    fi
+    echo "Installing $PI_PACKAGE@$PI_VERSION..."
+    npm install -g --prefix "$HOME/.local" "$PI_PACKAGE@$PI_VERSION"
     hash -r
     has pi || { echo "[ERROR] pi installation failed."; return 1; }
+    [[ "$(pi_version)" == "$PI_VERSION" ]] || echo "[WARN] pi reports $(pi_version), expected $PI_VERSION."
+}
+
+# Give base Pi the mellum-worker harness (/mellum, worker prompt, guards) from
+# this clone, so the Pi the learner runs is the worker, not bare Pi.
+ensure_harness() {
+    if pi list 2>/dev/null | grep -q "mellum-worker"; then
+        echo "[OK] mellum-worker harness already installed in Pi."
+        return 0
+    fi
+    echo "Installing the mellum-worker harness into Pi (from this clone)..."
+    pi install "$REPO_DIR" \
+        || echo "[WARN] harness install failed; run it yourself: pi install \"$REPO_DIR\""
+}
+
+# Once the tools are in, hand off to run.sh — the recurring entry point that
+# starts the server (first run downloads the model) and Pi.
+offer_start() {
+    echo
+    echo "Next: start the model and Pi with  bash ./run.sh"
+    [[ -t 0 ]] || return 0
+    local ans
+    read -r -p "Start now? [Y/n] " ans || ans=""
+    [[ "$ans" =~ ^[Nn] ]] || exec "$REPO_DIR/run.sh"
 }
 
 if has uv && [[ "$build_llama" == false ]]; then
@@ -148,10 +182,12 @@ if has uv && [[ "$build_llama" == false ]]; then
     echo "[OK] uv and llama-server already exist."
     ensure_node
     ensure_pi
+    ensure_harness
     echo
     llama-server --version
     node --version
     pi --version
+    offer_start
     exit 0
 fi
 
@@ -257,6 +293,7 @@ fi
 retire_old
 ensure_node
 ensure_pi
+ensure_harness
 
 echo
 uv --version
@@ -267,3 +304,4 @@ echo
 echo "Installation complete."
 echo 'For future terminals, ensure this is in your shell configuration:'
 echo 'export PATH="$HOME/.local/bin:$PATH"'
+offer_start
