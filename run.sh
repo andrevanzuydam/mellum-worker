@@ -84,8 +84,11 @@ uv run scripts/backend.py status || true
 
 # Pi, pointed at this repo's profile (which targets the local server). The
 # mellum-worker harness (/mellum) comes from the plugin install.sh set up.
+# --no-skills keeps the author's own ~/.agents/skills out of the learner's run,
+# so the course runs on the repo's extensions alone (lessons, remedies,
+# think-tags) and nobody's global skills leak in. Extensions and AGENTS.md stay.
 export PI_CODING_AGENT_DIR="$REPO_DIR/learn/code/profile"
 export PI_SKIP_VERSION_CHECK=1   # stay on the pinned 1.3.0; hide the update nag
 echo
 echo "Starting Pi. Put the worker on a job with:  /mellum <task>"
-exec pi
+exec pi --no-skills

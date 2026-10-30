@@ -11,7 +11,10 @@ Versions match git tags; pin one in both install lines.
   clears stray llama-servers and anything squatting on port 8002 before starting
   (the cause of the old "server did not start"), and silences the Pi update nag
   (pinned 1.3.0). Pi greets the learner with a welcome banner — "type `/start` to
-  begin" — and a new `/start` command opens the next lesson.
+  begin" — and a new `/start` command opens the next lesson. `run.sh` launches
+  Pi with `--no-skills` so the learner's run uses the repo's own extensions
+  (lessons, remedies, think-tags) alone, and no global `~/.agents/skills` on the
+  author's machine leak into the course.
 - A root installer and a one-command runner. `install.sh` / `install.bat` move
   to the repo root, so a learner clones and runs `./install.sh`: it installs the
   tools, pins Pi 1.3.0, installs the mellum-worker harness from the clone (so Pi
