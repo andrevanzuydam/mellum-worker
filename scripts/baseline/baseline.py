@@ -279,7 +279,7 @@ def cmd_up() -> None:
     say(f"renting offer {offer['id']} at ${offer['dph_total']:.3f}/h ({offer.get('geolocation')})")
     STATE.mkdir(parents=True, exist_ok=True)
     try:
-        made = vastai(c, "create", "instance", str(offer["id"]), "--image", p["BASELINE_VLLM_IMAGE"],
+        made = vastai(c, "create", "instance", str(offer["id"]), "--image", p["BASELINE_LLAMA_IMAGE"],
                       "--disk", c["VAST_DISK_GB"], "--ssh", "--direct", "--cancel-unavail",
                       "--label", LABEL)
         ident = str(made["new_contract"])
