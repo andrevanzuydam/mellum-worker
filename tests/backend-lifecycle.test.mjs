@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import { chmodSync, copyFileSync, existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -100,6 +100,20 @@ test("kill ends every process with the server's name, whatever started it", asyn
   const args = WIN ? ["-e", "setTimeout(() => {}, 60000)"] : ["60"];
   const sleepers = [1, 2].map(() => spawn(exe, args, { stdio: "ignore" }));
   const exited = sleepers.map((c) => new Promise((ok) => c.on("exit", ok)));
+  // Wait until both fakes answer the exact lookup kill uses (pgrep -x), so the
+  // assertion can't race their exec on a loaded runner. If they never appear,
+  // say what IS running under the name — a CI-only miss is then diagnosable,
+  // not a silent "no ... running".
+  if (!WIN) {
+    const seen = () => spawnSync("pgrep", ["-x", name], { encoding: "utf8" })
+      .stdout.split(/\s+/).filter(Boolean).length;
+    let n = 0;
+    for (let i = 0; i < 50 && (n = seen()) < 2; i++)
+      await new Promise((ok) => setTimeout(ok, 100));
+    assert.equal(n, 2, `fakes not found by 'pgrep -x ${name}' (saw ${n}); comm names: `
+      + (spawnSync("ps", ["-eo", "comm"], { encoding: "utf8" }).stdout
+        .split("\n").filter((l) => l.includes("mfake")).join(",") || "none"));
+  }
   writeFileSync(PID, String(sleepers[0].pid));
   const r = await run("kill", "--name", name, "--pidfile", PID);
   assert.equal(r.status, 0, r.stderr);
