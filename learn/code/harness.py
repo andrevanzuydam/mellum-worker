@@ -486,6 +486,7 @@ def run_suite(
         "PI_CODING_AGENT_DIR": str(run / "profile"),
         "MELLUM_TRACE_FILE": str(trace),
     }
+    env.pop("VIRTUAL_ENV", None)   # else uv warns in the workspace venv
     for key in ARM_ENV_KEYS:
         env.pop(key, None)
     env.update(settings["env"])
@@ -576,6 +577,13 @@ def grader_touched(run: Path, suite: Suite) -> bool:
     return suite.canary in text or f"suites/{suite.name}" in text
 
 
+def grade_env(workspace: Path) -> dict[str, str]:
+    """A grader subprocess's environment: the workspace on PYTHONPATH, and no
+    VIRTUAL_ENV — uv warns when it points at a venv other than the run's."""
+    return {k: v for k, v in os.environ.items()
+            if k != "VIRTUAL_ENV"} | {"PYTHONPATH": str(workspace)}
+
+
 def grade(workspace: Path) -> list[tuple[str, bool, str]]:
     workspace = Path(workspace)
     (workspace / "pyrefly.toml").write_text(
@@ -596,7 +604,7 @@ def grade(workspace: Path) -> list[tuple[str, bool, str]]:
     for name, command in commands:
         result = subprocess.run(
             command, cwd=workspace, capture_output=True, text=True, check=False,
-            env={**os.environ, "PYTHONPATH": str(workspace)},
+            env=grade_env(workspace),
         )
         output = [line for line in (result.stdout + result.stderr).splitlines()
                   if line.strip()]
