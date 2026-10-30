@@ -607,7 +607,7 @@ Versions match git tags; pin one in both install lines.
   the plan and verify gates (fewer extensions, order enforced by the runner, not
   a block the model can wait out). Pure core; the Pi-invoking runner builds on it.
 
-- A `mellum-contract` extension (`extensions/mellum-contract.ts`): Tier-1
+- A `mellum-acceptance` extension (`extensions/mellum-acceptance.ts`): Tier-1
   dynamic mediation. It derives a structural acceptance test straight from the
   task spec — the app module and every route the spec names — and writes a
   pytest the `mellum-ncm` gate can enforce (`NCM_TEST`), with no per-task

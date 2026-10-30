@@ -544,7 +544,7 @@ The bullets below on what the harness lacked still stand.
   spec and writes a strict *behavioral* acceptance test (exact keys, status codes,
   named migrations, expected values computed from the source of truth) BEFORE any
   coding; the coder builds to pass it and cannot weaken it (the gate is frozen and
-  restored). Visible pass then means *correct*, not *self-consistent*. (`mellum-contract`
+  restored). Visible pass then means *correct*, not *self-consistent*. (`mellum-acceptance`
   was the Tier-1 structural precursor — routes exist; the behavioral gate is new.)
 
 - **Ground on the live environment, and FORCE the lookup.** The model cannot know
