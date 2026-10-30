@@ -444,7 +444,7 @@ the numbering runs straight through.
 
   *Correction 2026-10-24:* "measured" here means ladder screens: n = 1 per rung
   for the 6/12 and 11/12, n = 1 to 3 on rung 9, and none of them has a
-  `docs/ladder/` record or a `research-*` release yet, so they are leads, not
+  `evals/` record or a `research-*` release yet, so they are leads, not
   rates. The v9 commit message (`18f9425`) says rung 9 went to 3/3 under v9
   ("n=3 confirming"); this entry and the v11 commit (`da04888`) say 2/3, and 2/3
   is the figure that stands. v10 and v11 each changed together with the
@@ -572,7 +572,7 @@ The bullets below on what the harness lacked still stand.
 ## Addendum — spec-driven examine, model parity, and killing the thrash (2026-10-23)
 
 *Correction 2026-10-24:* "Proven (measured)" below means single ladder runs
-(n = 1), not preregistered rates, and none has a `docs/ladder/` record yet,
+(n = 1), not preregistered rates, and none has a `evals/` record yet,
 including the Flint and Mellum 11/12 parity. Read each as a screen.
 
 **Proven (measured):**

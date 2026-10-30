@@ -52,4 +52,4 @@ run deciding either way is a lead, not the verdict.
   gates (the examiner runs per-arm). The hidden grade is the outcome, which is
   more stable than the proxy gate, but it's still per-run.
 - Everything via `uv run`; the live feed visible; runs recorded under
-  `docs/ladder/` if kept.
+  `evals/` if kept.

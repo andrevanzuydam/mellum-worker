@@ -26,14 +26,14 @@ start at [Getting started](../getting-started/index.md).
 | `templates/` | Pi model fragments |
 | `skills/` | The `mellum-setup` skill and its phases |
 | `scripts/` | Command-line counterparts: `scripts/mellum.mjs` for the worker, `scripts/backend.py` for the local model |
-| `ladder/` | The harness, fixtures and scoring that produce `docs/ladder/` |
+| `ladder/` | The harness, fixtures and scoring that produce `evals/` |
 | `learn/` | The Learning Center site (`zensical.toml`, `docs_dir = "learn"`) |
 | `docs/` | SDD records, backend notes, the recipe, and the measured `ladder/` records |
 | `tests/` | The Node suite that guards all of the above |
 
 ## Where the records live
 
-- `docs/ladder/` holds one directory per phase or ablation, with its score
+- `evals/` holds one directory per phase or ablation, with its score
   and links; raw traces, stdout and patches stay out of Git and ship as
   `research-*` release assets.
 - `docs/superpowers/specs/`, `plans/` and `research/` hold the SDD cycle. The

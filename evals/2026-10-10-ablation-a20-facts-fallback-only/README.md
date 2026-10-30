@@ -19,7 +19,7 @@ A20 informs the docs and does not gate the ship rule.
 Launch, 2026-10-10 08:56 EDT, from `ladder/` at commit `aff031a` (finished
 09:35 EDT, 12 rows):
 
-    uv run python -m ladder.run_ladder --mode mode --profile baseline --rung 6 --rung 7 --rung 8 --rung 9 --repeat 3 --deadline 600 --strip-facts-section --out ../docs/ladder/ablation-a20-facts-fallback-only
+    uv run python -m ladder.run_ladder --mode mode --profile baseline --rung 6 --rung 7 --rung 8 --rung 9 --repeat 3 --deadline 600 --strip-facts-section --out ../evals/2026-10-10-ablation-a20-facts-fallback-only
 
 oMLX was up; `~/.pi/agent/mellum-mode-runs.jsonl` had 7 lines before and 7
 after.

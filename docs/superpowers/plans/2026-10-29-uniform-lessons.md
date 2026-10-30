@@ -112,7 +112,7 @@ when a learner-facing surface changes.
 
 Each Easy lesson task: the challenge (layout of `running-commands`), its
 fixtures and qualify, a preregistration note, the check through
-`lesson-check.sh`, the record under `docs/ladder/<date>-<slug>-check/`, then
+`lesson-check.sh`, the record under `evals/<date>-<slug>-check/`, then
 the page (two lines, Remedy unit, Lesson check, badge) and removal from
 `PENDING`. The forcing idea for each is a starting point; the preregistration
 fixes it.

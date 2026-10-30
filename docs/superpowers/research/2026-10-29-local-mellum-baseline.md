@@ -3,8 +3,8 @@
 Date: 2026-10-29. Lifecycle: screen (n = 3 per rung, one serving stack, one
 host). The point of this run was to see how far a locally-served 6-bit MLX
 quant drifts from the pinned BF16 vLLM baseline, on the same vanilla Pi, with
-nothing else changed. The record is `docs/ladder/2026-10-29-local-mellum-baseline/`;
-the comparison target is `docs/ladder/2026-10-28-vllm-baseline` (26/36).
+nothing else changed. The record is `evals/baseline/2026-10-29-local-mellum-baseline/`;
+the comparison target is `evals/baseline/2026-10-28-vllm-baseline` (26/36).
 
 ## What is measured / What is conjecture
 

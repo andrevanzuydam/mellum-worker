@@ -55,7 +55,7 @@ check runs once more on that.
 - Revision 2 on the 6-bit LAN host, a screen: before 2/3, after 3/3. One
   before session ran `uvicorn app:app --port 8000` in the foreground and
   stalled; the guard fired in two of three after sessions (1 and 7 blocks).
-  Record: `docs/ladder/2026-10-29-running-commands-check/revision-2-lan-6bit/`.
+  Record: `evals/2026-10-29-running-commands-check/revision-2-lan-6bit/`.
 - Revision 2's step 2 said "Start the app on port 8000", leaving the how to
   the model. Revision 3 gives the project's own command, as a README would:
   "Run the app with `python app.py`, then check it live". Nothing else in the
@@ -105,7 +105,7 @@ foreground, and the guard is not what a session needs here.
 ## Result, 2026-10-29
 
 Run at `8a28b60` (`runs/E4-check-20261029T212000Z-8a28b60`, recorded under
-`docs/ladder/2026-10-29-running-commands-check/revision-3-lan-6bit/`), with
+`evals/2026-10-29-running-commands-check/revision-3-lan-6bit/`), with
 clean serving confirmed in both traces.
 
 - **Before:** PASS (27 requests, no stall). Every server start was

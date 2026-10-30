@@ -139,7 +139,7 @@ A blocking command (a foreground server, an unclosed-quote `echo`, a REPL, a
 - **Screens first, preregister the deciding run.** Fix arms, n, scoring and the
   rule *before* a run that decides a change. A screen is a lead, not a rate.
 - **Record every measured result in the repo** (`docs/superpowers/research/`,
-  `docs/ladder/`), never in a scratch dir. A claim with no committed record is a
+  `evals/`), never in a scratch dir. A claim with no committed record is a
   lead.
 - Atomic, pushed, individually-revertible commits; tag known-good milestones.
 - Everything through `uv run` — the pinned env is what makes a run reproducible.

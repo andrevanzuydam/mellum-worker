@@ -75,7 +75,7 @@ For a rung, rank the combinations that pass it by:
 2. Tie-break on **cleanliness**, from the ladder's own metrics (lower is
    better, in order): `tool_errors`, `anchor_fail`, `nudges`, `reentries`,
    then `requests`, then `wall_s`. These columns already exist in the ladder
-   table (see `docs/ladder/ablation-a0-replace/table.md`).
+   table (see `evals/2026-10-09-ablation-a0-replace/table.md`).
 
 The **best combination** for a rung is the top of that ranking. The
 **responsible layer** (Q2) is the first backbone arm at which the rung reaches
@@ -87,7 +87,7 @@ a passing pass-rate.
   (screen-plus; a default claim would want more).
 - Scoring oracle: the ladder's own pass/fail per rung (`result`), never a
   proxy. Everything via `uv run`; `scripts/watch_ladder.py` visible per the
-  skill; records promoted to `docs/ladder/<date>-extension-ablation/`.
+  skill; records promoted to `evals/<date>-extension-ablation/`.
 - Runs sequentially on the single GPU, **queued behind the live Qwen/Mellum
   flow comparison**.
 

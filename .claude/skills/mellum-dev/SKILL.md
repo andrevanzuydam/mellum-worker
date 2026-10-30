@@ -30,7 +30,7 @@ the fewest targeted runs that move the question and write a short research
 note. Before a run that decides a default or a comparative claim, fix the
 arms, n, scoring and rule in a preregistration. A screen is a **lead**, never
 a rate. Do not re-open settled, measured decisions without a ladder run in
-`ladder/`, recorded in `docs/ladder/`.
+`ladder/`, recorded in `evals/`.
 
 ## 2. Test-first, both suites
 
@@ -46,7 +46,7 @@ a rate. Do not re-open settled, measured decisions without a ladder run in
 ## 3. Measured settings are frozen without evidence
 
 Do not change the prompt, templates, filter, tools, sampling or guards without
-a ladder run in `ladder/` recorded in `docs/ladder/`. `prompts/mellum-worker.md`
+a ladder run in `ladder/` recorded in `evals/`. `prompts/mellum-worker.md`
 is the **only** prompt source; run `node build.mjs` after editing it (a test
 fails on template drift). A setting the shipped product does not use is a
 harness finding, not a claim about the worker.
@@ -189,14 +189,14 @@ How:
 Scratchpad runs are ephemeral. A measured result that backs a win or a learning
 is recorded **in the repo** before (or with) its PR — never left in `/tmp`:
 
-- **The record** → `docs/ladder/<YYYY-MM-DD-topic>/`: the `table.md` and, per
+- **The record** → `evals/<YYYY-MM-DD-topic>/`: the `table.md` and, per
   run, its `rung…-r{k}/run.json` (plus `final.md`/`brief.md`). Strip the raw
   `trace.jsonl`, `stdout.txt`, and `diff.patch` — those never go in the tree.
 - **The note** → `docs/superpowers/research/YYYY-MM-DD-<topic>.md`: arms, n, the
   rule, the result, and the decision (§3). It links the record and the release.
 - **Raw evidence** → a `research-YYYY-MM-DD` tag/release, linked from the note.
 - **Provenance** → when records move in from elsewhere, say from where and at
-  what commit (see `docs/ladder/PROVENANCE.md`).
+  what commit (see `evals/PROVENANCE.md`).
 
 The win/loss PR (§10) carries the record and the note. A claim with no committed
 record behind it is a lead, not a result.

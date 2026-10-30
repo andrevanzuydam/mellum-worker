@@ -14,7 +14,7 @@ until they pass, and reports. Your main model stays in charge.
   records remain, and the table below marks them as history.
 
 Every setting was measured by the ladder (`ladder/`; records in
-`docs/ladder/`). The 6-bit MLX weights (for Apple Silicon, served by oMLX)
+`evals/`). The 6-bit MLX weights (for Apple Silicon, served by oMLX)
 are on [Hugging Face](https://huggingface.co/pauleveritt/Mellum2.1-12B-A2.5B-Thinking-mlx-6bit).
 
 ## Domain engineering
@@ -228,7 +228,7 @@ Mellum as your main Pi model (no `/mellum`) writes no record, so `last` and
 ## What you get
 
 Rungs 1–5, five coding tasks, three runs each, on an M5 Max through oMLX
-([summary](docs/ladder/ablation-summary.md)):
+([summary](evals/ablation-summary.md)):
 
 | Host | Deliverable | Use | Passes | Wall s, mean | Requests per run | Your main model per run |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -246,10 +246,10 @@ specs. A run passes when the project's tests and hidden behaviour tests
 pass, no existing test was removed or edited, and nothing was written
 outside the file list. Mode, 12 runs each
 ([note](docs/superpowers/research/2026-10-09-m7-project-facts.md)): facts
-off ([A18](docs/ladder/ablation-a18-agentclinic-facts-off/README.md)), a
-`## Mellum` section ([A19](docs/ladder/ablation-a19-facts-on/README.md)),
+off ([A18](evals/2026-10-09-ablation-a18-agentclinic-facts-off/README.md)), a
+`## Mellum` section ([A19](evals/2026-10-10-ablation-a19-facts-on/README.md)),
 and the fallback only
-([A20](docs/ladder/ablation-a20-facts-fallback-only/README.md)). Passes,
+([A20](evals/2026-10-10-ablation-a20-facts-fallback-only/README.md)). Passes,
 requests, time and stray writes are in What helped, below; runs cut at the
 600 s deadline were 3, 1 and 1 of 12.
 
@@ -283,7 +283,7 @@ Pi was not run on these rungs.
 - [Learning Center](learn/index.md): problems, fixes, and evidence for small coding models.
 - [recipe.md §6](docs/recipe.md#6-what-is-settled-and-what-is-not): what is settled and what is not.
 - [recipe.md §4](docs/recipe.md#4-using-mellum-worker-delegated): recorded pathologies and the guard for each.
-- [Ablation summary](docs/ladder/ablation-summary.md): every setting measured in and out.
+- [Ablation summary](evals/ablation-summary.md): every setting measured in and out.
 - [Where the cost goes](docs/superpowers/research/2026-10-09-worker-cost-options.md): Mode versus Worker.
 - [Recovery report](docs/superpowers/research/2026-10-07-mellum-recovery/report.md): why Mellum cannot be the primary agent.
 
@@ -391,11 +391,11 @@ evidence behind it. Then, to run the ladder yourself:
 
 6. **The frozen acceptance tests are committed**, so a mediated run reproduces:
    point `--acceptance-test` at
-   [`docs/ladder/2026-10-20-v7-ablation/acceptance/`](docs/ladder/2026-10-20-v7-ablation/acceptance/)
+   [`evals/2026-10-20-v7-ablation/acceptance/`](evals/2026-10-20-v7-ablation/acceptance/)
    (`test_phase1.py`…`test_phase4.py`).
 
 7. **Every run that backs a claim is recorded** under
-   `docs/ladder/<date-topic>/`; compare any two mechanically with `uv run python
+   `evals/<date-topic>/`; compare any two mechanically with `uv run python
    scripts/compare_runs.py <dirA> <dirB>`.
 
 ## Working on it — the mellum-dev skill
@@ -425,7 +425,7 @@ skills/mellum-setup/          the guided installer
 templates/                    provider fragments
 scripts/                      merge-json (the skill); mellum.mjs check, learn
 docs/                         recipe, backend guides, docs/sdd.md
-ladder/, docs/ladder/         the measuring ladder and its phase records
+ladder/, evals/         the measuring ladder and its phase records
 ROADMAP.md, BACKLOG.md        phases and deferred work
 ```
 

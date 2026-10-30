@@ -74,4 +74,4 @@ should not reintroduce the self-exit failure.
   (fixture restore, per-phase scoring, schema injection, git checkpoints) stay
   in force for both arms.
 - n=3 is a screen-plus, not a rate; a default change still wants a ladder record
-  under `docs/ladder/`.
+  under `evals/`.

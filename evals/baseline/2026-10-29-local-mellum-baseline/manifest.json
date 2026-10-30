@@ -1,7 +1,7 @@
 {
   "commit": "0471a35320b674a87c6ff77fcadc05be53a9534e",
   "lifecycle": "screen",
-  "note": "Local MLX 6-bit screen, NOT the pinned vLLM BF16 baseline. Different serving stack (oMLX/MLX vs vLLM) and a different weight precision (6-bit vs bfloat16). Compared against docs/ladder/2026-10-28-vllm-baseline.",
+  "note": "Local MLX 6-bit screen, NOT the pinned vLLM BF16 baseline. Different serving stack (oMLX/MLX vs vLLM) and a different weight precision (6-bit vs bfloat16). Compared against evals/baseline/2026-10-28-vllm-baseline.",
   "run": {
     "rungs": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"],
     "ladder_repeat": "3",

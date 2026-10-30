@@ -81,7 +81,7 @@ extensions", the eval harness and the eval suites in Getting Started.
   numbers against Vanilla Pi, for both quality and budget.
 
 Both pages are **measured**: the numbers come from preregistered runs on the
-A6000 baseline rig and the Vast instance, recorded in `docs/ladder/`, never
+A6000 baseline rig and the Vast instance, recorded in `evals/`, never
 typed by hand.
 
 ## 6. What this changes

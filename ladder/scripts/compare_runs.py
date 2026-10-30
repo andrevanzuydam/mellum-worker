@@ -2,7 +2,7 @@
 """Compare ladder runs mechanically: pass rate and wall time per rung.
 
 Each argument is a run directory holding `*/run.json` records — a ladder
-`--out` directory or a `docs/ladder/<record>` directory. The run.json schema is
+`--out` directory or a `evals/<record>` directory. The run.json schema is
 the same for both, so old and new runs compare directly. Prints a side-by-side
 table (pass/n and average wall seconds per rung) plus totals.
 

@@ -71,7 +71,7 @@ Every lesson in the track is exactly this:
    `/lesson`, or, for a unit, with `/remedy on <unit>` in Pi.
 5. **See it pass.** The after line's result is PASS.
 6. **Proven.** A preregistered lesson check on the reference model shows
-   before failing and after passing, recorded under `docs/ladder/`.
+   before failing and after passing, recorded under `evals/`.
 
 A lesson that cannot meet the contract **leaves the track**. Its evidence is
 kept where it already belongs (the pathologies page, a research note, or a
@@ -209,7 +209,7 @@ name, in the layout `running-commands` already uses: `base/`, `prompts/`,
 - **One revision.** A lesson that misses the rule gets one preregistered
   revision of its challenge. A second miss means it leaves the track, recorded
   as a lesson whose pathology resisted a FAIL → PASS on this model.
-- **Recorded** under `docs/ladder/<date>-<slug>-check/` with `run.json` and
+- **Recorded** under `evals/<date>-<slug>-check/` with `run.json` and
   `final.md`, raw traces stripped. The page's "Lesson check:" line links the
   record and its badge becomes `measured`.
 

@@ -39,7 +39,7 @@ For a fair "halved" comparison, convert from the original fp16/bf16 weights.
      --mode direct --profile tuned --rung 9 --repeat 3 \
      --acceptance-test <path>/test_phase4.py --redispatch 5 --effort-ramp \
      --model omlx/<the-halved-model-id> \
-     --out ../docs/ladder/<date>-halved-rung9
+     --out ../evals/<date>-halved-rung9
    ```
    (`--model` sets the provider and the id the request carries, so it matches
    what oMLX serves.) Watch it live with `python scripts/watch_ladder.py`.

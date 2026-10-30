@@ -107,5 +107,5 @@ user-facing surface changes.
 - `npm test`, the learn suite, the ladder fast suite, the docs caps.
 - `uvx --with zensical-glossary zensical build` with the remedies list on
   both pages; glossary entries for **remedy unit** and **preset**.
-- The lesson check's record and verdicts are in `docs/ladder/` and linked
+- The lesson check's record and verdicts are in `evals/` and linked
   from the research note; LC.26 holds the per-lesson challenge tasks.

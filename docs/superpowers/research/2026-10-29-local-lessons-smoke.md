@@ -4,7 +4,7 @@ Date: 2026-10-29. Lifecycle: screen (n = 1 per command, one serving stack, one
 host). The point was to check that the local 6-bit path drives every lesson's
 own harness command and reaches a grade — the companion to the ladder baseline
 (`docs/superpowers/research/2026-10-29-local-mellum-baseline.md`). The record is
-`docs/ladder/2026-10-29-local-lessons-smoke/`.
+`evals/2026-10-29-local-lessons-smoke/`.
 
 ## What is measured / What is conjecture
 

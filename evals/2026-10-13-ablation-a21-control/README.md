@@ -11,7 +11,7 @@ the fixture's three bullets, including `Write only:`
 
 Launch, from `ladder/`:
 
-    uv run python -m ladder.run_ladder --mode mode --profile baseline --rung 6 --rung 7 --rung 8 --rung 9 --repeat 3 --deadline 600 --mode-facts on --out ../docs/ladder/ablation-a21-control
+    uv run python -m ladder.run_ladder --mode mode --profile baseline --rung 6 --rung 7 --rung 8 --rung 9 --repeat 3 --deadline 600 --mode-facts on --out ../evals/2026-10-13-ablation-a21-control
 
 | rung | repeat | result | requests | wall s (untrusted) | deadline | hidden tests | outside layout | leftovers stopped |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |

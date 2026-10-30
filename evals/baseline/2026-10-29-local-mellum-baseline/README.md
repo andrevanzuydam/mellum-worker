@@ -9,7 +9,7 @@ reading: `docs/superpowers/research/2026-10-29-local-mellum-baseline.md`.
 **This is a local MLX screen, not the pinned vLLM baseline.** The serving
 stack (oMLX/MLX) and the weight precision (6-bit) both differ from the pinned
 record, which runs Mellum 2.1 BF16 on vLLM 0.32.0 on a rented RTX A6000
-(`docs/ladder/2026-10-28-vllm-baseline`). Read it as a quant-vs-full lead on
+(`evals/baseline/2026-10-28-vllm-baseline`). Read it as a quant-vs-full lead on
 the same vanilla Pi, not as a second baseline.
 
 - `manifest.json`: the commit, the knobs, the oMLX server and model read live,

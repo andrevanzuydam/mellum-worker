@@ -11,7 +11,7 @@ the two-bullet light section and `specs/roadmap.md`
 
 Launch, from `ladder/`:
 
-    uv run python -m ladder.run_ladder --mode mode --profile baseline --rung 6 --rung 7 --rung 8 --rung 9 --repeat 3 --deadline 600 --mode-facts on --facts-section light --roadmap one-file --out ../docs/ladder/ablation-a21-light-section-roadmap
+    uv run python -m ladder.run_ladder --mode mode --profile baseline --rung 6 --rung 7 --rung 8 --rung 9 --repeat 3 --deadline 600 --mode-facts on --facts-section light --roadmap one-file --out ../evals/2026-10-13-ablation-a21-light-section-roadmap
 
 | rung | repeat | result | requests | wall s (untrusted) | deadline | hidden tests | outside layout | leftovers stopped |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |

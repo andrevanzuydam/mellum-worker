@@ -62,7 +62,7 @@ SERVED=$(curl -s http://127.0.0.1:11500/v1/models | python -c \
   "import sys,json;print(json.load(sys.stdin)['data'][0]['id'])")
 uv run --offline python -m ladder.run_ladder \
   --mode direct --provider mlx-lm --base-url http://127.0.0.1:11500/v1 \
-  --model "mlx-lm/$SERVED" --profile tuned --rung 1 --repeat 1 --out ../docs/ladder/<name>
+  --model "mlx-lm/$SERVED" --profile tuned --rung 1 --repeat 1 --out ../evals/<name>
 ```
 
 ## Issues hit, and the fix

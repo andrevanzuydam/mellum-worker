@@ -24,7 +24,7 @@
  *
  * ENABLED is set from the ladder records: the empty-final nudge capped at 3
  * and the loop breaker live are phase 2b's 15/15 configuration
- * (docs/ladder/phase2b-guards-bounded). The other guards stay
+ * (evals/2026-10-09-phase2b-guards-bounded). The other guards stay
  * dormant: their columns never went non-zero in direct mode.
  */
 

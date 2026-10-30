@@ -4,7 +4,7 @@ Direct mode launches ``pi -p`` in the recovery report's clean profile: no
 extensions, skills, or context files; the worker prompt in place of Pi's; the
 bundle's record extension capturing every provider request and tool event.
 
-    uv run python -m ladder.run_ladder --profile baseline --rung 1 --repeat 3 --out ../docs/ladder/phase0-baseline
+    uv run python -m ladder.run_ladder --profile baseline --rung 1 --repeat 3 --out ../evals/baseline/2026-10-09-phase0-baseline
 """
 
 from __future__ import annotations

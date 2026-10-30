@@ -57,7 +57,7 @@ not miss reliably, and the condition is not what this lesson says.
 ## Result, 2026-10-30
 
 Run at `b7e538e` (`runs/E1-check-20261029T220741Z-b7e538e`, recorded under
-`docs/ladder/2026-10-30-reasoning-as-text-check/`).
+`evals/2026-10-30-reasoning-as-text-check/`).
 
 - **Before:** FAIL on the record: hidden tests passed, `reasoning_as_text`
   7 (9 requests).

@@ -49,7 +49,7 @@ Versions match git tags; pin one in both install lines.
   clone-and-install commands.
 - E2 Reading More Than Fits holds: without `context/trim-tool-output` the
   session compacted 13 times and wrote a wrong list; with it, none, in 13
-  requests. Recorded under `docs/ladder/2026-10-30-context-overflow-check/`.
+  requests. Recorded under `evals/2026-10-30-context-overflow-check/`.
 - New lesson E2 · Reading More Than Fits: eight long notes read whole fill a
   64k context and Pi compacts it (6 compactions and a wrong answer on the
   screen); `context/trim-tool-output` keeps it at none. The `easy`, `medium`
@@ -64,7 +64,7 @@ Versions match git tags; pin one in both install lines.
 - E1 Reasoning Returned as Text is the first lesson whose check held: on the
   LAN host, without the unit the session failed on its record
   (`reasoning_as_text` 7, tests passing), and with `context/repair-think-tags`
-  it passed. Recorded under `docs/ladder/2026-10-30-reasoning-as-text-check/`.
+  it passed. Recorded under `evals/2026-10-30-reasoning-as-text-check/`.
   The `reference-run` badge now also covers a preregistered lesson check.
 - New lesson E1 · Reasoning Returned as Text: on a host whose reasoning
   parser misses, the session fails on its record (`reasoning_as_text`), and
@@ -139,13 +139,13 @@ Versions match git tags; pin one in both install lines.
   MLX runs: the foreground-server stall reproduced on a second host and
   quantization (two of three bare `build-a-harness` sessions stalled on
   `uvicorn`), from the lessons smoke
-  (`docs/ladder/2026-10-29-local-lessons-smoke/`, 32/36 graded) and the 6-bit
-  ladder baseline (`docs/ladder/2026-10-29-local-mellum-baseline/`, 21/36 vs the
+  (`evals/2026-10-29-local-lessons-smoke/`, 32/36 graded) and the 6-bit
+  ladder baseline (`evals/baseline/2026-10-29-local-mellum-baseline/`, 21/36 vs the
   pinned BF16 26/36). M6, E6, E2, M1 and `pathologies.md` updated; badges held
   at `screen`/`conjecture` (the runs are n = 1/n = 3 screens).
 
 - The Running Commands lesson check, revision 2, recorded with revision 1
-  (`docs/ladder/2026-10-29-running-commands-check/`): a challenge that makes
+  (`evals/2026-10-29-running-commands-check/`): a challenge that makes
   every session start a server. Without the guard the model backgrounded it
   itself and passed; with it, six foreground starts were refused and those
   sessions passed. The lesson says so: no FAIL → PASS on a short task. Two
@@ -159,13 +159,13 @@ Versions match git tags; pin one in both install lines.
   repository. `/lesson clean` removes `project/`, which git ignores.
 
 - E5's lesson check, run on its own challenge and recorded
-  (`docs/ladder/2026-10-29-e5-check/`): before and after both passed 3 of 3,
+  (`evals/2026-10-29-e5-check/`): before and after both passed 3 of 3,
   because the challenge rarely provoked a foreground server. When one session
   did start one, the guard refused it and the session went on to pass. E5
   says so; a revised challenge comes next. S0 now says how to open Pi and
   start the lesson.
 
-- The lesson check's record (`docs/ladder/2026-10-29-lesson-check/`) and its
+- The lesson check's record (`evals/2026-10-29-lesson-check/`) and its
   result: every lesson run with and without its remedy at the page's n on
   the vLLM host. No lesson fails every session without its remedy; the short
   prompt and project facts show direction only, and the thinking and nudge
@@ -216,11 +216,11 @@ Versions match git tags; pin one in both install lines.
   at 900 s), so a lesson's claim can be checked, not only smoke-tested.
 
 - A record of the full spec-driven flow on the vLLM baseline host
-  (`docs/ladder/2026-10-29-vllm-flow/`), with its research note: one run per
+  (`evals/2026-10-29-vllm-flow/`), with its research note: one run per
   level, Bronze 4/4 hidden checks (a pass), Silver 13/18, Gold 30/34. It also
   documents three gate faults in the flow harness that the next fixes address.
 
-- The replicable vLLM baseline's record, `docs/ladder/2026-10-28-vllm-baseline/`:
+- The replicable vLLM baseline's record, `evals/baseline/2026-10-28-vllm-baseline/`:
   vanilla Pi with Mellum 2.1 BF16 on vLLM passed 26/36 ladder rungs (12/12 on
   rungs 1–4, 4/12 on the web-app rungs 6–9, 8/9 on 10–12) and 1/3 Bronze, 1/3
   Silver, 0/3 Gold. It is the score to beat on The Challenge page and the
@@ -261,7 +261,7 @@ Versions match git tags; pin one in both install lines.
   `vast.env`. `--screen` runs screen 1 (two rungs and the easy suite, n = 1)
   before the full baseline.
 
-- The vLLM baseline's screen 1 record, `docs/ladder/2026-10-28-vllm-screen1/`:
+- The vLLM baseline's screen 1 record, `evals/2026-10-28-vllm-screen1/`:
   vanilla Pi passed ladder rung 1, hung on its own foreground server at rung 6,
   and wrote the easy suite's app under the wrong name. The pinned stack works
   end to end; the numbers are n = 1 leads, not rates.
@@ -755,7 +755,7 @@ Versions match git tags; pin one in both install lines.
 
 - Two Getting Started pages still called the ladder the measuring instrument a
   cycle after `reference-run` moved to the suites, and the suite page told the
-  learner that findings lessons cite `docs/ladder/`, which lesson pages may not
+  learner that findings lessons cite `evals/`, which lesson pages may not
   link. The harness and suite pages now name the suites as the instrument and a
   preregistered record in `docs/superpowers/research/` as the citation.
 
@@ -852,7 +852,7 @@ Versions match git tags; pin one in both install lines.
 
 - `reference-run` is earned on the suites now, not on `ladder/`: the badge
   names a preregistration, a record in `docs/superpowers/research/` and a
-  `research-*` release. `ladder/` and `docs/ladder/` stay as the internal
+  `research-*` release. `ladder/` and `evals/` stay as the internal
   instrument and the A0–A21 archive.
 
 - The Learning Center builds from the project virtualenv: `zensical` and
@@ -1109,7 +1109,7 @@ Versions match git tags; pin one in both install lines.
   columns of a file far larger than the context window (must be streamed). Each
   is scored by the hidden cumulative oracle plus a committed frozen acceptance
   test. The 6-bit clears all three 3/3 mediated — recorded in
-  `docs/ladder/2026-10-21-rungs-10-12-6bit/`.
+  `evals/2026-10-21-rungs-10-12-6bit/`.
 
 - `extensions/mellum-override.ts` — edit the system prompt the worker is fed,
   live, from a file (`$MELLUM_PROMPT_OVERRIDE`): `system` replaces it, `append`
@@ -1190,7 +1190,7 @@ Versions match git tags; pin one in both install lines.
   pattern from the empty-final nudge; self-contained (Node + Pi hooks, no
   Pi-internal imports). Config: `NCM_TEST`, `NCM_MAX` (default 5), `NCM_PYTEST`.
 
-- `docs/ladder/2026-10-20-mediated-6-9-v7/` records the measured pass: Mellum on
+- `evals/2026-10-20-mediated-6-9-v7/` records the measured pass: Mellum on
   AgentClinic rungs 6–9, n=3, mediated (frozen phase tests) with the v7 prompt +
   focused command + trimmed tools + fail-fast ramp — **12/12**, rung 9 (the
   phase-4 wall, best-ever 2/3) now **3/3**, clearing the historical 9/12 ceiling.
@@ -1382,7 +1382,7 @@ Versions match git tags; pin one in both install lines.
 
 - Worker prompt v7 → v11, hardenings against "self-certifying against a subset".
   Each was found by reading what the worker actually ran; the passes cited are ladder
-  screens (n = 1 to 3) with no `docs/ladder/` record yet:
+  screens (n = 1 to 3) with no `evals/` record yet:
   - **v8 (run the whole test file):** the "how to check" step now tells the
     worker to run the whole named test file (e.g. `pytest -v test_export.py`) and
     pass every test in it, never a single `::test_function`, and not to stop after
@@ -1864,20 +1864,20 @@ Versions match git tags; pin one in both install lines.
   `worker_git`). The Mode RPC probe (`ladder/ladder/probe_mode_rpc.py`)
   writes its run records under its scratch directory, not to your
   `~/.pi/agent/mellum-mode-runs.jsonl`.
-- `docs/ladder/`: the phase records (A0 to A17 and the earlier phases:
+- `evals/`: the phase records (A0 to A17 and the earlier phases:
   READMEs, tables, run records, final answers and briefs), moved in from
   the research repo. Raw traces, stdout and diffs are archived per phase
   as `research-2026-10-09` release assets, with their hashes in
-  `docs/ladder/PROVENANCE.md`; they are not tracked.
+  `evals/PROVENANCE.md`; they are not tracked.
   `uv run python -m ladder.archive_raw` (in `ladder/`) builds those
   tarballs. The first run from this checkout is the `smoke-m6-one-repo`
   record.
-- `docs/ladder/ablation-a18-agentclinic-facts-off/`: the A18 record, the
+- `evals/2026-10-09-ablation-a18-agentclinic-facts-off/`: the A18 record, the
   baseline for the project-facts work. Mellum Mode on the AgentClinic
   rungs 6 to 9 with facts off, three repeats each: 1 of 12 passes under the
   added-tests-allowed rule (0 of 12 under the strict one), median 50
   requests. Its raw files are archived under the same release tag.
-- `docs/ladder/ablation-a19-facts-on/` and
+- `evals/2026-10-10-ablation-a19-facts-on/` and
   `ablation-a20-facts-fallback-only/`: the records that decide the
   project-facts work. With the `## Mellum` section forwarded, Mode passes
   9 of 12 AgentClinic runs (A18: 1) at a median of 26 requests (A18: 50)
@@ -1916,12 +1916,12 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
-- `docs/ladder/ablation-a17-mode-v012/README.md`: the nudge and tool-error
+- `evals/2026-10-09-ablation-a17-mode-v012/README.md`: the nudge and tool-error
   rows gave runs-with-one counts labelled as totals (A17 2 and 8); they
   now give both, totals first (A17 3 and 12, A14 7 and 13), matching each
   phase's `table.md`.
 - Links to the research and the phase records now point inside this repo
-  (`docs/ladder/`, `docs/superpowers/research/`) instead of the research
+  (`evals/`, `docs/superpowers/research/`) instead of the research
   repo, so they keep working if that repo goes private. The research notes
   and the recovery bundle moved in with a "Moved from" line; the weights
   link names the Hugging Face model card. README and AGENTS.md say how to

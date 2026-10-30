@@ -102,7 +102,7 @@ them.
   the BF16 host stalled on a server start, and the guard refused foreground
   starts whenever they came. Its challenge, `learn/challenges/running-commands/`,
   stays and still qualifies; its record is
-  `docs/ladder/2026-10-29-running-commands-check/`.
+  `evals/2026-10-29-running-commands-check/`.
 - **Kept as** the pathologies entry "A server nobody can stop", and the unit
   `guard/block-foreground-server`, which stays in the remedies list for The
   Challenge.

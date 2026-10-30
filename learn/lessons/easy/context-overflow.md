@@ -68,7 +68,7 @@ owner right.
 
 **Remedy unit:** `context/trim-tool-output`; apply it with `--remedy context/trim-tool-output`.
 
-**Lesson check:** held on 2026-10-30: FAIL → PASS on the LAN host, one session per arm ([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/ladder/2026-10-30-context-overflow-check/README.md)).
+**Lesson check:** held on 2026-10-30: FAIL → PASS on the LAN host, one session per arm ([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/evals/2026-10-30-context-overflow-check/README.md)).
 
 The unit watches every `read`, `bash`, `grep`, `find` and `ls` result. One
 over 8,000 characters (about 2,000 tokens) is cut to its first 8,000, with a
@@ -87,7 +87,7 @@ host: without the unit the session compacted 13 times, peaked at 50,720
 tokens, made 99 requests and wrote a wrong list; with
 `context/trim-tool-output` it never compacted, peaked at 5,326 tokens and
 passed in 13 requests
-([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/ladder/2026-10-30-context-overflow-check/README.md)).
+([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/evals/2026-10-30-context-overflow-check/README.md)).
 With the two screens, the session without the unit compacted in 3 of 3
 sessions. This shows the trim works for this task on this host, not where
 the threshold should sit for every task.

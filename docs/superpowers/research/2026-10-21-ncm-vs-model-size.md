@@ -14,7 +14,7 @@ the frozen `test_phase4.py` placed and guards on. The 1.5B also loads
 | 3-bit Mellum | **FAIL** | 291s | dozens |
 | 1.5B Qwen + assist | **FAIL** | 62s | fires, model loops on `pytest` |
 
-Record: [`docs/ladder/2026-10-21-ncm-vs-model-size/`](../../ladder/2026-10-21-ncm-vs-model-size/).
+Record: [`evals/2026-10-21-ncm-vs-model-size/`](../../ladder/2026-10-21-ncm-vs-model-size/).
 
 ## The finding
 

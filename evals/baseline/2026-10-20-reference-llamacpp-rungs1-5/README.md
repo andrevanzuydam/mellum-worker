@@ -14,7 +14,7 @@ Not a comparison with oMLX: a different backend's numbers do not transfer.
 
 Launch, from `ladder/`:
 
-    uv run python -m ladder.run_ladder --mode direct --profile baseline --thinking high --prompt-mode replace --rung 1 --rung 2 --rung 3 --rung 4 --rung 5 --repeat 3 --deadline 600 --provider llamacpp --base-url http://127.0.0.1:8002/v1 --model llamacpp/Mellum2.1-12B-A2.5B-Thinking --context-window 50000 --out ../docs/ladder/reference-llamacpp-rungs1-5
+    uv run python -m ladder.run_ladder --mode direct --profile baseline --thinking high --prompt-mode replace --rung 1 --rung 2 --rung 3 --rung 4 --rung 5 --repeat 3 --deadline 600 --provider llamacpp --base-url http://127.0.0.1:8002/v1 --model llamacpp/Mellum2.1-12B-A2.5B-Thinking --context-window 50000 --out ../evals/baseline/2026-10-20-reference-llamacpp-rungs1-5
 
 The first invocation was interrupted after rung 5 repeat 2 by the agent's
 tool timeout, not by the ladder; the missing repeat was then run alone with

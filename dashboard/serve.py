@@ -235,7 +235,7 @@ def acc_for(n):
     """The committed frozen acceptance test for an AgentClinic rung (6-12)."""
     p = n - 5
     if 6 <= n <= 9:
-        return f"docs/ladder/2026-10-20-v7-ablation/acceptance/test_phase{p}.py"
+        return f"evals/2026-10-20-v7-ablation/acceptance/test_phase{p}.py"
     if 10 <= n <= 12:
         return f"ladder/fixtures/acceptance/test_phase{p}.py"
     return None

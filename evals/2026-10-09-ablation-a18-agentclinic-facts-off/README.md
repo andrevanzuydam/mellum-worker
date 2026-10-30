@@ -12,7 +12,7 @@ This is the baseline the M.7 ship rule compares A19 and A20 against.
 Launch, 2026-10-09 20:15 EDT, from `ladder/` at commit `38a4e64` (finished
 21:19 EDT):
 
-    uv run python -m ladder.run_ladder --mode mode --profile baseline --rung 6 --rung 7 --rung 8 --rung 9 --repeat 3 --deadline 600 --mode-facts off --out ../docs/ladder/ablation-a18-agentclinic-facts-off
+    uv run python -m ladder.run_ladder --mode mode --profile baseline --rung 6 --rung 7 --rung 8 --rung 9 --repeat 3 --deadline 600 --mode-facts off --out ../evals/2026-10-09-ablation-a18-agentclinic-facts-off
 
 oMLX was up with `Mellum2.1-12B-A2.5B-Thinking-6bit` listed before the
 launch. `~/.pi/agent/mellum-mode-runs.jsonl` had 7 lines before and 7 after.

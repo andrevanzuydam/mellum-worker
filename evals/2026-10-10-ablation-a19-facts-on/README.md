@@ -24,7 +24,7 @@ A18's rescored numbers: same rule on both sides.
 Launch, 2026-10-10 08:10 EDT, from `ladder/` at commit `aff031a` (finished
 08:56 EDT, 27 rows):
 
-    uv run python -m ladder.run_ladder --mode mode --profile baseline --rung 1 --rung 2 --rung 3 --rung 4 --rung 5 --rung 6 --rung 7 --rung 8 --rung 9 --repeat 3 --deadline 600 --mode-facts on --out ../docs/ladder/ablation-a19-facts-on
+    uv run python -m ladder.run_ladder --mode mode --profile baseline --rung 1 --rung 2 --rung 3 --rung 4 --rung 5 --rung 6 --rung 7 --rung 8 --rung 9 --repeat 3 --deadline 600 --mode-facts on --out ../evals/2026-10-10-ablation-a19-facts-on
 
 oMLX was up; `~/.pi/agent/mellum-mode-runs.jsonl` had 7 lines before and 7
 after. An earlier launch (2026-10-09 21:39) was stopped after 4 complete rows

@@ -69,7 +69,7 @@ $4.19/h.
 
 ## Screen 1 (2026-10-28)
 
-Record: [`docs/ladder/2026-10-28-vllm-screen1/`](../../ladder/2026-10-28-vllm-screen1/)
+Record: [`evals/2026-10-28-vllm-screen1/`](../../ladder/2026-10-28-vllm-screen1/)
 (manifest, ladder table and `run.json`s, the suite's `run.json`; raw traces
 stripped). Box: vast.ai instance 58114859, RTX A6000 (49140 MiB, driver
 595.104.02), $0.402/h; client: an Apple M3 laptop over the SSH tunnel.
@@ -117,7 +117,7 @@ single hung server cost 45 minutes.
 
 ## The baseline (2026-10-28)
 
-Record: [`docs/ladder/2026-10-28-vllm-baseline/`](../../ladder/2026-10-28-vllm-baseline/).
+Record: [`evals/baseline/2026-10-28-vllm-baseline/`](../../ladder/2026-10-28-vllm-baseline/).
 The ladder ran at commit `6264a2b`; the suites were rerun at `bd416f0` with the
 stall cutoff, after a first attempt hung on a server for 45 minutes and was
 stopped by hand. The reading was not preregistered; the pins were fixed before

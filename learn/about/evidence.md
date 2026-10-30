@@ -9,14 +9,14 @@ Each step of a lesson (except the Interpretation) opens with an evidence badge. 
 | Badge | Means | Needs |
 | --- | --- | --- |
 | `reference-run` | A preregistered run on llama.cpp, made for this lesson, on the suites the course teaches | A preregistration written before the run naming the lesson, the arms, n, the reading and the decision rule; the record in `docs/superpowers/research/`; raw evidence in a `research-*` release; machine and deadline in the record |
-| `cited` | An existing record made before 2026-10-25 | A record in `docs/ladder/` (pre-2026-10-25) or a research note on `main` |
+| `cited` | An existing record made before 2026-10-25 | A record in `evals/` (pre-2026-10-25) or a research note on `main` |
 | `screen` | A few targeted runs or one observation | A research note, or a PR note or commit message cited by name |
 | `conjecture` | No run behind it | Reasoning, design, unit tests only |
 
 2026-10-30: under the lesson contract, `reference-run` also covers a
 preregistered **lesson check**: before and after on the lesson's own
 challenge, on the course's reference host, with the record under
-`docs/ladder/<date>-<lesson>-check/` and its preregistration in
+`evals/<date>-<lesson>-check/` and its preregistration in
 `docs/superpowers/research/`.
 
 On the site each badge shows as a coloured pill with an icon, so you can read a

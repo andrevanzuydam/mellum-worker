@@ -11,7 +11,7 @@ launch, not the pass rate.
 
 ## Command
 
-    cd ladder && uv run python -m ladder.run_ladder --mode mode --profile baseline --rung 1 --repeat 1 --deadline 600 --out ../docs/ladder/smoke-m6-one-repo < /dev/null
+    cd ladder && uv run python -m ladder.run_ladder --mode mode --profile baseline --rung 1 --repeat 1 --deadline 600 --out ../evals/2026-10-09-smoke-m6-one-repo < /dev/null
 
 ## The four checks
 

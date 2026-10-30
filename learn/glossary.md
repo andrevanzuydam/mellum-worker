@@ -68,7 +68,7 @@ screen can show that a problem exists; it cannot establish a remedy’s effect.
 
 ### Cited
 
-A badge for an existing oMLX or mlx-lm record in `docs/ladder/` or a research
+A badge for an existing oMLX or mlx-lm record in `evals/` or a research
 note. It is stronger than a screen and weaker than a `reference-run`.
 
 ### Reference-run

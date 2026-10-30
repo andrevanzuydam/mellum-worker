@@ -219,7 +219,7 @@ the suite, because the change moves a setting the baseline was measured with.
 forwards the `## Mellum` section's `Write only:` line as text; nothing
 enforces it. On AgentClinic rungs 6–9 the text was enough: with the section
 forwarded, 0/12 runs had a non-empty `outside_write_list`
-([A19](docs/ladder/ablation-a19-facts-on/README.md)), against 8/12 with facts
+([A19](evals/2026-10-10-ablation-a19-facts-on/README.md)), against 8/12 with facts
 off (A18) and 5/12 with the fallback only (A20, no list sent). A guard that refuses `write`/`edit` outside the list is a guard
 decision, so it is measured before it ships.
 *Reopens when* a facts-on ladder phase or a run record shows a non-empty
@@ -338,7 +338,7 @@ because the Learning Center needs one worker; the entry stays until it lands.
 
 **pi-subagents Worker: one-liners and an in-process child (were M.8, M.9).**
 `async: false`, a re-dispatch line in the description and the intercom
-opt-out ([A11](docs/ladder/ablation-a11-delegated-nointercom/README.md)); a
+opt-out ([A11](evals/2026-10-09-ablation-a11-delegated-nointercom/README.md)); a
 `mellum_worker(task)` tool through Pi's SDK
 ([cost note](docs/superpowers/research/2026-10-09-worker-cost-options.md) §2,
 §3b). *Reopens when* M.12 does not retire the Pi Worker.
@@ -384,7 +384,7 @@ runs, servers, settings drift, empty finals, loops, writing outside the
 layout, a test edited to pass, a lost phase id. Each gets the record that
 shows it and the guard, fact or spec shape that answers it. `learn` already
 counts seven of these from run records; the page adds the ladder's and links
-`docs/ladder/`, so a lesson links one pathology instead of restating it.
+`evals/`, so a lesson links one pathology instead of restating it.
 *Reopens when* the ditch lesson names more than the page covers, or a second
 lesson needs the same explanation. Taken as LC.7A on 2026-10-21; the entry stays until it lands.
 

@@ -18,7 +18,7 @@ tool-calling, n=1, **no mediation**.
 | throughput | ~112 tok/s | ~133 tok/s |
 | size / wired | 9.2 G / ~9 G | 5.0 G / ~5 G |
 
-Record: [`docs/ladder/2026-10-21-halving-3bit/`](../../ladder/2026-10-21-halving-3bit/).
+Record: [`evals/2026-10-21-halving-3bit/`](../../ladder/2026-10-21-halving-3bit/).
 
 ## What is conjecture
 

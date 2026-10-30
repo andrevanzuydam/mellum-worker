@@ -21,8 +21,8 @@ Transient; delete when the effort lands. Updated: 2026-10-30.
 | E1 Reasoning Returned as Text | LAN vLLM's parser misses streamed follow-ups | FAIL, `reasoning_as_text` 7 | PASS, 0 (`context/repair-think-tags`) |
 | E2 Reading More Than Fits | 8 × 40 KB notes against a 64k window | FAIL, 13 compactions | PASS, 0 (`context/trim-tool-output`) |
 
-  Records: `docs/ladder/2026-10-30-reasoning-as-text-check/`,
-  `docs/ladder/2026-10-30-context-overflow-check/`; preregistrations in
+  Records: `evals/2026-10-30-reasoning-as-text-check/`,
+  `evals/2026-10-30-context-overflow-check/`; preregistrations in
   `docs/superpowers/research/2026-10-30-*-prereg.md`.
 
 ## Open issue: E1 does not fail on oMLX
@@ -75,7 +75,7 @@ Default profile `scripts/baseline/lan-profile` (6-bit Mellum on
 `http://192.168.88.99:11485/v1`, model id `mellum`); `--profile DIR` for
 another host. It runs the page's own before and after lines, checks port
 8000 is free, and closes stdin. Record a kept check under
-`docs/ladder/<date>-<slug>-check/` with `trace.jsonl`, `stdout.txt` and
+`evals/<date>-<slug>-check/` with `trace.jsonl`, `stdout.txt` and
 `diff.patch` stripped; set the page's "Lesson check:" line to "held on DATE:
 FAIL → PASS" and its Validation badge to `reference-run`.
 

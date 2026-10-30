@@ -881,8 +881,8 @@ changelog described it, with a fail-first test. Not restored: `--model-spec`
 | Gap | Rule it breaks | Step to conform |
 |---|---|---|
 | Flow (22–24 Oct) has no roadmap phase, spec or plan; `## Now` reads "Active: none" | SDD cycle; `## Now` is a pointer | Add an LC row (or Andre-track rows) for flow and the examiner. Write a spec, since product behaviour changed in the ladder (`--mode flow`) |
-| v8–v11 ship with no `docs/ladder/` record; v11 is unmeasured in Mode | Measured settings change only with a recorded ladder run | Preregister: v11 vs v7, Mode and direct, rungs 1–12, n=3. Record it. Revert to the last recorded prompt if it loses |
-| Flow, Flint parity, bare 6/12, the 1.5B result: no records | Skill §11: record every run that backs a claim | Commit `table.md` + `run.json` under `docs/ladder/`; raw evidence in a `research-2026-10-2x` release |
+| v8–v11 ship with no `evals/` record; v11 is unmeasured in Mode | Measured settings change only with a recorded ladder run | Preregister: v11 vs v7, Mode and direct, rungs 1–12, n=3. Record it. Revert to the last recorded prompt if it loses |
+| Flow, Flint parity, bare 6/12, the 1.5B result: no records | Skill §11: record every run that backs a claim | Commit `table.md` + `run.json` under `evals/`; raw evidence in a `research-2026-10-2x` release |
 | New defaults with no ladder run: `confineToWorkspace` on, suites easiest-first, per-phase `max_tokens` | Measured settings | Run one ladder arm with and without, or make each opt-in |
 | Flow and examiner prompts live in code | `prompts/mellum-worker.md` is the only prompt source | Move the role prompts under `prompts/` (for example `prompts/flow/*.md`) or amend AGENTS.md by decision |
 | The 22 Oct merge dropped Andre's ladder code and records (§VII.1) | Measure what ships; keep the changelog current | **Done 2026-10-24** on a local branch; reproducing the 12/12 on `main` (arm B) is still owed |
@@ -948,7 +948,7 @@ LC.18 (the intercom prefill tax) stand alone. LC.10 and LC.11 are written.
 
 - The LC.5 consent quote.
 - Steps 3 and 5 of each lesson backed by the run in "Run owed", recorded
-  in `docs/ladder/`.
+  in `evals/`.
 - The Part VII gaps closed, so lessons can cite `main`.
 
 ---
@@ -983,11 +983,11 @@ LC.18 (the intercom prefill tax) stand alone. LC.10 and LC.11 are written.
   - `docs/superpowers/research/2026-10-21-*`
   - [2026-10-24 flow note](docs/superpowers/research/2026-10-24-flow-hard-visible-pass-hidden-gap.md)
 - **Records:**
-  - `docs/ladder/ablation-a21-*`
-  - `docs/ladder/screen-rung9-*`
-  - `docs/ladder/2026-10-20-*`
-  - `docs/ladder/2026-10-21-*`
-  - `docs/ladder/reference-llamacpp-rungs1-5`
+  - `evals/ablation-a21-*`
+  - `evals/screen-rung9-*`
+  - `evals/2026-10-20-*`
+  - `evals/2026-10-21-*`
+  - `evals/baseline/2026-10-20-reference-llamacpp-rungs1-5`
 - **Specs:**
   - `2026-10-12-mellum-last`
   - `2026-10-20-learning-center`

@@ -5,7 +5,7 @@ import { join } from "node:path";
 
 // The lesson contract (docs/superpowers/specs/2026-10-29-uniform-lessons-design.md): one concept,
 // a before line on the lesson's own challenge that fails, an after line one remedy away that
-// passes. This checks the shape; the lesson check under docs/ladder/ proves the FAIL -> PASS.
+// passes. This checks the shape; the lesson check under evals/ proves the FAIL -> PASS.
 const ROOT = new URL("..", import.meta.url).pathname;
 const tutor = () => import("../extensions/mellum-lessons.ts");
 

@@ -21,7 +21,7 @@ Full suite: **379 node tests pass**, **218 ladder tests pass**.
   "15 passed" for each. (2) *Wired* — the ladder's own pytest suite (218) covers
   registration and fixtures. (3) *A worker clears them* — the 6-bit passed all
   three 3/3 mediated, recorded with raw stripped in
-  `docs/ladder/2026-10-21-rungs-10-12-6bit/`.
+  `evals/2026-10-21-rungs-10-12-6bit/`.
 - **Status.** Shipped.
 
 ## Extensions (opt-in Pi extensions, loaded with `--pi-extension`)

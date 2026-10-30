@@ -3,14 +3,14 @@
 Untested theories — hunches worth logging before they are measured. This file
 is a staging area, not a record of findings. A theory lives here while it is
 still a guess; once a ladder run or a research note tests it, move the outcome
-to `docs/ladder/` or `docs/superpowers/research/` and strike the theory through
+to `evals/` or `docs/superpowers/research/` and strike the theory through
 here with a dated pointer.
 
 Rules:
 - One theory per row in the table; detail below under the same id.
 - A theory is a falsifiable claim plus how you would test it. "X is better"
   with no test is a wish, not a theory.
-- Do not promote a theory to a settled rule without evidence in `docs/ladder/`.
+- Do not promote a theory to a settled rule without evidence in `evals/`.
 - Keep the table honest: `untested`, `screening`, `supported`, or `refuted`
   (with a pointer), never silently deleted.
 

@@ -8,6 +8,6 @@
 | shipped Mode — r3 | FAIL | 373s | 68 |
 | **shipped Mode total** | **0/3** | | |
 
-Shipped-Mode baseline reused from `docs/ladder/2026-10-21-shipped-mode-rung9/`;
-mediated baseline from `docs/ladder/2026-10-20-mediated-6-9-v7/` (rung 9).
+Shipped-Mode baseline reused from `evals/2026-10-21-shipped-mode-rung9/`;
+mediated baseline from `evals/2026-10-20-mediated-6-9-v7/` (rung 9).
 The extensions are engaged; the mediation (absent here) is the lever.

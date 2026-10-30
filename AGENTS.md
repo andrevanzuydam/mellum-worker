@@ -2,7 +2,7 @@
 
 This repo ships the measured "Mellum as a bounded coding worker" recipe for
 Pi and OpenCode. Read [`README.md`](README.md) first. The numbers come from
-the ladder (`ladder/`) and are recorded in `docs/ladder/`.
+the ladder (`ladder/`) and are recorded in `evals/`.
 
 ## Spec-driven development
 
@@ -51,7 +51,7 @@ and evidence with dated corrections; never edit archived plans.
   `scripts/product.sh <rung>` is the shipped worker (`--mode mode`, guards and
   facts on). Both write to `runs/` (git-ignored) and want
   `ladder/scripts/watch_ladder.py` alongside; promote a kept run to
-  `docs/ladder/<date-topic>/` with the raw stripped. Per-run
+  `evals/<date-topic>/` with the raw stripped. Per-run
   `--prompt`/`--tools`/`--thinking` tweaks or source edits are ablations,
   recorded as such — not how a standard run is made.
 - `prompts/mellum-worker.md` is the only prompt source.

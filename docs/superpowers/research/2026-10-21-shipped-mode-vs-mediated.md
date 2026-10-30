@@ -17,7 +17,7 @@ The shipped-Mode run was **verified correct** from its trace: system prompt is v
 (the first user message carries `Project facts: … Test command: uv run python -m
 pytest tests …`), guards are forced on, and the task is the native rung-9
 `Implement specs/phase-4-resolve-reopen.md`. Record:
-[`docs/ladder/2026-10-21-shipped-mode-rung9/`](../../ladder/2026-10-21-shipped-mode-rung9/).
+[`evals/2026-10-21-shipped-mode-rung9/`](../../ladder/2026-10-21-shipped-mode-rung9/).
 
 ## What is conjecture
 
