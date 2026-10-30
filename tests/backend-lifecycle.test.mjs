@@ -84,15 +84,21 @@ test("start skips an old llama-server that comes first on PATH and uses a newer 
 });
 
 test("kill ends every process with the server's name, whatever started it", async () => {
-  // A copy of node under a name no real program has, so a real llama-server is never touched.
-  // Short enough for Linux's 15-character process names.
+  // A long-lived process under a name no real program has, so a real
+  // llama-server is never touched. Short enough for Linux's 15-char comm.
   const name = `mfake${process.pid % 100000}`;
   const dir = mkdtempSync(join(tmpdir(), "mellum-kill-"));
   const exe = join(dir, WIN ? `${name}.exe` : name);
-  copyFileSync(process.execPath, exe);
+  // Stand in with a copied system binary whose comm stays its filename — what
+  // `pgrep -x` (Linux) and tasklist (Windows) match on. A copied node can
+  // rename its own process and is heavier to exec, so Linux's pgrep -x never
+  // found it (the CI-only failure). POSIX: sleep; Windows: node (no sleep.exe).
+  const src = WIN ? process.execPath
+    : ["/bin/sleep", "/usr/bin/sleep"].find((p) => existsSync(p));
+  copyFileSync(src, exe);
   chmodSync(exe, 0o755);
-  const sleepers = [1, 2].map(() =>
-    spawn(exe, ["-e", "setTimeout(() => {}, 60000)"], { stdio: "ignore" }));
+  const args = WIN ? ["-e", "setTimeout(() => {}, 60000)"] : ["60"];
+  const sleepers = [1, 2].map(() => spawn(exe, args, { stdio: "ignore" }));
   const exited = sleepers.map((c) => new Promise((ok) => c.on("exit", ok)));
   writeFileSync(PID, String(sleepers[0].pid));
   const r = await run("kill", "--name", name, "--pidfile", PID);
