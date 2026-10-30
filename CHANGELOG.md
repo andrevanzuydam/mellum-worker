@@ -22,7 +22,9 @@ Versions match git tags; pin one in both install lines.
   begin" — and a new `/start` command opens the next lesson. `run.sh` launches
   Pi with `--no-skills` so the learner's run uses the repo's own extensions
   (lessons, remedies, think-tags) alone, and no global `~/.agents/skills` on the
-  author's machine leak into the course.
+  author's machine leak into the course. The profile sets `quietStartup`, so the
+  first screen is the welcome banner rather than Pi's loaded-resources list
+  (`[Context]`, `[Extensions]`); `ctrl+o` still shows them.
 - A root installer and a one-command runner. `install.sh` / `install.bat` move
   to the repo root, so a learner clones and runs `./install.sh`: it installs the
   tools, pins Pi 1.3.0, installs the mellum-worker harness from the clone (so Pi
