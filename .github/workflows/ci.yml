@@ -21,8 +21,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-      # The package has no dependencies and `npm test` uses node --test, so
-      # there is nothing to install (and no install script may be added).
+      # The package has no npm dependencies, but the suite's harness and
+      # backend tests drive the Python tooling through `uv`/`uvx`, so uv must
+      # be on PATH or they fail with `spawn uv ENOENT`. (No npm install script
+      # may be added — pacote forbids it.)
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.14"
       - run: npm test
 
   ladder:
