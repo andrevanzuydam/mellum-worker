@@ -1,126 +1,102 @@
-# Handover — prove each lesson (before/after FAIL → PASS)
+# Handover — prove each lesson (before FAIL → after PASS)
 
 Working note for continuing the lesson-proof effort on a local machine.
-Transient; delete when the effort lands. Date: 2026-10-29.
+Transient; delete when the effort lands. Updated: 2026-10-30.
 
 ## Where things stand
 
-- Lessons aligned to the 2026-10-29 local 6-bit runs — commit `358451a`.
-- Internal `LC.26` codes stripped from 23 lesson pages ("planned under LC.26"
-  → "planned") — this push. ROADMAP still owns LC.26 internally.
-- The "prove each lesson" effort is **started and the method is validated** on
-  one lesson (below). Nothing else of it is built yet.
+- **The rule changed.** A lesson's pathology must be produced on demand by a
+  condition the lesson states; screen first; FAIL may be read from the run's
+  record (`record.json` caps on `run.json` fields), not only hidden tests.
+  Why: [lessons rethink](docs/superpowers/research/2026-10-29-lessons-rethink.md);
+  the luck-dependent lessons that left the track:
+  [note](docs/superpowers/research/2026-10-29-lessons-left-the-track.md).
+- **One session per arm** (lessons do not need n = 3), preregistered before
+  the deciding run.
+- **Two lessons hold** (checkpoint `checkpoint-2026-10-30-first-lesson-holds`
+  after E1; E2 at `8b8341f`):
 
-## The goal
+| Lesson | Condition | Before | After |
+| --- | --- | --- | --- |
+| E1 Reasoning Returned as Text | LAN vLLM's parser misses streamed follow-ups | FAIL, `reasoning_as_text` 7 | PASS, 0 (`context/repair-think-tags`) |
+| E2 Reading More Than Fits | 8 × 40 KB notes against a 64k window | FAIL, 13 compactions | PASS, 0 (`context/trim-tool-output`) |
 
-Give each lesson a before/after on its own challenge: **without the remedy →
-FAIL, with the one remedy → PASS.** That turns every "Lesson check: not built
-yet" into a real result and lifts the Solution/Validation badge from
-`conjecture`/`screen` toward `measured`.
+  Records: `docs/ladder/2026-10-30-reasoning-as-text-check/`,
+  `docs/ladder/2026-10-30-context-overflow-check/`; preregistrations in
+  `docs/superpowers/research/2026-10-30-*-prereg.md`.
 
-## Why it was stuck, and the fix
+## Open issue: E1 does not fail on oMLX
 
-- E6's running-commands check on **BF16** got before 3/3, after 3/3 — **no
-  separation**. The strong model dodged the pathology (checked in-process or
-  backgrounded the server itself), so the bare arm passed and the guard's
-  effect couldn't register.
-- The **6-bit model is weaker and falls into the traps** (our build-a-harness
-  smoke caught it stalling on `uvicorn`). So run the checks on the 6-bit: it
-  fails the bare arm where BF16 slipped through.
+E1's condition is the **host**, not the task. The LAN vLLM build
+(`0.26.1rc1.dev1102`) returns reasoning as `<think>` reply text after the
+first turn (236 of 244 turns). oMLX returns Mellum's reasoning in its own
+`reasoning_content` field (recorded in
+`docs/superpowers/research/2026-10-07-mellum-recovery/opencode-report.md`),
+as does pinned vLLM 0.32.0 (0 of 136). So a learner on oMLX — the README's
+default backend — would see the before arm PASS and nothing to repair. The
+page's front matter already says `backends: [vllm]`, but the track puts E1
+first for everyone. Not yet screened on oMLX; the above is from the record.
 
-## First result — proof of method (running-commands, 6-bit)
+Two options, undecided:
 
-| Arm | Remedies | Passed |
-| --- | --- | --- |
-| before | `guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite` | **2/3** |
-| after | before + `guard/block-foreground-server` | **3/3** |
+1. **The challenge injects the fault** (recommended): a challenge-owned
+   extension moves the reasoning back into the reply as `<think>` text after
+   the first turn, standing for a misparsing server or bad chat template. The
+   before arm then fails on any host. Check first that the repair runs after
+   the injection (Pi's extension load order on `message_end`), then screen it.
+   The page says the fault is staged and how to check your own host
+   (`reasoning_as_text` in a bare run).
+2. **Drop E1 from the track** to a host note; E2 becomes E1.
 
-n = 3, `--deadline 600 --stall 120`, no `--grade`. The 6-bit separated where
-BF16 did not.
+E2 is unaffected: oMLX's window is 56,000, so the notes overflow it sooner,
+and the E1 repair is a no-op on a correct host.
 
-**Honest caveats** (read before claiming a win):
-- A 1-session gap at n = 3 is a lead, not a rate.
-- The one before-FAIL (9 requests, 3 tool errors, finished fast) was **not
-  clearly a foreground-server stall** — inspect its trace, or raise n, before
-  claiming this guard fixed *that* pathology. It could be noise.
-- Raw runs were written to a session-local scratch dir and are **not** in git.
-  Re-run with the commands below to reproduce.
+## Next on the track
 
-## Run a lesson check locally
+- Decide E1 (above).
+- Screen the next Easy candidate: **thinking spends the output cap** (a small
+  `max_tokens` in the profile; record empty or `length`-stopped finals in
+  `run.json`; remedy reserves answer budget via `before_provider_request`).
+  Then runaway turns (`guard/cap-turns`).
+- E3 Looking Around, E4 Searching, E5 Creating Files, E6 Too Many Tools still
+  have no condition that produces their failure: find one (screen it) or they
+  leave the track. Medium (task traps) and Hard (orchestration) candidates
+  are in the rethink note. `PENDING` in `tests/lesson-contract.test.mjs` may
+  only shrink.
 
-1. **Serve the 6-bit** (oMLX; see `memory` / `docs/backends/omlx.md`):
-   ```bash
-   HF_HUB_OFFLINE=1 omlx serve --model-dir "$PWD/.models" \
-     --host 127.0.0.1 --port 8001 --headless \
-     --max-concurrent-requests 16 --memory-guard-gb 24
-   ```
-   Per-model settings (56k context, thinking on) persist in
-   `~/.omlx/model_settings.json`; admin-auth is disabled in `~/.omlx/settings.json`.
+## Run a lesson check
 
-2. **Build the oMLX 6-bit Pi profile** (the profile dir is not committed):
-   ```bash
-   cp -R learn/code/profile /tmp/omlx-6bit-profile
-   python3 - <<'PY'
-   import json; p="/tmp/omlx-6bit-profile/models.json"; d=json.load(open(p))
-   k=next(iter(d["providers"])); b=d["providers"].pop(k)
-   b["baseUrl"]="http://127.0.0.1:8001/v1"
-   b["models"][0]["id"]="Mellum2.1-12B-A2.5B-Thinking-6bit"
-   d["providers"]["omlx"]=b; json.dump(d,open(p,"w"),indent=2)
-   PY
-   ```
+```bash
+scripts/lesson-check.sh E2            # detached; log in runs/<n>-check-*/check.log
+scripts/lesson-check.sh E2 --dry-run  # print the two lines the page holds
+```
 
-3. **Run before, then after** (running-commands shown; swap the suite and the
-   two remedy sets per lesson):
-   ```bash
-   P=/tmp/omlx-6bit-profile; PI=$(which pi)
-   C="run --suite running-commands --suites-dir learn/challenges \
-      --repeat 3 --deadline 600 --stall 120 --profile $P --pi-binary $PI"
-   uv run learn/code/harness.py $C \
-     --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite \
-     --runs-dir /tmp/rc-before
-   uv run learn/code/harness.py $C \
-     --remedy guard/break-repeat-loops,guard/stay-in-workspace,guard/refuse-whole-file-rewrite,guard/block-foreground-server \
-     --runs-dir /tmp/rc-after
-   ```
-   Each arm prints `running-commands: X/3 sessions passed`.
+Default profile `scripts/baseline/lan-profile` (6-bit Mellum on
+`http://192.168.88.99:11485/v1`, model id `mellum`); `--profile DIR` for
+another host. It runs the page's own before and after lines, checks port
+8000 is free, and closes stdin. Record a kept check under
+`docs/ladder/<date>-<slug>-check/` with `trace.jsonl`, `stdout.txt` and
+`diff.patch` stripped; set the page's "Lesson check:" line to "held on DATE:
+FAIL → PASS" and its Validation badge to `reference-run`.
 
-## The rollout (per lesson)
+## Try lessons in Pi
 
-For each lesson with a remedy (its unit's `meta.lesson`):
+Copy the LAN profile to a scratch dir (Pi writes sessions into it), then:
 
-1. **Ensure a challenge** under `learn/challenges/<name>/` (`base`, `prompts`,
-   `grader`, `expected.json`, `layout.json`). `running-commands` is the
-   template. Where none exists, build a **forcing** challenge: the task must
-   make the pathology both likely AND fatal (a task the model can finish while
-   dodging the trap won't separate — that is exactly the BF16 failure).
-2. **before** = the guards/preset up to that lesson; **after** = + the one
-   remedy. The two sets are in each lesson's "Run it yourself" block.
-3. Run on the 6-bit, n = 3 (raise n if the gap is a single session).
-4. If it **separates** (before < after): record to
-   `docs/ladder/<date>-<lesson>-check/` (strip `trace.jsonl`/`stdout.txt`/
-   `diff.patch`; keep `run.json`), then update the lesson's "Lesson check:"
-   line and badge, and add the research note.
-5. If it **does not separate** (the 6-bit dodges the pathology too): say so
-   honestly — the lesson stays suite-evidence, recorded as one whose pathology
-   resists a model-driven FAIL → PASS. Not every lesson will yield a clean
-   before/after, and forcing a claim would break the repo's discipline.
+```bash
+PI_SKIP_VERSION_CHECK=1 PATH="$PWD/.baseline/pi-1.3.0/bin:$PWD/.baseline/node-v22.19.0/bin:$PATH" PI_CODING_AGENT_DIR=<scratch profile> pi --provider lan --model mellum
+```
 
-## Discipline (do not skip)
+`/lesson E1` opens a lesson; `r` runs a line, `p` opens it as a project to
+try by hand, `/lesson back` returns, `/lesson clear` starts a project over.
 
-- Screens first: a separation is a lead; a preregistered run (fixed arms, n,
-  scoring, rule) decides. See `docs/sdd.md` and the `mellum-dev` skill.
-- Never commit raw `trace.jsonl`/`stdout.txt`/`diff.patch`.
-- Keep changes agnostic — no suite-specific route/table/value coded in.
-- Keep the framework name out of commits and docs.
+## Do not
 
-## Infra reference
+- Change the LAN vLLM host — it is not ours, and E1's condition depends on it.
+- Commit or print the vast.ai token (`~/.tokens/vast.ai`); renting needs the
+  user's approval.
+- Commit raw `trace.jsonl` / `stdout.txt` / `diff.patch`.
+- Code to the eval, or put the framework name in commits or docs.
 
-- Harness: `learn/code/harness.py` (`--suite --suites-dir --remedy --repeat
-  --deadline --stall --profile --pi-binary`).
-- Remedies: `remedies/<kind>/<name>.ts` — 14 units; `meta.lesson` maps unit →
-  lesson; `meta.pathology`/`meta.does`/`meta.evidence` feed the remedies table.
-- Built checks to copy: `docs/ladder/2026-10-29-running-commands-check/` (E6,
-  BF16) and `docs/ladder/2026-10-29-e5-check/`.
-- The 6-bit records this effort builds on:
-  `docs/ladder/2026-10-29-local-mellum-baseline/` (21/36 vs BF16 26/36) and
-  `docs/ladder/2026-10-29-local-lessons-smoke/` (32/36).
+Known flake: the "kill ends every process with the server's name" node test
+fails intermittently; CI has failed since before this work.
