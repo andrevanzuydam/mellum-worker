@@ -41,6 +41,11 @@ def stack_label(rec: dict) -> list[str]:
         base = _basename(ext.get("path", ""))
         if base.startswith("mellum-") and "recorder" not in base and "record" != base:
             units.append(base)
+    # The arm is part of the config: a `worker` run is the shipped worker, not bare, even when
+    # it loads no extra remedies. Fold a non-bare arm into the label so it never reads as bare.
+    arm = rec.get("arm")
+    if arm and arm != "bare":
+        units.append(f"arm:{arm}")
     return sorted(set(units))
 
 

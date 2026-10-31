@@ -47,6 +47,13 @@ def test_entry_from_run_pulls_the_fields_and_a_sorted_stack(tmp_path):
     assert not any("recorder" in s for s in e["stack"]), "the recorder is harness plumbing, not a remedy"
 
 
+def test_stack_includes_a_non_bare_arm_so_a_worker_run_never_reads_as_bare(tmp_path):
+    e = scoreboard.entry_from_run(_run_dir(tmp_path, "w", arm="worker", remedies=[], extensions=[]))
+    assert "arm:worker" in e["stack"], e["stack"]
+    bare = scoreboard.entry_from_run(_run_dir(tmp_path, "b", arm="bare", remedies=[], extensions=[]))
+    assert bare["stack"] == [], "a bare run with no units stays bare"
+
+
 def test_record_writes_one_file_per_run_and_is_idempotent(tmp_path):
     board = tmp_path / "board"
     a = _run_dir(tmp_path, "run-a")
