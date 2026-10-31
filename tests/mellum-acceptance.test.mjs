@@ -176,3 +176,43 @@ test("generatePytest asserts each named nav link as an anchor with matching href
 	// the message points at the missing named link, not a generic 'navigation/links'
 	assert.match(py, /nav link|named link|href/i);
 });
+
+// --- phase-4 redirect contract: a POST route the spec ties to 303 must actually answer 303 ---
+
+const REDIRECT_SPEC = `
+## Phase 3 — Add Complaint
+- The board ends with a form that posts to \`/complaints\`.
+- \`POST /complaints\` appends the complaint and answers 303 with \`Location: /complaints\`.
+
+## Phase 4 — Resolve and Reopen
+- \`GET /complaints\` shows the board, one card per complaint.
+- Each card shows Open or Resolved and a button that posts to its route.
+- \`POST /complaints/{id}/resolve\` marks that complaint resolved and answers 303 with \`Location: /complaints\`.
+- \`POST /complaints/{id}/reopen\` marks it open and answers the same way.
+- \`app.py\` holds the FastAPI application as \`app\`.
+`;
+
+test("parseContract reads the redirect status and Location for a POST route the spec ties to 303", () => {
+	const c = parseContract(REDIRECT_SPEC);
+	const resolve = c.routes.find((r) => r.method === "POST" && normalizePath(r.path) === "/complaints/{}/resolve");
+	assert.ok(resolve, "resolve route parsed");
+	assert.equal(resolve.redirectStatus, 303);
+	assert.equal(resolve.redirectLocation, "/complaints");
+});
+
+test("generatePytest emits a redirect check that posts a board action link and asserts the 303 + Location", () => {
+	const py = generatePytest(parseContract(REDIRECT_SPEC));
+	assert.match(py, /def test_redirect_\d+_/, py);
+	assert.match(py, /follow_redirects=False/);
+	assert.match(py, /status_code == 303/);
+	assert.match(py, /resolve/);
+	assert.match(py, /\\d\+/, "regex to pull the id from a board action link");
+	assert.match(py, /location/i);
+});
+
+test("a tagline the spec wrapped across lines is normalized to one line in the contract", () => {
+	const spec = "## Phase 1\n- The `GET /` home page has a hero and the tagline \"Come in. Sit down.\n  Tell us about your human.\" and a welcome.\n- `app.py` holds the FastAPI application as `app`.";
+	const py = generatePytest(parseContract(spec));
+	assert.match(py, /"Come in\. Sit down\. Tell us about your human\." in r\.text/, py);
+	assert.doesNotMatch(py, /Sit down\.\\n/, "no raw newline left in the tagline literal");
+});

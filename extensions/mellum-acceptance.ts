@@ -26,6 +26,10 @@ export interface Route {
 	html?: boolean;
 	/** Required visible text the spec ties to this page (e.g. a quoted tagline). */
 	contains?: string[];
+	/** The redirect status the spec ties to this route (e.g. 303 for a POST that redirects). */
+	redirectStatus?: number;
+	/** The redirect Location the spec names (e.g. /complaints). */
+	redirectLocation?: string;
 }
 
 /** A navbar link the spec names in the open: its visible label and its href. */
@@ -64,7 +68,9 @@ export function normalizePath(path: string): string {
 /** The quoted text the spec ties to a tagline, derived from its prose (not the grader). */
 function taglineLiteral(spec: string): string | null {
 	const m = /tagline[^"“]*["“]([^"”]+)["”]/i.exec(spec);
-	return m ? m[1].trim() : null;
+	// A spec often wraps the quoted tagline across lines; the rendered page has it on one line
+	// ("word for word"), so collapse internal whitespace to match what the grader checks.
+	return m ? m[1].replace(/\s+/g, " ").trim() : null;
 }
 
 /** The navbar brand and named links the spec states, parsed from the clause that
@@ -157,6 +163,16 @@ export function parseContract(spec: string): Contract {
 		const route: Route = { method, path };
 		if (html) route.html = true;
 		if (contains.length) route.contains = contains;
+		// A POST route the spec says redirects with a status — e.g. "answers 303 with
+		// Location: /complaints". Derived from the spec's own words, never the grader.
+		if (method === "POST") {
+			const red = /\b(30[1-9])\b/.exec(ctx);
+			if (red && /\bredirect|\banswers?\b|\bLocation\b/i.test(ctx)) {
+				route.redirectStatus = Number.parseInt(red[1], 10);
+				const loc = /Location:?\s*`?(\/[A-Za-z0-9_/{}-]*)/i.exec(ctx);
+				if (loc) route.redirectLocation = loc[1];
+			}
+		}
 		routes.push(route);
 	}
 	const named = /`(\w+)\.py`[^`]*?as `(\w+)`/.exec(spec);
@@ -252,6 +268,38 @@ export function generatePytest(contract: Contract): string {
 		}
 		for (const text of route.contains ?? []) {
 			lines.push(`    assert ${JSON.stringify(text)} in r.text, ${JSON.stringify(`page missing required text: ${text.slice(0, 48)}`)}`);
+		}
+		lines.push("");
+	});
+	// Redirect checks: a POST route the spec ties to a redirect status must actually answer it.
+	// For a path-param action route (e.g. /complaints/{}/resolve) we find a real id from the
+	// collection page's own action link — the spec says each card has a button posting to its
+	// route — then POST it and assert the spec's status and Location. All spec-derived: the
+	// status, the Location, and "a button that posts to its route" are the spec's own words.
+	contract.routes.forEach((route, i) => {
+		if (!route.redirectStatus) return;
+		const norm = normalizePath(route.path);
+		const braceAt = route.path.indexOf("{");
+		if (braceAt < 0) return; // a no-param POST needs a form body; the param action routes are the gap
+		const parts = norm.split("/").filter(Boolean); // ["complaints","{}","resolve"]
+		const verb = parts[parts.length - 1];
+		const boardPath = "/" + parts.slice(0, -2).join("/");
+		const board = contract.routes.find((r) => r.method === "GET" && normalizePath(r.path) === boardPath);
+		const getPath = board ? board.path : boardPath;
+		const slug = norm.replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "root";
+		const prefix = route.path.slice(0, braceAt);
+		const suffix = route.path.slice(route.path.indexOf("}") + 1);
+		lines.push(`def test_redirect_${i}_${slug}():`);
+		lines.push(`    page = client.get(${JSON.stringify(getPath)}).text`);
+		lines.push(
+			`    m = re.search(r'(?:action|href)=["\\']' + re.escape(${JSON.stringify(prefix)}) + r'(\\d+)' + re.escape(${JSON.stringify(suffix)}) + r'["\\']', page)`,
+		);
+		lines.push(`    assert m, "no ${verb} button with an id on ${getPath} (spec: each card posts to its route)"`);
+		lines.push(`    url = ${JSON.stringify(prefix)} + m.group(1) + ${JSON.stringify(suffix)}`);
+		lines.push(`    resp = client.post(url, follow_redirects=False)`);
+		lines.push(`    assert resp.status_code == ${route.redirectStatus}, "POST " + url + " should answer ${route.redirectStatus}"`);
+		if (route.redirectLocation) {
+			lines.push(`    assert resp.headers.get("location") == ${JSON.stringify(route.redirectLocation)}, "redirect Location should be ${route.redirectLocation}"`);
 		}
 		lines.push("");
 	});

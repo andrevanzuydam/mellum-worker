@@ -15,6 +15,13 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- `mellum-acceptance` now derives a **redirect-behaviour check** for medium's Phase 4: a POST
+  route the spec ties to a redirect status (e.g. "answers 303 with `Location: /complaints`") is
+  exercised — the contract finds a real id from the collection page's own action link (the spec
+  says each card posts to its route), posts it, and asserts that status and Location. This
+  catches the Phase-4 303→307 class the structural contract passed over, so the gate can
+  redispatch it. It also normalizes a tagline the spec wrapped across lines, so the page check
+  no longer false-fails a correct build whose tagline renders on one line. All spec-derived.
 - The easy lesson **E7 · Know When to Stop** is rewritten from the 2026-10-31
   easy screens instead of being an unbuilt conjecture. It no longer presents
   `guard/cap-turns` as the clean answer: the measured causes of a session
