@@ -12,7 +12,7 @@ backends: [llamacpp]
 
 # E7 · Know When to Stop
 
-Pi has no turn cap, so a small model that cannot finish keeps working until the deadline. The obvious answer — a hard turn cap — turns out to fight a gate that re-checks the work; what stopped cleanly, measured, was letting the worker survive the server it starts and then settling only when an external test is green.
+Pi has no turn cap, so a model that cannot finish works until its deadline. A blunt cap looks like the fix, but it fights the gate that re-checks the work; what stops cleanly is surviving the server, then settling when the tests pass.
 
 !!! abstract "Overview"
 
