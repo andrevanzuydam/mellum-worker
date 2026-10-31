@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { distill } from "../learn/code/improve_distill.mjs";
+import { distill, distillFromRun, lessonsFromVerdict } from "../learn/code/improve_distill.mjs";
 
 // A schema-2 worker record line, as mellum-record writes and mellum-learn reads.
 const REC = (o) =>
@@ -42,4 +42,24 @@ test("distill filters records to those under cwd, so an unrelated workspace's re
 	const recordsText = REC({ cwd: "/somewhere/else/ws", commands: [{ command: "uvicorn app:app", failed: false }] });
 	const r = distill({ recordsText, agentsMd: "# Project\n\n## Mellum\n\n", cwd: "/loop", n: 10 });
 	assert.deepEqual(r.added, [], "a record outside cwd does not teach anything");
+});
+
+test("lessonsFromVerdict teaches the layout and contamination failures the harness flags", () => {
+	const b = lessonsFromVerdict({ out_of_layout: ["check_jinja.py", "test_home.py"], contaminated: true });
+	assert.ok(b.some((x) => /do not/i.test(x) && /layout/i.test(x)), JSON.stringify(b));
+	assert.ok(b.some((x) => /do not/i.test(x) && /test/i.test(x)), JSON.stringify(b));
+});
+
+test("lessonsFromVerdict teaches nothing from a clean run", () => {
+	assert.deepEqual(lessonsFromVerdict({ out_of_layout: [], contaminated: false }), []);
+});
+
+test("distillFromRun merges verdict lessons into AGENTS.md, additively and idempotently", () => {
+	const base = "# Project\n\n## Mellum\n\n- Test command: uv run pytest\n";
+	const r = distillFromRun({ run: { out_of_layout: ["x.py"], contaminated: false }, agentsMd: base });
+	assert.match(r.text, /layout/);
+	assert.ok(r.added.length >= 1);
+	assert.match(r.text, /Test command: uv run pytest/, "keeps existing facts");
+	const again = distillFromRun({ run: { out_of_layout: ["x.py"], contaminated: false }, agentsMd: r.text });
+	assert.deepEqual(again.added, [], "re-carrying the same lesson adds nothing");
 });

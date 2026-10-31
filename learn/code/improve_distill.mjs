@@ -29,12 +29,44 @@ export function distill({ recordsText, agentsMd, cwd, n = 20 }) {
 	};
 }
 
+/**
+ * Lessons from a graded run (`run.json`), not the mode-record file. The harness always writes
+ * run.json, and it carries the verdicts the mode records miss — `out_of_layout` (the run left
+ * files the layout does not name) and `contaminated` (it touched the tests or the grader). These
+ * are the failures the first live loop actually hit, and the channel that is reliably present.
+ * The bullets are general discipline, derived from the harness verdict, with no suite-specific
+ * route, table or value.
+ */
+export function lessonsFromVerdict(run) {
+	const bullets = [];
+	if ((run?.out_of_layout || []).length > 0) {
+		bullets.push("Do not: add files the project layout does not name; keep changes to the files the spec lists");
+	}
+	if (run?.contaminated) {
+		bullets.push("Do not: add, edit or delete tests; the acceptance tests are provided and run after you finish");
+	}
+	return bullets;
+}
+
+/** Merge a graded run's verdict lessons into the carried AGENTS.md text. Pure. */
+export function distillFromRun({ run, agentsMd }) {
+	const bullets = lessonsFromVerdict(run);
+	const merged = mergeSuggestion(agentsMd, bullets);
+	return {
+		text: merged.text || agentsMd || "",
+		added: merged.added,
+		conflicts: merged.conflicts,
+		bullets,
+	};
+}
+
 function parseArgs(argv) {
 	const o = { n: 20 };
 	for (let i = 0; i < argv.length; i++) {
 		if (argv[i] === "--records") o.records = argv[++i];
 		else if (argv[i] === "--agents") o.agents = argv[++i];
 		else if (argv[i] === "--cwd") o.cwd = argv[++i];
+		else if (argv[i] === "--run") o.run = argv[++i];
 		else if (argv[i] === "--n") o.n = Number.parseInt(argv[++i] ?? "20", 10) || 20;
 	}
 	return o;
@@ -50,12 +82,31 @@ const read = (p) => {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
 	const o = parseArgs(process.argv.slice(2));
-	if (!o.records || !o.agents || !o.cwd) {
-		console.error("usage: improve_distill.mjs --records <jsonl> --agents <AGENTS.md> --cwd <ancestor> [--n N]");
+	if (!o.agents || (!o.records && !o.run)) {
+		console.error("usage: improve_distill.mjs --agents <AGENTS.md> [--records <jsonl> --cwd <ancestor>] [--run <run.json>] [--n N]");
 		process.exit(2);
 	}
-	const r = distill({ recordsText: read(o.records) ?? "", agentsMd: read(o.agents), cwd: o.cwd, n: o.n });
-	writeFileSync(o.agents, r.text);
-	if (r.added.length) console.log(`carried forward ${r.added.length} lesson(s):\n${r.added.map((b) => `  - ${b}`).join("\n")}`);
+	let text = read(o.agents);
+	const added = [];
+	// Mode records (when present) via mellum-learn's patterns...
+	if (o.records && o.cwd) {
+		const r = distill({ recordsText: read(o.records) ?? "", agentsMd: text, cwd: o.cwd, n: o.n });
+		text = r.text;
+		added.push(...r.added);
+	}
+	// ...and the graded run's verdicts (the channel the harness always writes).
+	if (o.run) {
+		let run = {};
+		try {
+			run = JSON.parse(read(o.run) ?? "{}");
+		} catch {
+			run = {};
+		}
+		const r = distillFromRun({ run, agentsMd: text });
+		text = r.text;
+		added.push(...r.added);
+	}
+	writeFileSync(o.agents, text);
+	if (added.length) console.log(`carried forward ${added.length} lesson(s):\n${added.map((b) => `  - ${b}`).join("\n")}`);
 	else console.log("nothing new to carry forward");
 }

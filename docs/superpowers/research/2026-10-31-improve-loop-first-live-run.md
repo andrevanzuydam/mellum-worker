@@ -19,13 +19,20 @@ carried `## Mellum` section for the next rep. Recorded on the scoreboard as `arm
 on all five iterations, the carried `## Mellum` never grew past the suite's own base facts, and
 the turn-count stayed flat and noisy (25, 42, 49, 29, 42) with no downward trend.
 
-**Why it carried nothing (measured).** `mellum-learn`'s pattern vocabulary — test-thrash,
-bent-project, false-success, long-run (>30), servers, drift, announce-stop — did not match the
-failures these runs actually made: two home-misses, one **writes-outside-layout** (pathology
-#10) and one **contamination** (pathology #4). The only pattern that could have fired, `servers`
-("Do not: start servers"), was already in the base `AGENTS.md`, so the additive merge
-suppressed it. With no new lesson to add, each rep started from the same facts as the last — the
-loop was, in effect, five independent runs.
+**Why it carried nothing (measured — corrected).** The first reading of this run blamed
+`mellum-learn`'s pattern vocabulary; that was wrong. The real cause is upstream: the loop's
+records file was **empty** — zero records across all five reps. The shipped worker writes its
+mode record only inside a clean mode-off *deactivation* (`mellum-worker.ts` `writeRunRecord`,
+called when the worker turns off), and the harness `--arm worker` run exits without that
+transition, so no record is ever appended to `MELLUM_MODE_RUNS`. `mellum-learn` therefore had
+**no input**, not a vocabulary mismatch. Each rep started from the same base facts as the last;
+the loop was, in effect, five independent runs.
+
+So the distiller fed from the mode-record channel cannot work in the harness. The reliable
+per-rep artifact the harness always writes is `run.json`, and it carries exactly the verdicts
+these runs failed on — `out_of_layout` (iter 3: `check_jinja.py`, `test_home.py`, pathology #10)
+and `contaminated` (iter 5, pathology #4). The fix is to distil the carried facts from those
+verdicts, not from the empty mode-record file.
 
 **Conjecture.** That extending `mellum-learn` to the failures the worker actually hits on easy —
 a bullet when a run writes outside `app.py`/`models.py`/`templates/`/`tests/`, and when it edits

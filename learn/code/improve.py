@@ -68,11 +68,11 @@ def latest_run_dir(iter_out: Path):
     return max(cands, key=lambda d: d.stat().st_mtime) if cands else None
 
 
-def distill_into_carry(records: Path, carry: Path, cwd_ancestor: Path) -> None:
-    subprocess.run(
-        ["node", str(DISTILL), "--records", str(records), "--agents", str(carry), "--cwd", str(cwd_ancestor), "--n", "50"],
-        check=False,
-    )
+def distill_into_carry(records: Path, carry: Path, cwd_ancestor: Path, run_json: Path | None) -> None:
+    argv = ["node", str(DISTILL), "--agents", str(carry), "--records", str(records), "--cwd", str(cwd_ancestor), "--n", "50"]
+    if run_json is not None and run_json.is_file():
+        argv += ["--run", str(run_json)]  # the graded verdict (out_of_layout, contaminated) — reliably present
+    subprocess.run(argv, check=False)
 
 
 def run_loop(args) -> int:
@@ -108,8 +108,8 @@ def run_loop(args) -> int:
         rec = json.loads((rd / "run.json").read_text())
         rows.append((i, rec.get("passed"), rec.get("turns"), round(rec.get("wall", 0)), len(rec.get("missing_checks") or [])))
         print(f"  iter {i}: {'PASS' if rec.get('passed') else 'FAIL'} turns={rec.get('turns')} wall={round(rec.get('wall',0))}s miss={len(rec.get('missing_checks') or [])}")
-        # carry this run's lessons into the next iteration
-        distill_into_carry(records, carry, out)
+        # carry this run's lessons into the next iteration (mode records + the graded verdict)
+        distill_into_carry(records, carry, out, rd / "run.json")
         if args.board:
             subprocess.run(["uv", "run", "python", str(CODE / "scoreboard.py"), "record", str(rd), "--board", args.board], check=False)
 
