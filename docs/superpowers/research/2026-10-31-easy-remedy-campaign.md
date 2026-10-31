@@ -14,6 +14,7 @@ arm is bare plus the named remedies; the raw runs are kept under `runs/`
 | 1 | acceptance + ncm | **0/3** | 2/3 stalled on a foreground `python main.py` before settle; the gate never fired ([deadlock note](2026-10-31-cap-ncm-deadlock.md)) |
 | 2 | nonblock + acceptance + ncm | **1/3** | **stall gone — all 3 settled**; 2 fails at `miss=1`, each a different home check |
 | 3 | nonblock + **fixed** acceptance + ncm | **3/3** | phase-scoped contract + spec-named nav-link assertions; all settled, `miss=0`, contract green on all three |
+| 3′ | arm 3 again (confirmation) | **3/3** | independent n=3; all `miss=0`, fast (17–19 turns) — arm 3 is **6/6** across both |
 
 Arm 3 is the win: it adds the two contract fixes arm 2's fails pointed at —
 scope the contract to the phase the prompt names, and assert the spec-named nav
@@ -56,16 +57,29 @@ proxy-gap fail became a catch the gate redispatched on, and the
 redispatch-exhaustion fail went away once the gate stopped demanding phases 2–4.
 No separate `NCM_MAX` lever was needed on easy.
 
-**Conjecture (open).** That 3/3 holds on a confirmation run (n=6 total) rather
-than being a lucky draw at n=3. Until then it is a strong lead, not a rate.
+**Confirmed.** The confirmation run (arm 3′) also scored 3/3, so the winning
+stack is **6/6** across two independent n=3 runs — and the second run's reps
+converged fast (17–19 turns, under 80 s), the mark of a worker the scoped
+contract points straight at. Easy on local Q4 goes from bare 1/3 to 6/6 with the
+three-remedy stack. The evidence is promoted to
+[`evals/2026-10-31-easy-remedy/`](../../../evals/2026-10-31-easy-remedy/) with
+the raw stripped.
 
 ## What would falsify this / Risks
 
-- **Completed contract, still 1/3.** Then the nav proxy gap was not the binding
-  constraint — the model cannot act on the redispatch even when the gate is
-  right, and easy's ceiling is a convergence problem, not a gate-completeness one.
-- **Over-tight contract false-fails a correct page.** The nav assertion must be
-  mutation-proven: green on `known-good`, red on a page missing a named link,
-  and it must not reject a correct page that structures its navbar differently
-  than the fixture. The hidden grader stays the oracle.
-- **Small n.** Three reps an arm. Each row is a screen, not a rate.
+- **Over-tight contract false-fails a correct page.** The nav assertion is
+  mutation-proven on the fixtures (green on `known-good`, red on the 1890ec page
+  that folded Home into the brand), but it asserts an anchor whose href and
+  normalized text match the spec-named link. A correct page that names the link
+  differently than the spec's words (a different visible label, say) would be
+  rejected though the hidden grader passes it. The grader stays the oracle; the
+  contract is only the redispatch gate.
+- **Host and quant.** Measured on local M3 Q4 only. The stall-then-gate shape is
+  quant-independent in the earlier screens, but the 6/6 rate is one host, one
+  quant. A6000 Q8/BF16 are untested with this stack.
+- **n = 6, not a campaign.** Two independent n=3 runs, same arm, same day, same
+  seed-free sampling. Strong for a screen; still not a preregistered rate at
+  large n. The win is "1/3 → 6/6 on this rig", recorded as such.
+- **It is the stack, not one piece.** Dropping nonblock returns the stall (arm
+  1, 0/3); leaving the contract whole-roadmap/lax-nav returns the wrong-demand
+  (arm 2, 1/3). The result is the three together, not any one remedy.
