@@ -107,24 +107,37 @@ scoreboard.
    **Answer:** read the gate's config at settle time, not at load, and run the
    contract with the workspace on `PYTHONPATH`; a smoke run that asserts the gate
    actually redispatches would have caught it.
+11. **A stop-cap and a gate deadlock (not the model's fault).** Two remedies own
+   opposite halves of the stop/go decision and neither yields: a tool-call cap
+   refuses the next call ("budget reached — stop") while a verify gate refuses
+   the settle ("tests still fail — keep going"), so the worker can neither act
+   nor finish and churns text turns to the deadline. **Seen:** the 2026-10-31
+   easy screen, a `cap-turns(120)` + `mellum-ncm` rep that ran 296 turns to the
+   1800 s wall with `tool_calls` pinned at 120, `agent_settled` zero times, 349
+   budget blocks against 193 gate refusals; the one rep where the cap barely bit
+   (5 blocks) passed at 125 turns
+   ([record](../docs/superpowers/research/2026-10-31-cap-ncm-deadlock.md)).
+   **Answer:** do not run a hard stop-cap and a refuse-to-settle gate together
+   without reconciling them — the gate stands down once the budget is exhausted,
+   letting the run settle on its real (incomplete) state rather than timing out.
 
 ## It damages the project while finishing
 
-10. **Writes outside the layout.** The run passes every hidden test and still
+12. **Writes outside the layout.** The run passes every hidden test and still
    leaves scratch files, a second copy of the app, or an edited test, so the
    workspace is no longer the project. **Seen:** the file-set check found
    `main.py` outside the layout twice, and `pyproject.toml` once
    ([run](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson1-run.md),
    no lesson yet). **Answer:** name the layout in the task and compare the file
    set after the run; a guard that confines writes is planned.
-11. **A lost id.** The last phase's identity contract never lands: the field is
+13. **A lost id.** The last phase's identity contract never lands: the field is
     missing, or it is rebuilt from a position that changes when the list does.
     **Seen:** phase 4's group of checks missing in three of the four sessions
     whose checks ran, in the spec-layout arm
     ([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson10-run.md)).
     **Answer:** write the contract into the acceptance list (unique, stable,
     never reused) and grade the phase rather than the session.
-12. **The project stops importing.** A syntax error, or a dataclass that cannot
+14. **The project stops importing.** A syntax error, or a dataclass that cannot
     construct without an argument the seed code does not pass, leaves a
     workspace nothing can load. **Seen:** three of three sessions of a joined
     brief, and two of six in the spec-layout arm: `ModuleNotFoundError`,
@@ -135,7 +148,7 @@ scoreboard.
     **Answer:** the test command in the brief and a seeded test give the signal
     on the first turn; the harness now records `checks_ran: false` so a full
     set of missing checks is not read as a full set of failures.
-13. **Builds it somewhere else.** The requirements are met, but in a file the
+15. **Builds it somewhere else.** The requirements are met, but in a file the
     project's own notes did not name (the dataclass in `app.py` rather than
     `models.py`) so everything that imports the project fails. **Seen:** three
     joined-brief sessions and one spec-layout session ended without `models.py`,
@@ -147,7 +160,7 @@ scoreboard.
 
 ## It ignores what it was told
 
-14. **A skipped rule.** An instruction is in every request, in the project's own
+16. **A skipped rule.** An instruction is in every request, in the project's own
     words, and the run does the opposite. **Seen:** `Do not: start servers` sat
     in every request and both attempts started one
     ([record](https://github.com/andrevanzuydam/mellum-worker/blob/main/docs/superpowers/research/2026-10-25-lesson10-run.md)), and
@@ -159,6 +172,6 @@ scoreboard.
 ---
 
 *Provenance: entry 7 comes from Andre's harvest and has no observation here yet;
-entries 1, 2 and 4–13 are drawn from this repository's own records, linked on
+entries 1, 2 and 4–16 are drawn from this repository's own records, linked on
 each line; the strongest are three of three. Collected as runs happened, which is why the list is uneven and why
 it is not a rate.*
