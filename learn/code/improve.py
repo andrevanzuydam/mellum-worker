@@ -53,14 +53,20 @@ def inject_carry(carry: Path, suite_copy: Path) -> None:
     base_agents.write_text(carry.read_text() if carry.is_file() else "")
 
 
-def harness_argv(suite: str, tmp_suites: Path, profile: Path, iter_out: Path, arm: str, deadline: float, stall: float) -> list[str]:
-    return [
+def harness_argv(suite: str, tmp_suites: Path, profile: Path, iter_out: Path, arm: str, deadline: float, stall: float,
+                 remedies: str | None = None, extensions: tuple[str, ...] = ()) -> list[str]:
+    argv = [
         "uv", "run", "python", str(HARNESS), "run",
         "--suite", suite, "--suites-dir", str(tmp_suites),
         "--arm", arm, "--grade", "--repeat", "1",
         "--deadline", str(deadline), "--stall", str(stall),
         "--profile", str(profile), "--runs-dir", str(iter_out),
     ]
+    if remedies:
+        argv += ["--remedy", remedies]
+    for ext in extensions:
+        argv += ["--extension", ext]
+    return argv
 
 
 def latest_run_dir(iter_out: Path):
@@ -95,7 +101,8 @@ def run_loop(args) -> int:
     for i in range(1, args.iterations + 1):
         inject_carry(carry, suite_copy)
         iter_out = out / f"iter-{i}"
-        argv = harness_argv(args.suite, tmp_suites, Path(args.profile).resolve(), iter_out, args.arm, args.deadline, args.stall)
+        argv = harness_argv(args.suite, tmp_suites, Path(args.profile).resolve(), iter_out, args.arm, args.deadline, args.stall,
+                            remedies=args.remedy, extensions=tuple(args.extension or ()))
         if args.dry_run:
             print(f"[dry-run] iter {i}: {' '.join(argv)}")
             print(f"[dry-run] carried AGENTS.md bytes: {carry.stat().st_size}; records -> {records}")
@@ -129,6 +136,8 @@ def main(argv=None) -> int:
     ap.add_argument("--suites-dir", default=str(CODE / "suites"))
     ap.add_argument("--iterations", type=int, default=5)
     ap.add_argument("--arm", default="worker", help="worker (facts on — the carry channel) by default")
+    ap.add_argument("--remedy", default=None, help="remedy units to stack on the arm (comma-separated)")
+    ap.add_argument("--extension", action="append", default=[], help="an extra extension to load (repeatable)")
     ap.add_argument("--profile", default=str(CODE / "profile"))
     ap.add_argument("--out", required=True)
     ap.add_argument("--deadline", type=float, default=1800.0)

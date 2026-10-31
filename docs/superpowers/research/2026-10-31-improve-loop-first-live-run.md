@@ -73,6 +73,42 @@ enforces — run it on the winning stack, so the gate handles the home-miss and 
 handle the one-off slips (contamination) on top. Carrying advice helps at the margin; carrying
 the gate is what moves the rate.
 
+## Third live run — on the winning stack (added 2026-10-31)
+
+The fair test: carry on top of the gate. Run the loop with `--arm worker` (the only arm that
+injects the carried facts) plus the easy record stack — `nonblock + acceptance + ncm` — 5
+iterations on easy.
+
+| iter | result | turns | wall | miss |
+|---|---|---|---|---|
+| 1 | FAIL | 17 | 99 s | 4 |
+| 2 | FAIL | 40 | 117 s | 4 |
+| 3 | PASS | 30 | 143 s | 0 |
+| 4 | PASS | 50 | 196 s | 0 |
+| 5 | PASS | 43 | 214 s | 0 |
+
+3/5, recorded as `arm:worker · acceptance · ncm · nonblock`. Two findings, both against the
+carry hypothesis:
+
+- **The carry was inert.** The distiller said "nothing new to carry forward" on all five reps —
+  no rep hit a carryable failure (no `out_of_layout`, no `contaminated`), so there was nothing
+  to carry. The fail→pass pattern (iters 1–2 fail, 3–5 pass) is run-to-run variance of the
+  gate, not learning: the carried facts never changed between reps.
+- **Forcing the facts channel degrades the gate.** The stack scores **6/6** on `--arm bare`
+  but only **3/5** here on `--arm worker`. The gate fired (iter 1's trace shows ~5 `mellum-ncm`
+  redispatches, the `NCM_MAX` ceiling) yet the worker still settled at `miss=4` — on the worker
+  arm it could not build the home page even across five redispatches, where the bare worker
+  could. The carry channel (worker/facts) and the best gate performance (bare) are in tension.
+
+**Decision — the improvement loop does not improve easy.** It is a correctly-wired, recorded
+mechanism, and it *can* carry a lesson that sticks (the contamination fact in the second run).
+But on easy it has little to carry (the dominant failure, the home-miss, is not a carryable
+"do not" rule), and the one arm that reads the carry is a worse worker than bare. The lever on
+easy is the gate, run bare (`acceptance · ncm · nonblock`, 6/6) — not carried facts. Keep the
+loop as a tool; do not adopt it as an easy remedy. Where it would earn its place: a task on
+which the worker *repeats* a carryable mistake, or a loop that carries the *remedy to add*
+(a guard) rather than a reminder — the pathology-#14 reading, still unmeasured.
+
 ## What would falsify this / Risks
 
 - **A richer distiller still does not help.** A carried fact is a reminder, not an enforcement
