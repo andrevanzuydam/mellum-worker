@@ -28,11 +28,21 @@ export interface Route {
 	contains?: string[];
 }
 
+/** A navbar link the spec names in the open: its visible label and its href. */
+export interface NavLink {
+	label: string;
+	href: string;
+}
+
 /** Page-layout requirements the spec states in the open — never read from the grader. */
 export interface PageReqs {
 	doctype: boolean;
 	lang: string | null;
 	nav: boolean;
+	/** The navbar brand text the spec names, if any. */
+	brand: string | null;
+	/** The specific nav links the spec names (label + href), asserted as real anchors. */
+	navLinks: NavLink[];
 }
 
 export interface Contract {
@@ -57,14 +67,74 @@ function taglineLiteral(spec: string): string | null {
 	return m ? m[1].trim() : null;
 }
 
+/** The navbar brand and named links the spec states, parsed from the clause that
+ * describes the navbar — e.g. `a navbar with the "AgentClinic" brand and links to
+ * Home (`/`) and Complaints (`/complaints`)`. All of it is spec prose, never the grader. */
+function navSpec(spec: string): { brand: string | null; links: NavLink[] } {
+	const links: NavLink[] = [];
+	let brand: string | null = null;
+	const navIdx = spec.search(/\bnav(?:bar|igation)?\b/i);
+	if (navIdx >= 0) {
+		const win = spec.slice(navIdx, navIdx + 240);
+		if (/\blinks?\s+to\b/i.test(win)) {
+			const b = /["“']([^"”']+)["”']\s+brand/i.exec(win);
+			if (b) brand = b[1].trim();
+			// `Label (`/path`)` pairs, one per named link.
+			for (const m of win.matchAll(/\b([A-Z][A-Za-z]+)\s*\(\s*`?(\/[A-Za-z0-9_/{}\-]*)`?\s*\)/g)) {
+				links.push({ label: m[1], href: m[2] });
+			}
+		}
+	}
+	return { brand, links };
+}
+
 /** Page-layout requirements stated in the spec's own words. */
 function pageReqs(spec: string): PageReqs {
 	const lang = /\blang\s*=\s*["']?([A-Za-z]{2}(?:-[A-Za-z]{2})?)/.exec(spec);
+	const { brand, links } = navSpec(spec);
 	return {
 		doctype: /\bHTML5\b/i.test(spec) || /<!doctype/i.test(spec),
 		lang: lang ? lang[1].toLowerCase() : null,
 		nav: /\bnav(?:bar|igation)?\b/i.test(spec) || /\blinks?\s+to\b/i.test(spec),
+		brand,
+		navLinks: links,
 	};
+}
+
+/** The phase number a prompt names (`Implement Phase 1 — Home Page.`), or null when it names none. */
+export function phaseFromPrompt(prompt: string): number | null {
+	const m = /\bPhase\s+(\d+)\b/i.exec(prompt || "");
+	return m ? Number.parseInt(m[1], 10) : null;
+}
+
+/** Scope the spec to the phase the prompt asks for: keep phases 1..N and every non-phase
+ * section (layout, agent notes), drop the `## Phase K` sections for K > N. A phased suite
+ * sends one phase per request, so a contract derived from the whole roadmap would demand
+ * routes the current task never asked for. With phase null (a real Pi session that names
+ * no phase) the spec is returned unchanged. */
+export function scopeSpecToPhase(spec: string, phase: number | null): string {
+	if (phase == null) return spec;
+	const heads = [...spec.matchAll(/^##\s+Phase\s+(\d+)\b.*$/gim)].map((m) => ({
+		idx: m.index ?? 0,
+		num: Number.parseInt(m[1], 10),
+	}));
+	if (!heads.length) return spec;
+	const anyHead = [...spec.matchAll(/^##\s+/gim)].map((m) => m.index ?? 0);
+	const cuts: Array<[number, number]> = [];
+	for (const h of heads) {
+		if (h.num <= phase) continue;
+		const next = anyHead.find((i) => i > h.idx);
+		cuts.push([h.idx, next ?? spec.length]);
+	}
+	if (!cuts.length) return spec;
+	cuts.sort((a, b) => a[0] - b[0]);
+	let out = "";
+	let pos = 0;
+	for (const [s, e] of cuts) {
+		out += spec.slice(pos, s);
+		pos = e;
+	}
+	return out + spec.slice(pos);
 }
 
 /** Pull the app module and every route the spec names, deduped by method + normalized path. */
@@ -96,6 +166,9 @@ export function parseContract(spec: string): Contract {
 /** Emit a pytest that boots the app and asserts each named route is registered. */
 export function generatePytest(contract: Contract): string {
 	const app = contract.app;
+	const page = contract.page ?? { doctype: false, lang: null, nav: false, brand: null, navLinks: [] };
+	const navLinks = page.navLinks ?? [];
+	const needsAnchors = navLinks.length > 0 && contract.routes.some((r) => r.html);
 	const lines = [
 		'"""Structural contract — auto-derived from the spec, held out from the worker."""',
 		"import re",
@@ -111,10 +184,38 @@ export function generatePytest(contract: Contract): string {
 		"def _registered():",
 		`    return {_norm(getattr(r, "path", "")) for r in ${app}.routes}`,
 		"",
-		"def test_app_boots():",
-		'    assert client.get("/").status_code < 500',
-		"",
 	];
+	if (needsAnchors) {
+		// A stdlib anchor parser (no turbohtml dependency in the worker env), so a
+		// named nav link is checked as a real anchor — href AND visible text — the
+		// way the spec states it, not merely "some href is present".
+		lines.push(
+			"from html.parser import HTMLParser",
+			"",
+			"class _Anchors(HTMLParser):",
+			"    def __init__(self):",
+			"        super().__init__()",
+			"        self.links = []",
+			"        self._href = None",
+			"        self._buf = []",
+			"    def handle_starttag(self, tag, attrs):",
+			'        if tag == "a":',
+			'            self._href = dict(attrs).get("href")',
+			"            self._buf = []",
+			"    def handle_data(self, data):",
+			"        if self._href is not None:",
+			"            self._buf.append(data)",
+			"    def handle_endtag(self, tag):",
+			'        if tag == "a" and self._href is not None:',
+			'            self.links.append((self._href, "".join(self._buf).strip()))',
+			"            self._href = None",
+			"",
+			"def _anchors(html):",
+			"    p = _Anchors(); p.feed(html); return p.links",
+			"",
+		);
+	}
+	lines.push("def test_app_boots():", '    assert client.get("/").status_code < 500', "");
 	contract.routes.forEach((route, i) => {
 		const norm = normalizePath(route.path);
 		const slug = norm.replace(/[^a-zA-Z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "root";
@@ -123,8 +224,8 @@ export function generatePytest(contract: Contract): string {
 		lines.push("");
 	});
 	// Page-content checks for the routes the spec describes as rendered HTML pages.
-	// Structural hygiene (doctype/lang/nav) is generic; any `contains` text is spec-quoted.
-	const page = contract.page ?? { doctype: false, lang: null, nav: false };
+	// Structural hygiene (doctype/lang/nav) is generic; any `contains` text is spec-quoted,
+	// and any named nav link and brand come from the spec's own navbar sentence.
 	contract.routes.forEach((route, i) => {
 		if (!route.html) return;
 		const norm = normalizePath(route.path);
@@ -136,7 +237,19 @@ export function generatePytest(contract: Contract): string {
 		lines.push(`    assert "text/html" in r.headers.get("content-type", "").lower(), "GET ${route.path} should serve HTML"`);
 		if (page.doctype) lines.push(`    assert re.search(r"<!doctype\\s+html", r.text, re.I), "page missing HTML5 doctype"`);
 		if (page.lang) lines.push(`    assert re.search(r"<html[^>]*lang\\s*=\\s*.{0,1}${page.lang}\\b", r.text, re.I), "html missing lang=${page.lang}"`);
-		if (page.nav) lines.push(`    assert re.search(r"<nav\\b|<a\\s[^>]*href", r.text, re.I), "page missing navigation/links"`);
+		// A named nav link is a real anchor with that href and that visible text; the brand is text.
+		if (page.brand) {
+			lines.push(`    assert ${JSON.stringify(page.brand)} in r.text, ${JSON.stringify(`page missing nav brand: ${page.brand}`)}`);
+		}
+		if (navLinks.length) {
+			for (const link of navLinks) {
+				lines.push(
+					`    assert any(h == ${JSON.stringify(link.href)} and t.casefold() == ${JSON.stringify(link.label.toLowerCase())} for h, t in _anchors(r.text)), ${JSON.stringify(`page missing nav link: ${link.label} -> ${link.href}`)}`,
+				);
+			}
+		} else if (page.nav) {
+			lines.push(`    assert re.search(r"<nav\\b|<a\\s[^>]*href", r.text, re.I), "page missing navigation/links"`);
+		}
 		for (const text of route.contains ?? []) {
 			lines.push(`    assert ${JSON.stringify(text)} in r.text, ${JSON.stringify(`page missing required text: ${text.slice(0, 48)}`)}`);
 		}
@@ -163,9 +276,12 @@ export function readSpec(cwd: string): string {
 	return parts.join("\n\n");
 }
 
-/** Derive the contract from the spec under cwd and write the pytest to outDir; returns its path. */
-export function writeContractTest(cwd: string, outDir: string): string {
-	const contract = parseContract(readSpec(cwd));
+/** Derive the contract from the spec under cwd and write the pytest to outDir; returns its path.
+ * A `prompt` naming a phase scopes the spec to phases 1..N first, so the contract demands only
+ * the phase the task asked for (a phased suite sends one phase per request). */
+export function writeContractTest(cwd: string, outDir: string, prompt = ""): string {
+	const spec = scopeSpecToPhase(readSpec(cwd), phaseFromPrompt(prompt));
+	const contract = parseContract(spec);
 	mkdirSync(outDir, { recursive: true });
 	const path = join(outDir, "test_contract.py");
 	writeFileSync(path, generatePytest(contract) + "\n");
@@ -180,7 +296,10 @@ export default function (
 		try {
 			const cwd = ctx && typeof ctx.cwd === "string" ? ctx.cwd : process.cwd();
 			const outDir = options.outDir ?? join(cwd, "..", "contract");
-			const path = writeContractTest(cwd, outDir);
+			// The harness exports the current prompt so the contract scopes to the phase it names;
+			// a real Pi session that sets nothing falls back to the whole spec.
+			const prompt = process.env.ACCEPTANCE_PROMPT ?? "";
+			const path = writeContractTest(cwd, outDir, prompt);
 			// The ncm gate reads NCM_TEST when it verifies; point it at the derived contract.
 			process.env.NCM_TEST = path;
 		} catch {

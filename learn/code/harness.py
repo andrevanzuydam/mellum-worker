@@ -501,6 +501,8 @@ def run_suite(
             if remaining is not None and remaining <= 0:
                 (run / "deadline").write_text("hit\n")
                 break
+            # The spec-derived contract scopes itself to the phase this prompt names.
+            env["ACCEPTANCE_PROMPT"] = prompt
             argv = pi_argv(
                 pi_binary, run / "profile", recorder, provider, model, prompt,
                 extension=settings["extension"],

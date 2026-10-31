@@ -15,6 +15,18 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- `mellum-acceptance` now scopes its derived contract to the phase the prompt
+  names (`Implement Phase 1 …`) and checks the navbar links the spec states by
+  name. A phased suite sends one phase per request, so a contract built from the
+  whole roadmap used to demand later-phase routes the task never asked for —
+  pushing the worker to over-build or sending it a redispatch for the wrong
+  thing. It also accepted any `<nav>` or any `<a href>` as "navigation", so a
+  page that folded its Home link into the brand passed the gate while the hidden
+  grader failed it. The contract now keeps only phases 1..N (N from the prompt;
+  a real Pi session that names no phase still gets the whole spec), and asserts
+  each spec-named link as a real anchor with that href and that visible text,
+  plus the brand — both read from the spec's own navbar sentence, never the
+  grader. The harness exports the current prompt so the extension can scope.
 - The course now pins **Pi 1.4.0** (was 1.3.0). Guided mode's code panel rides
   on 1.4's fixes: concurrent `custom()` panels and dialogs, extension tools
   staying active on resume, and recovery from a tool call truncated at the
