@@ -479,6 +479,9 @@ def run_suite(
     sessions = run / "sessions"
     sessions.mkdir()
     provider, model = profile_pin(profile)
+    # Record the pinned model so run.json (assembled later, out of this scope) and the
+    # scoreboard can name which model produced the run.
+    (run / "model.txt").write_text(f"{provider}/{model}\n")
     session_id = str(uuid.uuid4())
     settings = arm_settings(arm)
     env = {
@@ -824,9 +827,11 @@ def _run_sessions(
         layout_file = run_dir / "layout.json"
         if layout_file.is_file():
             metrics["out_of_layout"] = json.loads(layout_file.read_text())["out_of_layout"]
+        model_file = run_dir / "model.txt"
         record = {
             "suite": suite.name,
             "arm": arm,
+            "model": model_file.read_text().strip() if model_file.is_file() else None,
             "remedies": list(remedies),
             "extensions": extension_record(list(extras)),
             "single_prompt": single_prompt,
