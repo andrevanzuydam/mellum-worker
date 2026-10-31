@@ -40,6 +40,39 @@ or adds a test (contamination) — would give the carry something to teach, and 
 the loop show whether carrying it forward pulls the turn-count down. Until that lands, the loop
 is a correctly-wired mechanism with nothing to say.
 
+## Second live run — the extended distiller (added 2026-10-31)
+
+With the distiller now learning from `run.json` verdicts, the loop was re-run on easy, same
+arm, 5 iterations:
+
+| iter | result | turns | wall | failure | carried after |
+|---|---|---|---|---|---|
+| 1 | PASS | 39 | 177 s | — | — |
+| 2 | FAIL | 30 | 212 s | `contaminated` + home miss | **"Do not: add, edit or delete tests"** |
+| 3 | FAIL | 28 | 102 s | home miss | — |
+| 4 | FAIL | 46 | 176 s | home miss | — |
+| 5 | PASS | 40 | 241 s | — | — |
+
+2/5 (vs 1/5 before), `arm:worker` now 3/10 cumulative on the board. **The carry grew for the
+first time**: iter 2 was contaminated, the distiller folded "do not edit tests" into the facts,
+and **contamination did not recur** — iters 3–5 were all `contaminated=False`. That is weak
+(n=1) but real evidence the carried fact landed and stopped a repeat mistake.
+
+**But it did not lift the pass rate, and the reason is the point.** The failures that remained
+(iters 3, 4) are **home-misses** — the worker did not build the home page — and a home-miss is
+not a carryable "do not" rule; it is "build the thing". No fact teaches it. The config that
+*does* fix a home-miss on easy is `acceptance · ncm · nonblock` (6/6, 17 turns), and it fixes it
+not with a reminder but with the **gate that re-runs the contract and redispatches** the miss.
+The plain-worker loop, however much it carries, cannot reach that — a fact reminds, a gate
+enforces (pathology #14).
+
+**Decision.** The distiller extension is sound and the mechanism now carries real lessons from
+the channel the harness writes. Its ceiling on the plain worker is the home-miss, which only the
+acceptance gate closes. The next step to make the loop *improve* is to carry the remedy that
+enforces — run it on the winning stack, so the gate handles the home-miss and the carried facts
+handle the one-off slips (contamination) on top. Carrying advice helps at the margin; carrying
+the gate is what moves the rate.
+
 ## What would falsify this / Risks
 
 - **A richer distiller still does not help.** A carried fact is a reminder, not an enforcement
