@@ -15,6 +15,14 @@ Versions match git tags; pin one in both install lines.
 
 ### Changed
 
+- The easy lesson **E7 · Know When to Stop** is rewritten from the 2026-10-31
+  easy screens instead of being an unbuilt conjecture. It no longer presents
+  `guard/cap-turns` as the clean answer: the measured causes of a session
+  running to its deadline are a foreground server the worker waits on and a
+  stop-cap deadlocked against a verify gate, and what stopped cleanly on the
+  easy suite was backgrounding the server plus a verify-and-settle gate (1/3 →
+  6/6). Its Problem, Eval, Evidence and Solution badges move to `screen`;
+  Validation stays `conjecture` (no lesson check has run yet).
 - `mellum-acceptance` now scopes its derived contract to the phase the prompt
   names (`Implement Phase 1 …`) and checks the navbar links the spec states by
   name. A phased suite sends one phase per request, so a contract built from the
