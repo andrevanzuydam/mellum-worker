@@ -233,3 +233,7 @@ subject = "the small robot sorting a tangled ribbon of thought bubbles and speec
 [context-overflow]
 seed = 8026
 subject = "the small robot trying to stuff an armful of thick books into a small backpack while pages spill out"
+
+[scoreboard]
+seed = 8040
+subject = "the small robot posting run times on a tall leaderboard with a stopwatch in one hand, fastest time pinned at the top"

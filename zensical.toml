@@ -47,6 +47,7 @@ nav = [
   ] },
   { "The Challenge" = "challenge/index.md" },
   { "Pathologies" = "pathologies.md" },
+  { "Scoreboard" = "scoreboard.md" },
   { "Glossary" = "glossary.md" },
   { "About" = [
     "about/index.md", "about/how-to-read.md",

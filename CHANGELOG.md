@@ -45,6 +45,22 @@ Versions match git tags; pin one in both install lines.
 
 ### Added
 
+- A **Scoreboard** (`learn/scoreboard.md`, the page; `learn/code/scoreboard.py`, the tool):
+  every run ever measured, with the fastest pass per configuration on top (fewest turns, then
+  least wall — a shorter run is the better pass) and every run below, each with turns and wall.
+  Records are keyed by stack *and* a version hash of the extensions' `sha256`, so an improved
+  extension shows as a new record that beats the old version rather than blending into it.
+  Runs are stored one JSON file per run under `evals/scoreboard/entries/` (merge-friendly — a
+  pull request adds its own file and never conflicts); `scoreboard.py consolidate` rebuilds the
+  page from every entry after a merge. `run.json` now also records the `model` id.
+- An opt-in **improvement loop** (`learn/code/improve.py`, with `learn/code/improve_distill.mjs`):
+  it carries what each run teaches (via `mellum-learn`) into a carried `## Mellum` section the
+  next run reads as facts, to see whether later runs get faster. It runs against a temp copy of
+  the suite and its own records file, so it never touches a measurement, and it records each rep
+  to the scoreboard.
+- A developer write-up, `docs/developing-with-extensions.md`: how a change moves from the file
+  you edit to the number it earns, test-first and mutation-proven, with the two rules that never
+  bend (the hidden grader is the oracle; a measured setting is frozen without evidence).
 - A lesson now shows the code the run produced. After a before or after run, the
   Eval case and Solution steps print the `.py` the session wrote — S0's `add.py`
   going from `return a - b` to `return a + b` — so you see the fix itself, not
