@@ -80,7 +80,9 @@ def entry_from_run(run_dir, model: str | None = None) -> dict:
     run_dir = Path(run_dir)
     rec = json.loads((run_dir / "run.json").read_text())
     rid = run_dir.name
-    mdl = rec.get("model") or model
+    # An explicit --model override wins (so a vast batch can stamp A6000/<quant> even though
+    # run.json carries the profile's generic model id); else run.json, else model.txt.
+    mdl = model or rec.get("model")
     if mdl is None:
         mt = run_dir / "model.txt"
         mdl = mt.read_text().strip() if mt.is_file() else None
