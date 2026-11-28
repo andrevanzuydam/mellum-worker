@@ -7,8 +7,8 @@
       "apiKey": "not-needed",
       "models": [
         {
-          "id": "r1d-sft-v2b",
-          "name": "DeepSeek-R1-Distill-Qwen-1.5B + tool tokens (sft-v2b, llama.cpp :8091)",
+          "id": "r1d-sft-v3-u900",
+          "name": "DeepSeek-R1-Distill-Qwen-1.5B + tool tokens (sft-v3-u900, llama.cpp :8091)",
           "reasoning": true,
           "input": [
             "text"

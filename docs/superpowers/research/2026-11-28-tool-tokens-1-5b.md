@@ -49,6 +49,24 @@ expected) before the fix.
 
 ## Log
 
+- 2026-11-28: second trained 1.5B, resumed on the other 3,704 examples of `data_sft_v2` (`adapters_r1d_sft_v2_rest`,
+  926 updates, 495 min, peak 26.1 GB from one long example; optimiser state restarted). Validation loss on the same
+  40 held-out examples 0.898 to 0.806 at update 900 (0.812 at 926). The marker rate wobbled: 39/39 at most
+  evaluations, 32/39 at 400, 34/39 at 600, 36/39 at 926. Both update 900 and the final checkpoint were fused,
+  converted (Q8_0, markers set to user-defined) and probed: update 900 10/10 with thinking off and 10/10 on, the
+  final checkpoint 8/10 off (2 no-call) and 10/10 on. Update 900 (`sft-v3-u900`) went to the Easy screens, same four
+  arms and remedies as the first screens, n=1 each. All four FAIL, and no arm made one `edit` or `write` call
+  (offered tools: read, bash, edit, write):
+  - thinking off: 46 requests, 2 bash and 43 reads, `specs/mission.md` read 12 times, 0 tool errors;
+  - thinking off + `guard/repeat-loops`: 10 requests, explored, ran `pytest tests` (no tests folder), then stopped;
+  - thinking on: 113 requests, 71 bash and 40 reads, 56 errors; it ran `touch app.py`, so an empty file, then
+    sent Python as bash commands (`import sys; print(sys.path)`);
+  - thinking on + `guard/repeat-loops`: 28 requests, read `specs` (a folder) 6 times, 19 errors.
+  Compared with the first screens, the command loops are shorter (off: 40 repeats of one command before, at most
+  12 now) and errors in the thinking-off arm went from 92 to 0. Not changed: it never writes code. All the data
+  doubled was the share it already had (edit and write 18% of taught calls), so the theory for the next step is
+  the mix, not the amount. Leads, not rates.
+
 - 2026-11-28: first Easy screens of the trained 1.5B (sft-v2b, Q8_0, llama-server `--jinja`, the teacher's harness
   shape, n=1 per arm, Easy held out from training). All four FAIL, no file created in any:
   - thinking off: 103 requests, 104 parsed calls, 92 errors; one command repeated 40 times;

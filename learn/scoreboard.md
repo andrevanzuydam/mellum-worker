@@ -10,7 +10,7 @@ Every Mellum worker run ever measured, split by tier.
 
 ## Overview
 
-533 runs recorded. Within a tier, **Records** rank by pass rate first, then by the fastest pass, fewest turns, then least wall, because a shorter pass is the better pass. A code change to an extension is a new **version** of the same stack, so an improvement shows as a new row that can beat the old one.
+537 runs recorded. Within a tier, **Records** rank by pass rate first, then by the fastest pass, fewest turns, then least wall, because a shorter pass is the better pass. A code change to an extension is a new **version** of the same stack, so an improvement shows as a new row that can beat the old one.
 
 ## Top 5
 
@@ -18,7 +18,7 @@ The five best stacks per tier, ranked by pass rate, then fewest turns, then leas
 
 ### Easy
 
-185 runs, 110 passed.
+189 runs, 110 passed.
 
 | model | stack | version | pass | best turns | best wall |
 |---|---|---|---|---|---|
@@ -539,6 +539,10 @@ Every run, newest first.
 
 | date | model | stack | thinking | result | turns | tool errors | wall | run |
 |---|---|---|---|---|---|---|---|---|
+| 2026-11-28 | `r1d/r1d-sft-v3-u900` (r1d sft-v3-u900 (900 of 926 updates, all 5,104 examples)) | Baseline Worker, vanilla arm · `context/narrow-tools` · `context/trim-tool-output` · `guard/foreground-server` · `guard/no-live-server` · `guard/repeat-loops` · `prompt/name-the-layout` · `prompt/python-developer` · `prompt/think-briefly` · `prompt/verify-the-spec` | on | fail | 28 | 19 | 114s | `20261128T144543Z-easy-efcf4b` |
+| 2026-11-28 | `r1d/r1d-sft-v3-u900` (r1d sft-v3-u900 (900 of 926 updates, all 5,104 examples)) | Baseline Worker, vanilla arm · `context/narrow-tools` · `context/trim-tool-output` · `guard/foreground-server` · `guard/no-live-server` · `prompt/name-the-layout` · `prompt/python-developer` · `prompt/think-briefly` · `prompt/verify-the-spec` | on | fail | 113 | 56 | 424s | `20261128T144543Z-easy-e5d908` |
+| 2026-11-28 | `r1d/r1d-sft-v3-u900` (r1d sft-v3-u900 (900 of 926 updates, all 5,104 examples)) | Baseline Worker, vanilla arm · `context/narrow-tools` · `context/trim-tool-output` · `guard/foreground-server` · `guard/no-live-server` · `prompt/name-the-layout` · `prompt/python-developer` · `prompt/think-briefly` · `prompt/verify-the-spec` | off | fail | 46 | 0 | 114s | `20261128T144543Z-easy-a9c87b` |
+| 2026-11-28 | `r1d/r1d-sft-v3-u900` (r1d sft-v3-u900 (900 of 926 updates, all 5,104 examples)) | Baseline Worker, vanilla arm · `context/narrow-tools` · `context/trim-tool-output` · `guard/foreground-server` · `guard/no-live-server` · `guard/repeat-loops` · `prompt/name-the-layout` · `prompt/python-developer` · `prompt/think-briefly` · `prompt/verify-the-spec` | off | fail | 10 | 2 | 8s | `20261128T144543Z-easy-47b658` |
 | 2026-11-28 | `r1d/r1d-sft-v2b` (sft-v2b-Q8_0.gguf (1,400 examples)) | Baseline Worker, vanilla arm · `context/narrow-tools` · `context/trim-tool-output` · `guard/foreground-server` · `guard/no-live-server` · `guard/repeat-loops` · `prompt/name-the-layout` · `prompt/python-developer` · `prompt/think-briefly` · `prompt/verify-the-spec` | off | fail | 358 | 325 | 619s | `20261128T060649Z-easy-ebf438` |
 | 2026-11-28 | `r1d/r1d-sft-v2b` (sft-v2b-Q8_0.gguf (1,400 examples)) | Baseline Worker, vanilla arm · `context/narrow-tools` · `context/trim-tool-output` · `guard/foreground-server` · `guard/no-live-server` · `prompt/name-the-layout` · `prompt/python-developer` · `prompt/think-briefly` · `prompt/verify-the-spec` | on | fail | 10 | 1 | 19s | `20261128T060649Z-easy-6d20fa` |
 | 2026-11-28 | `r1d/r1d-sft-v2b` (sft-v2b-Q8_0.gguf (1,400 examples)) | Baseline Worker, vanilla arm · `context/narrow-tools` · `context/trim-tool-output` · `guard/foreground-server` · `guard/no-live-server` · `guard/repeat-loops` · `prompt/name-the-layout` · `prompt/python-developer` · `prompt/think-briefly` · `prompt/verify-the-spec` | on | fail | 8 | 0 | 107s | `20261128T060649Z-easy-1ea93d` |
