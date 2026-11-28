@@ -94,6 +94,44 @@ def examples(msgs, scored, tools, failed, modes=("on", "off"), fmt=DEEPSEEK):
     return out
 
 
+def takeover_run_ok(run):
+    """A take-over run teaches only when the whole run passed: hidden tests and the quality checks (lint,
+    complexity). Passing tests with a lint or complexity failure is not accurate enough code to copy."""
+    return bool(run.get("passed") and run.get("tests_passed") and run.get("quality_ok"))
+
+
+def switch_point(events, teacher):
+    """How many assistant turns the student made before the teacher's first request; None if it never took over."""
+    for e in events:
+        if e.get("type") == "provider_request" and e.get("payload", {}).get("model") == teacher:
+            return sum(1 for m in e["payload"].get("messages", []) if m.get("role") == "assistant")
+    return None
+
+
+def teacher_steps(msgs, scored, students):
+    """The scored assistant indices after the first `students` assistant turns: the teacher's own steps."""
+    ast = [i for i, m in enumerate(msgs) if m["role"] == "assistant"]
+    return [i for i in scored if ast.index(i) >= students]
+
+
+def writes_bad_python(msg):
+    """True when the step writes a .py file whose content does not parse: a call that ran is not yet right code."""
+    for call in msg.get("tool_calls") or []:
+        fn = call.get("function", {})
+        if fn.get("name") != "write":
+            continue
+        try:
+            args = json.loads(fn.get("arguments") or "{}")
+        except json.JSONDecodeError:
+            return True
+        if str(args.get("path", "")).endswith(".py"):
+            try:
+                compile(str(args.get("content", "")), args["path"], "exec")
+            except SyntaxError:
+                return True
+    return False
+
+
 def _bad_call(err):
     from pathology_pairs import shell_shape
     name, is_error, text = err
@@ -123,6 +161,8 @@ def main():
     ap.add_argument("--tail", type=int, default=200)
     ap.add_argument("--all-runs", action="store_true",
                     help="also teach successful steps from phases that failed their hidden tests (ADR 0010)")
+    ap.add_argument("--teacher", help="take-over runs: teach only this model's steps after it took over from the student "
+                                      "(learn/finetune/r1d/takeover.ts); runs it never took over are skipped")
     ap.add_argument("--out", required=True)
     args = ap.parse_args()
     out = Path(args.out)
@@ -154,7 +194,15 @@ def main():
             if run.get("contaminated") or not trace.is_file() or (not outcome and not args.all_runs):
                 why["contaminated-no-trace-or-grade"] += 1
                 continue
-            segs = segment_trace([json.loads(x) for x in open(trace) if x.strip()])
+            if args.teacher and not takeover_run_ok(run):
+                why["takeover-run-not-passed"] += 1
+                continue
+            events = [json.loads(x) for x in open(trace) if x.strip()]
+            students = switch_point(events, args.teacher) if args.teacher else 0
+            if students is None:
+                why["no-takeover"] += 1
+                continue
+            segs = segment_trace(events)
             pg, pr = Path(f).with_name("phase_grades.json"), Path(f).with_name("phase_regressions.json")
             outcome = best_outcomes(outcome, json.loads(pg.read_text()) if pg.is_file() else None, reached=len(segs))
             outcome = with_regressions(outcome, json.loads(pr.read_text()) if pr.is_file() else None)
@@ -171,8 +219,14 @@ def main():
                 msgs, scored = rendered
                 ast, n_acts = [i for i, m in enumerate(msgs) if m["role"] == "assistant"], len(seg["acts"])
                 act_of = {ast[-j]: n_acts - j for j in range(1, len(ast) + 1)}
+                if args.teacher:
+                    why["student-step-not-taught"] += len(scored) - len(teacher_steps(msgs, scored, students))
+                    scored = teacher_steps(msgs, scored, students)
                 failed = {i for i in scored if any(_bad_call(e) for e in (seg.get("errs") or {}).get(act_of[i], []))}
                 why["failed-step-skipped"] += len(failed)
+                bad_py = {i for i in scored if i not in failed and writes_bad_python(msgs[i])}
+                why["bad-python-skipped"] += len(bad_py)
+                failed |= bad_py
                 for ex in examples(msgs, scored, seg["payload"].get("tools"), failed, fmt=fmt):
                     n = len(tok.encode(ex["prompt"] + ex["completion"], add_special_tokens=False).ids)
                     if n > args.budget:

@@ -75,3 +75,43 @@ def test_mellum_format_both_modes_match_its_own_template():
     assert "Look first." in on4["prompt"]       # on: earlier thinking stays in history, as Mellum sees it
     assert "Look first." not in off4["prompt"]  # off: no thinking was ever produced
     assert off4["completion"] == "Done.<|im_end|>\n"
+
+
+def test_switch_point_counts_the_students_turns_before_the_teachers_first_request():
+    from build_sft import switch_point
+    student = {"type": "provider_request", "payload": {"model": "r1d", "messages": [
+        {"role": "user", "content": "go"}]}}
+    teacher = {"type": "provider_request", "payload": {"model": "mellum", "messages": [
+        {"role": "user", "content": "go"}, {"role": "assistant", "content": "", "tool_calls": CALL},
+        {"role": "tool", "content": "x"}, {"role": "assistant", "content": "", "tool_calls": CALL},
+        {"role": "tool", "content": "ENOENT"}]}}
+    assert switch_point([student, student, teacher, teacher], "mellum") == 2
+    assert switch_point([student, student], "mellum") is None
+
+
+def test_only_the_teachers_steps_after_the_switch_are_kept():
+    from build_sft import teacher_steps
+    msgs = [{"role": "user"}, {"role": "assistant"}, {"role": "tool"}, {"role": "assistant"}, {"role": "tool"},
+            {"role": "assistant"}, {"role": "tool"}, {"role": "assistant"}]
+    assert teacher_steps(msgs, [1, 3, 5, 7], students=2) == [5, 7]
+    assert teacher_steps(msgs, [1, 3, 5, 7], students=0) == [1, 3, 5, 7]
+
+
+def test_a_step_that_writes_python_that_does_not_parse_is_bad():
+    from build_sft import writes_bad_python
+    good = {"role": "assistant", "tool_calls": [{"function": {"name": "write", "arguments":
+            '{"path": "a.py", "content": "def f():\\n    return 1\\n"}'}}]}
+    bad = {"role": "assistant", "tool_calls": [{"function": {"name": "write", "arguments":
+           '{"path": "a.py", "content": "def f(:\\n"}'}}]}
+    text = {"role": "assistant", "tool_calls": [{"function": {"name": "write", "arguments":
+            '{"path": "notes.md", "content": "def f(:"}'}}]}
+    assert not writes_bad_python(good) and writes_bad_python(bad) and not writes_bad_python(text)
+    assert not writes_bad_python({"role": "assistant", "content": "done"})
+
+
+def test_a_takeover_run_counts_only_when_tests_and_quality_both_pass():
+    from build_sft import takeover_run_ok
+    assert takeover_run_ok({"passed": True, "tests_passed": True, "quality_ok": True})
+    assert not takeover_run_ok({"passed": False, "tests_passed": True, "quality_ok": False})
+    assert not takeover_run_ok({"passed": False, "tests_passed": False, "quality_ok": True})
+    assert not takeover_run_ok({})

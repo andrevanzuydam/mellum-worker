@@ -49,6 +49,22 @@ expected) before the fix.
 
 ## Log
 
+- 2026-11-28: why the Easy screens fail, checked against the teacher data (126 teacher-v2 runs). The teacher's
+  first file change is an edit of existing code in 100 runs and a new file in 16; write is 4% of its 3,677 calls;
+  after a read of a missing file (25 times) it searched or read again, and never wrote that file. The student
+  copied that: on Easy it treats "create app.py" as "find app.py". It also sent Python to bash 16 times in one
+  run (23% of its bash calls; the teacher's syntax-error rate is 2%) and repeated the same failing call, so its
+  own mistakes put it where the teacher data never went (theory: copying a teacher covers only the teacher's
+  states). Response, all agnostic: `suites/scratch-train` (7 tools-train tasks with the module removed and a
+  spec naming the file to create), and **take-over runs**: the student works until its first mistake point,
+  then Mellum answers in the same session (`r1d/takeover.ts`, 9 tests). The builder keeps only Mellum's steps
+  after the switch, and only from runs that pass the hidden tests and the quality checks (`--teacher`, 4 tests).
+  Batch 1 (21 runs, spec always in `specs/`): 19 taken over, 16 passed the tests, 9 passed tests and quality,
+  0 calls left inside thinking (one smoke run did, and replaying its request gave a parsed call 6 times out of 6).
+  `data_takeover_b1`: 178 steps, 356 examples. The teacher's first step after a switch was a write in 2 of 9
+  runs; it usually looked at the real layout first. Next batch varies where the spec lives and how the request
+  is worded (`make_suite.py`), so no folder name or phrasing becomes the cue. Leads, not rates.
+
 - 2026-11-28: second trained 1.5B, resumed on the other 3,704 examples of `data_sft_v2` (`adapters_r1d_sft_v2_rest`,
   926 updates, 495 min, peak 26.1 GB from one long example; optimiser state restarted). Validation loss on the same
   40 held-out examples 0.898 to 0.806 at update 900 (0.812 at 926). The marker rate wobbled: 39/39 at most

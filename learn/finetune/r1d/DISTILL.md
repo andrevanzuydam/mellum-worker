@@ -24,6 +24,7 @@ The AgentClinic family (`easy`, `medium`, `hard`, and Satyrn's `agentclinic-*`),
 |---|---|---|
 | `suites/py-features-train` | 12 | Python 3.14/3.15 features; the teacher lacks some APIs, so many runs fail but their successful calls still count |
 | Satyrn self-host + `format_number` | 6 | converted into the git-ignored `learn/code/suites-local/satyrn-train` (no Satyrn content in this repo) with `uv run --no-project python ../finetune/satyrn_suites.py --tasks <satyrn-evals>/src/satyrn_evals/tasks --out suites-local/satyrn-train --only format_number --only selfhost-... --check`; `selfhost-preflight-quiet` and `selfhost-speed-probe` left out: their known-good fixes fail their own check (speed-probe's failure was hidden by the old substring grader, ADR 0011) |
+| `suites/scratch-train` | 7 | build-from-scratch versions of 7 tools-train tasks: the module removed, a spec naming the file to create; built by its `make_suite.py`; each grader red without the module and green with the reference; for take-over runs (below) |
 | `suites/tools-train` | 24 | varied tool use in small stdlib projects, never AgentClinic; each proven by `py_features.py --root suites/tools-train check` (reference green, workaround red, base red) |
 
 ## Teacher batches
@@ -31,11 +32,13 @@ The AgentClinic family (`easy`, `medium`, `hard`, and Satyrn's `agentclinic-*`),
 | Date | Run folder | Tasks | Repeats | Shape | Result |
 |---|---|---|---|---|---|
 | 2026-11-28 | `runs/2026-11-28-teacher-v2` | 24 tools-train + 12 py-features-train + 6 satyrn-train (speed-probe removed before its sessions started) | 3 | as above, 4 parallel, deadline 1,200 s | 126 sessions run, 46 passed: tools-train 42/72, Satyrn 3/18, py-features-train 1/39 (the teacher lacks the new APIs); 05:08 |
+| 2026-11-28 | `runs/2026-11-28-takeover-b1` | 7 scratch-train (spec in `specs/` for all) | 3 | **take-over**: the student (sft-v3-u900, llama.cpp) runs until its first mistake, then Mellum (lab) answers in the same session (`r1d/takeover.ts`, profile `profile-r1d-takeover`); thinking on; 3 parallel | 21 runs; 19 taken over (2 never tripped a mistake point); 16 passed the hidden tests, 9 passed tests and quality checks (7 failed complexity or lint); 0 tool calls left inside thinking |
 | 2026-11-28 | `runs/2026-11-28-teacher-smoke` | py3.14-zstd-bytes | 1 | as above | plumbing check: 19 requests, 17 calls, 2 errors; task failed (API unknown to the teacher) |
 
 ## Data sets built from it
 
 | Set | Status | Notes |
 |---|---|---|
+| `data_takeover_b1` | current | the teacher's steps after each take-over, from the 9 runs that passed tests **and** quality, both modes: 356 train, 0 valid (9 runs, below the every-10th split); see its SOURCE.md |
 | `data_sft_v2` | current | from teacher-v2, both thinking modes, 5,104 train / 734 valid; see its SOURCE.md |
 | `data_sft_v1` | **superseded** | tool results cut to 400 + 200 characters, unlike inference: 31% of examples act on a result seen only in part; also mostly AgentClinic (2,865 of 3,208), now held out |
